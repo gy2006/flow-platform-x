@@ -14,18 +14,31 @@
  * limitations under the License.
  */
 
-package com.flowci.agent;
+package com.flowci.agent.cmd;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.flowci.domain.ExecutedCmd;
 
 /**
  * @author yang
  */
-@SpringBootApplication
-public class Application {
+public interface ProcessListener {
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+    /**
+     * Proc start to exec
+     */
+    default void onStarted(ExecutedCmd exected) {
     }
+
+    /**
+     * Proc executed without exception
+     */
+    default void onExecuted(ExecutedCmd exected) {
+    }
+
+    /**
+     * Proc got exception while executing (option)
+     */
+    default void onException(Throwable e) {
+    }
+
 }

@@ -17,8 +17,13 @@
 package com.flowci.domain;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 /**
@@ -29,18 +34,40 @@ public class Cmd implements Serializable {
 
     @Getter
     @Setter
+    @NonNull
     private String id;
 
     @Getter
     @Setter
-    private String script;
+    @NonNull
+    private List<String> scripts;
 
     @Getter
     @Setter
     private String workDir;
 
+    /**
+     * Cmd timeout in seconds
+     */
     @Getter
     @Setter
-    private VariableMap inputs;
+    @NonNull
+    private Long timeout = 1800L;
 
+    @Getter
+    @Setter
+    @NonNull
+    private VariableMap inputs = new VariableMap();
+
+    /**
+     * Output env filters
+     */
+    @Getter
+    @Setter
+    @NonNull
+    private Set<String> envFilters = Collections.emptySet();
+
+    public Cmd(String id) {
+        this.id = id;
+    }
 }

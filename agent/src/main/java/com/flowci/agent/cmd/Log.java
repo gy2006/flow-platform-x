@@ -14,18 +14,36 @@
  * limitations under the License.
  */
 
-package com.flowci.agent;
+package com.flowci.agent.cmd;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * @author yang
  */
-@SpringBootApplication
-public class Application {
+@RequiredArgsConstructor
+@AllArgsConstructor
+@ToString(of = {"type", "content"})
+public final class Log implements Serializable {
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+    public enum Type {
+        STDOUT,
+        STDERR,
     }
+
+    @Getter
+    private final Type type;
+
+    @Getter
+    private final String content;
+
+    @Getter
+    @Setter
+    private Integer number = 0;
+
 }

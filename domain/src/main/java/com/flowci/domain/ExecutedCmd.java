@@ -17,15 +17,20 @@
 package com.flowci.domain;
 
 import java.io.Serializable;
+import java.util.Objects;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 /**
  * @author yang
  */
+@RequiredArgsConstructor
 @EqualsAndHashCode(of = {"id"})
 public final class ExecutedCmd implements Serializable {
+
+    public final static Integer CODE_TIMEOUT = -100;
 
     public enum Status {
 
@@ -56,8 +61,11 @@ public final class ExecutedCmd implements Serializable {
     }
 
     @Getter
+    private final String id;
+
+    @Getter
     @Setter
-    private String id;
+    private Integer processId;
 
     @Getter
     @Setter
@@ -72,7 +80,7 @@ public final class ExecutedCmd implements Serializable {
 
     @Getter
     @Setter
-    private VariableMap output;
+    private VariableMap output = new VariableMap();
 
     @Getter
     @Setter
@@ -81,4 +89,12 @@ public final class ExecutedCmd implements Serializable {
     @Getter
     @Setter
     private Long finishAt;
+
+    public Long getDuration() {
+        if (Objects.isNull(startAt) || Objects.isNull(finishAt)) {
+            return -1L;
+        }
+
+        return finishAt - startAt;
+    }
 }

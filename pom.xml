@@ -5,19 +5,21 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.flowci</groupId>
-  <artifactId>flowci</artifactId>
+  <artifactId>flowci-platform</artifactId>
   <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
   <modules>
     <module>domain</module>
     <module>agent</module>
     <module>core</module>
+    <module>util</module>
   </modules>
 
   <properties>
-    <spring-boot.version>2.0.3.RELEASE</spring-boot.version>
     <lombok.version>1.18.0</lombok.version>
     <guava.version>21.0</guava.version>
+    <junit.version>4.12</junit.version>
+    <spring.version>2.0.3.RELEASE</spring.version>
   </properties>
 
   <build>
@@ -25,9 +27,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.6.1</version>
         <configuration>
           <source>8</source>
           <target>8</target>
+          <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
     </plugins>
@@ -36,11 +40,35 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>com.flowci</groupId>
+        <artifactId>domain</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.flowci</groupId>
+        <artifactId>util</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
+        <version>${spring.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+        <version>${spring.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -54,6 +82,13 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>

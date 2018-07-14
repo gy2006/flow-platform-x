@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package com.flowci.agent;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+package com.flowci.agent.cmd;
 
 /**
  * @author yang
  */
-@SpringBootApplication
-public class Application {
+public interface LoggingListener {
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+    default void onLogging(Log log) {
     }
+
+    default void onFinish() {
+    }
+
 }

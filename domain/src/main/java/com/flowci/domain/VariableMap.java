@@ -18,6 +18,7 @@ package com.flowci.domain;
 
 import com.flowci.domain.Variable.ValueType;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,10 @@ public class VariableMap implements Serializable {
 
     private final Map<Variable, Object> values = new HashMap<>(10);
 
+    public int size() {
+        return values.size();
+    }
+
     public void addString(String key, String value) {
         Variable var = new Variable(key);
         values.put(var, value);
@@ -52,6 +57,18 @@ public class VariableMap implements Serializable {
 
     public Integer getInteger(String key) {
         return (Integer) values.get(new Variable(key));
+    }
+
+    public Map<String, String> toStringMap() {
+        if (values.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, String> map = new HashMap<>(values.size());
+        for (Map.Entry<Variable, Object> entry : values.entrySet()) {
+            map.put(entry.getKey().getName(), entry.getValue().toString());
+        }
+        return map;
     }
 
     private interface ValueTypeValidator {
