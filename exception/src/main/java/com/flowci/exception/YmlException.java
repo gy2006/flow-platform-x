@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2018 fir.im
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 
-package com.flowci.core.domain;
+package com.flowci.exception;
+
+import com.flowci.domain.StatusCode;
 
 /**
  * @author yang
  */
-public final class StatusCode {
+public class YmlException extends CIException {
 
-    public final static int OK = 200;
-
-    public static class Error {
-
-        public final static int FATAL = 500;
-
-        public final static int INVALID_ARGUMENT = 400;
-
-        private Error() {
-        }
-
+    public YmlException(String message) {
+        super(message);
     }
 
-    private StatusCode() {
+    public YmlException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    @Override
+    public int getCode() {
+        return StatusCode.Error.PARSE_YML;
     }
 }

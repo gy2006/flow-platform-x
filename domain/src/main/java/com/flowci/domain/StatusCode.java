@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
-
+package com.flowci.domain;
 
 /**
  * @author yang
  */
-public abstract class CIException extends RuntimeException {
+public final class StatusCode {
 
-    public CIException(String message) {
-        super(message);
+    public final static int OK = 200;
+
+    public static class Error {
+
+        public final static int FATAL = 500;
+
+        public final static int INVALID_ARGUMENT = 400;
+
+        public static final int PARSE_YML = 401;
+
+        private Error() {
+        }
+
     }
 
-    public CIException(String message, Throwable cause) {
-        super(message, cause);
+    private StatusCode() {
     }
-
-    public abstract int getCode();
 }

@@ -17,7 +17,7 @@
 package com.flowci.core.adviser;
 
 import com.flowci.core.domain.ResponseMessage;
-import com.flowci.core.domain.StatusCode.Error;
+import com.flowci.domain.StatusCode.Error;
 import com.flowci.exception.CIException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
