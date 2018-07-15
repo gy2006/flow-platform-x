@@ -19,6 +19,7 @@ package com.flowci.tree;
 import com.flowci.domain.VariableMap;
 import com.flowci.domain.node.Node;
 import com.flowci.exception.YmlException;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -38,6 +39,10 @@ import org.yaml.snakeyaml.representer.Representer;
  * @author yang
  */
 public class YmlParser {
+
+    private final static String DEFAULT_ROOT_NAME = "root";
+
+    private final static String DEFAULT_CHILD_NAME_PREFIX = "step-";
 
     private final static Constructor ROOT_YML_CONSTRUCTOR = new Constructor(RootYmlWrapper.class);
 
@@ -81,7 +86,7 @@ public class YmlParser {
             throw new YmlException("The 'step' must be defined");
         }
 
-        return flow.toNode();
+        return flow.toNode(0);
     }
 
     public static synchronized String parse(Node root) {
@@ -110,8 +115,6 @@ public class YmlParser {
     @NoArgsConstructor
     private static class RootNodeWrapper {
 
-        private final static String DEFAULT_ROOT_NAME = "root";
-
         public static RootNodeWrapper fromNode(Node node) {
             RootNodeWrapper wrapper = new RootNodeWrapper();
 
@@ -136,7 +139,7 @@ public class YmlParser {
 
         public List<ChildNodeWrapper> steps = new LinkedList<>();
 
-        public Node toNode() {
+        public Node toNode(int index) {
             Node node = new Node(DEFAULT_ROOT_NAME);
             setEnvs(node);
             setChildren(node);
@@ -151,8 +154,9 @@ public class YmlParser {
         }
 
         void setChildren(Node node) {
+            int index = 1;
             for (ChildNodeWrapper child : steps) {
-                node.getChildren().add(child.toNode());
+                node.getChildren().add(child.toNode(index++));
             }
         }
     }
@@ -195,8 +199,8 @@ public class YmlParser {
         public String condition;
 
         @Override
-        public Node toNode() {
-            Node node = new Node(name);
+        public Node toNode(int index) {
+            Node node = new Node(Strings.isNullOrEmpty(name) ? DEFAULT_CHILD_NAME_PREFIX + index : name);
             node.setScript(script);
             node.setPlugin(plugin);
             node.setAllowFailure(allowFailure);

@@ -59,7 +59,7 @@ public class YmlParserTest {
         Assert.assertEquals(2, steps.size());
 
         Node step1 = steps.get(0);
-        Assert.assertEquals("step1", step1.getName());
+        Assert.assertEquals("step-1", step1.getName()); // step-1 is default name
         Assert.assertEquals("echo step", step1.getEnv("FLOW_WORKSPACE"));
         Assert.assertEquals("echo step version", step1.getEnv("FLOW_VERSION"));
         Assert.assertNotNull(step1.getCondition());
@@ -88,17 +88,17 @@ public class YmlParserTest {
         Assert.assertEquals(root, tree.getRoot());
 
         // verify parent / child relationship
-        Node step1 = tree.get(NodePath.create("root/step1"));
+        Node step1 = tree.get(NodePath.create("root/step-1")); // step-1 is default name
         Assert.assertNotNull(step1);
         Assert.assertEquals(2, step1.getChildren().size());
         Assert.assertEquals(root, step1.getParent());
 
-        Node step11 = tree.get(NodePath.create("root/step1/step11"));
+        Node step11 = tree.get(NodePath.create("root/step-1/step11"));
         Assert.assertNotNull(step11);
         Assert.assertTrue(step11.getChildren().isEmpty());
         Assert.assertEquals(step1, step11.getParent());
 
-        Node step12 = tree.get(NodePath.create("root/step1/step12"));
+        Node step12 = tree.get(NodePath.create("root/step-1/step12"));
         Assert.assertNotNull(step12);
         Assert.assertTrue(step12.getChildren().isEmpty());
         Assert.assertEquals(step1, step12.getParent());
