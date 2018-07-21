@@ -17,7 +17,12 @@
 package com.flowci.core.test;
 
 import com.flowci.core.flow.FlowService;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Yml;
 import com.flowci.exception.ArgumentException;
+import com.flowci.exception.YmlException;
+import com.flowci.util.StringHelper;
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,10 +43,28 @@ public class FlowServiceTest extends SpringTest {
         Assert.assertNotNull(flowService.get(name));
     }
 
+    @Test
+    public void should_save_yml_for_flow() throws IOException {
+        // when:
+        Flow flow = flowService.create("hello");
+        String ymlRaw = StringHelper.toString(load("flow.yml"));
+
+        // then: yml object should be created
+        Yml yml = flowService.saveYml(flow, ymlRaw);
+        Assert.assertNotNull(yml);
+        Assert.assertEquals(flow.getId(), yml.getId());
+    }
+
     @Test(expected = ArgumentException.class)
     public void should_throw_exception_if_flow_name_is_invalid_when_create() {
         String name = "hello.world";
         flowService.create(name);
+    }
+
+    @Test(expected = YmlException.class)
+    public void should_throw_exception_if_yml_illegal_yml_format() {
+        Flow flow = flowService.create("test");
+        flowService.saveYml(flow, "hello-...");
     }
 
 }

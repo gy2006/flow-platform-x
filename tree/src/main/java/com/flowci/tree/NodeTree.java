@@ -41,11 +41,6 @@ public class NodeTree {
         return new NodeTree(root);
     }
 
-    public static NodeTree create(String yml) {
-        Node root = YmlParser.load(yml);
-        return new NodeTree(root);
-    }
-
     private final Map<NodePath, NodeWithIndex> cached = new HashMap<>(DEFAULT_SIZE);
 
     @Getter

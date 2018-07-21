@@ -73,8 +73,7 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException("Yml content cannot be null or empty");
         }
 
-        YmlParser.load(yml);
-
+        YmlParser.load(flow.getName(), yml);
         return ymlDao.save(new Yml(flowId, yml));
     }
 }

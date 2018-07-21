@@ -47,7 +47,7 @@ public class YmlParserTest {
 
     @Test
     public void should_get_node_from_yml() {
-        Node root = YmlParser.load(content);
+        Node root = YmlParser.load("root", content);
 
         // verify flow
         Assert.assertEquals("root", root.getName());
@@ -83,7 +83,7 @@ public class YmlParserTest {
 
     @Test
     public void should_get_correct_relationship_on_node_tree() {
-        Node root = YmlParser.load(content);
+        Node root = YmlParser.load("hello", content);
         NodeTree tree = NodeTree.create(root);
         Assert.assertEquals(root, tree.getRoot());
 
@@ -118,7 +118,7 @@ public class YmlParserTest {
 
     @Test
     public void should_parse_to_yml_from_node() {
-        Node root = YmlParser.load(content);
+        Node root = YmlParser.load("default", content);
         String parsed = YmlParser.parse(root);
         Assert.assertNotNull(parsed);
     }

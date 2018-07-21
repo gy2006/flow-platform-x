@@ -16,6 +16,7 @@
 
 package com.flowci.core.test;
 
+import java.io.InputStream;
 import org.junit.After;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,10 @@ public abstract class SpringTest {
     @After
     public void dbClean() {
         mongoTemplate.getDb().drop();
+    }
+
+    InputStream load(String resource) {
+        return SpringTest.class.getClassLoader().getResourceAsStream(resource);
     }
 
 }

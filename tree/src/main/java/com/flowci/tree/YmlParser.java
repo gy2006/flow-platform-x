@@ -31,6 +31,7 @@ import org.yaml.snakeyaml.DumperOptions.LineBreak;
 import org.yaml.snakeyaml.DumperOptions.ScalarStyle;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.error.YAMLException;
 import org.yaml.snakeyaml.representer.Representer;
 
 /**
@@ -60,17 +61,26 @@ public class YmlParser {
     /**
      * Create Node instance from yml
      */
-    public static synchronized Node load(String yml) {
+    public static synchronized Node load(String defaultName, String yml) {
         Yaml yaml = new Yaml(ROOT_YML_CONSTRUCTOR);
-        RootNodeWrapper root = yaml.load(yml);
 
-        // steps must be provided
-        List<ChildNodeWrapper> steps = root.steps;
-        if (Objects.isNull(steps) || steps.isEmpty()) {
-            throw new YmlException("The 'step' must be defined");
+        try {
+            RootNodeWrapper root = yaml.load(yml);
+            // set default flow name if not defined in yml
+            if (Strings.isNullOrEmpty(root.name)) {
+                root.name = defaultName;
+            }
+
+            // steps must be provided
+            List<ChildNodeWrapper> steps = root.steps;
+            if (Objects.isNull(steps) || steps.isEmpty()) {
+                throw new YmlException("The 'step' must be defined");
+            }
+
+            return root.toNode(0);
+        } catch (YAMLException e) {
+            throw new YmlException(e.getMessage());
         }
-
-        return root.toNode(0);
     }
 
     public static synchronized String parse(Node root) {
