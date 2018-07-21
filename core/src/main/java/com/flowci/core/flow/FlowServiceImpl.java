@@ -20,6 +20,7 @@ import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.domain.node.NodePath;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.google.common.base.Strings;
@@ -43,11 +44,16 @@ public class FlowServiceImpl implements FlowService {
     public Flow create(String name) {
         Flow existed = flowDao.findByName(name);
 
-        if (Objects.isNull(existed)) {
-            return flowDao.save(new Flow(name));
+        if (!Objects.isNull(existed)) {
+            throw new DuplicateException("The flow {0} already existed", name);
         }
 
-        throw new DuplicateException("The flow {0} already existed", name);
+        if (!NodePath.validate(name)) {
+            String message = "Illegal flow name {0}, the length cannot over 100 and '*' ',' is not available";
+            throw new ArgumentException(message, name);
+        }
+
+        return flowDao.save(new Flow(name));
     }
 
     @Override

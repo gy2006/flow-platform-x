@@ -73,7 +73,11 @@ public final class NodePath implements Serializable {
                     if (Strings.isNullOrEmpty(name.trim())) {
                         continue;
                     }
-                    validateNodeName(name);
+
+                    if (!validate(name)) {
+                        throw new IllegalArgumentException("Illegal node name: " + name);
+                    }
+
                     paths.add(name);
                 }
                 continue;
@@ -84,7 +88,10 @@ public final class NodePath implements Serializable {
                 continue;
             }
 
-            validateNodeName(name);
+            if (!validate(name)) {
+                throw new IllegalArgumentException("Illegal node name: " + name);
+            }
+
             paths.add(name);
         }
 
@@ -119,20 +126,24 @@ public final class NodePath implements Serializable {
         return paths.get(paths.size() - 1);
     }
 
-    private void validateNodeName(String name) throws IllegalArgumentException {
-        String errMsg = "Illegal node name: " + name;
-
+    /**
+     * Validate node name
+     */
+    public static boolean validate(String name) {
         name = name.trim();
+
         if (Strings.isNullOrEmpty(name) || name.startsWith(PathSeparator)) {
-            throw new IllegalArgumentException(errMsg);
+            return false;
         }
 
         if (!NameLengthRange.contains(name.length())) {
-            throw new IllegalArgumentException(errMsg);
+            return false;
         }
 
         if (name.contains("*") || name.contains(".")) {
-            throw new IllegalArgumentException(errMsg);
+            return false;
         }
+
+        return true;
     }
 }

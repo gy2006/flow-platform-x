@@ -17,6 +17,7 @@
 package com.flowci.core.test;
 
 import com.flowci.core.flow.FlowService;
+import com.flowci.exception.ArgumentException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +32,16 @@ public class FlowServiceTest extends SpringTest {
 
     @Test
     public void should_create_flow_by_name() {
-        String name = "hello.world";
+        String name = "hello";
         flowService.create(name);
 
         Assert.assertNotNull(flowService.get(name));
+    }
+
+    @Test(expected = ArgumentException.class)
+    public void should_throw_exception_if_flow_name_is_invalid_when_create() {
+        String name = "hello.world";
+        flowService.create(name);
     }
 
 }
