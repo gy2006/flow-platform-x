@@ -26,6 +26,11 @@
 
     <dependency>
       <groupId>com.flowci</groupId>
+      <artifactId>tree</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.flowci</groupId>
       <artifactId>exception</artifactId>
     </dependency>
 

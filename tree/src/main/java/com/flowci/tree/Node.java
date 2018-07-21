@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.domain.node;
+package com.flowci.tree;
 
 import com.flowci.domain.VariableMap;
 import java.io.Serializable;
@@ -22,6 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 

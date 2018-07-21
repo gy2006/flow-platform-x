@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.domain.node;
+package com.flowci.tree;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -22,7 +22,9 @@ import com.google.common.collect.Range;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -48,8 +50,10 @@ public final class NodePath implements Serializable {
     }
 
     public static NodePath create(NodePath parentPath, String... nameOrPaths) {
-        ArrayList<String> paths = new ArrayList<>(parentPath.paths.size() + nameOrPaths.length);
-        paths.addAll(parentPath.paths);
+        List<String> paths = new LinkedList<>();
+        if (!Objects.isNull(parentPath)) {
+            paths.addAll(parentPath.paths);
+        }
         paths.addAll(Arrays.asList(nameOrPaths));
         return new NodePath(paths);
     }

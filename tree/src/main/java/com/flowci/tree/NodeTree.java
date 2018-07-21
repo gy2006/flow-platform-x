@@ -17,8 +17,6 @@
 package com.flowci.tree;
 
 import com.flowci.domain.VariableMap;
-import com.flowci.domain.node.Node;
-import com.flowci.domain.node.NodePath;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;

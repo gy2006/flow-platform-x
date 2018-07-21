@@ -20,9 +20,10 @@ import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.domain.node.NodePath;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
+import com.flowci.tree.NodePath;
+import com.flowci.tree.YmlParser;
 import com.google.common.base.Strings;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +72,8 @@ public class FlowServiceImpl implements FlowService {
         if (Strings.isNullOrEmpty(yml)) {
             throw new ArgumentException("Yml content cannot be null or empty");
         }
+
+        YmlParser.load(yml);
 
         return ymlDao.save(new Yml(flowId, yml));
     }

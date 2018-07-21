@@ -103,6 +103,12 @@
 
       <dependency>
         <groupId>com.flowci</groupId>
+        <artifactId>tree</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.flowci</groupId>
         <artifactId>exception</artifactId>
         <version>${project.version}</version>
       </dependency>

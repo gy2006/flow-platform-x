@@ -16,8 +16,8 @@
 
 package com.flowci.tree.test;
 
-import com.flowci.domain.node.Node;
-import com.flowci.domain.node.NodePath;
+import com.flowci.tree.Node;
+import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
 import com.google.common.io.Files;
@@ -47,15 +47,15 @@ public class YmlParserTest {
 
     @Test
     public void should_get_node_from_yml() {
-        Node node = YmlParser.load(content);
+        Node root = YmlParser.load(content);
 
         // verify flow
-        Assert.assertEquals("root", node.getName());
-        Assert.assertEquals("echo hello", node.getEnv("FLOW_WORKSPACE"));
-        Assert.assertEquals("echo version", node.getEnv("FLOW_VERSION"));
+        Assert.assertEquals("root", root.getName());
+        Assert.assertEquals("echo hello", root.getEnv("FLOW_WORKSPACE"));
+        Assert.assertEquals("echo version", root.getEnv("FLOW_VERSION"));
 
         // verify steps
-        List<Node> steps = node.getChildren();
+        List<Node> steps = root.getChildren();
         Assert.assertEquals(2, steps.size());
 
         Node step1 = steps.get(0);
