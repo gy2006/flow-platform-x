@@ -14,43 +14,31 @@
  * limitations under the License.
  */
 
-package com.flowci.core.domain;
+package com.flowci.core.flow.domain;
 
-import java.io.Serializable;
-import java.util.Date;
-import lombok.EqualsAndHashCode;
+import com.flowci.core.domain.Mongoable;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
-import lombok.ToString;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
  */
-@EqualsAndHashCode(of = {"id"})
-@ToString(of = {"id"})
-public abstract class Mongoable implements Serializable {
+@Document(collection = "flow_yml")
+@NoArgsConstructor
+public class Yml extends Mongoable {
 
-    @Id
     @Getter
     @Setter
     @NonNull
-    protected String id;
+    private String raw;
 
-    @Getter
-    @Setter
-    @CreatedDate
-    protected Date createdAt;
-
-    @Getter
-    @Setter
-    @LastModifiedDate
-    protected Date updatedAt;
-
-    @Getter
-    @Setter
-    protected String createdBy;
+    public Yml(String flowId, String raw) {
+        this.id = flowId;
+        this.raw = raw;
+    }
 }

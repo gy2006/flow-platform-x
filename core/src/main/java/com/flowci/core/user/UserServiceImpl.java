@@ -50,11 +50,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public User create(String email, String password) {
         if (!Objects.isNull(getByEmail(email))) {
-            throw new DuplicateException("Email {} is already existed", email);
+            throw new DuplicateException("Email {0} is already existed", email);
         }
 
-        new User(email, HashingHelper.md5(password));
-        return userDao.save(new User(email, password));
+        return userDao.save(new User(email, HashingHelper.md5(password)));
     }
 
     @Override

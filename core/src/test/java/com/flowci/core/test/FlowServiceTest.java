@@ -14,32 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.core.flow.domain;
+package com.flowci.core.test;
 
-import com.flowci.core.domain.Mongoable;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.ToString;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
+import com.flowci.core.flow.FlowService;
+import org.junit.Assert;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author yang
  */
-@Document(collection = "flow")
-@NoArgsConstructor
-@ToString(of = {"name"}, callSuper = true)
-public final class Flow extends Mongoable {
+public class FlowServiceTest extends SpringTest {
 
-    @Getter
-    @Setter
-    @NonNull
-    @Indexed(name = "index_flow_name")
-    private String name;
+    @Autowired
+    private FlowService flowService;
 
-    public Flow(String name) {
-        this.name = name;
+    @Test
+    public void should_create_flow_by_name() {
+        String name = "hello.world";
+        flowService.create(name);
+
+        Assert.assertNotNull(flowService.get(name));
     }
+
 }
