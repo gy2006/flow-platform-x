@@ -28,7 +28,7 @@ import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -43,7 +43,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author yang
  */
 @Configuration
-@EnableMongoAuditing
+@EnableMongoRepositories(basePackages = "com.flowci.core")
 public class AppConfig implements WebMvcConfigurer {
 
     private final static ObjectMapper ObjectMapper = new ObjectMapper();

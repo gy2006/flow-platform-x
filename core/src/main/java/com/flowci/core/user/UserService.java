@@ -21,6 +21,8 @@ package com.flowci.core.user;
  */
 public interface UserService {
 
+    User defaultAdmin();
+
     /**
      * Create user by email and password;
      */

@@ -16,7 +16,10 @@
 
 package com.flowci.core.test;
 
+import com.flowci.core.user.User;
+import com.flowci.core.user.UserService;
 import java.io.InputStream;
+import lombok.Getter;
 import org.junit.After;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +39,13 @@ public abstract class SpringTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Getter
+    @Autowired
+    private ThreadLocal<User> currentUser;
+
+    @Autowired
+    private UserService userService;
+
     @After
     public void dbClean() {
         mongoTemplate.getDb().drop();
@@ -43,6 +53,11 @@ public abstract class SpringTest {
 
     InputStream load(String resource) {
         return SpringTest.class.getClassLoader().getResourceAsStream(resource);
+    }
+
+    void mockLogin() {
+        User user = userService.create("test@flow.ci", "11111");
+        currentUser.set(user);
     }
 
 }

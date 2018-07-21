@@ -48,6 +48,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User defaultAdmin() {
+        return userDao.findByEmail(config.getAdmin().getEmail());
+    }
+
+    @Override
     public User create(String email, String password) {
         if (!Objects.isNull(getByEmail(email))) {
             throw new DuplicateException("Email {0} is already existed", email);

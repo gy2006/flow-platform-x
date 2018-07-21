@@ -20,6 +20,7 @@ import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.user.User;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.tree.NodePath;
@@ -41,6 +42,9 @@ public class FlowServiceImpl implements FlowService {
     @Autowired
     private YmlDao ymlDao;
 
+    @Autowired
+    private ThreadLocal<User> currentUser;
+
     @Override
     public Flow create(String name) {
         Flow existed = flowDao.findByName(name);
@@ -54,7 +58,9 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException(message, name);
         }
 
-        return flowDao.save(new Flow(name));
+        Flow newFlow = new Flow(name);
+        newFlow.setCreatedBy(currentUser.get().getId());
+        return flowDao.save(newFlow);
     }
 
     @Override
@@ -74,6 +80,9 @@ public class FlowServiceImpl implements FlowService {
         }
 
         YmlParser.load(flow.getName(), yml);
-        return ymlDao.save(new Yml(flowId, yml));
+
+        Yml ymlObj = new Yml(flowId, yml);
+        ymlObj.setCreatedBy(currentUser.get().getId());
+        return ymlDao.save(ymlObj);
     }
 }

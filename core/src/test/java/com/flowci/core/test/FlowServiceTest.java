@@ -24,22 +24,30 @@ import com.flowci.exception.YmlException;
 import com.flowci.util.StringHelper;
 import java.io.IOException;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author yang
  */
+@FixMethodOrder(value = MethodSorters.JVM)
 public class FlowServiceTest extends SpringTest {
 
     @Autowired
     private FlowService flowService;
 
+    @Before
+    public void login() {
+        mockLogin();
+    }
+
     @Test
     public void should_create_flow_by_name() {
         String name = "hello";
         flowService.create(name);
-
         Assert.assertNotNull(flowService.get(name));
     }
 
