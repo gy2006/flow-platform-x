@@ -19,18 +19,18 @@ package com.flowci.exception;
 /**
  * @author yang
  */
-public class YmlException extends CIException {
+public class DuplicateException extends CIException {
 
-    public YmlException(String message, String... params) {
+    public DuplicateException(String message, String... params) {
         super(message, params);
     }
 
-    public YmlException(String message, Throwable cause, String... params) {
+    public DuplicateException(String message, Throwable cause, String... params) {
         super(message, cause, params);
     }
 
     @Override
     public int getCode() {
-        return ErrorCode.PARSE_YML;
+        return ErrorCode.DUPLICATE;
     }
 }

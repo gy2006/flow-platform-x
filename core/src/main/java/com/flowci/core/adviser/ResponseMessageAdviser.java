@@ -17,7 +17,7 @@
 package com.flowci.core.adviser;
 
 import com.flowci.core.domain.ResponseMessage;
-import com.flowci.domain.StatusCode;
+import com.flowci.core.domain.StatusCode;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
@@ -30,7 +30,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
  * @author yang
  */
 @ControllerAdvice({
-    "com.flowci"
+    "com.flowci.flow",
+    "com.flowci.job"
 })
 public class ResponseMessageAdviser implements ResponseBodyAdvice {
 

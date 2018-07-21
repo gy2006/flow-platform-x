@@ -19,18 +19,19 @@ package com.flowci.exception;
 /**
  * @author yang
  */
-public class YmlException extends CIException {
+public final class ErrorCode {
 
-    public YmlException(String message, String... params) {
-        super(message, params);
-    }
+    public final static int ERROR = 400;
 
-    public YmlException(String message, Throwable cause, String... params) {
-        super(message, cause, params);
-    }
+    public final static int INVALID_ARGUMENT = 401;
 
-    @Override
-    public int getCode() {
-        return ErrorCode.PARSE_YML;
+    public static final int PARSE_YML = 402;
+
+    public static final int DUPLICATE = 403;
+
+    public static final int NOT_FOUND = 404;
+
+    private ErrorCode() {
+
     }
 }

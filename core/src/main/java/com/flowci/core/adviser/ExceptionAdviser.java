@@ -17,8 +17,9 @@
 package com.flowci.core.adviser;
 
 import com.flowci.core.domain.ResponseMessage;
-import com.flowci.domain.StatusCode.Error;
+import com.flowci.core.domain.StatusCode;
 import com.flowci.exception.CIException;
+import com.flowci.exception.ErrorCode;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,7 +40,7 @@ public class ExceptionAdviser {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseMessage<Object> methodArgumentNotValidException(MethodArgumentNotValidException e) {
         String defaultMessage = e.getBindingResult().getFieldError().getDefaultMessage();
-        return new ResponseMessage<>(Error.INVALID_ARGUMENT, defaultMessage, null);
+        return new ResponseMessage<>(ErrorCode.INVALID_ARGUMENT, defaultMessage, null);
     }
 
     @ResponseBody
@@ -54,6 +55,6 @@ public class ExceptionAdviser {
     @ExceptionHandler(Throwable.class)
     public ResponseMessage<Object> fatalException(Throwable e) {
         log.error(e);
-        return new ResponseMessage<>(Error.FATAL, e.getMessage(), null);
+        return new ResponseMessage<>(StatusCode.FATAL, e.getMessage(), null);
     }
 }

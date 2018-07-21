@@ -14,28 +14,19 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.user;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author yang
  */
-public final class StatusCode {
+@Repository
+public interface UserDao extends MongoRepository<User, String> {
 
-    public final static int OK = 200;
+    @Query
+    User findByEmail(String email);
 
-    public static class Error {
-
-        public final static int FATAL = 500;
-
-        public final static int INVALID_ARGUMENT = 400;
-
-        public static final int PARSE_YML = 401;
-
-        private Error() {
-        }
-
-    }
-
-    private StatusCode() {
-    }
 }

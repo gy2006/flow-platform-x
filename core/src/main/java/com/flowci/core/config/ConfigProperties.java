@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.core.config;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author yang
  */
-public class YmlException extends CIException {
+public class ConfigProperties {
 
-    public YmlException(String message, String... params) {
-        super(message, params);
+    @Getter
+    private final Admin admin = new Admin();
+
+    public static class Admin {
+
+        @Getter
+        @Setter
+        private String email;
+
+        @Getter
+        @Setter
+        private String password;
     }
 
-    public YmlException(String message, Throwable cause, String... params) {
-        super(message, cause, params);
-    }
-
-    @Override
-    public int getCode() {
-        return ErrorCode.PARSE_YML;
-    }
 }

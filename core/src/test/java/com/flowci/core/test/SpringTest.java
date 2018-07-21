@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.core.test;
+
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * @author yang
  */
-public class YmlException extends CIException {
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+public class SpringTest {
 
-    public YmlException(String message, String... params) {
-        super(message, params);
-    }
-
-    public YmlException(String message, Throwable cause, String... params) {
-        super(message, cause, params);
-    }
-
-    @Override
-    public int getCode() {
-        return ErrorCode.PARSE_YML;
-    }
 }

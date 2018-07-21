@@ -22,10 +22,13 @@ import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpMethod.PUT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.user.User;
 import com.google.common.collect.Lists;
 import java.util.List;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -40,6 +43,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author yang
  */
 @Configuration
+@EnableMongoAuditing
 public class AppConfig implements WebMvcConfigurer {
 
     private final static ObjectMapper ObjectMapper = new ObjectMapper();
@@ -65,6 +69,17 @@ public class AppConfig implements WebMvcConfigurer {
         RestTemplate restTemplate = new RestTemplate(factory);
         restTemplate.setMessageConverters(DefaultConverters);
         return restTemplate;
+    }
+
+    @Bean("currentUser")
+    public ThreadLocal<User> currentUser() {
+        return new ThreadLocal<>();
+    }
+
+    @Bean("config")
+    @ConfigurationProperties(prefix = "app")
+    public ConfigProperties config() {
+        return new ConfigProperties();
     }
 
     @Override

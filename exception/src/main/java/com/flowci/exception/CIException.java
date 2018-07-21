@@ -17,18 +17,22 @@
 package com.flowci.exception;
 
 
+import java.text.MessageFormat;
+
 /**
  * @author yang
  */
-public abstract class CIException extends RuntimeException {
+public class CIException extends RuntimeException {
 
-    public CIException(String message) {
-        super(message);
+    public CIException(String message, String... params) {
+        super(MessageFormat.format(message, params));
     }
 
-    public CIException(String message, Throwable cause) {
-        super(message, cause);
+    public CIException(String message, Throwable cause, String... params) {
+        super(MessageFormat.format(message, params), cause);
     }
 
-    public abstract int getCode();
+    public int getCode() {
+        return ErrorCode.ERROR;
+    }
 }

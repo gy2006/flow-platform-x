@@ -14,23 +14,30 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.core.test;
+
+import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.user.User;
+import com.flowci.core.user.UserService;
+import org.junit.Assert;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author yang
  */
-public class YmlException extends CIException {
+public class UserServiceTest extends SpringTest {
 
-    public YmlException(String message, String... params) {
-        super(message, params);
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private ConfigProperties config;
+
+    @Test
+    public void should_init_admin_user() {
+        User admin = userService.getByEmail(config.getAdmin().getEmail());
+        Assert.assertNotNull(admin);
     }
 
-    public YmlException(String message, Throwable cause, String... params) {
-        super(message, cause, params);
-    }
-
-    @Override
-    public int getCode() {
-        return ErrorCode.PARSE_YML;
-    }
 }

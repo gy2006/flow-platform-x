@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.core.user;
 
 /**
  * @author yang
  */
-public class YmlException extends CIException {
+public interface UserService {
 
-    public YmlException(String message, String... params) {
-        super(message, params);
-    }
+    /**
+     * Create user by email and password;
+     */
+    User create(String email, String password);
 
-    public YmlException(String message, Throwable cause, String... params) {
-        super(message, cause, params);
-    }
+    /**
+     * Get user by email
+     */
+    User getByEmail(String email);
 
-    @Override
-    public int getCode() {
-        return ErrorCode.PARSE_YML;
-    }
 }

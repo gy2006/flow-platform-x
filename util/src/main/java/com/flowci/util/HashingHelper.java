@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.util;
+
+import com.google.common.hash.Hashing;
 
 /**
  * @author yang
  */
-public class YmlException extends CIException {
+public final class HashingHelper {
 
-    public YmlException(String message, String... params) {
-        super(message, params);
+    public static String md5(String value) {
+        return Hashing.md5().hashBytes(value.getBytes()).toString();
     }
 
-    public YmlException(String message, Throwable cause, String... params) {
-        super(message, cause, params);
-    }
+    private HashingHelper(){
 
-    @Override
-    public int getCode() {
-        return ErrorCode.PARSE_YML;
     }
 }
