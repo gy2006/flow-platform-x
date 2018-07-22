@@ -26,6 +26,7 @@ import com.flowci.core.domain.ResponseMessage;
 import com.flowci.core.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.util.StringHelper;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,8 +38,17 @@ import org.springframework.http.MediaType;
  */
 public class FlowControllerTest extends SpringTest {
 
-    private final TypeReference<ResponseMessage<Flow>> FlowType = new TypeReference<ResponseMessage<Flow>>() {
-    };
+    private final static TypeReference<ResponseMessage<Flow>> FlowType =
+        new TypeReference<ResponseMessage<Flow>>() {
+        };
+
+    private final static TypeReference<ResponseMessage<List<Flow>>> ListFlowType =
+        new TypeReference<ResponseMessage<List<Flow>>>() {
+        };
+
+    private final static TypeReference<ResponseMessage<String>> YmlType =
+        new TypeReference<ResponseMessage<String>>() {
+        };
 
     @Autowired
     private MvcMockHelper mvcMockHelper;
@@ -67,12 +77,28 @@ public class FlowControllerTest extends SpringTest {
     }
 
     @Test
-    public void should_get_or_list_flow() throws Exception {
+    public void should_get_flow_and_yml() throws Exception {
         ResponseMessage<Flow> getFlowResponse = mvcMockHelper
             .expectSuccessAndReturnClass(get("/flows/" + flowName), FlowType);
 
         Assert.assertEquals(StatusCode.OK, getFlowResponse.getCode());
         Assert.assertEquals(flowName, getFlowResponse.getData().getName());
+
+        ResponseMessage<String> getYmlResponse = mvcMockHelper
+            .expectSuccessAndReturnClass(get("/flows/" + flowName + "/yml"), YmlType);
+
+        Assert.assertEquals(StatusCode.OK, getYmlResponse.getCode());
+        Assert.assertEquals(StringHelper.toString(load("flow.yml")), getYmlResponse.getData());
+    }
+
+    @Test
+    public void should_list_flows() throws Exception {
+        ResponseMessage<List<Flow>> listFlowResponse = mvcMockHelper
+            .expectSuccessAndReturnClass(get("/flows"), ListFlowType);
+
+        Assert.assertEquals(StatusCode.OK, listFlowResponse.getCode());
+        Assert.assertEquals(1, listFlowResponse.getData().size());
+        Assert.assertEquals(flowName, listFlowResponse.getData().get(0).getName());
     }
 
 }

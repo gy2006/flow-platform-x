@@ -30,7 +30,7 @@ public class YmlException extends CIException {
     }
 
     @Override
-    public int getCode() {
+    public Integer getCode() {
         return ErrorCode.PARSE_YML;
     }
 }

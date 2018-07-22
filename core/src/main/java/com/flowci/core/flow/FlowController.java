@@ -60,6 +60,12 @@ public class FlowController {
         return flow;
     }
 
+    @GetMapping(value = "/{name}/yml")
+    public String getYml(@PathVariable String name) {
+        Flow flow = flowService.get(name);
+        return flowService.getYml(flow).getRaw();
+    }
+
     @PatchMapping("/{name}/yml")
     public void updateYml(@PathVariable String name, @RequestBody RequestMessage<String> yml) {
         Flow flow = flowService.get(name);

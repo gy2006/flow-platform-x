@@ -30,7 +30,7 @@ public class DuplicateException extends CIException {
     }
 
     @Override
-    public int getCode() {
+    public Integer getCode() {
         return ErrorCode.DUPLICATE;
     }
 }

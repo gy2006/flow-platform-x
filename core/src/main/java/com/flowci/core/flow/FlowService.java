@@ -46,6 +46,11 @@ public interface FlowService {
     void update(Flow flow);
 
     /**
+     * Get yml by flow
+     */
+    Yml getYml(Flow flow);
+
+    /**
      * Create or update yml for flow
      */
     Yml saveYml(Flow flow, String yml);

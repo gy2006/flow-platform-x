@@ -32,7 +32,7 @@ public class CIException extends RuntimeException {
         super(MessageFormat.format(message, params), cause);
     }
 
-    public int getCode() {
+    public Integer getCode() {
         return ErrorCode.ERROR;
     }
 }

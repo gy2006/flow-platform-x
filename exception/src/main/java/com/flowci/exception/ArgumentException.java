@@ -30,7 +30,7 @@ public class ArgumentException extends CIException {
     }
 
     @Override
-    public int getCode() {
+    public Integer getCode() {
         return ErrorCode.INVALID_ARGUMENT;
     }
 }

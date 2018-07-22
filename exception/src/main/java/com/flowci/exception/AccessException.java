@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,18 @@ package com.flowci.exception;
 /**
  * @author yang
  */
-public final class ErrorCode {
+public class AccessException extends CIException {
 
-    public final static Integer ERROR = 400;
+    public AccessException(String message, String... params) {
+        super(message, params);
+    }
 
-    public final static Integer INVALID_ARGUMENT = 401;
+    public AccessException(String message, Throwable cause, String... params) {
+        super(message, cause, params);
+    }
 
-    public static final Integer PARSE_YML = 402;
-
-    public static final Integer DUPLICATE = 403;
-
-    public static final Integer NOT_FOUND = 404;
-
-    public static final Integer ILLEGAL_ACCESS = 405;
-
-    private ErrorCode() {
-
+    @Override
+    public Integer getCode() {
+        return ErrorCode.ILLEGAL_ACCESS;
     }
 }

@@ -21,6 +21,7 @@ import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.tree.NodePath;
@@ -68,24 +69,24 @@ public class FlowServiceImpl extends RequireCurrentUser implements FlowService {
 
     @Override
     public Flow get(String name) {
-        return flowDao.findByName(name);
+        return flowDao.findByNameAndCreatedBy(name, getCurrentUser().getId());
     }
 
     @Override
     public void update(Flow flow) {
-        if (Strings.isNullOrEmpty(flow.getId())) {
-            throw new ArgumentException("The flow id is missing");
-        }
-
+        verifyFlowIdAndUser(flow);
         flowDao.save(flow);
     }
 
     @Override
+    public Yml getYml(Flow flow) {
+        verifyFlowIdAndUser(flow);
+        return ymlDao.findById(flow.getId()).get();
+    }
+
+    @Override
     public Yml saveYml(Flow flow, String yml) {
-        String flowId = flow.getId();
-        if (Strings.isNullOrEmpty(flowId)) {
-            throw new ArgumentException("The flow id is missing");
-        }
+        verifyFlowIdAndUser(flow);
 
         if (Strings.isNullOrEmpty(yml)) {
             throw new ArgumentException("Yml content cannot be null or empty");
@@ -93,8 +94,19 @@ public class FlowServiceImpl extends RequireCurrentUser implements FlowService {
 
         YmlParser.load(flow.getName(), yml);
 
-        Yml ymlObj = new Yml(flowId, yml);
+        Yml ymlObj = new Yml(flow.getId(), yml);
         ymlObj.setCreatedBy(getCurrentUser().getId());
         return ymlDao.save(ymlObj);
+    }
+
+    private void verifyFlowIdAndUser(Flow flow) {
+        String flowId = flow.getId();
+        if (Strings.isNullOrEmpty(flowId)) {
+            throw new ArgumentException("The flow id is missing");
+        }
+
+        if (!Objects.equals(flow.getCreatedBy(), getCurrentUser().getId())) {
+            throw new AccessException("Illegal account for flow {0}", flow.getName());
+        }
     }
 }
