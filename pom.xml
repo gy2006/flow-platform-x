@@ -23,6 +23,7 @@
     <junit.version>4.12</junit.version>
     <spring.version>2.0.3.RELEASE</spring.version>
     <snakeyaml.version>1.21</snakeyaml.version>
+    <jackson.version>2.9.6</jackson.version>
   </properties>
 
   <build>
@@ -111,6 +112,24 @@
         <groupId>com.flowci</groupId>
         <artifactId>exception</artifactId>
         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson.version}</version>
       </dependency>
 
       <dependency>

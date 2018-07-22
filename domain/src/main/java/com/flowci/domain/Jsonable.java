@@ -14,33 +14,28 @@
  * limitations under the License.
  */
 
-package com.flowci.core.flow;
+package com.flowci.domain;
 
-import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.Yml;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author yang
  */
-public interface FlowService {
+public final class Jsonable {
 
-    /**
-     * Create flow by name
-     */
-    Flow create(String name);
+    private final static ObjectMapper Mapper = new ObjectMapper();
 
-    /**
-     * Get flow by name
-     */
-    Flow get(String name);
+    static {
+        Mapper.setSerializationInclusion(Include.NON_NULL);
+    }
 
-    /**
-     * Update flow name or variables
-     */
-    void update(Flow flow);
+    public static ObjectMapper getMapper() {
+        return Mapper;
+    }
 
-    /**
-     * Create or update yml for flow
-     */
-    Yml saveYml(Flow flow, String yml);
+    private Jsonable() {
+
+    }
+
 }

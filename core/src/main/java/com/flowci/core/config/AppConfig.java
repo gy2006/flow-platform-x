@@ -23,6 +23,7 @@ import static org.springframework.http.HttpMethod.PUT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.user.User;
+import com.flowci.domain.Jsonable;
 import com.google.common.collect.Lists;
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -46,18 +47,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableMongoRepositories(basePackages = "com.flowci.core")
 public class AppConfig implements WebMvcConfigurer {
 
-    private final static ObjectMapper ObjectMapper = new ObjectMapper();
-
     private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(
         new ByteArrayHttpMessageConverter(),
-        new MappingJackson2HttpMessageConverter(ObjectMapper),
+        new MappingJackson2HttpMessageConverter(Jsonable.getMapper()),
         new ResourceHttpMessageConverter(),
         new AllEncompassingFormHttpMessageConverter()
     );
 
     @Bean("objectMapper")
     public ObjectMapper objectMapper() {
-        return ObjectMapper;
+        return Jsonable.getMapper();
     }
 
     @Bean("restTemplate")

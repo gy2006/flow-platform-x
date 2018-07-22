@@ -19,6 +19,7 @@ package com.flowci.core.test;
 import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.YmlException;
 import com.flowci.util.StringHelper;
@@ -46,9 +47,18 @@ public class FlowServiceTest extends SpringTest {
 
     @Test
     public void should_create_flow_by_name() {
-        String name = "hello";
-        flowService.create(name);
-        Assert.assertNotNull(flowService.get(name));
+        flowService.create("hello");
+        Assert.assertNotNull(flowService.get("hello"));
+    }
+
+    @Test
+    public void should_update_flow_variables() {
+        Flow flow = flowService.create("hello");
+        flow.getVariables().putString("FLOW_NAME", "hello.world");
+        flowService.update(flow);
+
+        VariableMap variables = flowService.get(flow.getName()).getVariables();
+        Assert.assertEquals("hello.world", variables.getString("FLOW_NAME"));
     }
 
     @Test

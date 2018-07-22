@@ -282,7 +282,7 @@ public class CmdExecutor {
             // reset value builder and current key
             if (index != -1 && !isMatchEnvFilter(line, cmd.getEnvFilters())) {
                 if (value != null && currentKey != null) {
-                    result.getOutput().addString(currentKey, value.toString());
+                    result.getOutput().putString(currentKey, value.toString());
                 }
 
                 currentKey = null;
@@ -294,7 +294,7 @@ public class CmdExecutor {
 
                 // put previous env to output and reset
                 if (value != null && currentKey != null) {
-                    result.getOutput().addString(currentKey, value.toString());
+                    result.getOutput().putString(currentKey, value.toString());
                     value = null;
                     currentKey = null;
                 }

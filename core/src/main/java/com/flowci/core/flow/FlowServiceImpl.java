@@ -69,6 +69,15 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
+    public void update(Flow flow) {
+        if (Strings.isNullOrEmpty(flow.getId())) {
+            throw new ArgumentException("The flow id is missing");
+        }
+
+        flowDao.save(flow);
+    }
+
+    @Override
     public Yml saveYml(Flow flow, String yml) {
         String flowId = flow.getId();
         if (Strings.isNullOrEmpty(flowId)) {

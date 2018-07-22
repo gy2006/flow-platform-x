@@ -17,6 +17,7 @@
 package com.flowci.core.flow.domain;
 
 import com.flowci.core.domain.Mongoable;
+import com.flowci.domain.VariableMap;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -38,6 +39,11 @@ public final class Flow extends Mongoable {
     @NonNull
     @Indexed(name = "index_flow_name")
     private String name;
+
+    @Getter
+    @Setter
+    @NonNull
+    private VariableMap variables = new VariableMap();
 
     public Flow(String name) {
         this.name = name;

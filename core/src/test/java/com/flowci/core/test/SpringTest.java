@@ -19,6 +19,7 @@ package com.flowci.core.test;
 import com.flowci.core.user.User;
 import com.flowci.core.user.UserService;
 import java.io.InputStream;
+import java.util.Objects;
 import lombok.Getter;
 import org.junit.After;
 import org.junit.runner.RunWith;
@@ -56,7 +57,10 @@ public abstract class SpringTest {
     }
 
     void mockLogin() {
-        User user = userService.create("test@flow.ci", "11111");
+        User user = userService.getByEmail("test@flow.ci");
+        if (Objects.isNull(user)) {
+            user = userService.create("test@flow.ci", "12345");
+        }
         currentUser.set(user);
     }
 

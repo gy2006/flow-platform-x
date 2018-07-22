@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /**
  * @author yang
@@ -27,6 +28,8 @@ import java.nio.charset.StandardCharsets;
 public class StringHelper {
 
     public final static String EMPTY = "";
+
+    private static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
 
     public static String toString(InputStream is) throws IOException {
         try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
@@ -37,6 +40,36 @@ public class StringHelper {
             }
             return result.toString(StandardCharsets.UTF_8.name());
         }
+    }
+
+    public static String toHex(String str) {
+        byte[] bytes = str.getBytes();
+        char[] chars = new char[2 * bytes.length];
+
+        for (int i = 0; i < bytes.length; ++i) {
+            chars[2 * i] = HEX_CHARS[(bytes[i] & 0xF0) >>> 4];
+            chars[2 * i + 1] = HEX_CHARS[bytes[i] & 0x0F];
+        }
+
+        return new String(chars);
+    }
+
+    public static String fromHex(String hex) {
+        byte[] txtInByte = new byte[hex.length() / 2];
+        int j = 0;
+        for (int i = 0; i < hex.length(); i += 2) {
+            txtInByte[j++] = Byte.parseByte(hex.substring(i, i + 2), 16);
+        }
+        return new String(txtInByte);
+    }
+
+    public static String toBase64(String str) {
+        return Base64.getEncoder().encodeToString(str.getBytes());
+    }
+
+    public static String fromBase64(String base64) {
+        byte[] decode = Base64.getDecoder().decode(base64.getBytes());
+        return new String(decode);
     }
 
     private StringHelper() {

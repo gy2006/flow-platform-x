@@ -43,8 +43,12 @@ public class UserServiceImpl implements UserService {
         String adminEmail = config.getAdmin().getEmail();
         String adminPassword = config.getAdmin().getPassword();
 
-        create(adminEmail, adminPassword);
-        log.info("Admin {} been initialized", adminEmail);
+        try {
+            create(adminEmail, adminPassword);
+            log.info("Admin {} been initialized", adminEmail);
+        } catch (DuplicateException ignore) {
+
+        }
     }
 
     @Override
