@@ -16,7 +16,15 @@
 
 package com.flowci.core.flow;
 
+import com.flowci.core.domain.RequestMessage;
 import com.flowci.core.flow.domain.Flow;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,10 +38,45 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/flows")
 public class FlowController {
 
-    @PostMapping("/{name}")
-    public Flow crate(@PathVariable String name,
-                      @RequestBody(required = false) String yml) {
-        return null;
+    @Autowired
+    private FlowService flowService;
+
+    @GetMapping
+    public List<Flow> list() {
+        return flowService.list();
     }
 
+    @GetMapping(value = "/{name}")
+    public Flow get(@PathVariable String name) {
+        return flowService.get(name);
+    }
+
+    @PostMapping(value = "/{name}")
+    public Flow create(@PathVariable String name, @RequestBody(required = false) RequestMessage<String> yml) {
+        Flow flow = flowService.create(name);
+        if (!Objects.isNull(yml)) {
+            flowService.saveYml(flow, yml.getData());
+        }
+        return flow;
+    }
+
+    @PatchMapping("/{name}/yml")
+    public void updateYml(@PathVariable String name, @RequestBody RequestMessage<String> yml) {
+        Flow flow = flowService.get(name);
+        flowService.saveYml(flow, yml.getData());
+    }
+
+    @PatchMapping("/{name}/variables")
+    public void updateVariables(@PathVariable String name, @RequestBody Map<String, String> variables) {
+        Flow flow = flowService.get(name);
+        flow.getVariables().reset(variables);
+        flowService.update(flow);
+    }
+
+    @DeleteMapping("/{name}/variables")
+    public void cleanVariables(@PathVariable String name) {
+        Flow flow = flowService.get(name);
+        flow.getVariables().clear();
+        flowService.update(flow);
+    }
 }

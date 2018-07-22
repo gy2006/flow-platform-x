@@ -16,16 +16,17 @@
 
 package com.flowci.core.flow;
 
+import com.flowci.core.RequireCurrentUser;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.user.User;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
 import com.google.common.base.Strings;
+import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ import org.springframework.stereotype.Service;
  * @author yang
  */
 @Service
-public class FlowServiceImpl implements FlowService {
+public class FlowServiceImpl extends RequireCurrentUser implements FlowService {
 
     @Autowired
     private FlowDao flowDao;
@@ -42,8 +43,10 @@ public class FlowServiceImpl implements FlowService {
     @Autowired
     private YmlDao ymlDao;
 
-    @Autowired
-    private ThreadLocal<User> currentUser;
+    @Override
+    public List<Flow> list() {
+        return flowDao.findAllByCreatedBy(getCurrentUser().getId());
+    }
 
     @Override
     public Flow create(String name) {
@@ -59,7 +62,7 @@ public class FlowServiceImpl implements FlowService {
         }
 
         Flow newFlow = new Flow(name);
-        newFlow.setCreatedBy(currentUser.get().getId());
+        newFlow.setCreatedBy(getCurrentUser().getId());
         return flowDao.save(newFlow);
     }
 
@@ -91,7 +94,7 @@ public class FlowServiceImpl implements FlowService {
         YmlParser.load(flow.getName(), yml);
 
         Yml ymlObj = new Yml(flowId, yml);
-        ymlObj.setCreatedBy(currentUser.get().getId());
+        ymlObj.setCreatedBy(getCurrentUser().getId());
         return ymlDao.save(ymlObj);
     }
 }

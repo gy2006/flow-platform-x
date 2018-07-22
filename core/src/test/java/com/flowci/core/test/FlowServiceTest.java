@@ -24,6 +24,7 @@ import com.flowci.exception.ArgumentException;
 import com.flowci.exception.YmlException;
 import com.flowci.util.StringHelper;
 import java.io.IOException;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -49,6 +50,9 @@ public class FlowServiceTest extends SpringTest {
     public void should_create_flow_by_name() {
         flowService.create("hello");
         Assert.assertNotNull(flowService.get("hello"));
+
+        List<Flow> flows = flowService.list();
+        Assert.assertEquals(1, flows.size());
     }
 
     @Test

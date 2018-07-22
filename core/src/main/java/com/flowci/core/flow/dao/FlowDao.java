@@ -17,6 +17,7 @@
 package com.flowci.core.flow.dao;
 
 import com.flowci.core.flow.domain.Flow;
+import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -27,5 +28,7 @@ import org.springframework.stereotype.Repository;
 public interface FlowDao extends MongoRepository<Flow, String> {
 
     Flow findByName(String name);
+
+    List<Flow> findAllByCreatedBy(String createdBy);
 
 }

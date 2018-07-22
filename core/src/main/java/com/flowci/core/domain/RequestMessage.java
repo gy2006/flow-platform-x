@@ -14,39 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.core.flow;
+package com.flowci.core.domain;
 
-import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.Yml;
-import java.util.List;
+import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author yang
  */
-public interface FlowService {
+@NoArgsConstructor
+@AllArgsConstructor
+public class RequestMessage<T> implements Serializable {
 
-    /**
-     * List all flow by current user
-     */
-    List<Flow> list();
-
-    /**
-     * Create flow by name
-     */
-    Flow create(String name);
-
-    /**
-     * Get flow by name
-     */
-    Flow get(String name);
-
-    /**
-     * Update flow name or variables
-     */
-    void update(Flow flow);
-
-    /**
-     * Create or update yml for flow
-     */
-    Yml saveYml(Flow flow, String yml);
+    @Getter
+    @Setter
+    private T data;
 }

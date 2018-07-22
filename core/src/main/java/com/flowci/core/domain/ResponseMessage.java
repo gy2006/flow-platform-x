@@ -17,22 +17,24 @@
 package com.flowci.core.domain;
 
 import java.io.Serializable;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 /**
  * @author yang
  */
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 public final class ResponseMessage<T> implements Serializable {
 
     @Getter
-    private final Integer code;
+    private Integer code;
 
     @Getter
-    private final String message;
+    private String message;
 
     @Getter
-    private final T data;
+    private T data;
 
 }

@@ -14,39 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.core.flow;
+package com.flowci.core;
 
-import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.Yml;
-import java.util.List;
+import com.flowci.core.user.User;
+import com.flowci.exception.CIException;
+import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author yang
  */
-public interface FlowService {
+public abstract class RequireCurrentUser {
 
-    /**
-     * List all flow by current user
-     */
-    List<Flow> list();
+    @Autowired
+    private ThreadLocal<User> currentUser;
 
-    /**
-     * Create flow by name
-     */
-    Flow create(String name);
+    protected User getCurrentUser() {
+        User user = currentUser.get();
+        if (Objects.isNull(user)) {
+            throw new CIException("User logged in is required");
+        }
+        return user;
+    }
 
-    /**
-     * Get flow by name
-     */
-    Flow get(String name);
-
-    /**
-     * Update flow name or variables
-     */
-    void update(Flow flow);
-
-    /**
-     * Create or update yml for flow
-     */
-    Yml saveYml(Flow flow, String yml);
 }
