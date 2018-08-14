@@ -14,44 +14,26 @@
  * limitations under the License.
  */
 
-package com.flowci.core.config;
+package com.flowci.core.job;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.domain.Job.Trigger;
 
 /**
  * @author yang
  */
-public class ConfigProperties {
+public interface JobService {
 
-    @Getter
-    private final Admin admin = new Admin();
+    /**
+     * Start a job and send to queue
+     */
+    Job start(Flow flow, Yml yml, Trigger trigger);
 
-    @Getter
-    private final Job job = new Job();
-
-    public static class Admin {
-
-        @Getter
-        @Setter
-        private String email;
-
-        @Getter
-        @Setter
-        private String password;
-    }
-
-    public static class Job {
-
-        @Getter
-        private final Queue queue = new Queue();
-    }
-
-    public static class Queue {
-
-        @Getter
-        @Setter
-        private String name;
-    }
+    /**
+     * Process job from queue
+     */
+    void processJob(Job job);
 
 }

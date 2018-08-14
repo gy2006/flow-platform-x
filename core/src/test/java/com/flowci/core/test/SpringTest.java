@@ -29,6 +29,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -58,6 +59,9 @@ public abstract class SpringTest {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    protected ApplicationEventMulticaster applicationEventMulticaster;
 
     @After
     public void dbClean() {

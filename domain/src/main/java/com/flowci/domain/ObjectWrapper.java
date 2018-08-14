@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.config;
+package com.flowci.domain;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -22,36 +22,10 @@ import lombok.Setter;
 /**
  * @author yang
  */
-public class ConfigProperties {
+public final class ObjectWrapper<T> {
 
     @Getter
-    private final Admin admin = new Admin();
-
-    @Getter
-    private final Job job = new Job();
-
-    public static class Admin {
-
-        @Getter
-        @Setter
-        private String email;
-
-        @Getter
-        @Setter
-        private String password;
-    }
-
-    public static class Job {
-
-        @Getter
-        private final Queue queue = new Queue();
-    }
-
-    public static class Queue {
-
-        @Getter
-        @Setter
-        private String name;
-    }
+    @Setter
+    private T value;
 
 }

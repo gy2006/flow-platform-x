@@ -14,44 +14,14 @@
  * limitations under the License.
  */
 
-package com.flowci.core.config;
+package com.flowci.core.job.dao;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.flowci.core.job.domain.JobYml;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
 /**
  * @author yang
  */
-public class ConfigProperties {
-
-    @Getter
-    private final Admin admin = new Admin();
-
-    @Getter
-    private final Job job = new Job();
-
-    public static class Admin {
-
-        @Getter
-        @Setter
-        private String email;
-
-        @Getter
-        @Setter
-        private String password;
-    }
-
-    public static class Job {
-
-        @Getter
-        private final Queue queue = new Queue();
-    }
-
-    public static class Queue {
-
-        @Getter
-        @Setter
-        private String name;
-    }
+public interface JobYmlDao extends MongoRepository<JobYml, String> {
 
 }

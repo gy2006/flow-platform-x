@@ -14,44 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.core.config;
+package com.flowci.core.job.domain;
 
+import com.flowci.core.domain.Mongoable;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
  */
-public class ConfigProperties {
+@Document(collection = "job_yml")
+@NoArgsConstructor
+public class JobYml extends Mongoable {
 
     @Getter
-    private final Admin admin = new Admin();
+    @Setter
+    private String raw;
 
-    @Getter
-    private final Job job = new Job();
-
-    public static class Admin {
-
-        @Getter
-        @Setter
-        private String email;
-
-        @Getter
-        @Setter
-        private String password;
+    public JobYml(String jobId, String raw) {
+        this.id = jobId;
+        this.raw = raw;
     }
-
-    public static class Job {
-
-        @Getter
-        private final Queue queue = new Queue();
-    }
-
-    public static class Queue {
-
-        @Getter
-        @Setter
-        private String name;
-    }
-
 }

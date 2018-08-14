@@ -14,44 +14,33 @@
  * limitations under the License.
  */
 
-package com.flowci.core.config;
+package com.flowci.core.job.domain;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 /**
  * @author yang
  */
-public class ConfigProperties {
+@Document
+@NoArgsConstructor
+public class JobNumber {
+
+    @Id
+    @Getter
+    @Setter
+    @Field("flow_id")
+    private String flowId;
 
     @Getter
-    private final Admin admin = new Admin();
+    @Setter
+    private Long number = 1L;
 
-    @Getter
-    private final Job job = new Job();
-
-    public static class Admin {
-
-        @Getter
-        @Setter
-        private String email;
-
-        @Getter
-        @Setter
-        private String password;
+    public JobNumber(String flowId) {
+        this.flowId = flowId;
     }
-
-    public static class Job {
-
-        @Getter
-        private final Queue queue = new Queue();
-    }
-
-    public static class Queue {
-
-        @Getter
-        @Setter
-        private String name;
-    }
-
 }

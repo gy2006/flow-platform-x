@@ -14,44 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.core.config;
+package com.flowci.core.job.event;
 
+import com.flowci.core.job.domain.Job;
 import lombok.Getter;
-import lombok.Setter;
+import org.springframework.context.ApplicationEvent;
 
 /**
  * @author yang
  */
-public class ConfigProperties {
+public abstract class JobEvent extends ApplicationEvent {
 
     @Getter
-    private final Admin admin = new Admin();
+    private final Job job;
 
-    @Getter
-    private final Job job = new Job();
-
-    public static class Admin {
-
-        @Getter
-        @Setter
-        private String email;
-
-        @Getter
-        @Setter
-        private String password;
+    public JobEvent(Object source, Job job) {
+        super(source);
+        this.job = job;
     }
-
-    public static class Job {
-
-        @Getter
-        private final Queue queue = new Queue();
-    }
-
-    public static class Queue {
-
-        @Getter
-        @Setter
-        private String name;
-    }
-
 }

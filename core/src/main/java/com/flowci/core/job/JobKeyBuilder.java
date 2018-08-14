@@ -14,44 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.core.config;
+package com.flowci.core.job;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.flowci.core.flow.domain.Flow;
 
 /**
  * @author yang
  */
-public class ConfigProperties {
+public class JobKeyBuilder {
 
-    @Getter
-    private final Admin admin = new Admin();
+    private final static char Splitter = '-';
 
-    @Getter
-    private final Job job = new Job();
-
-    public static class Admin {
-
-        @Getter
-        @Setter
-        private String email;
-
-        @Getter
-        @Setter
-        private String password;
+    public static String build(Flow flow, Long buildNumber) {
+        return flow.getId() + Splitter + buildNumber;
     }
 
-    public static class Job {
+    private JobKeyBuilder() {
 
-        @Getter
-        private final Queue queue = new Queue();
     }
-
-    public static class Queue {
-
-        @Getter
-        @Setter
-        private String name;
-    }
-
 }
