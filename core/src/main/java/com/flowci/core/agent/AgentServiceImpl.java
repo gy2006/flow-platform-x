@@ -16,16 +16,26 @@
 
 package com.flowci.core.agent;
 
+import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.domain.Agent;
+import com.flowci.domain.Agent.Status;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
+import com.google.common.collect.ImmutableSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 /**
@@ -39,19 +49,28 @@ public class AgentServiceImpl implements AgentService {
     private ConfigProperties config;
 
     @Autowired
-    private ZookeeperClient client;
+    private ZookeeperClient zk;
 
     @Autowired
     private AgentDao agentDao;
 
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @PostConstruct
     public void initRootNode() {
+        String root = config.getZookeeper().getRoot();
+
         try {
-            String root = config.getZookeeper().getRoot();
-            client.create(CreateMode.PERSISTENT, root, null);
-            log.info("The root node {} been initialized", root);
+            zk.create(CreateMode.PERSISTENT, root, null);
         } catch (ZookeeperException ignore) {
 
+        }
+
+        try {
+            zk.watchChildren(root, new RootNodeListener());
+        } catch (ZookeeperException e) {
+            log.error(e.getMessage());
         }
     }
 
@@ -65,5 +84,65 @@ public class AgentServiceImpl implements AgentService {
         Agent agent = new Agent(name, tags);
         agent.setToken(UUID.randomUUID().toString());
         return agentDao.save(agent);
+    }
+
+    /**
+     * Get agent id from zookeeper path
+     *
+     * Ex: /agents/123123, should get 123123
+     */
+    private static String getAgentIdFromPath(String path) {
+        int index = path.lastIndexOf(Agent.PATH_SLASH);
+        return path.substring(index + 1);
+    }
+
+    private class RootNodeListener implements PathChildrenCacheListener {
+
+        private final Set<Type> ChildOperations = ImmutableSet.of(
+            Type.CHILD_ADDED,
+            Type.CHILD_REMOVED,
+            Type.CHILD_UPDATED
+        );
+
+        @Override
+        public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
+            ChildData data = event.getData();
+
+            if (ChildOperations.contains(event.getType())) {
+                handleAgentStatusChange(event);
+            }
+        }
+
+        private void handleAgentStatusChange(PathChildrenCacheEvent event) {
+            String agentId = getAgentIdFromPath(event.getData().getPath());
+
+            Agent agent = get(agentId);
+            if (Objects.isNull(agent)) {
+                log.warn("Agent {} does not existed", agentId);
+                return;
+            }
+
+            if (event.getType() == Type.CHILD_ADDED) {
+                updateAgentStatus(agent, Status.IDLE);
+                return;
+            }
+
+            if (event.getType() == Type.CHILD_REMOVED) {
+                updateAgentStatus(agent, Status.OFFLINE);
+                return;
+            }
+
+            if (event.getType() == Type.CHILD_UPDATED) {
+                byte[] statusInBytes = zk.get(event.getData().getPath());
+                Status status = Status.fromBytes(statusInBytes);
+                updateAgentStatus(agent, status);
+            }
+        }
+
+        private void updateAgentStatus(Agent agent, Status status) {
+            agent.setStatus(status);
+            agentDao.save(agent);
+            applicationEventPublisher.publishEvent(new StatusChangeEvent(this, agent));
+        }
     }
 }

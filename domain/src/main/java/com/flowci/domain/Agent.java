@@ -18,7 +18,6 @@ package com.flowci.domain;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -32,13 +31,23 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(of = {"id"})
 public class Agent implements Serializable {
 
+    public final static String PATH_SLASH = "/";
+
     public enum Status {
 
         OFFLINE,
 
         BUSY,
 
-        IDLE
+        IDLE;
+
+        public byte[] getBytes() {
+            return this.toString().getBytes();
+        }
+
+        public static Status fromBytes(byte[] bytes) {
+            return Status.valueOf(new String(bytes));
+        }
     }
 
     private String id;

@@ -16,13 +16,19 @@
 
 package com.flowci.zookeeper;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import lombok.Getter;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.DeleteBuilder;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.retry.RetryNTimes;
 import org.apache.zookeeper.CreateMode;
@@ -36,12 +42,20 @@ public class ZookeeperClient implements AutoCloseable {
 
     private final CuratorFramework client;
 
+    @Getter
     private final int timeout;
 
-    public ZookeeperClient(String connection, int retryTimes, int timeOutInSeconds) {
-        this.timeout = timeOutInSeconds;
+    @Getter
+    private final Map<String, PathChildrenCache> nodeChildrenCache = new ConcurrentHashMap<>(20);
+
+    @Getter
+    private final Executor watchExecutor;
+
+    public ZookeeperClient(String connection, int retryTimes, int timeOutInSeconds, Executor watchExecutor) {
         RetryPolicy policy = new RetryNTimes(retryTimes, RetryBetweenInMs);
         client = CuratorFrameworkFactory.newClient(connection, policy);
+        this.timeout = timeOutInSeconds;
+        this.watchExecutor = watchExecutor;
     }
 
     public boolean start() {
@@ -137,6 +151,27 @@ public class ZookeeperClient implements AutoCloseable {
 
                 }
             }
+        }
+    }
+
+    public boolean watchChildren(String rootPath, PathChildrenCacheListener listener) {
+        if (!exist(rootPath)) {
+            return false;
+        }
+
+        PathChildrenCache pcc = nodeChildrenCache.get(rootPath);
+        if (pcc != null) {
+            return false;
+        }
+
+        try {
+            pcc = new PathChildrenCache(client, rootPath, false);
+            pcc.start();
+            pcc.getListenable().addListener(listener, watchExecutor);
+            nodeChildrenCache.put(rootPath, pcc);
+            return true;
+        } catch (Throwable e) {
+            throw new ZookeeperException("Unable to watch children for root: {}", rootPath);
         }
     }
 

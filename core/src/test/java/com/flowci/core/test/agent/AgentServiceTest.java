@@ -17,14 +17,21 @@
 package com.flowci.core.test.agent;
 
 import com.flowci.core.agent.AgentService;
+import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
+import com.flowci.domain.Agent.Status;
+import com.flowci.domain.ObjectWrapper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.google.common.collect.ImmutableSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import org.apache.zookeeper.CreateMode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 
 /**
  * @author yang
@@ -35,14 +42,14 @@ public class AgentServiceTest extends ZookeeperScenario {
     private ConfigProperties config;
 
     @Autowired
-    private ZookeeperClient client;
+    private ZookeeperClient zk;
 
     @Autowired
     private AgentService agentService;
 
     @Test
     public void should_init_root_node() {
-        Assert.assertTrue(client.exist(config.getZookeeper().getRoot()));
+        Assert.assertTrue(zk.exist(config.getZookeeper().getRoot()));
     }
 
     @Test
@@ -52,4 +59,25 @@ public class AgentServiceTest extends ZookeeperScenario {
         Assert.assertEquals(agent, agentService.get(agent.getId()));
     }
 
+    @Test
+    public void should_make_agent_online() throws InterruptedException {
+        // init:
+        Agent agent = agentService.create("hello.test", ImmutableSet.of("local", "android"));
+        String agentPath = config.getZookeeper().getRoot() + "/" + agent.getId();
+
+        CountDownLatch counter = new CountDownLatch(1);
+        ObjectWrapper<Agent> agentWrapper = new ObjectWrapper<>();
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<StatusChangeEvent>) event -> {
+            counter.countDown();
+            agentWrapper.setValue(event.getAgent());
+        });
+
+        // when: agent online in dummy
+        zk.create(CreateMode.EPHEMERAL, agentPath, Status.IDLE.getBytes());
+
+        // then:
+        counter.await(10, TimeUnit.SECONDS);
+        Assert.assertEquals(agent, agentWrapper.getValue());
+        Assert.assertEquals(Status.IDLE, agentWrapper.getValue().getStatus());
+    }
 }
