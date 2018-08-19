@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class Agent implements Serializable {
     private String token;
 
     @Getter
-    private Set<String> tags = new HashSet<String>(DefaultTagSize);
+    private Set<String> tags = new HashSet<>(DefaultTagSize);
 
     @Getter
     @Setter

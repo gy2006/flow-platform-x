@@ -15,6 +15,7 @@
     <module>util</module>
     <module>exception</module>
     <module>tree</module>
+    <module>zookeeper</module>
   </modules>
 
   <properties>
@@ -24,6 +25,7 @@
     <spring.version>2.0.3.RELEASE</spring.version>
     <snakeyaml.version>1.21</snakeyaml.version>
     <jackson.version>2.9.6</jackson.version>
+    <curator.version>2.12.0</curator.version>
   </properties>
 
   <build>
@@ -115,6 +117,12 @@
       </dependency>
 
       <dependency>
+        <groupId>com.flowci</groupId>
+        <artifactId>zookeeper</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
         <version>${jackson.version}</version>
@@ -156,6 +164,12 @@
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
         <version>${snakeyaml.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-recipes</artifactId>
+        <version>${curator.version}</version>
       </dependency>
 
       <dependency>

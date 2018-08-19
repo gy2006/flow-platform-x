@@ -35,6 +35,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.flowci</groupId>
+      <artifactId>zookeeper</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>

@@ -16,42 +16,55 @@
 
 package com.flowci.core.config;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * @author yang
  */
+@Data
 public class ConfigProperties {
 
-    @Getter
+    private String workspace;
+
     private final Admin admin = new Admin();
 
-    @Getter
     private final Job job = new Job();
 
+    private final Zookeeper zookeeper = new Zookeeper();
+
+    @Data
     public static class Admin {
 
-        @Getter
-        @Setter
         private String email;
 
-        @Getter
-        @Setter
         private String password;
     }
 
+    @Data
     public static class Job {
 
-        @Getter
         private final Queue queue = new Queue();
     }
 
+    @Data
     public static class Queue {
 
-        @Getter
-        @Setter
         private String name;
     }
 
+    @Data
+    public static class Zookeeper {
+
+        private Boolean embedded;
+
+        private String host;
+
+        private String root;
+
+        private Integer timeout;
+
+        private Integer retry;
+    }
 }

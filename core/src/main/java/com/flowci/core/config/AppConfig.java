@@ -25,8 +25,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.user.User;
 import com.flowci.domain.Jsonable;
 import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import javax.annotation.PostConstruct;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,6 +51,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * @author yang
  */
+@Log4j2
 @Configuration
 @EnableRabbit
 public class AppConfig implements WebMvcConfigurer {
@@ -53,6 +62,21 @@ public class AppConfig implements WebMvcConfigurer {
         new ResourceHttpMessageConverter(),
         new AllEncompassingFormHttpMessageConverter()
     );
+
+    @Autowired
+    private ConfigProperties config;
+
+    @PostConstruct
+    public void initWorkspace() {
+        try {
+            Path path = Paths.get(config.getWorkspace());
+            Files.createDirectory(path);
+        } catch (FileAlreadyExistsException ignore) {
+
+        } catch (IOException e) {
+            log.error("Unable to init workspace directory: {}", config.getWorkspace());
+        }
+    }
 
     @Bean("objectMapper")
     public ObjectMapper objectMapper() {
@@ -73,12 +97,6 @@ public class AppConfig implements WebMvcConfigurer {
     @Bean("currentUser")
     public ThreadLocal<User> currentUser() {
         return new ThreadLocal<>();
-    }
-
-    @Bean("config")
-    @ConfigurationProperties(prefix = "app")
-    public ConfigProperties config() {
-        return new ConfigProperties();
     }
 
     @Override

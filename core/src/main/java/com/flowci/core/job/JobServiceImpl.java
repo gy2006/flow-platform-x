@@ -97,6 +97,12 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     @RabbitListener(queues = "${app.job.queue.name}")
     public void processJob(Job job) {
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
+
+        // select agent
+
+
+        // send job to agent queue
+
     }
 
     private Long getJobNumber(Flow flow) {

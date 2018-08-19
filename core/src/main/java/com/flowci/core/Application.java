@@ -16,14 +16,25 @@
 
 package com.flowci.core;
 
+import com.flowci.core.config.ConfigProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author yang
  */
 @SpringBootApplication
+@Configuration
 public class Application {
+
+    @Bean("config")
+    @ConfigurationProperties(prefix = "app")
+    public ConfigProperties config() {
+        return new ConfigProperties();
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
