@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test;
+package com.flowci.core.test.flow;
 
 import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.YmlException;
@@ -36,7 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author yang
  */
 @FixMethodOrder(value = MethodSorters.JVM)
-public class FlowServiceTest extends SpringTest {
+public class FlowServiceTest extends SpringScenario {
 
     @Autowired
     private FlowService flowService;

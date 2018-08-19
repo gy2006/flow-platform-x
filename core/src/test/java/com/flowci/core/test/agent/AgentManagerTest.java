@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-package com.flowci.core.agent;
+package com.flowci.core.test.agent;
 
 import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.zookeeper.ZookeeperClient;
-import com.flowci.zookeeper.ZookeeperException;
-import javax.annotation.PostConstruct;
-import lombok.extern.log4j.Log4j2;
-import org.apache.zookeeper.CreateMode;
+import org.junit.Assert;
+import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * @author yang
  */
-@Log4j2
-@Component
-public class AgentManagerImpl implements AgentManager {
+public class AgentManagerTest extends ZookeeperScenario {
 
     @Autowired
     private ConfigProperties config;
@@ -38,14 +34,9 @@ public class AgentManagerImpl implements AgentManager {
     @Autowired
     private ZookeeperClient client;
 
-    @PostConstruct
-    public void initRootNode() {
-        try {
-            String root = config.getZookeeper().getRoot();
-            client.create(CreateMode.PERSISTENT, root, null);
-            log.info("The root node {} been initialized", root);
-        } catch (ZookeeperException ignore) {
-
-        }
+    @Test
+    public void should_init_root_node() {
+        Assert.assertTrue(client.exist(config.getZookeeper().getRoot()));
     }
+
 }

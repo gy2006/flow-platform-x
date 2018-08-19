@@ -17,19 +17,13 @@
 package com.flowci.core.config;
 
 import com.flowci.core.helper.ThreadHelper;
-import com.flowci.domain.ObjectWrapper;
 import com.flowci.exception.CIException;
 import com.flowci.zookeeper.LocalServer;
 import com.flowci.zookeeper.ZookeeperClient;
-import java.io.IOException;
+import com.flowci.zookeeper.ZookeeperException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.log4j.Log4j2;
-import org.apache.zookeeper.server.ServerConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -67,40 +61,13 @@ public class ZookeeperConfig {
     }
 
     private void startEmbeddedServer(ThreadPoolTaskExecutor executor) {
-        final Properties properties = new Properties();
-        properties.setProperty("dataDir", Paths.get(config.getWorkspace(), "zookeeper").toString());
-        properties.setProperty("clientPort", "2181");
-        properties.setProperty("clientPortAddress", "0.0.0.0");
-        properties.setProperty("tickTime", "1500");
-        properties.setProperty("maxClientCnxns", "50");
-
-        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
-        ServerConfig configuration = new ServerConfig();
+        Path path = Paths.get(config.getWorkspace(), "zookeeper");
+        String address = "0.0.0.0";
+        Integer port = 2180;
 
         try {
-            quorumPeerConfig.parseProperties(properties);
-            configuration.readFrom(quorumPeerConfig);
-        } catch (IOException | ConfigException e) {
-            throw new CIException("Unable to start embedded zookeeper server: {}", e.getMessage());
-        }
-
-        CountDownLatch errorCounter = new CountDownLatch(1);
-        ObjectWrapper<Exception> error = new ObjectWrapper<>();
-
-        executor.execute(() -> {
-            try {
-                new LocalServer().runFromConfig(configuration);
-            } catch (IOException e) {
-                error.setValue(e);
-                errorCounter.countDown();
-            }
-        });
-
-        try {
-            if (errorCounter.await(5, TimeUnit.SECONDS)) {
-                throw new CIException("Unable to start embedded zookeeper: {}", error.getValue().getMessage());
-            }
-        } catch (InterruptedException e) {
+            executor.execute(new LocalServer(path, address, port));
+        } catch (ZookeeperException e) {
             throw new CIException("Unable to start embedded zookeeper: {}", e.getMessage());
         }
     }

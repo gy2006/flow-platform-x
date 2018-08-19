@@ -36,7 +36,7 @@ import org.springframework.context.ApplicationListener;
 /**
  * @author yang
  */
-public class JobServiceTest extends SpringTest {
+public class JobServiceTest extends SpringScenario {
 
     @Autowired
     private FlowService flowService;

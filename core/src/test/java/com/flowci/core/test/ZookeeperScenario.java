@@ -16,28 +16,31 @@
 
 package com.flowci.core.test;
 
-import com.flowci.core.config.ConfigProperties;
-import com.flowci.core.user.User;
-import com.flowci.core.user.UserService;
-import org.junit.Assert;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.io.IOException;
+import org.apache.curator.test.TestingServer;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author yang
  */
-public class UserServiceTest extends SpringScenario {
+public class ZookeeperScenario extends SpringScenario {
 
-    @Autowired
-    private UserService userService;
+    private static TestingServer server;
 
-    @Autowired
-    private ConfigProperties config;
+    @ClassRule
+    public static TemporaryFolder temp = new TemporaryFolder();
 
-    @Test
-    public void should_init_admin_user() {
-        User admin = userService.getByEmail(config.getAdmin().getEmail());
-        Assert.assertNotNull(admin);
+    @BeforeClass
+    public static void start() throws Exception {
+        server = new TestingServer(2181);
+        server.start();
     }
 
+    @AfterClass
+    public static void close() throws IOException {
+        server.close();
+    }
 }

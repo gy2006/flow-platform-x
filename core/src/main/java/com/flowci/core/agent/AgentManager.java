@@ -16,8 +16,6 @@
 
 package com.flowci.core.agent;
 
-import org.springframework.stereotype.Component;
-
 /**
  * @author yang
  */

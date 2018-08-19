@@ -17,23 +17,44 @@
 package com.flowci.zookeeper;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Properties;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
 /**
  * @author yang
  */
-public class LocalServer extends ZooKeeperServerMain {
+public class LocalServer extends ZooKeeperServerMain implements Runnable {
 
     private Boolean isStarted = false;
 
-    public LocalServer() {
+    private final Properties properties = new Properties();
+
+    public LocalServer(Path dataDir, String address, Integer port) {
         super();
+
+        properties.setProperty("dataDir", dataDir.toString());
+        properties.setProperty("clientPort", port.toString());
+        properties.setProperty("clientPortAddress", address);
+        properties.setProperty("tickTime", "1500");
+        properties.setProperty("maxClientCnxns", "50");
     }
 
-    @Override
-    protected void shutdown() {
-        super.shutdown();
+    public void run() {
+        try {
+            QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+            ServerConfig configuration = new ServerConfig();
+
+            quorumPeerConfig.parseProperties(properties);
+            configuration.readFrom(quorumPeerConfig);
+
+            this.runFromConfig(configuration);
+        } catch (IOException | ConfigException e) {
+            throw new ZookeeperException("Unable to start embedded zookeeper server: {}", e.getMessage());
+        }
     }
 
     // stop inner zookeeper server
@@ -41,6 +62,11 @@ public class LocalServer extends ZooKeeperServerMain {
         if (isStarted) {
             shutdown();
         }
+    }
+
+    @Override
+    protected void shutdown() {
+        super.shutdown();
     }
 
     @Override

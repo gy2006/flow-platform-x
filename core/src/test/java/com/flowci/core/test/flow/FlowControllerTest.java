@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test;
+package com.flowci.core.test.flow;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -28,6 +28,8 @@ import com.flowci.core.domain.ResponseMessage;
 import com.flowci.core.domain.StatusCode;
 import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.test.MvcMockHelper;
+import com.flowci.core.test.SpringScenario;
 import com.flowci.util.StringHelper;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +43,7 @@ import org.springframework.http.MediaType;
 /**
  * @author yang
  */
-public class FlowControllerTest extends SpringTest {
+public class FlowControllerTest extends SpringScenario {
 
     private final static TypeReference<ResponseMessage<Flow>> FlowType =
         new TypeReference<ResponseMessage<Flow>>() {

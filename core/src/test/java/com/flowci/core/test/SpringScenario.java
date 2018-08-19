@@ -16,7 +16,7 @@
 
 package com.flowci.core.test;
 
-import com.flowci.core.test.SpringTest.Config;
+import com.flowci.core.test.SpringScenario.Config;
 import com.flowci.core.user.User;
 import com.flowci.core.user.UserService;
 import java.io.InputStream;
@@ -39,7 +39,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Config.class)
 @AutoConfigureMockMvc
-public abstract class SpringTest {
+public abstract class SpringScenario {
 
     @TestConfiguration
     public static class Config {
@@ -68,16 +68,15 @@ public abstract class SpringTest {
         mongoTemplate.getDb().drop();
     }
 
-    InputStream load(String resource) {
-        return SpringTest.class.getClassLoader().getResourceAsStream(resource);
+    protected InputStream load(String resource) {
+        return SpringScenario.class.getClassLoader().getResourceAsStream(resource);
     }
 
-    void mockLogin() {
+    protected void mockLogin() {
         User user = userService.getByEmail("test@flow.ci");
         if (Objects.isNull(user)) {
             user = userService.create("test@flow.ci", "12345");
         }
         currentUser.set(user);
     }
-
 }
