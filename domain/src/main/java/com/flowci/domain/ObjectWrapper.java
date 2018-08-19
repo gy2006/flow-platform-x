@@ -17,15 +17,20 @@
 package com.flowci.domain;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
  * @author yang
  */
+@NoArgsConstructor
 public final class ObjectWrapper<T> {
 
     @Getter
     @Setter
     private T value;
 
+    public ObjectWrapper(T value) {
+        this.value = value;
+    }
 }

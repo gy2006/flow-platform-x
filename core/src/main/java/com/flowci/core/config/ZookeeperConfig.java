@@ -16,13 +16,16 @@
 
 package com.flowci.core.config;
 
+import com.flowci.core.helper.ThreadHelper;
+import com.flowci.domain.ObjectWrapper;
+import com.flowci.exception.CIException;
 import com.flowci.zookeeper.LocalServer;
 import com.flowci.zookeeper.ZookeeperClient;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Properties;
-import javax.annotation.PostConstruct;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.log4j.Log4j2;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -30,6 +33,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * @author yang
@@ -41,36 +45,18 @@ public class ZookeeperConfig {
     @Autowired
     private ConfigProperties config;
 
-    @PostConstruct
-    private void startLocalServer() {
-        if (!config.getZookeeper().getEmbedded()) {
-            return;
-        }
-
-        Properties properties = new Properties();
-        properties.setProperty("dataDir", Paths.get(config.getWorkspace(), "zookeeper").toString());
-        properties.setProperty("clientPort", "2181");
-        properties.setProperty("clientPortAddress", "0.0.0.0");
-        properties.setProperty("tickTime", "1500");
-        properties.setProperty("maxClientCnxns", "50");
-
-        try {
-            QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
-            quorumPeerConfig.parseProperties(properties);
-
-            ServerConfig configuration = new ServerConfig();
-            configuration.readFrom(quorumPeerConfig);
-
-            new LocalServer().runFromConfig(configuration);
-        } catch (IOException e) {
-            log.error("Unable to start embedded zookeeper server: {}", e.getMessage());
-        } catch (ConfigException e) {
-            log.error("Unable to init embedded zookeeper server config: {}", e.getMessage());
-        }
+    @Bean("zkServerExecutor")
+    public ThreadPoolTaskExecutor zookeeperThreadPool() {
+        return ThreadHelper.createTaskExecutor(5, 1, 0, "zk-server-");
     }
 
     @Bean("zk")
-    public ZookeeperClient zookeeperClient() {
+    public ZookeeperClient zookeeperClient(ThreadPoolTaskExecutor zkServerExecutor) {
+        if (config.getZookeeper().getEmbedded()) {
+            startEmbeddedServer(zkServerExecutor);
+            log.info("Embedded zookeeper been started ~");
+        }
+
         String host = config.getZookeeper().getHost();
         Integer timeout = config.getZookeeper().getTimeout();
         Integer retry = config.getZookeeper().getRetry();
@@ -80,4 +66,42 @@ public class ZookeeperConfig {
         return client;
     }
 
+    private void startEmbeddedServer(ThreadPoolTaskExecutor executor) {
+        final Properties properties = new Properties();
+        properties.setProperty("dataDir", Paths.get(config.getWorkspace(), "zookeeper").toString());
+        properties.setProperty("clientPort", "2181");
+        properties.setProperty("clientPortAddress", "0.0.0.0");
+        properties.setProperty("tickTime", "1500");
+        properties.setProperty("maxClientCnxns", "50");
+
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        ServerConfig configuration = new ServerConfig();
+
+        try {
+            quorumPeerConfig.parseProperties(properties);
+            configuration.readFrom(quorumPeerConfig);
+        } catch (IOException | ConfigException e) {
+            throw new CIException("Unable to start embedded zookeeper server: {}", e.getMessage());
+        }
+
+        CountDownLatch errorCounter = new CountDownLatch(1);
+        ObjectWrapper<Exception> error = new ObjectWrapper<>();
+
+        executor.execute(() -> {
+            try {
+                new LocalServer().runFromConfig(configuration);
+            } catch (IOException e) {
+                error.setValue(e);
+                errorCounter.countDown();
+            }
+        });
+
+        try {
+            if (errorCounter.await(5, TimeUnit.SECONDS)) {
+                throw new CIException("Unable to start embedded zookeeper: {}", error.getValue().getMessage());
+            }
+        } catch (InterruptedException e) {
+            throw new CIException("Unable to start embedded zookeeper: {}", e.getMessage());
+        }
+    }
 }
