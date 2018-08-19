@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2018 fir.im
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,12 @@
 
 package com.flowci.core.agent;
 
+import com.flowci.domain.Agent;
+import org.springframework.data.mongodb.repository.MongoRepository;
+
 /**
  * @author yang
  */
-public interface AgentManager {
+public interface AgentDao extends MongoRepository<Agent, String> {
 
 }

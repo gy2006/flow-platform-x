@@ -17,26 +17,32 @@
 package com.flowci.core.agent;
 
 import com.flowci.core.config.ConfigProperties;
+import com.flowci.domain.Agent;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
+import java.util.Set;
+import java.util.UUID;
 import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /**
  * @author yang
  */
 @Log4j2
-@Component
-public class AgentManagerImpl implements AgentManager {
+@Service
+public class AgentServiceImpl implements AgentService {
 
     @Autowired
     private ConfigProperties config;
 
     @Autowired
     private ZookeeperClient client;
+
+    @Autowired
+    private AgentDao agentDao;
 
     @PostConstruct
     public void initRootNode() {
@@ -47,5 +53,17 @@ public class AgentManagerImpl implements AgentManager {
         } catch (ZookeeperException ignore) {
 
         }
+    }
+
+    @Override
+    public Agent get(String id) {
+        return agentDao.findById(id).get();
+    }
+
+    @Override
+    public Agent create(String name, Set<String> tags) {
+        Agent agent = new Agent(name, tags);
+        agent.setToken(UUID.randomUUID().toString());
+        return agentDao.save(agent);
     }
 }

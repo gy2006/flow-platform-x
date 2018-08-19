@@ -16,9 +16,12 @@
 
 package com.flowci.core.test.agent;
 
+import com.flowci.core.agent.AgentService;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.test.ZookeeperScenario;
+import com.flowci.domain.Agent;
 import com.flowci.zookeeper.ZookeeperClient;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * @author yang
  */
-public class AgentManagerTest extends ZookeeperScenario {
+public class AgentServiceTest extends ZookeeperScenario {
 
     @Autowired
     private ConfigProperties config;
@@ -34,9 +37,19 @@ public class AgentManagerTest extends ZookeeperScenario {
     @Autowired
     private ZookeeperClient client;
 
+    @Autowired
+    private AgentService agentService;
+
     @Test
     public void should_init_root_node() {
         Assert.assertTrue(client.exist(config.getZookeeper().getRoot()));
+    }
+
+    @Test
+    public void should_create_agent_in_db() {
+        Agent agent = agentService.create("hello.test", ImmutableSet.of("local", "android"));
+        Assert.assertNotNull(agent);
+        Assert.assertEquals(agent, agentService.get(agent.getId()));
     }
 
 }

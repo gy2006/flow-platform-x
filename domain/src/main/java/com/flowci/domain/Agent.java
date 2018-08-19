@@ -17,21 +17,20 @@
 package com.flowci.domain;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * @author yang
  */
+@Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = {"id"})
 public class Agent implements Serializable {
-
-    private final static int DefaultTagSize = 10;
 
     public enum Status {
 
@@ -42,32 +41,26 @@ public class Agent implements Serializable {
         IDLE
     }
 
-    @Getter
-    @Setter
     private String id;
 
-    @Getter
-    @Setter
     private String name;
 
-    @Getter
-    @Setter
     private String token;
 
-    @Getter
-    private Set<String> tags = new HashSet<>(DefaultTagSize);
+    private Set<String> tags = Collections.emptySet();
 
-    @Getter
-    @Setter
     private Status status = Status.OFFLINE;
 
-    public Agent(String id, String name) {
-        this.id = id;
+    public Agent(String name) {
         this.name = name;
+    }
+
+    public Agent(String name, Set<String> tags) {
+        this.name = name;
+        this.tags = tags;
     }
 
     public String getQueueName() {
         return "queue.agent." + id;
     }
-
 }
