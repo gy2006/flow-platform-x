@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-package com.flowci.core.agent;
-
-import com.flowci.domain.Agent;
-import com.flowci.domain.Agent.Status;
-import java.util.List;
-import java.util.Set;
-import org.springframework.data.mongodb.repository.MongoRepository;
+package com.flowci.exception;
 
 /**
  * @author yang
  */
-public interface AgentDao extends MongoRepository<Agent, String> {
+public class NotFoundException extends CIException {
 
-    List<Agent> findAllByStatusAndTagsIn(Status status, Set<String> tags);
+    public NotFoundException(String message, String... params) {
+        super(message, params);
+    }
 
+    public NotFoundException(String message, Throwable cause, String... params) {
+        super(message, cause, params);
+    }
+
+    @Override
+    public Integer getCode() {
+        return ErrorCode.NOT_FOUND;
+    }
 }

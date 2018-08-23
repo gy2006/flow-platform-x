@@ -20,9 +20,11 @@ import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
+import com.flowci.exception.NotFoundException;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -37,6 +39,7 @@ import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * @author yang
@@ -77,6 +80,26 @@ public class AgentServiceImpl implements AgentService {
     @Override
     public Agent get(String id) {
         return agentDao.findById(id).get();
+    }
+
+    @Override
+    public Agent find(Status status, Set<String> tags) {
+        List<Agent> agents = agentDao.findAllByStatusAndTagsIn(status, tags);
+        if (agents.isEmpty()) {
+            String tagsInStr = StringUtils.collectionToCommaDelimitedString(tags);
+            throw new NotFoundException("Agent not found by status : {0} and tags: {1}", status.name(), tagsInStr);
+        }
+        return agents.get(0);
+    }
+
+    @Override
+    public Boolean occupy(Agent agent) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void release(Agent agent) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

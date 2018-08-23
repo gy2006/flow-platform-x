@@ -80,4 +80,16 @@ public class AgentServiceTest extends ZookeeperScenario {
         Assert.assertEquals(agent, agentWrapper.getValue());
         Assert.assertEquals(Status.IDLE, agentWrapper.getValue().getStatus());
     }
+
+    @Test
+    public void should_find_available_agents() {
+        // init:
+        agentService.create("hello.test.1", ImmutableSet.of("local", "android"));
+        agentService.create("hello.test.2", null);
+        agentService.create("hello.test.3", ImmutableSet.of("alicloud", "android"));
+
+        // when:
+        Agent agent = agentService.find(Status.OFFLINE, ImmutableSet.of("android"));
+        Assert.assertNotNull(agent);
+    }
 }

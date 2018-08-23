@@ -24,8 +24,32 @@ import java.util.Set;
  */
 public interface AgentService {
 
+    /**
+     * Get agent by id
+     */
     Agent get(String id);
 
+    /**
+     * Find agent by status and tags from database
+     *
+     * @param status Status
+     * @param tags Agent tags, optional
+     */
+    Agent find(Agent.Status status, Set<String> tags);
+
+    /**
+     * Try to occupy agent resource
+     */
+    Boolean occupy(Agent agent);
+
+    /**
+     * Release agent
+     */
+    void release(Agent agent);
+
+    /**
+     * Create agent by name and tags
+     */
     Agent create(String name, Set<String> tags);
 
 }

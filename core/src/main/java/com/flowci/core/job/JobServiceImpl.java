@@ -61,11 +61,6 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     @Autowired
     private Queue jobQueue;
 
-    @PostConstruct
-    public void init() {
-        assert queueTemplate != null;
-    }
-
     @Override
     public Job start(Flow flow, Yml yml, Trigger trigger) {
         // create job number
