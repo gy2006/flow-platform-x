@@ -61,17 +61,17 @@ public class AppConfig implements WebMvcConfigurer {
     );
 
     @Autowired
-    private ConfigProperties config;
+    private ConfigProperties appProperties;
 
     @PostConstruct
     public void initWorkspace() {
         try {
-            Path path = Paths.get(config.getWorkspace());
+            Path path = Paths.get(appProperties.getWorkspace());
             Files.createDirectory(path);
         } catch (FileAlreadyExistsException ignore) {
 
         } catch (IOException e) {
-            log.error("Unable to init workspace directory: {}", config.getWorkspace());
+            log.error("Unable to init workspace directory: {}", appProperties.getWorkspace());
         }
     }
 

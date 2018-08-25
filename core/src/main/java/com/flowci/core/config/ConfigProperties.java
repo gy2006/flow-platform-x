@@ -26,14 +26,12 @@ public class ConfigProperties {
 
     private String workspace;
 
-    private final Admin admin = new Admin();
-
     @Data
     public static class Admin {
 
-        private String email;
+        private String defaultEmail;
 
-        private String password;
+        private String defaultPassword;
     }
 
     @Data

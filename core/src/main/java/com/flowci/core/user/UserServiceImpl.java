@@ -33,15 +33,15 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements UserService {
 
     @Autowired
-    private ConfigProperties config;
+    private ConfigProperties.Admin adminProperties;
 
     @Autowired
     private UserDao userDao;
 
     @PostConstruct
     public void initAdmin() {
-        String adminEmail = config.getAdmin().getEmail();
-        String adminPassword = config.getAdmin().getPassword();
+        String adminEmail = adminProperties.getDefaultEmail();
+        String adminPassword = adminProperties.getDefaultPassword();
 
         try {
             create(adminEmail, adminPassword);
@@ -53,7 +53,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User defaultAdmin() {
-        return userDao.findByEmail(config.getAdmin().getEmail());
+        String email = adminProperties.getDefaultEmail();
+        return userDao.findByEmail(email);
     }
 
     @Override

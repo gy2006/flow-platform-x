@@ -32,11 +32,11 @@ public class UserServiceTest extends SpringScenario {
     private UserService userService;
 
     @Autowired
-    private ConfigProperties config;
+    private ConfigProperties.Admin adminProperties;
 
     @Test
     public void should_init_admin_user() {
-        User admin = userService.getByEmail(config.getAdmin().getEmail());
+        User admin = userService.getByEmail(adminProperties.getDefaultEmail());
         Assert.assertNotNull(admin);
     }
 

@@ -42,7 +42,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 public class AgentServiceTest extends ZookeeperScenario {
 
     @Autowired
-    private ConfigProperties.Zookeeper zkConfig;
+    private ConfigProperties.Zookeeper zkProperties;
 
     @Autowired
     private ZookeeperClient zk;
@@ -52,7 +52,7 @@ public class AgentServiceTest extends ZookeeperScenario {
 
     @Test
     public void should_init_root_node() {
-        Assert.assertTrue(zk.exist(zkConfig.getRoot()));
+        Assert.assertTrue(zk.exist(zkProperties.getRoot()));
     }
 
     @Test
@@ -66,7 +66,7 @@ public class AgentServiceTest extends ZookeeperScenario {
     public void should_make_agent_online() throws InterruptedException {
         // init:
         Agent agent = agentService.create("hello.test", ImmutableSet.of("local", "android"));
-        String agentPath = zkConfig.getRoot() + "/" + agent.getId();
+        String agentPath = zkProperties.getRoot() + "/" + agent.getId();
 
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> agentWrapper = new ObjectWrapper<>();

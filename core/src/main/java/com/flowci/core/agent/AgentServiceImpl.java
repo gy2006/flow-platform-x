@@ -50,7 +50,7 @@ import org.springframework.util.StringUtils;
 public class AgentServiceImpl implements AgentService {
 
     @Autowired
-    private ConfigProperties.Zookeeper zkConfig;
+    private ConfigProperties.Zookeeper zkProperties;
 
     @Autowired
     private ZookeeperClient zk;
@@ -63,7 +63,7 @@ public class AgentServiceImpl implements AgentService {
 
     @PostConstruct
     public void initRootNode() {
-        String root = zkConfig.getRoot();
+        String root = zkProperties.getRoot();
 
         try {
             zk.create(CreateMode.PERSISTENT, root, null);
@@ -89,7 +89,7 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     public String getPath(Agent agent) {
-        String root = zkConfig.getRoot();
+        String root = zkProperties.getRoot();
         return root + Agent.PATH_SLASH + agent.getId();
     }
 

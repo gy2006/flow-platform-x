@@ -30,15 +30,21 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class Application {
 
-    @Bean("config")
+    @Bean("appProperties")
     @ConfigurationProperties(prefix = "app")
-    public ConfigProperties config() {
+    public ConfigProperties appProperties() {
         return new ConfigProperties();
     }
 
-    @Bean("zkConfig")
+    @Bean("adminProperties")
+    @ConfigurationProperties(prefix = "app.admin")
+    public ConfigProperties.Admin adminProperties() {
+        return new ConfigProperties.Admin();
+    }
+
+    @Bean("zkProperties")
     @ConfigurationProperties(prefix = "app.zookeeper")
-    public ConfigProperties.Zookeeper zkConfig() {
+    public ConfigProperties.Zookeeper zkProperties() {
         return new ConfigProperties.Zookeeper();
     }
 
