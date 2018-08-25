@@ -17,8 +17,8 @@
 package com.flowci.core.job.domain;
 
 import com.flowci.core.domain.Mongoable;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.Date;
+import lombok.Data;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -26,6 +26,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 /**
  * @author yang
  */
+@Data
 @Document
 public class Job extends Mongoable {
 
@@ -80,27 +81,18 @@ public class Job extends Mongoable {
     /**
      * Job key is generated from {flow id}-{build number}
      */
-    @Getter
-    @Setter
     @Indexed(name = "index_job_key", unique = true)
     private String key;
 
     @Field("flow_id")
-    @Getter
-    @Setter
     private String flowId;
 
     @Field("build_number")
-    @Getter
-    @Setter
     private Long buildNumber;
 
-    @Getter
-    @Setter
     private Trigger trigger;
 
-    @Getter
-    @Setter
     private Status status = Status.PENDING;
 
+    private Date expireAt;
 }

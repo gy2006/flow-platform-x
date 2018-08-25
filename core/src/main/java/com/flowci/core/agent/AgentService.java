@@ -39,6 +39,7 @@ public interface AgentService {
      *
      * @param status Status
      * @param tags Agent tags, optional
+     * @throws com.flowci.exception.NotFoundException
      */
     Agent find(Agent.Status status, Set<String> tags);
 

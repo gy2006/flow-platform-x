@@ -30,8 +30,6 @@ public class ConfigProperties {
 
     private final Admin admin = new Admin();
 
-    private final Job job = new Job();
-
     @Data
     public static class Admin {
 
@@ -43,14 +41,11 @@ public class ConfigProperties {
     @Data
     public static class Job {
 
-        private final Queue queue = new Queue();
+        private String queueName;
+
+        private Integer expireInSeconds;
     }
 
-    @Data
-    public static class Queue {
-
-        private String name;
-    }
 
     @Data
     public static class Zookeeper {

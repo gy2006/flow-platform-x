@@ -17,6 +17,7 @@
 package com.flowci.core.job;
 
 import com.flowci.core.RequireCurrentUser;
+import com.flowci.core.agent.AgentService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.dao.JobDao;
@@ -28,8 +29,10 @@ import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
+import com.flowci.domain.Agent;
+import com.flowci.domain.Agent.Status;
+import com.flowci.exception.NotFoundException;
 import java.util.Optional;
-import javax.annotation.PostConstruct;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -61,6 +64,9 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     @Autowired
     private Queue jobQueue;
 
+    @Autowired
+    private AgentService agentService;
+
     @Override
     public Job start(Flow flow, Yml yml, Trigger trigger) {
         // create job number
@@ -78,26 +84,28 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         // create job yml
         JobYml jobYml = new JobYml(job.getId(), yml.getRaw());
         jobYmlDao.save(jobYml);
-
-        // send job to queue
-        queueTemplate.convertAndSend(jobQueue.getName(), job);
-
-        // send application event
-        applicationEventPublisher.publishEvent(new JobCreatedEvent(this, job));
-
-        return job;
+        return enqueue(job);
     }
 
     @Override
-    @RabbitListener(queues = "${app.job.queue.name}")
+    @RabbitListener(queues = "${app.job.queue-name}")
     public void processJob(Job job) {
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
 
         // select agent
-
+        try {
+            Agent agent = agentService.find(Status.IDLE, null);
+        } catch (NotFoundException e) {
+            enqueue(job);
+        }
 
         // send job to agent queue
+    }
 
+    private Job enqueue(Job job) {
+        queueTemplate.convertAndSend(jobQueue.getName(), job);
+        applicationEventPublisher.publishEvent(new JobCreatedEvent(this, job));
+        return job;
     }
 
     private Long getJobNumber(Flow flow) {

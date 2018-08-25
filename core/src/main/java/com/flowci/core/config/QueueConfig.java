@@ -37,11 +37,11 @@ public class QueueConfig {
         new Jackson2JsonMessageConverter(Jsonable.getMapper());
 
     @Autowired
-    private ConfigProperties config;
+    private ConfigProperties.Job jobConfig;
 
     @Bean("jobQueue")
     public Queue jobQueue() {
-        String jobQueueName = config.getJob().getQueue().getName();
+        String jobQueueName = jobConfig.getQueueName();
         return new Queue(jobQueueName, true);
     }
 

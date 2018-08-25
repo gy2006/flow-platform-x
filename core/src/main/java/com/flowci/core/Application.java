@@ -42,6 +42,12 @@ public class Application {
         return new ConfigProperties.Zookeeper();
     }
 
+    @Bean("jobConfig")
+    @ConfigurationProperties(prefix = "app.job")
+    public ConfigProperties.Job jobConfig() {
+        return new ConfigProperties.Job();
+    }
+
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
