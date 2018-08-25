@@ -86,7 +86,7 @@ public class AgentServiceTest extends ZookeeperScenario {
     }
 
     @Test
-    public void should_find_available_and_lock_agents() throws InterruptedException {
+    public void should_find_lock_and_release_agents() throws InterruptedException {
         // init:
         agentService.create("hello.test.1", ImmutableSet.of("local", "android"));
         agentService.create("hello.test.2", null);
@@ -135,5 +135,24 @@ public class AgentServiceTest extends ZookeeperScenario {
         counterForLock.await(10, TimeUnit.SECONDS);
         Assert.assertEquals(1, numOfLocked.get());
         Assert.assertEquals(4, numOfFailure.get());
+        Assert.assertEquals(Status.BUSY, Status.fromBytes(zk.get(agentService.getPath(available))));
+
+        // when: release agent and mock event from agent
+        CountDownLatch counterForRelease = new CountDownLatch(1);
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<StatusChangeEvent>) event -> {
+            counterForRelease.countDown();
+        });
+
+        agentService.release(available);
+        zk.set(agentService.getPath(available), Status.IDLE.getBytes());
+
+        // then: the status should be idle
+        counterForRelease.await(10, TimeUnit.SECONDS);
+        Status statusFromZk = Status.fromBytes(zk.get(agentService.getPath(available)));
+        Assert.assertEquals(Status.IDLE, statusFromZk);
+
+        ThreadHelper.sleep(2000);
+        Status statusFromDB = agentService.get(available.getId()).getStatus();
+        Assert.assertEquals(Status.IDLE, statusFromDB);
     }
 }

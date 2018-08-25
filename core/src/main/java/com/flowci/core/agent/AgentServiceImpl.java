@@ -99,8 +99,7 @@ public class AgentServiceImpl implements AgentService {
 
         if (Objects.isNull(tags) || tags.isEmpty()) {
             agents = agentDao.findAllByStatus(status);
-        }
-        else {
+        } else {
             agents = agentDao.findAllByStatusAndTagsIn(status, tags);
         }
 
@@ -122,14 +121,14 @@ public class AgentServiceImpl implements AgentService {
 
         try {
             // check agent status from zk
-            String zkPath = getPath(agent);
+            String zkPath = getPath(reload);
             Status status = Status.fromBytes(zk.get(zkPath));
             if (status != Status.IDLE) {
                 return false;
             }
 
             // lock and set status to busy
-            zk.lock(zkPath, path -> zk.set(path, Status.BUSY.getBytes()));
+            zk.lock(zkPath, path -> updateAgentStatus(reload, Status.BUSY));
             return true;
         } catch (ZookeeperException e) {
             log.debug(e);
@@ -139,7 +138,12 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     public void release(Agent agent) {
-        throw new UnsupportedOperationException();
+        Agent reload = get(agent.getId());
+        if (reload.isIdle()) {
+            return;
+        }
+
+        // TODO: send STOP cmd to agent
     }
 
     @Override
@@ -157,6 +161,26 @@ public class AgentServiceImpl implements AgentService {
     private static String getAgentIdFromPath(String path) {
         int index = path.lastIndexOf(Agent.PATH_SLASH);
         return path.substring(index + 1);
+    }
+
+    /**
+     * Update agent status from ZK and DB
+     * @param agent
+     * @param status
+     */
+    private void updateAgentStatus(Agent agent, Status status) {
+        agent.setStatus(status);
+
+        // update zookeeper status
+        String path = getPath(agent);
+        Status current = Status.fromBytes(zk.get(path));
+        if (current != status) {
+            zk.set(path, status.getBytes());
+        }
+
+        // update database status
+        agentDao.save(agent);
+        applicationEventPublisher.publishEvent(new StatusChangeEvent(this, agent));
     }
 
     private class RootNodeListener implements PathChildrenCacheListener {
@@ -182,11 +206,13 @@ public class AgentServiceImpl implements AgentService {
 
             if (event.getType() == Type.CHILD_ADDED) {
                 updateAgentStatus(agent, Status.IDLE);
+                log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_ADDED, agent.getName(), Status.IDLE);
                 return;
             }
 
             if (event.getType() == Type.CHILD_REMOVED) {
                 updateAgentStatus(agent, Status.OFFLINE);
+                log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_REMOVED, agent.getName(), Status.OFFLINE);
                 return;
             }
 
@@ -194,14 +220,8 @@ public class AgentServiceImpl implements AgentService {
                 byte[] statusInBytes = zk.get(event.getData().getPath());
                 Status status = Status.fromBytes(statusInBytes);
                 updateAgentStatus(agent, status);
+                log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_UPDATED, agent.getName(), status);
             }
-        }
-
-        private void updateAgentStatus(Agent agent, Status status) {
-            agent.setStatus(status);
-            agentDao.save(agent);
-            applicationEventPublisher.publishEvent(new StatusChangeEvent(this, agent));
-            log.debug("Agent {} event received from zk with status {}", agent.getName(), status);
         }
     }
 }
