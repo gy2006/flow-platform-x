@@ -36,6 +36,12 @@ public class Application {
         return new ConfigProperties();
     }
 
+    @Bean("zkConfig")
+    @ConfigurationProperties(prefix = "app.zookeeper")
+    public ConfigProperties.Zookeeper zkConfig() {
+        return new ConfigProperties.Zookeeper();
+    }
+
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }

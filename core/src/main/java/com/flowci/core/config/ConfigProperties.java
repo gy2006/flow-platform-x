@@ -32,8 +32,6 @@ public class ConfigProperties {
 
     private final Job job = new Job();
 
-    private final Zookeeper zookeeper = new Zookeeper();
-
     @Data
     public static class Admin {
 
@@ -66,5 +64,7 @@ public class ConfigProperties {
         private Integer timeout;
 
         private Integer retry;
+
+        private String dataDir;
     }
 }

@@ -39,7 +39,7 @@ import org.springframework.context.ApplicationListener;
 public class AgentServiceTest extends ZookeeperScenario {
 
     @Autowired
-    private ConfigProperties config;
+    private ConfigProperties.Zookeeper zkConfig;
 
     @Autowired
     private ZookeeperClient zk;
@@ -49,7 +49,7 @@ public class AgentServiceTest extends ZookeeperScenario {
 
     @Test
     public void should_init_root_node() {
-        Assert.assertTrue(zk.exist(config.getZookeeper().getRoot()));
+        Assert.assertTrue(zk.exist(zkConfig.getRoot()));
     }
 
     @Test
@@ -63,7 +63,7 @@ public class AgentServiceTest extends ZookeeperScenario {
     public void should_make_agent_online() throws InterruptedException {
         // init:
         Agent agent = agentService.create("hello.test", ImmutableSet.of("local", "android"));
-        String agentPath = config.getZookeeper().getRoot() + "/" + agent.getId();
+        String agentPath = zkConfig.getRoot() + "/" + agent.getId();
 
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> agentWrapper = new ObjectWrapper<>();

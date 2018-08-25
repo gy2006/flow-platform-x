@@ -25,7 +25,7 @@ import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
@@ -49,7 +49,7 @@ import org.springframework.util.StringUtils;
 public class AgentServiceImpl implements AgentService {
 
     @Autowired
-    private ConfigProperties config;
+    private ConfigProperties.Zookeeper zkConfig;
 
     @Autowired
     private ZookeeperClient zk;
@@ -62,7 +62,7 @@ public class AgentServiceImpl implements AgentService {
 
     @PostConstruct
     public void initRootNode() {
-        String root = config.getZookeeper().getRoot();
+        String root = zkConfig.getRoot();
 
         try {
             zk.create(CreateMode.PERSISTENT, root, null);
@@ -79,7 +79,11 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     public Agent get(String id) {
-        return agentDao.findById(id).get();
+        Optional<Agent> optional = agentDao.findById(id);
+        if (!optional.isPresent()) {
+            throw new NotFoundException("Agent {0} does not existed", id);
+        }
+        return optional.get();
     }
 
     @Override
@@ -94,6 +98,13 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     public Boolean occupy(Agent agent) {
+        // double check agent is available form db and zk
+        Agent reload = get(agent.getId());
+        if (reload.isBusy()) {
+            return false;
+        }
+
+
         throw new UnsupportedOperationException();
     }
 
@@ -138,12 +149,7 @@ public class AgentServiceImpl implements AgentService {
 
         private void handleAgentStatusChange(PathChildrenCacheEvent event) {
             String agentId = getAgentIdFromPath(event.getData().getPath());
-
             Agent agent = get(agentId);
-            if (Objects.isNull(agent)) {
-                log.warn("Agent {} does not existed", agentId);
-                return;
-            }
 
             if (event.getType() == Type.CHILD_ADDED) {
                 updateAgentStatus(agent, Status.IDLE);

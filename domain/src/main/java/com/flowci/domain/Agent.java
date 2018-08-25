@@ -73,6 +73,10 @@ public class Agent implements Serializable {
         this.tags = tags;
     }
 
+    public boolean isBusy() {
+        return status != Status.OFFLINE && status == Status.BUSY;
+    }
+
     public String getQueueName() {
         return "queue.agent." + id;
     }

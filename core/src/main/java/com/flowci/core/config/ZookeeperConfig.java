@@ -43,7 +43,7 @@ public class ZookeeperConfig {
     private LocalServer server;
 
     @Autowired
-    private ConfigProperties config;
+    private ConfigProperties.Zookeeper zkConfig;
 
     @Bean("zkServerExecutor")
     public ThreadPoolTaskExecutor serverExecutor() {
@@ -57,14 +57,14 @@ public class ZookeeperConfig {
 
     @Bean(name = "zk")
     public ZookeeperClient zookeeperClient(Executor zkServerExecutor, Executor zkWatchExecutor) {
-        if (config.getZookeeper().getEmbedded()) {
+        if (zkConfig.getEmbedded()) {
             startEmbeddedServer(zkServerExecutor);
             log.info("Embedded zookeeper been started ~");
         }
 
-        String host = config.getZookeeper().getHost();
-        Integer timeout = config.getZookeeper().getTimeout();
-        Integer retry = config.getZookeeper().getRetry();
+        String host = zkConfig.getHost();
+        Integer timeout = zkConfig.getTimeout();
+        Integer retry = zkConfig.getRetry();
 
         client = new ZookeeperClient(host, retry, timeout, zkWatchExecutor);
         client.start();
@@ -83,7 +83,7 @@ public class ZookeeperConfig {
     }
 
     private void startEmbeddedServer(Executor executor) {
-        Path path = Paths.get(config.getWorkspace(), "zookeeper");
+        Path path = Paths.get(zkConfig.getDataDir());
         String address = "0.0.0.0";
         Integer port = 2180;
 
