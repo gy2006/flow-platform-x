@@ -18,6 +18,7 @@ package com.flowci.core.job;
 
 import com.flowci.core.RequireCurrentUser;
 import com.flowci.core.agent.AgentService;
+import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.dao.JobDao;
@@ -32,6 +33,9 @@ import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.exception.NotFoundException;
+import java.sql.Date;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -45,6 +49,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class JobServiceImpl extends RequireCurrentUser implements JobService {
+
+    @Autowired
+    private ConfigProperties.Job jobConfig;
 
     @Autowired
     private JobDao jobDao;
@@ -79,6 +86,9 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         job.setTrigger(trigger);
         job.setCreatedBy(getCurrentUser().getId());
         job.setBuildNumber(buildNumber);
+
+        Instant expireAt = Instant.now().plus(jobConfig.getExpireInSeconds(), ChronoUnit.SECONDS);
+        job.setExpireAt(Date.from(expireAt));
         jobDao.save(job);
 
         // create job yml

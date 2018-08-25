@@ -24,6 +24,8 @@ import java.util.Objects;
 import lombok.Getter;
 import org.junit.After;
 import org.junit.runner.RunWith;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -61,11 +63,22 @@ public abstract class SpringScenario {
     private UserService userService;
 
     @Autowired
+    private RabbitAdmin queueAdmin;
+
+    @Autowired
+    private Queue jobQueue;
+
+    @Autowired
     protected ApplicationEventMulticaster applicationEventMulticaster;
 
     @After
     public void dbClean() {
         mongoTemplate.getDb().drop();
+    }
+
+    @After
+    public void queueClean() {
+        queueAdmin.deleteQueue(jobQueue.getName());
     }
 
     protected InputStream load(String resource) {

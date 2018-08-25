@@ -37,6 +37,7 @@ import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -53,6 +54,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Log4j2
 @Configuration
 @EnableRabbit
+@EnableMongoAuditing
 public class AppConfig implements WebMvcConfigurer {
 
     private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(

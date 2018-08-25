@@ -17,8 +17,6 @@
 package com.flowci.core.config;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * @author yang
@@ -43,7 +41,7 @@ public class ConfigProperties {
 
         private String queueName;
 
-        private Integer expireInSeconds;
+        private Long expireInSeconds;
     }
 
 

@@ -94,5 +94,6 @@ public class Job extends Mongoable {
 
     private Status status = Status.PENDING;
 
+    @Field("expire_at")
     private Date expireAt;
 }
