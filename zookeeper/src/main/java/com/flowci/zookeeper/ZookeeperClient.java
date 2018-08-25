@@ -16,6 +16,7 @@
 
 package com.flowci.zookeeper;
 
+import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -139,10 +140,9 @@ public class ZookeeperClient implements AutoCloseable {
             if (!lock.acquire(0, TimeUnit.SECONDS)) {
                 throw new ZookeeperException("Cannot acquire the lock on path: " + path);
             }
-
             consumer.accept(path);
         } catch (Exception e) {
-            throw new ZookeeperException("Cannot acquire the lock on path: " + path);
+            throw new ZookeeperException("Cannot acquire the lock on path {0}: {1}", path, e.getMessage());
         } finally {
             if (lock.isAcquiredInThisProcess()) {
                 try {

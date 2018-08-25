@@ -19,6 +19,7 @@ package com.flowci.core.test.agent;
 import com.flowci.core.agent.AgentService;
 import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.helper.ThreadHelper;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
@@ -27,11 +28,14 @@ import com.flowci.zookeeper.ZookeeperClient;
 import com.google.common.collect.ImmutableSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.curator.utils.ThreadUtils;
 import org.apache.zookeeper.CreateMode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * @author yang
@@ -82,14 +86,54 @@ public class AgentServiceTest extends ZookeeperScenario {
     }
 
     @Test
-    public void should_find_available_agents() {
+    public void should_find_available_and_lock_agents() throws InterruptedException {
         // init:
         agentService.create("hello.test.1", ImmutableSet.of("local", "android"));
         agentService.create("hello.test.2", null);
-        agentService.create("hello.test.3", ImmutableSet.of("alicloud", "android"));
+        Agent idle = agentService.create("hello.test.3", ImmutableSet.of("alicloud", "android"));
+        ThreadPoolTaskExecutor executor = ThreadHelper.createTaskExecutor(5, 5, 0, "mock-lock-");
+        executor.initialize();
 
         // when:
         Agent agent = agentService.find(Status.OFFLINE, ImmutableSet.of("android"));
         Assert.assertNotNull(agent);
+
+        // when: make agent online
+        CountDownLatch counter  = new CountDownLatch(1);
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<StatusChangeEvent>) event -> {
+            counter.countDown();
+        });
+
+        String path = agentService.getPath(idle);
+        zk.create(CreateMode.PERSISTENT, path, Status.IDLE.getBytes());
+
+        // then: find available agent
+        counter.await(10, TimeUnit.SECONDS);
+        Agent available = agentService.find(Status.IDLE, null);
+        Assert.assertEquals(idle, available);
+
+        // when: lock agent in multiple thread
+        AtomicInteger numOfLocked = new AtomicInteger(0);
+        AtomicInteger numOfFailure = new AtomicInteger(0);
+        CountDownLatch counterForLock = new CountDownLatch(5);
+
+        for (int i = 0; i < 5; i++) {
+            executor.execute(() -> {
+                Boolean isLocked = agentService.lock(available);
+                if (isLocked) {
+                    numOfLocked.incrementAndGet();
+                }
+                else {
+                    numOfFailure.incrementAndGet();
+                }
+
+                counterForLock.countDown();
+            });
+        }
+
+        // then: verify num of locked
+        counterForLock.await(10, TimeUnit.SECONDS);
+        Assert.assertEquals(1, numOfLocked.get());
+        Assert.assertEquals(4, numOfFailure.get());
     }
 }

@@ -30,6 +30,11 @@ public interface AgentService {
     Agent get(String id);
 
     /**
+     * Get zookeeper path
+     */
+    String getPath(Agent agent);
+
+    /**
      * Find agent by status and tags from database
      *
      * @param status Status
@@ -38,9 +43,9 @@ public interface AgentService {
     Agent find(Agent.Status status, Set<String> tags);
 
     /**
-     * Try to occupy agent resource
+     * Try to lock agent resource
      */
-    Boolean occupy(Agent agent);
+    Boolean lock(Agent agent);
 
     /**
      * Release agent

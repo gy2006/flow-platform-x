@@ -29,4 +29,6 @@ public interface AgentDao extends MongoRepository<Agent, String> {
 
     List<Agent> findAllByStatusAndTagsIn(Status status, Set<String> tags);
 
+    List<Agent> findAllByStatus(Status status);
+
 }

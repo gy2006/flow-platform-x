@@ -25,6 +25,7 @@ import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -87,25 +88,53 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
+    public String getPath(Agent agent) {
+        String root = zkConfig.getRoot();
+        return root + Agent.PATH_SLASH + agent.getId();
+    }
+
+    @Override
     public Agent find(Status status, Set<String> tags) {
-        List<Agent> agents = agentDao.findAllByStatusAndTagsIn(status, tags);
+        List<Agent> agents;
+
+        if (Objects.isNull(tags) || tags.isEmpty()) {
+            agents = agentDao.findAllByStatus(status);
+        }
+        else {
+            agents = agentDao.findAllByStatusAndTagsIn(status, tags);
+        }
+
         if (agents.isEmpty()) {
             String tagsInStr = StringUtils.collectionToCommaDelimitedString(tags);
             throw new NotFoundException("Agent not found by status : {0} and tags: {1}", status.name(), tagsInStr);
         }
+
         return agents.get(0);
     }
 
     @Override
-    public Boolean occupy(Agent agent) {
-        // double check agent is available form db and zk
+    public Boolean lock(Agent agent) {
+        // check agent is available form db
         Agent reload = get(agent.getId());
         if (reload.isBusy()) {
             return false;
         }
 
+        try {
+            // check agent status from zk
+            String zkPath = getPath(agent);
+            Status status = Status.fromBytes(zk.get(zkPath));
+            if (status != Status.IDLE) {
+                return false;
+            }
 
-        throw new UnsupportedOperationException();
+            // lock and set status to busy
+            zk.lock(zkPath, path -> zk.set(path, Status.BUSY.getBytes()));
+            return true;
+        } catch (ZookeeperException e) {
+            log.debug(e);
+            return false;
+        }
     }
 
     @Override
@@ -172,6 +201,7 @@ public class AgentServiceImpl implements AgentService {
             agent.setStatus(status);
             agentDao.save(agent);
             applicationEventPublisher.publishEvent(new StatusChangeEvent(this, agent));
+            log.debug("Agent {} event received from zk with status {}", agent.getName(), status);
         }
     }
 }
