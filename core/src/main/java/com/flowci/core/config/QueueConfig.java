@@ -18,6 +18,7 @@ package com.flowci.core.config;
 
 import com.flowci.domain.Jsonable;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -31,17 +32,18 @@ import org.springframework.context.annotation.Configuration;
  * @author yang
  */
 @Configuration
+@EnableRabbit
 public class QueueConfig {
 
     private final Jackson2JsonMessageConverter queueMessageConverter =
         new Jackson2JsonMessageConverter(Jsonable.getMapper());
 
     @Autowired
-    private ConfigProperties.Job jobConfig;
+    private ConfigProperties.Job jobProperties;
 
     @Bean("jobQueue")
     public Queue jobQueue() {
-        String jobQueueName = jobConfig.getQueueName();
+        String jobQueueName = jobProperties.getQueueName();
         return new Queue(jobQueueName, true);
     }
 

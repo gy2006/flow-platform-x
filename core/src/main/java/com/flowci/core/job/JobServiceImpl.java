@@ -21,6 +21,7 @@ import com.flowci.core.agent.AgentService;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.helper.ThreadHelper;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobNumberDao;
 import com.flowci.core.job.dao.JobYmlDao;
@@ -30,28 +31,32 @@ import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
+import com.flowci.core.job.event.StatusChangeEvent;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.exception.NotFoundException;
-import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.Optional;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 /**
  * @author yang
  */
+@Log4j2
 @Service
 public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
     @Autowired
-    private ConfigProperties.Job jobConfig;
+    private ConfigProperties.Job jobProperties;
 
     @Autowired
     private JobDao jobDao;
@@ -72,6 +77,9 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     private Queue jobQueue;
 
     @Autowired
+    private ThreadPoolTaskExecutor retryExecutor;
+
+    @Autowired
     private AgentService agentService;
 
     @Override
@@ -87,7 +95,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         job.setCreatedBy(getCurrentUser().getId());
         job.setBuildNumber(buildNumber);
 
-        Instant expireAt = Instant.now().plus(jobConfig.getExpireInSeconds(), ChronoUnit.SECONDS);
+        Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
         jobDao.save(job);
 
@@ -98,24 +106,62 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     }
 
     @Override
+    public boolean isExpired(Job job) {
+        Instant expireAt = job.getExpireAt().toInstant();
+        return Instant.now().compareTo(expireAt) == 1;
+    }
+
+    @Override
     @RabbitListener(queues = "${app.job.queue-name}")
     public void processJob(Job job) {
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
 
-        // select agent
         try {
-            Agent agent = agentService.find(Status.IDLE, null);
-        } catch (NotFoundException e) {
-            enqueue(job);
-        }
+            // find available agent and tryLock
+            Agent available = agentService.find(Status.IDLE, null);
+            Boolean isLocked = agentService.tryLock(available);
 
-        // send job to agent queue
+            // re-enqueue to job while agent been locked by other
+            if (!isLocked) {
+                retry(job);
+                return;
+            }
+
+            // dispatch job to agent queue
+
+
+        } catch (NotFoundException e) {
+            // re-enqueue to job while agent not found
+            retry(job);
+        }
+    }
+
+    /**
+     * Re-enqueue job after 5 seconds
+     */
+    private void retry(Job job) {
+        retryExecutor.execute(() -> {
+            ThreadHelper.sleep(5000);
+            enqueue(job);
+        });
     }
 
     private Job enqueue(Job job) {
+        if (isExpired(job)) {
+            setJobStatus(job, Job.Status.TIMEOUT);
+            log.warn("Job '{}' is expired", job);
+            return job;
+        }
+
         queueTemplate.convertAndSend(jobQueue.getName(), job);
         applicationEventPublisher.publishEvent(new JobCreatedEvent(this, job));
         return job;
+    }
+
+    private void setJobStatus(Job job, Job.Status newStatus) {
+        job.setStatus(newStatus);
+        jobDao.save(job);
+        applicationEventPublisher.publishEvent(new StatusChangeEvent(this, job));
     }
 
     private Long getJobNumber(Flow flow) {

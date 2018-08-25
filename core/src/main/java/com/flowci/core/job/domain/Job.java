@@ -65,16 +65,39 @@ public class Job extends Mongoable {
 
     public enum Status {
 
+        /**
+         * Initial job state
+         */
         PENDING,
 
+        /**
+         * Job been dispatched to agent
+         */
+        DISPATCHED,
+
+        /**
+         * Agent take over the job, and been start to execute
+         */
         RUNNING,
 
+        /**
+         * Job been executed
+         */
         SUCCESS,
 
+        /**
+         * Job been executed but failure
+         */
         FAILURE,
 
+        /**
+         * Job been stopped by user
+         */
         STOPPED,
 
+        /**
+         * Job execution time been over the expiredAt
+         */
         TIMEOUT
     }
 

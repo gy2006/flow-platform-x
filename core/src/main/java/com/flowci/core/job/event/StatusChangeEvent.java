@@ -14,31 +14,16 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job;
+package com.flowci.core.job.event;
 
-import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.domain.Job.Trigger;
 
 /**
  * @author yang
  */
-public interface JobService {
+public class StatusChangeEvent extends JobEvent {
 
-    /**
-     * Start a job and send to queue
-     */
-    Job start(Flow flow, Yml yml, Trigger trigger);
-
-    /**
-     * Job is expired compare to now
-     */
-    boolean isExpired(Job job);
-
-    /**
-     * Process job from queue
-     */
-    void processJob(Job job);
-
+    public StatusChangeEvent(Object source, Job job) {
+        super(source, job);
+    }
 }

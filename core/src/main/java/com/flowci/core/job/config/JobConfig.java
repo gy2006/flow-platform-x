@@ -14,31 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job;
+package com.flowci.core.job.config;
 
-import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.helper.ThreadHelper;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * @author yang
  */
-public interface JobService {
+@Configuration
+public class JobConfig {
 
-    /**
-     * Start a job and send to queue
-     */
-    Job start(Flow flow, Yml yml, Trigger trigger);
-
-    /**
-     * Job is expired compare to now
-     */
-    boolean isExpired(Job job);
-
-    /**
-     * Process job from queue
-     */
-    void processJob(Job job);
+    @Bean("retryExecutor")
+    public ThreadPoolTaskExecutor retryExecutor() {
+        return ThreadHelper.createTaskExecutor(1, 1, 100, "job-retry-");
+    }
 
 }

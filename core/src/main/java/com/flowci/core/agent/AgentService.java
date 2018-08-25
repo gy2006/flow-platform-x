@@ -44,14 +44,14 @@ public interface AgentService {
     Agent find(Agent.Status status, Set<String> tags);
 
     /**
-     * Try to lock agent resource
+     * Try to lock agent resource, and set agent status to BUSY
      */
-    Boolean lock(Agent agent);
+    Boolean tryLock(Agent agent);
 
     /**
-     * Release agent
+     * Release agent, send 'stop' cmd to agent
      */
-    void release(Agent agent);
+    void tryRelease(Agent agent);
 
     /**
      * Create agent by name and tags

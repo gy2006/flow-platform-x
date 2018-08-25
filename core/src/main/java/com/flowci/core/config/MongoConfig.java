@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.mongodb.config.AbstractMongoConfiguration;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
@@ -36,7 +37,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
  * @author yang
  */
 @Configuration
-@EnableMongoRepositories(basePackages = "com.flowci.core")
+@EnableMongoAuditing
 public class MongoConfig extends AbstractMongoConfiguration {
 
     @Autowired

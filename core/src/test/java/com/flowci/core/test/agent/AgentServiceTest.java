@@ -29,7 +29,6 @@ import com.google.common.collect.ImmutableSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.curator.utils.ThreadUtils;
 import org.apache.zookeeper.CreateMode;
 import org.junit.Assert;
 import org.junit.Test;
@@ -91,7 +90,7 @@ public class AgentServiceTest extends ZookeeperScenario {
         agentService.create("hello.test.1", ImmutableSet.of("local", "android"));
         agentService.create("hello.test.2", null);
         Agent idle = agentService.create("hello.test.3", ImmutableSet.of("alicloud", "android"));
-        ThreadPoolTaskExecutor executor = ThreadHelper.createTaskExecutor(5, 5, 0, "mock-lock-");
+        ThreadPoolTaskExecutor executor = ThreadHelper.createTaskExecutor(5, 5, 0, "mock-tryLock-");
         executor.initialize();
 
         // when:
@@ -112,14 +111,14 @@ public class AgentServiceTest extends ZookeeperScenario {
         Agent available = agentService.find(Status.IDLE, null);
         Assert.assertEquals(idle, available);
 
-        // when: lock agent in multiple thread
+        // when: try lock agent in multiple thread
         AtomicInteger numOfLocked = new AtomicInteger(0);
         AtomicInteger numOfFailure = new AtomicInteger(0);
         CountDownLatch counterForLock = new CountDownLatch(5);
 
         for (int i = 0; i < 5; i++) {
             executor.execute(() -> {
-                Boolean isLocked = agentService.lock(available);
+                Boolean isLocked = agentService.tryLock(available);
                 if (isLocked) {
                     numOfLocked.incrementAndGet();
                 }
@@ -143,7 +142,7 @@ public class AgentServiceTest extends ZookeeperScenario {
             counterForRelease.countDown();
         });
 
-        agentService.release(available);
+        agentService.tryRelease(available);
         zk.set(agentService.getPath(available), Status.IDLE.getBytes());
 
         // then: the status should be idle

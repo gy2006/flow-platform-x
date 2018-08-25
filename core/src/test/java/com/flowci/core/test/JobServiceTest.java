@@ -25,17 +25,21 @@ import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.util.StringHelper;
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 
 /**
  * @author yang
  */
+@FixMethodOrder(MethodSorters.JVM)
 public class JobServiceTest extends SpringScenario {
 
     @Autowired
@@ -44,6 +48,16 @@ public class JobServiceTest extends SpringScenario {
     @Autowired
     private JobService jobService;
 
+    private Flow flow;
+
+    private Yml yml;
+
+    @Before
+    public void mockFlowAndYml() throws IOException {
+        flow = flowService.create("hello");
+        yml = flowService.saveYml(flow, StringHelper.toString(load("flow.yml")));
+    }
+
     @Before
     public void userLogin() {
         mockLogin();
@@ -51,10 +65,6 @@ public class JobServiceTest extends SpringScenario {
 
     @Test
     public void should_start_new_job() throws Throwable {
-        // init: flow and yml
-        Flow flow = flowService.create("hello");
-        Yml yml = flowService.saveYml(flow, StringHelper.toString(load("flow.yml")));
-
         ObjectWrapper<Job> receivedJob = new ObjectWrapper<>();
 
         // init: register JobReceivedEvent
@@ -74,4 +84,9 @@ public class JobServiceTest extends SpringScenario {
         Assert.assertEquals(job, receivedJob.getValue());
     }
 
+    @Test
+    public void should_get_job_expire() {
+        Job job = jobService.start(flow, yml, Trigger.MANUAL);
+        Assert.assertFalse(jobService.isExpired(job));
+    }
 }

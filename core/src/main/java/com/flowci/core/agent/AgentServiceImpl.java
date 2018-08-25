@@ -112,7 +112,7 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public Boolean lock(Agent agent) {
+    public Boolean tryLock(Agent agent) {
         // check agent is available form db
         Agent reload = get(agent.getId());
         if (reload.isBusy()) {
@@ -137,7 +137,7 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public void release(Agent agent) {
+    public void tryRelease(Agent agent) {
         Agent reload = get(agent.getId());
         if (reload.isIdle()) {
             return;

@@ -42,9 +42,9 @@ public class Application {
         return new ConfigProperties.Zookeeper();
     }
 
-    @Bean("jobConfig")
+    @Bean("jobProperties")
     @ConfigurationProperties(prefix = "app.job")
-    public ConfigProperties.Job jobConfig() {
+    public ConfigProperties.Job jobProperties() {
         return new ConfigProperties.Job();
     }
 
