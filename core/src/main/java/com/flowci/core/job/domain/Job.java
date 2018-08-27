@@ -119,4 +119,7 @@ public class Job extends Mongoable {
 
     @Field("expire_at")
     private Date expireAt;
+
+    @Field("agent_id")
+    private String agentId;
 }

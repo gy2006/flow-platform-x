@@ -20,6 +20,7 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.domain.Agent;
 
 /**
  * @author yang
@@ -41,4 +42,8 @@ public interface JobService {
      */
     void processJob(Job job);
 
+    /**
+     * Dispatch job to selected agent
+     */
+    boolean dispatch(Job job, Agent agent);
 }

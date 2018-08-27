@@ -40,6 +40,8 @@ public class ConfigProperties {
         private String queueName;
 
         private Long expireInSeconds;
+
+        private Long retryWaitingSeconds;
     }
 
 

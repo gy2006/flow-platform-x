@@ -127,8 +127,12 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
                 return;
             }
 
-            // dispatch job to agent queue
+            // set dispatched agent id to job
+            job.setAgentId(available.getId());
+            jobDao.save(job);
 
+            // dispatch job to agent queue
+            dispatch(job, available);
 
         } catch (NotFoundException e) {
             // re-enqueue to job while agent not found
@@ -136,12 +140,17 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         }
     }
 
+    @Override
+    public boolean dispatch(Job job, Agent agent) {
+        return true;
+    }
+
     /**
-     * Re-enqueue job after 5 seconds
+     * Re-enqueue job after few seconds
      */
     private void retry(Job job) {
         retryExecutor.execute(() -> {
-            ThreadHelper.sleep(5000);
+            ThreadHelper.sleep(jobProperties.getRetryWaitingSeconds() * 1000);
             enqueue(job);
         });
     }
