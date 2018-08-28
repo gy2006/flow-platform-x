@@ -77,6 +77,7 @@ public class JobServiceTest extends SpringScenario {
         // when:
         Job job = jobService.start(flow, yml, Trigger.MANUAL);
         Assert.assertNotNull(job);
+        Assert.assertNotNull(jobService.getTree(job));
 
         // then: confirm job is received from queue
         waitForJobFromQueue.await(10, TimeUnit.SECONDS);

@@ -35,6 +35,10 @@ import com.flowci.core.job.event.StatusChangeEvent;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.exception.NotFoundException;
+import com.flowci.tree.Node;
+import com.flowci.tree.NodePath;
+import com.flowci.tree.NodeTree;
+import com.flowci.tree.YmlParser;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -44,6 +48,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -68,6 +73,9 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     private JobNumberDao jobNumberDao;
 
     @Autowired
+    private Cache jobTreeCache;
+
+    @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
@@ -84,6 +92,9 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
     @Override
     public Job start(Flow flow, Yml yml, Trigger trigger) {
+        // verify yml and parse to Node
+        Node root = YmlParser.load(flow.getName(), yml.getRaw());
+
         // create job number
         Long buildNumber = getJobNumber(flow);
 
@@ -94,15 +105,26 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         job.setTrigger(trigger);
         job.setCreatedBy(getCurrentUser().getId());
         job.setBuildNumber(buildNumber);
+        job.setCurrentPath(root.getPath().toString());
 
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
         jobDao.save(job);
 
         // create job yml
-        JobYml jobYml = new JobYml(job.getId(), yml.getRaw());
+        JobYml jobYml = new JobYml(job.getId(), flow.getName(), yml.getRaw());
         jobYmlDao.save(jobYml);
         return enqueue(job);
+    }
+
+    @Override
+    public NodeTree getTree(Job job) {
+        return jobTreeCache.get(job.getId(), () -> {
+            log.debug("Load node tree for job: {}", job.getId());
+            JobYml yml = jobYmlDao.findById(job.getId()).get();
+            Node root = YmlParser.load(yml.getName(), yml.getRaw());
+            return NodeTree.create(root);
+        });
     }
 
     @Override
@@ -142,6 +164,10 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
     @Override
     public boolean dispatch(Job job, Agent agent) {
+        NodeTree tree = getTree(job);
+        NodePath current = NodePath.create(job.getCurrentPath());
+
+        Node nodeToDispatch = tree.next(current);
         return true;
     }
 

@@ -16,10 +16,13 @@
 
 package com.flowci.core.test;
 
+import com.flowci.core.agent.AgentDao;
 import com.flowci.core.test.SpringScenario.Config;
 import com.flowci.core.user.User;
 import com.flowci.core.user.UserService;
+import com.flowci.domain.Agent;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
 import org.junit.After;
@@ -69,6 +72,9 @@ public abstract class SpringScenario {
     private Queue jobQueue;
 
     @Autowired
+    private AgentDao agentDao;
+
+    @Autowired
     protected ApplicationEventMulticaster applicationEventMulticaster;
 
     @After
@@ -77,8 +83,16 @@ public abstract class SpringScenario {
     }
 
     @After
-    public void queueClean() {
+    public void jobQueueClean() {
         queueAdmin.deleteQueue(jobQueue.getName());
+    }
+
+    @After
+    public void agentQueueClean() {
+        List<Agent> all = agentDao.findAll();
+        for (Agent agent : all) {
+            queueAdmin.deleteQueue(agent.getQueueName());
+        }
     }
 
     protected InputStream load(String resource) {

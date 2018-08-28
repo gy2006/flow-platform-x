@@ -17,6 +17,11 @@
 package com.flowci.core.job.config;
 
 import com.flowci.core.helper.ThreadHelper;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import java.util.concurrent.TimeUnit;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -32,4 +37,19 @@ public class JobConfig {
         return ThreadHelper.createTaskExecutor(1, 1, 100, "job-retry-");
     }
 
+    @Bean("jobCacheManager")
+    public CacheManager cacheManager() {
+        Caffeine<Object, Object> cache = Caffeine.newBuilder()
+            .maximumSize(100)
+            .expireAfterWrite(30, TimeUnit.SECONDS);
+
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+        cacheManager.setCaffeine(cache);
+        return cacheManager;
+    }
+
+    @Bean("jobTreeCache")
+    public Cache jobTreeCache(CacheManager jobCacheManager) {
+        return jobCacheManager.getCache("JOB_TREE");
+    }
 }

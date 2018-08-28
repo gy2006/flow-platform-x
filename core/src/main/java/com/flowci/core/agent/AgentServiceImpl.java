@@ -16,10 +16,12 @@
 
 package com.flowci.core.agent;
 
+import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
+import com.flowci.domain.Cmd;
 import com.flowci.exception.NotFoundException;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
@@ -37,6 +39,9 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -57,6 +62,12 @@ public class AgentServiceImpl implements AgentService {
 
     @Autowired
     private AgentDao agentDao;
+
+    @Autowired
+    private RabbitAdmin rabbitAdmin;
+
+    @Autowired
+    private RabbitTemplate queueTemplate;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -150,7 +161,15 @@ public class AgentServiceImpl implements AgentService {
     public Agent create(String name, Set<String> tags) {
         Agent agent = new Agent(name, tags);
         agent.setToken(UUID.randomUUID().toString());
-        return agentDao.save(agent);
+        agentDao.save(agent);
+        rabbitAdmin.declareQueue(new Queue(agent.getQueueName()));
+        return agent;
+    }
+
+    @Override
+    public void dispatch(Cmd cmd, Agent agent) {
+        queueTemplate.convertAndSend(agent.getQueueName(), cmd);
+        applicationEventPublisher.publishEvent(new CmdSentEvent(this, agent, cmd));
     }
 
     /**

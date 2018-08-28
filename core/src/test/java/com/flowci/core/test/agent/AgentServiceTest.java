@@ -17,15 +17,18 @@
 package com.flowci.core.test.agent;
 
 import com.flowci.core.agent.AgentService;
+import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.helper.ThreadHelper;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
+import com.flowci.domain.Cmd;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.google.common.collect.ImmutableSet;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,6 +36,7 @@ import org.apache.zookeeper.CreateMode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
@@ -153,5 +157,24 @@ public class AgentServiceTest extends ZookeeperScenario {
         ThreadHelper.sleep(2000);
         Status statusFromDB = agentService.get(available.getId()).getStatus();
         Assert.assertEquals(Status.IDLE, statusFromDB);
+    }
+
+    @Test
+    public void should_dispatch_cmd_to_agent() throws InterruptedException {
+        // init:
+        Cmd cmd = new Cmd(UUID.randomUUID().toString());
+        Agent agent = agentService.create("hello.agent", null);
+
+        // when:
+        CountDownLatch counter = new CountDownLatch(1);
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdSentEvent>) event -> {
+            counter.countDown();
+        });
+
+        agentService.dispatch(cmd, agent);
+
+        // then:
+        counter.await(10, TimeUnit.SECONDS);
+        Assert.assertEquals(0, counter.getCount());
     }
 }

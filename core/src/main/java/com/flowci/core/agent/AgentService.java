@@ -17,6 +17,7 @@
 package com.flowci.core.agent;
 
 import com.flowci.domain.Agent;
+import com.flowci.domain.Cmd;
 import java.util.Set;
 
 /**
@@ -57,5 +58,10 @@ public interface AgentService {
      * Create agent by name and tags
      */
     Agent create(String name, Set<String> tags);
+
+    /**
+     * Dispatch cmd to agent
+     */
+    void dispatch(Cmd cmd, Agent agent);
 
 }

@@ -21,6 +21,7 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.domain.Agent;
+import com.flowci.tree.NodeTree;
 
 /**
  * @author yang
@@ -31,6 +32,11 @@ public interface JobService {
      * Start a job and send to queue
      */
     Job start(Flow flow, Yml yml, Trigger trigger);
+
+    /**
+     * Get node tree from job
+     */
+    NodeTree getTree(Job job);
 
     /**
      * Job is expired compare to now

@@ -14,36 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.domain;
+package com.flowci.core.agent.event;
 
-import com.flowci.core.domain.Mongoable;
-import lombok.Data;
+import com.flowci.domain.Agent;
+import com.flowci.domain.Cmd;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.context.ApplicationEvent;
 
 /**
  * @author yang
  */
-@Document(collection = "job_yml")
-@NoArgsConstructor
-@Data
-public class JobYml extends Mongoable {
+public class CmdSentEvent extends ApplicationEvent {
 
-    /**
-     * Root name
-     */
-    private String name;
+    @Getter
+    private final Agent agent;
 
-    /**
-     * Yml raw
-     */
-    private String raw;
+    @Getter
+    private final Cmd cmd;
 
-    public JobYml(String jobId, String name, String raw) {
-        this.id = jobId;
-        this.name = name;
-        this.raw = raw;
+    public CmdSentEvent(Object source, Agent agent, Cmd cmd) {
+        super(source);
+        this.agent = agent;
+        this.cmd = cmd;
     }
 }

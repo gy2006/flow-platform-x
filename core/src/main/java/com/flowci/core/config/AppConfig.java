@@ -34,6 +34,7 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -51,6 +52,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Log4j2
 @Configuration
+@EnableCaching
 public class AppConfig implements WebMvcConfigurer {
 
     private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(

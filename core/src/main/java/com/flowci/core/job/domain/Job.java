@@ -21,7 +21,6 @@ import java.util.Date;
 import lombok.Data;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 /**
  * @author yang
@@ -107,19 +106,17 @@ public class Job extends Mongoable {
     @Indexed(name = "index_job_key", unique = true)
     private String key;
 
-    @Field("flow_id")
     private String flowId;
 
-    @Field("build_number")
     private Long buildNumber;
 
     private Trigger trigger;
 
     private Status status = Status.PENDING;
 
-    @Field("expire_at")
     private Date expireAt;
 
-    @Field("agent_id")
     private String agentId;
+
+    private String currentPath;
 }
