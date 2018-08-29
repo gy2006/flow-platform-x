@@ -33,7 +33,7 @@ public class KeyBuilder {
     }
 
     public static String buildCmdKey(Job job, Node node) {
-        return MessageFormat.format("{0}-{1}", job.getId(), node.getPath().toString());
+        return MessageFormat.format("{0}-{1}", job.getId(), node.getPath().getPathInStr());
     }
 
     private KeyBuilder() {

@@ -131,6 +131,11 @@ public class JobServiceTest extends SpringScenario {
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
         NodeTree tree = NodeTree.create(root);
         Node first = tree.next(tree.getRoot().getPath());
-        Assert.assertEquals(CmdBuilder.build(job, first).getId(), targetCmd.getValue().getId());
+
+        Cmd cmd = targetCmd.getValue();
+        Assert.assertEquals(CmdBuilder.build(job, first).getId(), cmd.getId());
+        Assert.assertEquals("echo step version", cmd.getInputs().getString("FLOW_VERSION"));
+        Assert.assertEquals("echo step", cmd.getInputs().getString("FLOW_WORKSPACE"));
+        Assert.assertEquals("echo hello\n", cmd.getScripts().get(0));
     }
 }
