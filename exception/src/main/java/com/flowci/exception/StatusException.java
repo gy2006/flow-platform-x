@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2018 fir.im
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,18 @@ package com.flowci.exception;
 /**
  * @author yang
  */
-public final class ErrorCode {
+public class StatusException extends CIException {
 
-    public static final Integer ERROR = 400;
+    public StatusException(String message, String... params) {
+        super(message, params);
+    }
 
-    public static final Integer INVALID_ARGUMENT = 401;
+    public StatusException(String message, Throwable cause, String... params) {
+        super(message, cause, params);
+    }
 
-    public static final Integer PARSE_YML = 402;
-
-    public static final Integer DUPLICATE = 403;
-
-    public static final Integer NOT_FOUND = 404;
-
-    public static final Integer ILLEGAL_ACCESS = 405;
-
-    public static final Integer ILLEGAL_STATUS = 406;
-
-    private ErrorCode() {
-
+    @Override
+    public Integer getCode() {
+        return ErrorCode.ILLEGAL_STATUS;
     }
 }

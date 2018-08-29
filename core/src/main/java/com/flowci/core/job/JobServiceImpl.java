@@ -32,9 +32,13 @@ import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.StatusChangeEvent;
+import com.flowci.core.job.util.CmdBuilder;
+import com.flowci.core.job.util.KeyBuilder;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
+import com.flowci.domain.Cmd;
 import com.flowci.exception.NotFoundException;
+import com.flowci.exception.StatusException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
@@ -91,7 +95,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     private AgentService agentService;
 
     @Override
-    public Job start(Flow flow, Yml yml, Trigger trigger) {
+    public Job create(Flow flow, Yml yml, Trigger trigger) {
         // verify yml and parse to Node
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
@@ -100,12 +104,12 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
         // create job
         Job job = new Job();
-        job.setKey(JobKeyBuilder.build(flow, buildNumber));
+        job.setKey(KeyBuilder.buildJobKey(flow, buildNumber));
         job.setFlowId(flow.getId());
         job.setTrigger(trigger);
         job.setCreatedBy(getCurrentUser().getId());
         job.setBuildNumber(buildNumber);
-        job.setCurrentPath(root.getPath().toString());
+        job.setCurrentPath(root.getPath().getPathInStr());
 
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
@@ -114,7 +118,17 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         // create job yml
         JobYml jobYml = new JobYml(job.getId(), flow.getName(), yml.getRaw());
         jobYmlDao.save(jobYml);
-        return enqueue(job);
+
+        return job;
+    }
+
+    @Override
+    public void start(Job job) {
+        if (job.getStatus() != Job.Status.PENDING) {
+            throw new StatusException("Job not in pending status");
+        }
+
+        enqueue(job);
     }
 
     @Override
@@ -168,6 +182,8 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         NodePath current = NodePath.create(job.getCurrentPath());
 
         Node nodeToDispatch = tree.next(current);
+        Cmd cmd = CmdBuilder.build(job, nodeToDispatch);
+        agentService.dispatch(cmd, agent);
         return true;
     }
 

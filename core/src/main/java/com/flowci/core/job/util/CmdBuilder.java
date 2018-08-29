@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.core.job.util;
+
+import com.flowci.core.job.domain.Job;
+import com.flowci.domain.Cmd;
+import com.flowci.domain.VariableMap;
+import com.flowci.tree.Node;
+import com.google.common.collect.Lists;
 
 /**
  * @author yang
  */
-public final class ErrorCode {
+public class CmdBuilder {
 
-    public static final Integer ERROR = 400;
+    public static Cmd build(Job job, Node node) {
+        VariableMap variables = node.getEnvironments().merge(job.getContext());
 
-    public static final Integer INVALID_ARGUMENT = 401;
+        Cmd cmd = new Cmd(KeyBuilder.buildCmdKey(job, node));
+        cmd.setInputs(variables);
+        cmd.setScripts(Lists.newArrayList(node.getScript()));
+        return cmd;
+    }
 
-    public static final Integer PARSE_YML = 402;
-
-    public static final Integer DUPLICATE = 403;
-
-    public static final Integer NOT_FOUND = 404;
-
-    public static final Integer ILLEGAL_ACCESS = 405;
-
-    public static final Integer ILLEGAL_STATUS = 406;
-
-    private ErrorCode() {
-
+    private CmdBuilder() {
     }
 }

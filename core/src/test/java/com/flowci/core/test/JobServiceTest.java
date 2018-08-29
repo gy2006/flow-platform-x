@@ -16,6 +16,8 @@
 
 package com.flowci.core.test;
 
+import com.flowci.core.agent.AgentService;
+import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
@@ -23,7 +25,13 @@ import com.flowci.core.job.JobService;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
+import com.flowci.core.job.util.CmdBuilder;
+import com.flowci.domain.Agent;
+import com.flowci.domain.Cmd;
 import com.flowci.domain.ObjectWrapper;
+import com.flowci.tree.Node;
+import com.flowci.tree.NodeTree;
+import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -47,6 +55,9 @@ public class JobServiceTest extends SpringScenario {
 
     @Autowired
     private JobService jobService;
+
+    @Autowired
+    private AgentService agentService;
 
     private Flow flow;
 
@@ -75,7 +86,9 @@ public class JobServiceTest extends SpringScenario {
         });
 
         // when:
-        Job job = jobService.start(flow, yml, Trigger.MANUAL);
+        Job job = jobService.create(flow, yml, Trigger.MANUAL);
+        jobService.start(job);
+
         Assert.assertNotNull(job);
         Assert.assertNotNull(jobService.getTree(job));
 
@@ -87,7 +100,37 @@ public class JobServiceTest extends SpringScenario {
 
     @Test
     public void should_get_job_expire() {
-        Job job = jobService.start(flow, yml, Trigger.MANUAL);
+        Job job = jobService.create(flow, yml, Trigger.MANUAL);
         Assert.assertFalse(jobService.isExpired(job));
+    }
+
+    @Test
+    public void should_dispatch_job_to_agent() throws InterruptedException {
+        // init:
+        Job job = jobService.create(flow, yml, Trigger.MANUAL);
+        Agent agent = agentService.create("hello", null);
+
+        // when:
+        ObjectWrapper<Agent> targetAgent = new ObjectWrapper<>();
+        ObjectWrapper<Cmd> targetCmd = new ObjectWrapper<>();
+        CountDownLatch counter = new CountDownLatch(1);
+
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdSentEvent>) event -> {
+            targetAgent.setValue(event.getAgent());
+            targetCmd.setValue(event.getCmd());
+            counter.countDown();
+        });
+
+        jobService.dispatch(job, agent);
+
+        // then: verify cmd been sent
+        counter.await(10, TimeUnit.SECONDS);
+        Assert.assertEquals(agent, targetAgent.getValue());
+
+        // then: verify cmd content
+        Node root = YmlParser.load(flow.getName(), yml.getRaw());
+        NodeTree tree = NodeTree.create(root);
+        Node first = tree.next(tree.getRoot().getPath());
+        Assert.assertEquals(CmdBuilder.build(job, first).getId(), targetCmd.getValue().getId());
     }
 }

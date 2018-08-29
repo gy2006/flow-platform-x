@@ -17,6 +17,7 @@
 package com.flowci.core.job.domain;
 
 import com.flowci.core.domain.Mongoable;
+import com.flowci.domain.VariableMap;
 import java.util.Date;
 import lombok.Data;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -119,4 +120,6 @@ public class Job extends Mongoable {
     private String agentId;
 
     private String currentPath;
+
+    private VariableMap context = new VariableMap();
 }

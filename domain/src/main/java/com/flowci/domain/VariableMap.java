@@ -72,6 +72,13 @@ public class VariableMap extends LinkedHashMap<Variable, String> implements Seri
         super();
     }
 
+    public VariableMap merge(VariableMap other) {
+        for (Map.Entry<Variable, String> entry : other.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
+        return this;
+    }
+
     public void putString(String key, String value) {
         Variable var = new Variable(key);
         put(var, value);

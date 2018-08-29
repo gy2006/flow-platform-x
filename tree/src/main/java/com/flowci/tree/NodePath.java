@@ -26,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.ToString;
 
 /**
@@ -43,6 +44,7 @@ public final class NodePath implements Serializable {
 
     private final List<String> paths = new ArrayList<>(MaxDepth);
 
+    @Getter
     private final String pathInStr;
 
     public static NodePath create(String... nameOrPaths) {

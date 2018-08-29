@@ -16,7 +16,6 @@
 
 package com.flowci.tree;
 
-import com.flowci.domain.VariableMap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,9 +44,6 @@ public class NodeTree {
 
     @Getter
     private final List<Node> ordered = new ArrayList<>(DEFAULT_SIZE);
-
-    @Getter
-    private final VariableMap sharedContext = new VariableMap();
 
     @Getter
     private Node root;

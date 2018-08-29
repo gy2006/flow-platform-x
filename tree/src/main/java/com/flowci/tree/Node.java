@@ -20,77 +20,57 @@ import com.flowci.domain.VariableMap;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
+import lombok.ToString;
 
 /**
  * @author yang
  */
+@Data
 @EqualsAndHashCode(of = {"path"})
+@ToString(of = {"path"})
 public class Node implements Serializable {
 
     public final static boolean ALLOW_FAILURE_DEFAULT = false;
 
     public final static boolean IS_FINAL_DEFAULT = false;
 
-    @Setter
-    @Getter
     @NonNull
     private String name;
 
-    @Setter
-    @Getter
     @NonNull
     private NodePath path;
 
-    @Getter
-    @Setter
     @NonNull
     private VariableMap environments = new VariableMap();
 
     /**
      * Node execute script, can be null
      */
-    @Getter
-    @Setter
     private String script;
 
     /**
      * Condition script
      */
-    @Getter
-    @Setter
     private String condition;
 
-    @Getter
-    @Setter
     private String plugin;
 
     /**
      * Is allow failure
      */
-    @Getter
-    @Setter
     @NonNull
     private boolean allowFailure = ALLOW_FAILURE_DEFAULT;
 
-    @Getter
-    @Setter
     private boolean isFinal = IS_FINAL_DEFAULT;
 
-    @Getter
-    @Setter
     @NonNull
     private Integer order = 0;
 
-    @Getter
-    @Setter
     private Node parent;
 
-    @Getter
-    @Setter
     @NonNull
     private List<Node> children = new LinkedList<>();
 

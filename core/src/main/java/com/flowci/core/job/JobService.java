@@ -28,10 +28,12 @@ import com.flowci.tree.NodeTree;
  */
 public interface JobService {
 
+    Job create(Flow flow, Yml yml, Trigger trigger);
+
     /**
-     * Start a job and send to queue
+     * Send to job queue
      */
-    Job start(Flow flow, Yml yml, Trigger trigger);
+    void start(Job job);
 
     /**
      * Get node tree from job
