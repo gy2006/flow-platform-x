@@ -21,21 +21,50 @@ import com.flowci.domain.Cmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.tree.Node;
 import com.google.common.collect.Lists;
+import java.text.MessageFormat;
+import java.util.Base64;
+import lombok.Data;
 
 /**
  * @author yang
  */
-public class CmdBuilder {
+public class CmdHelper {
 
-    public static Cmd build(Job job, Node node) {
+    @Data
+    public static class CmdID {
+
+        private final String jobId;
+
+        private final String nodePath;
+
+        @Override
+        public String toString() {
+            String cmdId = MessageFormat.format("{0}-{1}", jobId, nodePath);
+            return Base64.getEncoder().encodeToString(cmdId.getBytes());
+        }
+    }
+
+    public static CmdID parseID(String id) {
+        byte[] decode = Base64.getDecoder().decode(id);
+        String idString = new String(decode);
+        int index = idString.indexOf('-');
+
+        return new CmdID(idString.substring(0, index), idString.substring(index + 1));
+    }
+
+    public static CmdID createId(Job job, Node node) {
+        return new CmdID(job.getId(), node.getPath().getPathInStr());
+    }
+
+    public static Cmd create(Job job, Node node) {
         VariableMap variables = node.getEnvironments().merge(job.getContext());
 
-        Cmd cmd = new Cmd(KeyBuilder.buildCmdKey(job, node));
+        Cmd cmd = new Cmd(createId(job, node).toString());
         cmd.setInputs(variables);
         cmd.setScripts(Lists.newArrayList(node.getScript()));
         return cmd;
     }
 
-    private CmdBuilder() {
+    private CmdHelper() {
     }
 }

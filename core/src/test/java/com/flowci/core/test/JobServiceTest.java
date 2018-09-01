@@ -26,7 +26,7 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Status;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
-import com.flowci.core.job.util.CmdBuilder;
+import com.flowci.core.job.util.CmdHelper;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.ObjectWrapper;
@@ -137,7 +137,7 @@ public class JobServiceTest extends SpringScenario {
         Node first = tree.next(tree.getRoot().getPath());
 
         Cmd cmd = targetCmd.getValue();
-        Assert.assertEquals(CmdBuilder.build(job, first).getId(), cmd.getId());
+        Assert.assertEquals(CmdHelper.createId(job, first).toString(), cmd.getId());
         Assert.assertEquals("echo step version", cmd.getInputs().getString("FLOW_VERSION"));
         Assert.assertEquals("echo step", cmd.getInputs().getString("FLOW_WORKSPACE"));
         Assert.assertEquals("echo hello\n", cmd.getScripts().get(0));

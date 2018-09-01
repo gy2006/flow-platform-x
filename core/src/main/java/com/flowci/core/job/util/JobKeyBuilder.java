@@ -17,26 +17,19 @@
 package com.flowci.core.job.util;
 
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.job.domain.Job;
-import com.flowci.tree.Node;
-import java.text.MessageFormat;
 
 /**
  * @author yang
  */
-public class KeyBuilder {
+public class JobKeyBuilder {
 
     private final static char Splitter = '-';
 
-    public static String buildJobKey(Flow flow, Long buildNumber) {
+    public static String build(Flow flow, Long buildNumber) {
         return flow.getId() + Splitter + buildNumber;
     }
 
-    public static String buildCmdKey(Job job, Node node) {
-        return MessageFormat.format("{0}-{1}", job.getId(), node.getPath().getPathInStr());
-    }
-
-    private KeyBuilder() {
+    private JobKeyBuilder() {
 
     }
 }

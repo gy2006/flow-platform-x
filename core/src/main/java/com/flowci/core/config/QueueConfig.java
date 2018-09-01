@@ -43,8 +43,14 @@ public class QueueConfig {
 
     @Bean("jobQueue")
     public Queue jobQueue() {
-        String jobQueueName = jobProperties.getQueueName();
-        return new Queue(jobQueueName, true);
+        String jobQueue = jobProperties.getQueueName();
+        return new Queue(jobQueue, true);
+    }
+
+    @Bean("callbackQueue")
+    public Queue callbackQueue() {
+        String callbackQueue = jobProperties.getCallbackQueueName();
+        return new Queue(callbackQueue, true);
     }
 
     @Bean

@@ -21,6 +21,7 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.domain.Agent;
+import com.flowci.domain.ExecutedCmd;
 import com.flowci.tree.NodeTree;
 
 /**
@@ -46,12 +47,17 @@ public interface JobService {
     boolean isExpired(Job job);
 
     /**
+     * Convert node to cmd and dispatch to agent
+     */
+    boolean dispatch(Job job, Agent agent);
+
+    /**
      * Process job from queue
      */
     void processJob(Job job);
 
     /**
-     * Dispatch job to selected agent
+     * Process executed cmd callback from queue
      */
-    boolean dispatch(Job job, Agent agent);
+    void processCallback(ExecutedCmd execCmd);
 }

@@ -39,6 +39,8 @@ public class ConfigProperties {
 
         private String queueName;
 
+        private String callbackQueueName;
+
         private Long expireInSeconds;
 
         private Long retryWaitingSeconds;

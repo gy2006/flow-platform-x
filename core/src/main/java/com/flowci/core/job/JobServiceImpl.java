@@ -32,11 +32,12 @@ import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.StatusChangeEvent;
-import com.flowci.core.job.util.CmdBuilder;
-import com.flowci.core.job.util.KeyBuilder;
+import com.flowci.core.job.util.CmdHelper;
+import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
+import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
 import com.flowci.tree.Node;
@@ -104,7 +105,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
         // create job
         Job job = new Job();
-        job.setKey(KeyBuilder.buildJobKey(flow, buildNumber));
+        job.setKey(JobKeyBuilder.build(flow, buildNumber));
         job.setFlowId(flow.getId());
         job.setTrigger(trigger);
         job.setCreatedBy(getCurrentUser().getId());
@@ -152,6 +153,24 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     }
 
     @Override
+    public boolean dispatch(Job job, Agent agent) {
+        NodeTree tree = getTree(job);
+        NodePath current = NodePath.create(job.getCurrentPath());
+
+        Node nodeToDispatch = tree.next(current);
+        Cmd cmd = CmdHelper.create(job, nodeToDispatch);
+
+        try {
+            agentService.dispatch(cmd, agent);
+            setJobStatus(job, Job.Status.DISPATCHED, null);
+            return true;
+        } catch (Throwable e) {
+            setJobStatus(job, Job.Status.FAILURE, e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
     @RabbitListener(queues = "${app.job.queue-name}")
     public void processJob(Job job) {
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
@@ -181,21 +200,9 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     }
 
     @Override
-    public boolean dispatch(Job job, Agent agent) {
-        NodeTree tree = getTree(job);
-        NodePath current = NodePath.create(job.getCurrentPath());
+    @RabbitListener(queues = "${app.job.callback-queue-name}")
+    public void processCallback(ExecutedCmd execCmd) {
 
-        Node nodeToDispatch = tree.next(current);
-        Cmd cmd = CmdBuilder.build(job, nodeToDispatch);
-
-        try {
-            agentService.dispatch(cmd, agent);
-            setJobStatus(job, Job.Status.DISPATCHED, null);
-            return true;
-        } catch (Throwable e) {
-            setJobStatus(job, Job.Status.FAILURE, e.getMessage());
-            return false;
-        }
     }
 
     /**
