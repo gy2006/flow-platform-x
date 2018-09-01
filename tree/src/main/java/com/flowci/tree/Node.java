@@ -79,6 +79,10 @@ public class Node implements Serializable {
         this.path = NodePath.create(name);
     }
 
+    public String getPathAsString() {
+        return path.getPathInStr();
+    }
+
     public String getEnv(String name) {
         return environments.getString(name);
     }

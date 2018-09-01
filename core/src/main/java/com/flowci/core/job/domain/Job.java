@@ -16,6 +16,7 @@
 
 package com.flowci.core.job.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.domain.Mongoable;
 import com.flowci.domain.VariableMap;
 import java.util.Date;
@@ -77,11 +78,6 @@ public class Job extends Mongoable {
         ENQUEUE,
 
         /**
-         * Job been dispatched to agent
-         */
-        DISPATCHED,
-
-        /**
          * Agent take over the job, and been start to execute
          */
         RUNNING,
@@ -130,6 +126,11 @@ public class Job extends Mongoable {
     private VariableMap context = new VariableMap();
 
     private String message;
+
+    @JsonIgnore
+    public boolean isRunning() {
+        return status == Status.RUNNING;
+    }
 
     @Override
     public boolean equals(Object o) {

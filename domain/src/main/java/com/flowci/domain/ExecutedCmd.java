@@ -16,31 +16,47 @@
 
 package com.flowci.domain;
 
+import static com.flowci.domain.ExecutedCmd.Status.EXCEPTION;
+import static com.flowci.domain.ExecutedCmd.Status.KILLED;
+import static com.flowci.domain.ExecutedCmd.Status.REJECTED;
+import static com.flowci.domain.ExecutedCmd.Status.STOPPED;
+import static com.flowci.domain.ExecutedCmd.Status.SUCCESS;
+import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT_KILL;
+
+import com.google.common.collect.ImmutableSet;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Set;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
  */
-@RequiredArgsConstructor
+@Data
+@Document
+@NoArgsConstructor
 @EqualsAndHashCode(of = {"id"})
 public final class ExecutedCmd implements Serializable {
 
     public final static Integer CODE_TIMEOUT = -100;
 
+    private final static Set<Status> FailureStatus = ImmutableSet.of(
+        EXCEPTION,
+        KILLED,
+        REJECTED,
+        TIMEOUT_KILL,
+        STOPPED
+    );
+
     public enum Status {
 
         PENDING(-1),
 
-        SENT(0),
-
-        RUNNING(1), // current cmd
-
-        EXECUTED(2), // current cmd
+        SUCCESS(2), // current cmd
 
         EXCEPTION(3),
 
@@ -60,35 +76,34 @@ public final class ExecutedCmd implements Serializable {
         }
     }
 
-    @Getter
-    private final String id;
+    private String id;
 
-    @Getter
-    @Setter
     private Integer processId;
 
-    @Getter
-    @Setter
     private Status status = Status.PENDING;
 
     /**
      * Linux shell exit code
      */
-    @Getter
-    @Setter
     private Integer code;
 
-    @Getter
-    @Setter
     private VariableMap output = new VariableMap();
 
-    @Getter
-    @Setter
     private Long startAt;
 
-    @Getter
-    @Setter
     private Long finishAt;
+
+    public ExecutedCmd(String id) {
+        this.id = id;
+    }
+
+    public boolean isSuccess() {
+        return status == SUCCESS;
+    }
+
+    public boolean isFailure() {
+        return FailureStatus.contains(status);
+    }
 
     public Long getDuration() {
         if (Objects.isNull(startAt) || Objects.isNull(finishAt)) {

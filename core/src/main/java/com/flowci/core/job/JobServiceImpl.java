@@ -22,6 +22,7 @@ import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobNumberDao;
 import com.flowci.core.job.dao.JobYmlDao;
@@ -47,6 +48,7 @@ import com.flowci.tree.YmlParser;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
@@ -76,6 +78,9 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
     @Autowired
     private JobNumberDao jobNumberDao;
+
+    @Autowired
+    private ExecutedCmdDao executedCmdDao;
 
     @Autowired
     private Cache jobTreeCache;
@@ -110,7 +115,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         job.setTrigger(trigger);
         job.setCreatedBy(getCurrentUser().getId());
         job.setBuildNumber(buildNumber);
-        job.setCurrentPath(root.getPath().getPathInStr());
+        job.setCurrentPath(root.getPathAsString());
 
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
@@ -156,13 +161,16 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     public boolean dispatch(Job job, Agent agent) {
         NodeTree tree = getTree(job);
         NodePath current = NodePath.create(job.getCurrentPath());
-
-        Node nodeToDispatch = tree.next(current);
-        Cmd cmd = CmdHelper.create(job, nodeToDispatch);
+        Node node = tree.get(current);
 
         try {
+            Cmd cmd = CmdHelper.create(job, node);
             agentService.dispatch(cmd, agent);
-            setJobStatus(job, Job.Status.DISPATCHED, null);
+
+            if (job.getStatus() != Job.Status.RUNNING) {
+                setJobStatus(job, Job.Status.RUNNING, null);
+            }
+
             return true;
         } catch (Throwable e) {
             setJobStatus(job, Job.Status.FAILURE, e.getMessage());
@@ -186,7 +194,16 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
                 return;
             }
 
-            // set dispatched agent id to job
+            NodeTree tree = getTree(job);
+            Node next = tree.next(NodePath.create(job.getCurrentPath()));
+
+            if (Objects.isNull(next)) {
+                log.debug("Next node cannot be found when process job {}", job);
+                return;
+            }
+
+            // set path and agent id to job
+            job.setCurrentPath(next.getPathAsString());
             job.setAgentId(available.getId());
             jobDao.save(job);
 
@@ -202,7 +219,60 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     @Override
     @RabbitListener(queues = "${app.job.callback-queue-name}")
     public void processCallback(ExecutedCmd execCmd) {
+        CmdHelper.CmdID cmdId = CmdHelper.parseID(execCmd.getId());
 
+        // get cmd related job
+        Job job = jobDao.findById(cmdId.getJobId()).get();
+        NodePath current = NodePath.create(cmdId.getNodePath());
+
+        // verify job node path is match cmd node path
+        if (!current.equals(NodePath.create(job.getCurrentPath()))) {
+            log.error("Invalid executed cmd callback: does not match job current node path");
+            return;
+        }
+
+        // verify job status
+        if (!job.isRunning()) {
+            log.error("Cannot handle cmd callback since job is not running: {}", job.getStatus());
+            return;
+        }
+
+        // save executed cmd
+        executedCmdDao.save(execCmd);
+        log.debug("Executed cmd {} been recorded", execCmd);
+
+        // merge job context
+        job.getContext().merge(execCmd.getOutput());
+        jobDao.save(job);
+
+        // continue to run next node
+        if (execCmd.isSuccess()) {
+            handleSuccessCmd(job, current);
+            return;
+        }
+
+        handleFailureCmd(job, current, execCmd);
+    }
+
+    private void handleFailureCmd(Job job, NodePath current, ExecutedCmd execCmd) {
+
+    }
+
+    private void handleSuccessCmd(Job job, NodePath current) {
+        NodeTree tree = getTree(job);
+        Node next = tree.next(current);
+
+        if (Objects.isNull(next)) {
+            setJobStatus(job, Job.Status.SUCCESS, null);
+            log.info("Job {} been executed", job.getId());
+            return;
+        }
+
+        job.setCurrentPath(next.getPathAsString());
+        jobDao.save(job);
+
+        Agent agent = agentService.get(job.getAgentId());
+        dispatch(job, agent);
     }
 
     /**
