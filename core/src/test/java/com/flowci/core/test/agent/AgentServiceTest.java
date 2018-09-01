@@ -18,25 +18,21 @@ package com.flowci.core.test.agent;
 
 import com.flowci.core.agent.AgentService;
 import com.flowci.core.agent.event.CmdSentEvent;
-import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.helper.ThreadHelper;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
-import com.flowci.domain.ObjectWrapper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.google.common.collect.ImmutableSet;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.zookeeper.CreateMode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
@@ -70,22 +66,13 @@ public class AgentServiceTest extends ZookeeperScenario {
     public void should_make_agent_online() throws InterruptedException {
         // init:
         Agent agent = agentService.create("hello.test", ImmutableSet.of("local", "android"));
-        String agentPath = zkProperties.getRoot() + "/" + agent.getId();
 
-        CountDownLatch counter = new CountDownLatch(1);
-        ObjectWrapper<Agent> agentWrapper = new ObjectWrapper<>();
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<StatusChangeEvent>) event -> {
-            counter.countDown();
-            agentWrapper.setValue(event.getAgent());
-        });
-
-        // when: agent online in dummy
-        zk.create(CreateMode.EPHEMERAL, agentPath, Status.IDLE.getBytes());
+        // when:
+        Agent online = mockAgentOnline(agentService.getPath(agent));
 
         // then:
-        counter.await(10, TimeUnit.SECONDS);
-        Assert.assertEquals(agent, agentWrapper.getValue());
-        Assert.assertEquals(Status.IDLE, agentWrapper.getValue().getStatus());
+        Assert.assertEquals(agent, online);
+        Assert.assertEquals(Status.IDLE, online.getStatus());
     }
 
     @Test
@@ -102,16 +89,9 @@ public class AgentServiceTest extends ZookeeperScenario {
         Assert.assertNotNull(agent);
 
         // when: make agent online
-        CountDownLatch counter  = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<StatusChangeEvent>) event -> {
-            counter.countDown();
-        });
-
-        String path = agentService.getPath(idle);
-        zk.create(CreateMode.PERSISTENT, path, Status.IDLE.getBytes());
+        mockAgentOnline(agentService.getPath(idle));
 
         // then: find available agent
-        counter.await(10, TimeUnit.SECONDS);
         Agent available = agentService.find(Status.IDLE, null);
         Assert.assertEquals(idle, available);
 
@@ -138,20 +118,14 @@ public class AgentServiceTest extends ZookeeperScenario {
         counterForLock.await(10, TimeUnit.SECONDS);
         Assert.assertEquals(1, numOfLocked.get());
         Assert.assertEquals(4, numOfFailure.get());
-        Assert.assertEquals(Status.BUSY, Status.fromBytes(zk.get(agentService.getPath(available))));
+        Assert.assertEquals(Status.BUSY, getAgentStatus(agentService.getPath(available)));
 
         // when: release agent and mock event from agent
-        CountDownLatch counterForRelease = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<StatusChangeEvent>) event -> {
-            counterForRelease.countDown();
-        });
-
         agentService.tryRelease(available);
-        zk.set(agentService.getPath(available), Status.IDLE.getBytes());
+        mockReleaseAgent(agentService.getPath(available));
 
         // then: the status should be idle
-        counterForRelease.await(10, TimeUnit.SECONDS);
-        Status statusFromZk = Status.fromBytes(zk.get(agentService.getPath(available)));
+        Status statusFromZk = getAgentStatus(agentService.getPath(available));
         Assert.assertEquals(Status.IDLE, statusFromZk);
 
         ThreadHelper.sleep(2000);
