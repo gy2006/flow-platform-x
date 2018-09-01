@@ -160,8 +160,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     @Override
     public boolean dispatch(Job job, Agent agent) {
         NodeTree tree = getTree(job);
-        NodePath current = NodePath.create(job.getCurrentPath());
-        Node node = tree.get(current);
+        Node node = tree.get(currentJobNode(job));
 
         try {
             Cmd cmd = CmdHelper.create(job, node);
@@ -195,7 +194,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
             }
 
             NodeTree tree = getTree(job);
-            Node next = tree.next(NodePath.create(job.getCurrentPath()));
+            Node next = tree.next(currentJobNode(job));
 
             if (Objects.isNull(next)) {
                 log.debug("Next node cannot be found when process job {}", job);
@@ -223,10 +222,10 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
         // get cmd related job
         Job job = jobDao.findById(cmdId.getJobId()).get();
-        NodePath current = NodePath.create(cmdId.getNodePath());
+        NodePath currentFromCmd = NodePath.create(cmdId.getNodePath());
 
         // verify job node path is match cmd node path
-        if (!current.equals(NodePath.create(job.getCurrentPath()))) {
+        if (!currentFromCmd.equals(currentJobNode(job))) {
             log.error("Invalid executed cmd callback: does not match job current node path");
             return;
         }
@@ -247,20 +246,20 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
         // continue to run next node
         if (execCmd.isSuccess()) {
-            handleSuccessCmd(job, current);
+            handleSuccessCmd(job);
             return;
         }
 
-        handleFailureCmd(job, current, execCmd);
+        handleFailureCmd(job, currentFromCmd, execCmd);
     }
 
     private void handleFailureCmd(Job job, NodePath current, ExecutedCmd execCmd) {
 
     }
 
-    private void handleSuccessCmd(Job job, NodePath current) {
+    private void handleSuccessCmd(Job job) {
         NodeTree tree = getTree(job);
-        Node next = tree.next(current);
+        Node next = tree.next(currentJobNode(job));
 
         if (Objects.isNull(next)) {
             setJobStatus(job, Job.Status.SUCCESS, null);
@@ -273,6 +272,10 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
         Agent agent = agentService.get(job.getAgentId());
         dispatch(job, agent);
+    }
+
+    private NodePath currentJobNode(Job job) {
+        return NodePath.create(job.getCurrentPath());
     }
 
     /**
