@@ -123,7 +123,7 @@ public class CmdExecutor {
 
     public void run() {
         try {
-            result.setStartAt(new Date().getTime());
+            result.setStartAt(new Date());
             process = pBuilder.start();
             result.setProcessId(getPid(process));
             processListener.onStarted(result);
@@ -165,7 +165,7 @@ public class CmdExecutor {
             processListener.onException(e);
             log.warn(e.getMessage());
         } finally {
-            result.setFinishAt(new Date().getTime());
+            result.setFinishAt(new Date());
             log.trace("====== Process Done ======");
         }
     }

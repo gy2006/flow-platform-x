@@ -35,6 +35,7 @@ import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.StatusChangeEvent;
 import com.flowci.core.job.util.CmdHelper;
 import com.flowci.core.job.util.JobKeyBuilder;
+import com.flowci.core.job.util.StatusHelper;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
@@ -160,7 +161,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     @Override
     public boolean dispatch(Job job, Agent agent) {
         NodeTree tree = getTree(job);
-        Node node = tree.get(currentJobNode(job));
+        Node node = tree.get(currentNodePath(job));
 
         try {
             Cmd cmd = CmdHelper.create(job, node);
@@ -194,7 +195,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
             }
 
             NodeTree tree = getTree(job);
-            Node next = tree.next(currentJobNode(job));
+            Node next = tree.next(currentNodePath(job));
 
             if (Objects.isNull(next)) {
                 log.debug("Next node cannot be found when process job {}", job);
@@ -225,7 +226,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         NodePath currentFromCmd = NodePath.create(cmdId.getNodePath());
 
         // verify job node path is match cmd node path
-        if (!currentFromCmd.equals(currentJobNode(job))) {
+        if (!currentFromCmd.equals(currentNodePath(job))) {
             log.error("Invalid executed cmd callback: does not match job current node path");
             return;
         }
@@ -250,16 +251,33 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
             return;
         }
 
-        handleFailureCmd(job, currentFromCmd, execCmd);
+        handleFailureCmd(job, execCmd);
     }
 
-    private void handleFailureCmd(Job job, NodePath current, ExecutedCmd execCmd) {
+    private void handleFailureCmd(Job job, ExecutedCmd execCmd) {
+        Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus());
 
+        NodeTree tree = getTree(job);
+        NodePath path = currentNodePath(job);
+
+        Node current = tree.get(path);
+        Node next = tree.next(path);
+
+        // set job status
+        // - no more node to be executed
+        // - current node not allow failure
+        if (Objects.isNull(next) || !current.isAllowFailure()) {
+            setJobStatus(job, jobStatus, execCmd.getError());
+            log.info("Job {} been executed with status {}", job.getId(), jobStatus);
+            return;
+        }
+
+        setupNodePathAndDispatch(job, next);
     }
 
     private void handleSuccessCmd(Job job) {
         NodeTree tree = getTree(job);
-        Node next = tree.next(currentJobNode(job));
+        Node next = tree.next(currentNodePath(job));
 
         if (Objects.isNull(next)) {
             setJobStatus(job, Job.Status.SUCCESS, null);
@@ -267,6 +285,10 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
             return;
         }
 
+        setupNodePathAndDispatch(job, next);
+    }
+
+    private void setupNodePathAndDispatch(Job job, Node next) {
         job.setCurrentPath(next.getPathAsString());
         jobDao.save(job);
 
@@ -274,7 +296,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         dispatch(job, agent);
     }
 
-    private NodePath currentJobNode(Job job) {
+    private NodePath currentNodePath(Job job) {
         return NodePath.create(job.getCurrentPath());
     }
 

@@ -18,13 +18,12 @@ package com.flowci.domain;
 
 import static com.flowci.domain.ExecutedCmd.Status.EXCEPTION;
 import static com.flowci.domain.ExecutedCmd.Status.KILLED;
-import static com.flowci.domain.ExecutedCmd.Status.REJECTED;
-import static com.flowci.domain.ExecutedCmd.Status.STOPPED;
 import static com.flowci.domain.ExecutedCmd.Status.SUCCESS;
-import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT_KILL;
+import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT;
 
 import com.google.common.collect.ImmutableSet;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
 import lombok.Data;
@@ -47,9 +46,7 @@ public final class ExecutedCmd implements Serializable {
     private final static Set<Status> FailureStatus = ImmutableSet.of(
         EXCEPTION,
         KILLED,
-        REJECTED,
-        TIMEOUT_KILL,
-        STOPPED
+        TIMEOUT
     );
 
     public enum Status {
@@ -64,7 +61,7 @@ public final class ExecutedCmd implements Serializable {
 
         REJECTED(3),
 
-        TIMEOUT_KILL(4),
+        TIMEOUT(4),
 
         STOPPED(4);
 
@@ -78,8 +75,14 @@ public final class ExecutedCmd implements Serializable {
 
     private String id;
 
+    /**
+     * Process id
+     */
     private Integer processId;
 
+    /**
+     * Cmd execution status
+     */
     private Status status = Status.PENDING;
 
     /**
@@ -87,11 +90,25 @@ public final class ExecutedCmd implements Serializable {
      */
     private Integer code;
 
+    /**
+     * Cmd output
+     */
     private VariableMap output = new VariableMap();
 
-    private Long startAt;
+    /**
+     * Cmd start at timestamp
+     */
+    private Date startAt;
 
-    private Long finishAt;
+    /**
+     * Cmd finish at timestamp
+     */
+    private Date finishAt;
+
+    /**
+     * Error message
+     */
+    private String error;
 
     public ExecutedCmd(String id) {
         this.id = id;
@@ -110,6 +127,6 @@ public final class ExecutedCmd implements Serializable {
             return -1L;
         }
 
-        return finishAt - startAt;
+        return finishAt.getTime() - startAt.getTime();
     }
 }

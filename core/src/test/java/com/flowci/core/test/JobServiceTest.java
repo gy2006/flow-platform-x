@@ -40,7 +40,6 @@ import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
 import java.io.IOException;
-import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
@@ -161,20 +160,13 @@ public class JobServiceTest extends ZookeeperScenario {
     }
 
     @Test
-    public void should_save_executed_cmd_and_continue_the_job() throws InterruptedException {
-        // init: agent
+    public void should_handle_cmd_callback_for_success_status() throws InterruptedException {
+        // init: agent and job
         Agent agent = agentService.create("hello.agent", null);
-
-        // init: job to mock the first node been send to agent
-        Job job = jobService.create(flow, yml, Trigger.MANUAL);
+        Job job = prepareJobForRunningStatus(agent);
 
         NodeTree tree = jobService.getTree(job);
         Node firstNode = tree.next(tree.getRoot().getPath());
-
-        job.setAgentId(agent.getId());
-        job.setCurrentPath(firstNode.getPath().getPathInStr());
-        job.setStatus(Status.RUNNING);
-        jobDao.save(job);
 
         // when: cmd of first node been executed
         VariableMap output = new VariableMap();
@@ -182,10 +174,6 @@ public class JobServiceTest extends ZookeeperScenario {
 
         ExecutedCmd executedCmd = new ExecutedCmd(CmdHelper.createId(job, firstNode).toString());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
-        executedCmd.setCode(0);
-        executedCmd.setStartAt(new Date().getTime());
-        executedCmd.setFinishAt(new Date().getTime() + 10);
-        executedCmd.setProcessId(1);
         executedCmd.setOutput(output);
 
         jobService.processCallback(executedCmd);
@@ -209,10 +197,6 @@ public class JobServiceTest extends ZookeeperScenario {
 
         executedCmd = new ExecutedCmd(CmdHelper.createId(job, secondNode).toString());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
-        executedCmd.setCode(0);
-        executedCmd.setStartAt(new Date().getTime());
-        executedCmd.setFinishAt(new Date().getTime() + 10);
-        executedCmd.setProcessId(1);
         executedCmd.setOutput(output);
 
         jobService.processCallback(executedCmd);
@@ -227,5 +211,70 @@ public class JobServiceTest extends ZookeeperScenario {
         Assert.assertEquals("hello.java", job.getContext().getString("HELLO_JAVA"));
         Assert.assertEquals("hello.world", job.getContext().getString("HELLO_WORLD"));
         Assert.assertEquals(Status.SUCCESS, job.getStatus());
+    }
+
+    @Test
+    public void should_handle_cmd_callback_for_failure_status_but_allow_failure() {
+        // init: agent and job
+        Agent agent = agentService.create("hello.agent", null);
+        Job job = prepareJobForRunningStatus(agent);
+
+        NodeTree tree = jobService.getTree(job);
+        Node firstNode = tree.next(tree.getRoot().getPath());
+
+        // when: cmd of first node with failure
+        VariableMap output = new VariableMap();
+        output.putString("HELLO_WORLD", "hello.world");
+
+        ExecutedCmd executedCmd = new ExecutedCmd(CmdHelper.createId(job, firstNode).toString());
+        executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
+        executedCmd.setOutput(output);
+
+        jobService.processCallback(executedCmd);
+
+        // then: executed cmd should be recorded
+        Assert.assertNotNull(executedCmdDao.findById(executedCmd.getId()).get());
+
+        // then: job status should be running and current path should be change to second node
+        job = jobDao.findById(job.getId()).get();
+        Node secondNode = tree.next(firstNode.getPath());
+
+        Assert.assertEquals(Status.RUNNING, job.getStatus());
+        Assert.assertEquals(secondNode.getPathAsString(), job.getCurrentPath());
+        Assert.assertEquals("hello.world", job.getContext().getString("HELLO_WORLD"));
+
+        // when: second cmd of node been timeout
+        output = new VariableMap();
+        output.putString("HELLO_TIMEOUT", "hello.timeout");
+
+        executedCmd = new ExecutedCmd(CmdHelper.createId(job, secondNode).toString());
+        executedCmd.setStatus(ExecutedCmd.Status.TIMEOUT);
+        executedCmd.setOutput(output);
+        executedCmd.setError("timeout");
+
+        jobService.processCallback(executedCmd);
+
+        // then: executed cmd of second node should be recorded
+        Assert.assertNotNull(executedCmdDao.findById(executedCmd.getId()).get());
+
+        // then: job should be timeout with error message
+        job = jobDao.findById(job.getId()).get();
+        Assert.assertEquals(Status.TIMEOUT, job.getStatus());
+        Assert.assertEquals("hello.timeout", job.getContext().getString("HELLO_TIMEOUT"));
+        Assert.assertEquals("timeout", job.getMessage());
+    }
+
+    private Job prepareJobForRunningStatus(Agent agent) {
+        // init: job to mock the first node been send to agent
+        Job job = jobService.create(flow, yml, Trigger.MANUAL);
+
+        NodeTree tree = jobService.getTree(job);
+        Node firstNode = tree.next(tree.getRoot().getPath());
+
+        job.setAgentId(agent.getId());
+        job.setCurrentPath(firstNode.getPath().getPathInStr());
+        job.setStatus(Status.RUNNING);
+
+        return jobDao.save(job);
     }
 }
