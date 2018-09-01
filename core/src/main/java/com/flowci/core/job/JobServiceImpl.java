@@ -123,12 +123,16 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     }
 
     @Override
-    public void start(Job job) {
+    public Job start(Job job) {
         if (job.getStatus() != Job.Status.PENDING) {
             throw new StatusException("Job not in pending status");
         }
 
-        enqueue(job);
+        try {
+            return enqueue(job);
+        } catch (StatusException e) {
+            return setJobStatus(job, Job.Status.FAILURE, e.getMessage());
+        }
     }
 
     @Override
@@ -183,8 +187,15 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
         Node nodeToDispatch = tree.next(current);
         Cmd cmd = CmdBuilder.build(job, nodeToDispatch);
-        agentService.dispatch(cmd, agent);
-        return true;
+
+        try {
+            agentService.dispatch(cmd, agent);
+            setJobStatus(job, Job.Status.DISPATCHED, null);
+            return true;
+        } catch (Throwable e) {
+            setJobStatus(job, Job.Status.FAILURE, e.getMessage());
+            return false;
+        }
     }
 
     /**
@@ -199,20 +210,27 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
 
     private Job enqueue(Job job) {
         if (isExpired(job)) {
-            setJobStatus(job, Job.Status.TIMEOUT);
+            setJobStatus(job, Job.Status.TIMEOUT, null);
             log.warn("Job '{}' is expired", job);
             return job;
         }
 
-        queueTemplate.convertAndSend(jobQueue.getName(), job);
-        applicationEventPublisher.publishEvent(new JobCreatedEvent(this, job));
-        return job;
+        try {
+            queueTemplate.convertAndSend(jobQueue.getName(), job);
+            applicationEventPublisher.publishEvent(new JobCreatedEvent(this, job));
+            setJobStatus(job, Job.Status.ENQUEUE, null);
+            return job;
+        } catch (Throwable e) {
+            throw new StatusException("Unable to enqueue the job {} since {}", job.getId(), e.getMessage());
+        }
     }
 
-    private void setJobStatus(Job job, Job.Status newStatus) {
+    private Job setJobStatus(Job job, Job.Status newStatus, String message) {
         job.setStatus(newStatus);
+        job.setMessage(message);
         jobDao.save(job);
         applicationEventPublisher.publishEvent(new StatusChangeEvent(this, job));
+        return job;
     }
 
     private Long getJobNumber(Flow flow) {

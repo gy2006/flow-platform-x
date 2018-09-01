@@ -19,6 +19,7 @@ package com.flowci.core.job.domain;
 import com.flowci.core.domain.Mongoable;
 import com.flowci.domain.VariableMap;
 import java.util.Date;
+import java.util.Objects;
 import lombok.Data;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -69,6 +70,11 @@ public class Job extends Mongoable {
          * Initial job state
          */
         PENDING,
+
+        /**
+         * Been put to job queue
+         */
+        ENQUEUE,
 
         /**
          * Job been dispatched to agent
@@ -122,4 +128,16 @@ public class Job extends Mongoable {
     private String currentPath;
 
     private VariableMap context = new VariableMap();
+
+    private String message;
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 }

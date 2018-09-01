@@ -33,7 +33,7 @@ public interface JobService {
     /**
      * Send to job queue
      */
-    void start(Job job);
+    Job start(Job job);
 
     /**
      * Get node tree from job

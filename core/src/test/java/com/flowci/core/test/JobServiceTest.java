@@ -23,6 +23,7 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.JobService;
 import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.domain.Job.Status;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.util.CmdBuilder;
@@ -85,9 +86,12 @@ public class JobServiceTest extends SpringScenario {
             waitForJobFromQueue.countDown();
         });
 
-        // when:
+        // when: create and start job
         Job job = jobService.create(flow, yml, Trigger.MANUAL);
-        jobService.start(job);
+        Assert.assertEquals(Status.PENDING, job.getStatus());
+
+        job = jobService.start(job);
+        Assert.assertEquals(Status.ENQUEUE, job.getStatus());
 
         Assert.assertNotNull(job);
         Assert.assertNotNull(jobService.getTree(job));
