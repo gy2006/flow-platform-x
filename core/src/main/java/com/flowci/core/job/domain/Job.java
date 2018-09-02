@@ -132,6 +132,11 @@ public class Job extends Mongoable {
         return status == Status.RUNNING;
     }
 
+    @JsonIgnore
+    public boolean isPending() {
+        return status == Status.PENDING;
+    }
+
     @Override
     public boolean equals(Object o) {
         return super.equals(o);

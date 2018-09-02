@@ -183,6 +183,11 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
     public void processJob(Job job) {
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
 
+        if (!job.isPending()) {
+            log.info("Job {} cannot be process since status not pending", job.getId());
+            return;
+        }
+
         try {
             // find available agent and tryLock
             Agent available = agentService.find(Status.IDLE, null);
