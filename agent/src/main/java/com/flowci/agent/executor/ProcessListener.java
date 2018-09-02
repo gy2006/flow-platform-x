@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.cmd;
+package com.flowci.agent.executor;
 
 import com.flowci.domain.ExecutedCmd;
 

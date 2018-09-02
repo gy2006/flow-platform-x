@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.cmd.test;
+package com.flowci.agent.executor.test;
 
-import com.flowci.agent.cmd.CmdExecutor;
-import com.flowci.agent.cmd.Log;
-import com.flowci.agent.cmd.LoggingListener;
+import com.flowci.agent.executor.CmdExecutor;
+import com.flowci.agent.executor.Log;
+import com.flowci.agent.executor.LoggingListener;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.ExecutedCmd;
 import com.google.common.collect.Lists;

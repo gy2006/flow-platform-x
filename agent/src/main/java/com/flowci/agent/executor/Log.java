@@ -14,17 +14,36 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.cmd;
+package com.flowci.agent.executor;
+
+import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * @author yang
  */
-public interface LoggingListener {
+@RequiredArgsConstructor
+@AllArgsConstructor
+@ToString(of = {"type", "content"})
+public final class Log implements Serializable {
 
-    default void onLogging(Log log) {
+    public enum Type {
+        STDOUT,
+        STDERR,
     }
 
-    default void onFinish() {
-    }
+    @Getter
+    private final Type type;
+
+    @Getter
+    private final String content;
+
+    @Getter
+    @Setter
+    private Integer number = 0;
 
 }
