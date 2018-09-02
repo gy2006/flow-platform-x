@@ -16,7 +16,7 @@
 
 package com.flowci.zookeeper;
 
-import java.text.MessageFormat;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -87,6 +87,14 @@ public class ZookeeperClient implements AutoCloseable {
                 .forPath(path, data);
         } catch (Throwable e) {
             throw new ZookeeperException("Fail to create node: {0}", e.getMessage());
+        }
+    }
+
+    public List<String> children(String root) {
+        try {
+            return client.getChildren().forPath(root);
+        } catch (Throwable e) {
+            throw new ZookeeperException("Fail to list children of {0} : {1}", root, e.getMessage());
         }
     }
 

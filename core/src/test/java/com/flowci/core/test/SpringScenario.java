@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.junit.After;
 import org.junit.runner.RunWith;
 import org.springframework.amqp.core.Queue;
@@ -41,6 +42,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 /**
  * @author yang
  */
+@Log4j2
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Config.class)
 @AutoConfigureMockMvc

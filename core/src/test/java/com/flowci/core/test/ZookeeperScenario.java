@@ -17,6 +17,7 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.event.StatusChangeEvent;
+import com.flowci.core.config.ConfigProperties;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.ObjectWrapper;
@@ -24,10 +25,12 @@ import com.flowci.zookeeper.ZookeeperClient;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.log4j.Log4j2;
 import org.apache.curator.test.TestingServer;
 import org.apache.zookeeper.CreateMode;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -37,12 +40,16 @@ import org.springframework.context.ApplicationListener;
 /**
  * @author yang
  */
+@Log4j2
 public abstract class ZookeeperScenario extends SpringScenario {
 
     private static TestingServer server;
 
     @Autowired
     private ZookeeperClient zk;
+
+    @Autowired
+    private ConfigProperties.Zookeeper zkProperties;
 
     @ClassRule
     public static TemporaryFolder temp = new TemporaryFolder();
@@ -58,6 +65,14 @@ public abstract class ZookeeperScenario extends SpringScenario {
         server.close();
     }
 
+    @Before
+    public void cleanZkNodes() {
+        String root = zkProperties.getRoot();
+        for (String child : zk.children(root)) {
+            zk.delete(root + "/" + child, true);
+        }
+    }
+
     protected Agent mockAgentOnline(String agentPath) throws InterruptedException {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
@@ -67,15 +82,18 @@ public abstract class ZookeeperScenario extends SpringScenario {
             counter.countDown();
         });
 
-        zk.create(CreateMode.PERSISTENT, agentPath, Status.IDLE.getBytes());
+        zk.create(CreateMode.EPHEMERAL, agentPath, Status.IDLE.getBytes());
         counter.await(10, TimeUnit.SECONDS);
 
         Assert.assertNotNull(wrapper.getValue());
         Assert.assertEquals(Status.IDLE, wrapper.getValue().getStatus());
+        Assert.assertTrue(zk.exist(agentPath + "-lock"));
+
         return wrapper.getValue();
     }
 
     protected Agent mockReleaseAgent(String agentPath) throws InterruptedException {
+        log.debug("Mock release agent {}", agentPath);
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
 

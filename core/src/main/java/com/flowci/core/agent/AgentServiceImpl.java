@@ -48,11 +48,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 /**
+ * Manage agent from zookeeper nodes
+ *  - The ephemeral node present agent, path is /{root}/{agent id}
+ *  - The persistent node present agent of lock, path is /{root}/{agent id}-lock, managed by server side
  * @author yang
  */
 @Log4j2
 @Service
 public class AgentServiceImpl implements AgentService {
+
+    private static final String LockPathSuffix = "-lock";
 
     @Autowired
     private ConfigProperties.Zookeeper zkProperties;
@@ -139,7 +144,8 @@ public class AgentServiceImpl implements AgentService {
             }
 
             // lock and set status to busy
-            zk.lock(zkPath, path -> updateAgentStatus(reload, Status.BUSY));
+            String zkLockPath = getLockPath(reload);
+            zk.lock(zkLockPath, path -> updateAgentStatus(reload, Status.BUSY));
             return true;
         } catch (ZookeeperException e) {
             log.debug(e);
@@ -184,13 +190,18 @@ public class AgentServiceImpl implements AgentService {
 
     /**
      * Update agent status from ZK and DB
-     * @param agent
-     * @param status
+     * @param agent target agent
+     * @param status new status
      */
     private void updateAgentStatus(Agent agent, Status status) {
+        if (agent.getStatus() == status) {
+            log.debug("Cannot update agent {} status since status the same", agent);
+            return;
+        }
+
         agent.setStatus(status);
 
-        // update zookeeper status
+        // update zookeeper status if new status not same with zk
         String path = getPath(agent);
         Status current = Status.fromBytes(zk.get(path));
         if (current != status) {
@@ -202,6 +213,31 @@ public class AgentServiceImpl implements AgentService {
         applicationEventPublisher.publishEvent(new StatusChangeEvent(this, agent));
     }
 
+    private void syncLockNode(Agent agent, Type type) {
+        String lockPath = getLockPath(agent);
+
+        if (type == Type.CHILD_ADDED) {
+            try {
+                zk.create(CreateMode.PERSISTENT, lockPath, null);
+            } catch (Throwable ignore) {
+
+            }
+            return;
+        }
+
+        if (type == Type.CHILD_REMOVED) {
+            try {
+                zk.delete(lockPath, true);
+            } catch (Throwable ignore) {
+
+            }
+        }
+    }
+
+    private String getLockPath(Agent agent) {
+        return getPath(agent) + LockPathSuffix;
+    }
+
     private class RootNodeListener implements PathChildrenCacheListener {
 
         private final Set<Type> ChildOperations = ImmutableSet.of(
@@ -211,7 +247,7 @@ public class AgentServiceImpl implements AgentService {
         );
 
         @Override
-        public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
+        public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) {
             ChildData data = event.getData();
 
             if (ChildOperations.contains(event.getType())) {
@@ -220,16 +256,26 @@ public class AgentServiceImpl implements AgentService {
         }
 
         private void handleAgentStatusChange(PathChildrenCacheEvent event) {
-            String agentId = getAgentIdFromPath(event.getData().getPath());
+            String path = event.getData().getPath();
+
+            // do not handle event from lock node
+            if (path.endsWith(LockPathSuffix)) {
+                log.debug("Lock node '{}' event '{}' received", path, event.getType());
+                return;
+            }
+
+            String agentId = getAgentIdFromPath(path);
             Agent agent = get(agentId);
 
             if (event.getType() == Type.CHILD_ADDED) {
+                syncLockNode(agent, Type.CHILD_ADDED);
                 updateAgentStatus(agent, Status.IDLE);
                 log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_ADDED, agent.getName(), Status.IDLE);
                 return;
             }
 
             if (event.getType() == Type.CHILD_REMOVED) {
+                syncLockNode(agent, Type.CHILD_REMOVED);
                 updateAgentStatus(agent, Status.OFFLINE);
                 log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_REMOVED, agent.getName(), Status.OFFLINE);
                 return;
