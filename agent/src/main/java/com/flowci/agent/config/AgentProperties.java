@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2018 fir.im
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.agent.config;
+
+import lombok.Data;
 
 /**
  * @author yang
  */
-public class StatusException extends CIException {
+@Data
+public class AgentProperties {
 
-    public StatusException(String message, String... params) {
-        super(message, params);
-    }
-
-    public StatusException(String message, Throwable cause, String... params) {
-        super(message, cause, params);
-    }
-
-    @Override
-    public Integer getCode() {
-        return ErrorCode.ILLEGAL_STATUS;
-    }
+    private String workspace;
 }

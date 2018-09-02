@@ -18,6 +18,7 @@ package com.flowci.domain;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import lombok.Data;
@@ -37,7 +38,7 @@ public class Cmd implements Serializable {
     private String id;
 
     @NonNull
-    private List<String> scripts;
+    private List<String> scripts = new LinkedList<>();
 
     private String workDir;
 

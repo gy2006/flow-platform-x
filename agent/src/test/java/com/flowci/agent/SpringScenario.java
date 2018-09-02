@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.agent;
+
+import java.io.InputStream;
+import lombok.extern.log4j.Log4j2;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * @author yang
  */
-public class StatusException extends CIException {
+@Log4j2
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public abstract class SpringScenario {
 
-    public StatusException(String message, String... params) {
-        super(message, params);
-    }
-
-    public StatusException(String message, Throwable cause, String... params) {
-        super(message, cause, params);
-    }
-
-    @Override
-    public Integer getCode() {
-        return ErrorCode.ILLEGAL_STATUS;
+    protected InputStream load(String resource) {
+        return SpringScenario.class.getClassLoader().getResourceAsStream(resource);
     }
 }

@@ -16,14 +16,25 @@
 
 package com.flowci.agent;
 
+import com.flowci.agent.config.AgentProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author yang
  */
 @SpringBootApplication
+@Configuration
 public class Application {
+
+    @Bean("agentProperties")
+    @ConfigurationProperties(prefix = "agent")
+    public AgentProperties agentProperties() {
+        return new AgentProperties();
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);

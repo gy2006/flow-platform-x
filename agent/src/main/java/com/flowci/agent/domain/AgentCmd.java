@@ -14,23 +14,30 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.agent.domain;
+
+import com.flowci.domain.Cmd;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
 /**
  * @author yang
  */
-public class StatusException extends CIException {
+@Entity(name = "cmd")
+public class AgentCmd extends Cmd {
 
-    public StatusException(String message, String... params) {
-        super(message, params);
-    }
-
-    public StatusException(String message, Throwable cause, String... params) {
-        super(message, cause, params);
+    @Id
+    public String getId() {
+        return super.getId();
     }
 
     @Override
-    public Integer getCode() {
-        return ErrorCode.ILLEGAL_STATUS;
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 }

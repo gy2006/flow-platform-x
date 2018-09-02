@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.agent.dao;
+
+import com.flowci.agent.domain.AgentCmd;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author yang
  */
-public class StatusException extends CIException {
+@Repository
+public interface AgentCmdDao extends CrudRepository<AgentCmd, String> {
 
-    public StatusException(String message, String... params) {
-        super(message, params);
-    }
-
-    public StatusException(String message, Throwable cause, String... params) {
-        super(message, cause, params);
-    }
-
-    @Override
-    public Integer getCode() {
-        return ErrorCode.ILLEGAL_STATUS;
-    }
 }

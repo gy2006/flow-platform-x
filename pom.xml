@@ -27,6 +27,7 @@
     <jackson.version>2.9.6</jackson.version>
     <curator.version>2.12.0</curator.version>
     <caffeine.version>2.6.2</caffeine.version>
+    <h2.version>1.4.197</h2.version>
   </properties>
 
   <build>
@@ -146,6 +147,13 @@
         <artifactId>jackson-databind</artifactId>
         <version>${jackson.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <version>${h2.version}</version>
+      </dependency>
+
 
       <dependency>
         <groupId>org.springframework.boot</groupId>
