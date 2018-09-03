@@ -21,11 +21,13 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import java.util.Date;
 import javax.persistence.Convert;
-import org.springframework.data.annotation.Id;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
 /**
  * @author yang
  */
+@Entity(name = "cmd_executed")
 public class AgentExecutedCmd extends ExecutedCmd {
 
     @Id

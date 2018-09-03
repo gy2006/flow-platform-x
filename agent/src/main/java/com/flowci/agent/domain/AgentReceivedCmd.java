@@ -34,6 +34,7 @@ import javax.persistence.Id;
 public class AgentReceivedCmd extends Cmd {
 
     @Id
+    @Override
     public String getId() {
         return super.getId();
     }
