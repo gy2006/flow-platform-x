@@ -54,10 +54,13 @@ public class CmdManagerImpl implements CmdManager {
     public void onCmdReceived(Cmd received) {
         log.debug("Cmd received: {}", received);
 
-        AgentCmd cmd = new AgentCmd();
-        BeanUtils.copyProperties(received, cmd);
-        agentCmdDao.save(cmd);
+        Cmd cmd = save(received);
+        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, cmd));
+    }
 
-        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, received));
+    private Cmd save(Cmd cmd) {
+        AgentCmd agentCmd = new AgentCmd();
+        BeanUtils.copyProperties(cmd, agentCmd);
+        return agentCmdDao.save(agentCmd);
     }
 }

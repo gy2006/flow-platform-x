@@ -19,23 +19,18 @@ package com.flowci.exception;
 /**
  * @author yang
  */
-public final class ErrorCode {
+public class JsonException extends CIException {
 
-    public static final Integer ERROR = 400;
+    public JsonException(String message, String... params) {
+        super(message, params);
+    }
 
-    public static final Integer INVALID_ARGUMENT = 401;
+    public JsonException(String message, Throwable cause, String... params) {
+        super(message, cause, params);
+    }
 
-    public static final Integer PARSE_YML_OR_JSON = 402;
-
-    public static final Integer DUPLICATE = 403;
-
-    public static final Integer NOT_FOUND = 404;
-
-    public static final Integer ILLEGAL_ACCESS = 405;
-
-    public static final Integer ILLEGAL_STATUS = 406;
-
-    private ErrorCode() {
-
+    @Override
+    public Integer getCode() {
+        return ErrorCode.PARSE_YML_OR_JSON;
     }
 }

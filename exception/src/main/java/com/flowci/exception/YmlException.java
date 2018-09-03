@@ -31,6 +31,6 @@ public class YmlException extends CIException {
 
     @Override
     public Integer getCode() {
-        return ErrorCode.PARSE_YML;
+        return ErrorCode.PARSE_YML_OR_JSON;
     }
 }

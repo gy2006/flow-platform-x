@@ -16,6 +16,7 @@
 
 package com.flowci.agent.test.manager;
 
+import com.flowci.agent.domain.AgentCmd;
 import com.flowci.agent.event.CmdReceivedEvent;
 import com.flowci.agent.manager.CmdManager;
 import com.flowci.agent.test.SpringScenario;
@@ -24,6 +25,7 @@ import com.flowci.domain.Cmd;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.Settings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
@@ -53,6 +55,7 @@ public class CmdManagerTest extends SpringScenario {
         cmd.setTimeout(10L);
         cmd.setScripts(Lists.newArrayList("echo hello"));
         cmd.setWorkDir("${HOME}");
+        cmd.setEnvFilters(Sets.newHashSet("FLOW_"));
         cmd.getInputs().putString("HELLO_WORLD", "hello");
 
         // when:
@@ -72,11 +75,14 @@ public class CmdManagerTest extends SpringScenario {
 
         Cmd received = cmdWrapper.getValue();
         Assert.assertNotNull(received);
+        Assert.assertTrue(received instanceof AgentCmd);
         Assert.assertEquals(cmd, received);
         Assert.assertEquals(cmd, cmdManager.get(cmd.getId()));
 
         Assert.assertEquals("${HOME}", received.getWorkDir());
+        Assert.assertEquals(10L, received.getTimeout().longValue());
         Assert.assertEquals("hello", received.getInputs().getString("HELLO_WORLD"));
-
+        Assert.assertTrue(received.getEnvFilters().contains("FLOW_"));
+        Assert.assertTrue(received.getScripts().contains("echo hello"));
     }
 }

@@ -23,8 +23,6 @@ import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 
 /**
  * @author yang
@@ -53,14 +51,12 @@ public class Agent implements Serializable {
         }
     }
 
-    @Id
     private String id;
 
     private String name;
 
     private String token;
 
-    @Indexed
     private Set<String> tags = Collections.emptySet();
 
     private Status status = Status.OFFLINE;

@@ -14,28 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.agent.domain.converter;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.List;
 
 /**
  * @author yang
  */
-public final class ErrorCode {
+public class StringListConverter extends JsonConverter<List<String>> {
 
-    public static final Integer ERROR = 400;
+    private final static TypeReference<List<String>> StringListType = new TypeReference<List<String>>() {
+    };
 
-    public static final Integer INVALID_ARGUMENT = 401;
-
-    public static final Integer PARSE_YML_OR_JSON = 402;
-
-    public static final Integer DUPLICATE = 403;
-
-    public static final Integer NOT_FOUND = 404;
-
-    public static final Integer ILLEGAL_ACCESS = 405;
-
-    public static final Integer ILLEGAL_STATUS = 406;
-
-    private ErrorCode() {
-
+    @Override
+    public TypeReference<List<String>> getTypeReference() {
+        return StringListType;
     }
 }
