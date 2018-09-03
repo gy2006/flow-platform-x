@@ -17,19 +17,13 @@
 package com.flowci.agent.event;
 
 import com.flowci.domain.Cmd;
-import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
 
 /**
  * @author yang
  */
-public class CmdReceivedEvent extends ApplicationEvent {
-
-    @Getter
-    private final Cmd cmd;
+public class CmdReceivedEvent extends CmdEvent {
 
     public CmdReceivedEvent(Object source, Cmd cmd) {
-        super(source);
-        this.cmd = cmd;
+        super(source, cmd);
     }
 }

@@ -14,26 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.executor;
+package com.flowci.agent.event;
 
-import java.io.Serializable;
-import lombok.Data;
+import com.flowci.domain.Cmd;
+import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
 /**
  * @author yang
  */
-@Data(staticConstructor = "of")
-public final class Log implements Serializable {
+public abstract class CmdEvent extends ApplicationEvent {
 
-    public enum Type {
-        STDOUT,
-        STDERR,
+    @Getter
+    private final Cmd cmd;
+
+    public CmdEvent(Object source, Cmd cmd) {
+        super(source);
+        this.cmd = cmd;
     }
-
-    private final Type type;
-
-    private final String content;
-
-    private final Integer number;
-
 }

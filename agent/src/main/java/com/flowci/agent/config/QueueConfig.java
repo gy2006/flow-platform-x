@@ -77,11 +77,12 @@ public class QueueConfig {
     @Bean
     public ThreadPoolTaskExecutor consumerExecutor() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(2);
-        taskExecutor.setMaxPoolSize(2);
+        taskExecutor.setCorePoolSize(1);
+        taskExecutor.setMaxPoolSize(1);
         taskExecutor.setQueueCapacity(0);
         taskExecutor.setThreadNamePrefix("cmd-consumer-");
         taskExecutor.setDaemon(true);
+        taskExecutor.initialize();
         return taskExecutor;
     }
 

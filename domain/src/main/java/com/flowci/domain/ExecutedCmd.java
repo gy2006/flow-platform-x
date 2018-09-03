@@ -51,17 +51,15 @@ public final class ExecutedCmd implements Serializable {
 
         PENDING(-1),
 
+        RUNNING(1),
+
         SUCCESS(2), // current cmd
 
         EXCEPTION(3),
 
         KILLED(3),
 
-        REJECTED(3),
-
-        TIMEOUT(4),
-
-        STOPPED(4);
+        TIMEOUT(4);
 
         @Getter
         private Integer level;

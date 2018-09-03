@@ -18,6 +18,7 @@ package com.flowci.agent.executor;
 
 import com.flowci.domain.Cmd;
 import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.ExecutedCmd.Status;
 import com.flowci.util.UnixHelper;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -124,6 +125,8 @@ public class CmdExecutor {
     public void run() {
         try {
             result.setStartAt(new Date());
+            result.setStatus(Status.RUNNING);
+
             process = pBuilder.start();
             result.setProcessId(getPid(process));
             processListener.onStarted(result);
@@ -139,9 +142,12 @@ public class CmdExecutor {
             executor.execute(createCmdLoggingReader());
 
             // wait for max process timeout
-            result.setCode(ExecutedCmd.CODE_TIMEOUT);
             if (process.waitFor(cmd.getTimeout(), TimeUnit.SECONDS)) {
                 result.setCode(process.exitValue());
+                result.setStatus(Status.SUCCESS);
+            } else {
+                result.setCode(ExecutedCmd.CODE_TIMEOUT);
+                result.setStatus(Status.TIMEOUT);
             }
 
             log.trace("====== Process executed : {} ======", result.getCode());
@@ -159,9 +165,13 @@ public class CmdExecutor {
             log.trace("====== Logging executed ======");
 
         } catch (InterruptedException e) {
+            result.setStatus(Status.KILLED);
+            result.setError(e.getMessage());
             processListener.onException(e);
             log.trace("====== Interrupted ======");
         } catch (Throwable e) {
+            result.setStatus(Status.EXCEPTION);
+            result.setError(e.getMessage());
             processListener.onException(e);
             log.warn(e.getMessage());
         } finally {
@@ -256,7 +266,7 @@ public class CmdExecutor {
                         break;
                     }
                     count += 1;
-                    loggingQueue.add(new Log(type, line, count));
+                    loggingQueue.add(Log.of(type, line, count));
                 }
             } catch (IOException ignore) {
 

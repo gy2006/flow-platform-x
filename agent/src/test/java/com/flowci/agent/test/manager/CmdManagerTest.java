@@ -17,15 +17,19 @@
 package com.flowci.agent.test.manager;
 
 import com.flowci.agent.domain.AgentCmd;
+import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
 import com.flowci.agent.manager.CmdManager;
 import com.flowci.agent.test.SpringScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
+import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.ExecutedCmd.Status;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.Settings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
@@ -84,5 +88,38 @@ public class CmdManagerTest extends SpringScenario {
         Assert.assertEquals("hello", received.getInputs().getString("HELLO_WORLD"));
         Assert.assertTrue(received.getEnvFilters().contains("FLOW_"));
         Assert.assertTrue(received.getScripts().contains("echo hello"));
+    }
+
+    @Test
+    public void should_execute_cmd_with_success_status() throws InterruptedException {
+        // init: create cmd to run
+        Cmd cmd = new Cmd(UUID.randomUUID().toString());
+        cmd.setScripts(Lists.newArrayList(""
+            + "echo \"test shell\"\n"
+            + "export CMD_RUNNER_TEST_1=test1\n"
+            + "export OUTPUT_2=test2"));
+        cmd.setEnvFilters(Sets.newHashSet("CMD_RUNNER"));
+        cmd.setTimeout(10L);
+
+        // when:
+        CountDownLatch counter = new CountDownLatch(1);
+        ObjectWrapper<ExecutedCmd> executedWrapper = new ObjectWrapper<>();
+
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdCompleteEvent>) event -> {
+            executedWrapper.setValue(event.getExecuted());
+            counter.countDown();
+        });
+
+        cmdManager.onCmdReceived(cmd);
+
+        // then:
+        counter.await(10, TimeUnit.SECONDS);
+        ExecutedCmd executed = executedWrapper.getValue();
+
+        Assert.assertNotNull(executed);
+        Assert.assertEquals(cmd.getId(), executed.getId());
+        Assert.assertEquals(0, executed.getCode().intValue());
+        Assert.assertEquals(Status.SUCCESS, executed.getStatus());
+        Assert.assertEquals("test1", executed.getOutput().getString("CMD_RUNNER_TEST_1"));
     }
 }

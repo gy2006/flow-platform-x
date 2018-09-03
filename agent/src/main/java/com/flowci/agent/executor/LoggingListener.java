@@ -21,7 +21,7 @@ package com.flowci.agent.executor;
  */
 public interface LoggingListener {
 
-    default void onLogging(Log log) {
+    default void onLogging(Log item) {
     }
 
     default void onFinish() {

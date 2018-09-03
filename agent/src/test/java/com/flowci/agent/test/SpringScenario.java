@@ -86,6 +86,11 @@ public abstract class SpringScenario {
     @Autowired
     protected ApplicationEventMulticaster applicationEventMulticaster;
 
+    @Before
+    public void resetEventListener() {
+        applicationEventMulticaster.removeAllListeners();
+    }
+
     protected InputStream load(String resource) {
         return SpringScenario.class.getClassLoader().getResourceAsStream(resource);
     }

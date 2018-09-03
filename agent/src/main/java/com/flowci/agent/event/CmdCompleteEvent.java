@@ -14,26 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.executor;
+package com.flowci.agent.event;
 
-import java.io.Serializable;
-import lombok.Data;
+import com.flowci.domain.Cmd;
+import com.flowci.domain.ExecutedCmd;
+import lombok.Getter;
 
 /**
  * @author yang
  */
-@Data(staticConstructor = "of")
-public final class Log implements Serializable {
+public class CmdCompleteEvent extends CmdEvent {
 
-    public enum Type {
-        STDOUT,
-        STDERR,
+    @Getter
+    private final ExecutedCmd executed;
+
+    public CmdCompleteEvent(Object source, Cmd cmd, ExecutedCmd executed) {
+        super(source, cmd);
+        this.executed = executed;
     }
-
-    private final Type type;
-
-    private final String content;
-
-    private final Integer number;
-
 }
