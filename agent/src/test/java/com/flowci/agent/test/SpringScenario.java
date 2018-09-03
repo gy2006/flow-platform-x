@@ -34,7 +34,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.test.context.junit4.SpringRunner;
 
 /**
@@ -80,6 +82,9 @@ public abstract class SpringScenario {
     public void reset() {
         WireMock.reset();
     }
+
+    @Autowired
+    protected ApplicationEventMulticaster applicationEventMulticaster;
 
     protected InputStream load(String resource) {
         return SpringScenario.class.getClassLoader().getResourceAsStream(resource);
