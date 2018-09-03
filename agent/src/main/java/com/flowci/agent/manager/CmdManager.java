@@ -23,6 +23,8 @@ import com.flowci.domain.Cmd;
  */
 public interface CmdManager {
 
+    Cmd get(String id);
+
     void onCmdReceived(Cmd cmd);
 
 }

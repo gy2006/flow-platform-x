@@ -17,6 +17,7 @@
 package com.flowci.agent.test.manager;
 
 import com.flowci.agent.event.CmdReceivedEvent;
+import com.flowci.agent.manager.CmdManager;
 import com.flowci.agent.test.SpringScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
@@ -41,6 +42,9 @@ public class CmdManagerTest extends SpringScenario {
 
     @Autowired
     private Settings agentSettings;
+
+    @Autowired
+    private CmdManager cmdManager;
 
     @Test
     public void should_receive_cmd_from_server() throws InterruptedException {
@@ -69,8 +73,10 @@ public class CmdManagerTest extends SpringScenario {
         Cmd received = cmdWrapper.getValue();
         Assert.assertNotNull(received);
         Assert.assertEquals(cmd, received);
+        Assert.assertEquals(cmd, cmdManager.get(cmd.getId()));
 
         Assert.assertEquals("${HOME}", received.getWorkDir());
         Assert.assertEquals("hello", received.getInputs().getString("HELLO_WORLD"));
+
     }
 }

@@ -17,8 +17,13 @@
 package com.flowci.agent.manager;
 
 import com.flowci.agent.dao.AgentCmdDao;
+import com.flowci.agent.domain.AgentCmd;
 import com.flowci.agent.event.CmdReceivedEvent;
 import com.flowci.domain.Cmd;
+import com.flowci.exception.NotFoundException;
+import java.util.Optional;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -26,6 +31,7 @@ import org.springframework.stereotype.Component;
 /**
  * @author yang
  */
+@Log4j2
 @Component
 public class CmdManagerImpl implements CmdManager {
 
@@ -36,8 +42,22 @@ public class CmdManagerImpl implements CmdManager {
     private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
-    public void onCmdReceived(Cmd cmd) {
-        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, cmd));
+    public Cmd get(String id) {
+        Optional<AgentCmd> optional = agentCmdDao.findById(id);
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+        throw new NotFoundException("Cmd {0} is not found", id);
     }
 
+    @Override
+    public void onCmdReceived(Cmd received) {
+        log.debug("Cmd received: {}", received);
+
+        AgentCmd cmd = new AgentCmd();
+        BeanUtils.copyProperties(received, cmd);
+        agentCmdDao.save(cmd);
+
+        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, received));
+    }
 }

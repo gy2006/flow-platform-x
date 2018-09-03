@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * @author yang
@@ -74,13 +75,27 @@ public class QueueConfig {
     }
 
     @Bean
-    public SimpleMessageListenerContainer container(ConnectionFactory factory, MessageListenerAdapter adapter) {
+    public ThreadPoolTaskExecutor consumerExecutor() {
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(2);
+        taskExecutor.setMaxPoolSize(2);
+        taskExecutor.setQueueCapacity(0);
+        taskExecutor.setThreadNamePrefix("cmd-consumer-");
+        taskExecutor.setDaemon(true);
+        return taskExecutor;
+    }
+
+    @Bean
+    public SimpleMessageListenerContainer container(ConnectionFactory factory,
+                                                    MessageListenerAdapter adapter,
+                                                    ThreadPoolTaskExecutor consumerExecutor) {
         String queueName = agentSettings.getAgent().getQueueName();
 
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(factory);
         container.setQueueNames(queueName);
         container.setMessageListener(adapter);
+        container.setTaskExecutor(consumerExecutor);
         return container;
     }
 
