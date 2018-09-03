@@ -16,7 +16,7 @@
 
 package com.flowci.agent.test.manager;
 
-import com.flowci.agent.domain.AgentCmd;
+import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
 import com.flowci.agent.manager.CmdManager;
@@ -79,7 +79,7 @@ public class CmdManagerTest extends SpringScenario {
 
         Cmd received = cmdWrapper.getValue();
         Assert.assertNotNull(received);
-        Assert.assertTrue(received instanceof AgentCmd);
+        Assert.assertTrue(received instanceof AgentReceivedCmd);
         Assert.assertEquals(cmd, received);
         Assert.assertEquals(cmd, cmdManager.get(cmd.getId()));
 

@@ -16,8 +16,8 @@
 
 package com.flowci.agent.manager;
 
-import com.flowci.agent.dao.AgentCmdDao;
-import com.flowci.agent.domain.AgentCmd;
+import com.flowci.agent.dao.ReceivedCmdDao;
+import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
 import com.flowci.agent.executor.CmdExecutor;
@@ -44,7 +44,7 @@ import org.springframework.stereotype.Component;
 public class CmdManagerImpl implements CmdManager {
 
     @Autowired
-    private AgentCmdDao agentCmdDao;
+    private ReceivedCmdDao receivedCmdDao;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -53,7 +53,7 @@ public class CmdManagerImpl implements CmdManager {
 
     @Override
     public Cmd get(String id) {
-        Optional<AgentCmd> optional = agentCmdDao.findById(id);
+        Optional<AgentReceivedCmd> optional = receivedCmdDao.findById(id);
         if (optional.isPresent()) {
             return optional.get();
         }
@@ -77,9 +77,9 @@ public class CmdManagerImpl implements CmdManager {
     }
 
     private Cmd save(Cmd cmd) {
-        AgentCmd agentCmd = new AgentCmd();
+        AgentReceivedCmd agentCmd = new AgentReceivedCmd();
         BeanUtils.copyProperties(cmd, agentCmd);
-        return agentCmdDao.save(agentCmd);
+        return receivedCmdDao.save(agentCmd);
     }
 
     private ThreadPoolTaskExecutor createExecutor() {

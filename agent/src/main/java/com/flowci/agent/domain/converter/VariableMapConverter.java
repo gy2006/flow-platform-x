@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.dao;
+package com.flowci.agent.domain.converter;
 
-import com.flowci.agent.domain.AgentCmd;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.flowci.domain.VariableMap;
 
 /**
+ * VariableMap object convert for JPA
+ *
  * @author yang
  */
-@Repository
-public interface AgentCmdDao extends CrudRepository<AgentCmd, String> {
+public class VariableMapConverter extends JsonConverter<VariableMap> {
 
+    private final static TypeReference<VariableMap> VariableMapType = new TypeReference<VariableMap>() {
+    };
+
+    @Override
+    public TypeReference<VariableMap> getTypeReference() {
+        return VariableMapType;
+    }
 }

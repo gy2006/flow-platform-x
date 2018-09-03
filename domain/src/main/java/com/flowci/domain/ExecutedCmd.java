@@ -21,6 +21,7 @@ import static com.flowci.domain.ExecutedCmd.Status.KILLED;
 import static com.flowci.domain.ExecutedCmd.Status.SUCCESS;
 import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableSet;
 import java.io.Serializable;
 import java.util.Date;
@@ -37,7 +38,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = {"id"})
-public final class ExecutedCmd implements Serializable {
+public class ExecutedCmd implements Serializable {
 
     public final static Integer CODE_TIMEOUT = -100;
 
@@ -110,14 +111,17 @@ public final class ExecutedCmd implements Serializable {
         this.id = id;
     }
 
+    @JsonIgnore
     public boolean isSuccess() {
         return status == SUCCESS;
     }
 
+    @JsonIgnore
     public boolean isFailure() {
         return FailureStatus.contains(status);
     }
 
+    @JsonIgnore
     public Long getDuration() {
         if (Objects.isNull(startAt) || Objects.isNull(finishAt)) {
             return -1L;

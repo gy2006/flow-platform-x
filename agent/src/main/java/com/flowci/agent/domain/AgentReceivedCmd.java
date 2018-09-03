@@ -16,10 +16,9 @@
 
 package com.flowci.agent.domain;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.flowci.agent.domain.converter.JsonConverter;
 import com.flowci.agent.domain.converter.StringListConverter;
 import com.flowci.agent.domain.converter.StringSetConverter;
+import com.flowci.agent.domain.converter.VariableMapConverter;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.VariableMap;
 import java.util.List;
@@ -31,19 +30,8 @@ import javax.persistence.Id;
 /**
  * @author yang
  */
-@Entity(name = "cmd")
-public class AgentCmd extends Cmd {
-
-    private final static TypeReference<VariableMap> VariableMapType = new TypeReference<VariableMap>() {
-    };
-
-    public static class VariableMapConverter extends JsonConverter<VariableMap> {
-
-        @Override
-        public TypeReference<VariableMap> getTypeReference() {
-            return VariableMapType;
-        }
-    }
+@Entity(name = "cmd_received")
+public class AgentReceivedCmd extends Cmd {
 
     @Id
     public String getId() {
