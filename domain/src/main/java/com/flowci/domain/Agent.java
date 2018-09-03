@@ -16,6 +16,7 @@
 
 package com.flowci.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
@@ -73,22 +74,27 @@ public class Agent implements Serializable {
         this.tags = tags;
     }
 
+    @JsonIgnore
     public boolean isBusy() {
         return isOnline() && status == Status.BUSY;
     }
 
+    @JsonIgnore
     public boolean isIdle() {
         return isOnline() && status == Status.IDLE;
     }
 
+    @JsonIgnore
     public boolean isOffline() {
         return status == Status.OFFLINE;
     }
 
+    @JsonIgnore
     public boolean isOnline() {
         return !isOffline();
     }
 
+    @JsonIgnore
     public String getQueueName() {
         return "queue.agent." + id;
     }

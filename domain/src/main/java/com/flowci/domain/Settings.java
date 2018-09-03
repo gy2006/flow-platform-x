@@ -29,11 +29,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Settings implements Serializable {
 
+    private Agent agent;
+
     private RabbitMQ queue;
 
     private Zookeeper zookeeper;
 
-    public Settings(RabbitMQ queue, Zookeeper zookeeper) {
+    public Settings(Agent agent, RabbitMQ queue, Zookeeper zookeeper) {
+        this.agent = agent;
         this.queue = queue;
         this.zookeeper = zookeeper;
     }

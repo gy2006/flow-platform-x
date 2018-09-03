@@ -22,10 +22,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 
+import com.flowci.domain.Agent;
 import com.flowci.domain.Jsonable;
 import com.flowci.domain.Settings;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.Sets;
 import java.io.InputStream;
 import lombok.extern.log4j.Log4j2;
 import org.junit.Before;
@@ -58,10 +60,17 @@ public abstract class SpringScenario {
         zk.setHost("127.0.0.1:2181");
         zk.setRoot("/flow-agent-test");
 
+        String token = "123-123-123";
+
+        Agent local = new Agent("hello.agent");
+        local.setId("agent.id.123");
+        local.setToken(token);
+        local.setTags(Sets.newHashSet("local", "test"));
+
         stubFor(get(urlPathEqualTo("/agents"))
-            .withQueryParam("token", equalTo("123-123-123"))
+            .withQueryParam("token", equalTo(token))
             .willReturn(aResponse()
-                .withBody(Jsonable.getMapper().writeValueAsBytes(new Settings(mq, zk)))
+                .withBody(Jsonable.getMapper().writeValueAsBytes(new Settings(local, mq, zk)))
                 .withHeader("Content-Type", "application/json")));
     }
 

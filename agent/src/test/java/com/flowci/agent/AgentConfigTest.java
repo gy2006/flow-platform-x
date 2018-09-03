@@ -16,6 +16,7 @@
 
 package com.flowci.agent;
 
+import com.flowci.domain.Agent;
 import com.flowci.domain.Settings;
 import com.flowci.domain.Settings.RabbitMQ;
 import com.flowci.domain.Settings.Zookeeper;
@@ -46,5 +47,12 @@ public class AgentConfigTest extends SpringScenario {
         Assert.assertEquals(5672, (int) queue.getPort());
         Assert.assertEquals("guest", queue.getUsername());
         Assert.assertEquals("guest", queue.getPassword());
+
+        Agent local = agentSettings.getAgent();
+        Assert.assertEquals("agent.id.123", local.getId());
+        Assert.assertEquals("hello.agent", local.getName());
+        Assert.assertEquals("123-123-123", local.getToken());
+        Assert.assertTrue(local.getTags().contains("local"));
+        Assert.assertTrue(local.getTags().contains("test"));
     }
 }
