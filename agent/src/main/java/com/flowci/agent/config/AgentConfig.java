@@ -23,8 +23,10 @@ import static org.springframework.http.HttpMethod.PUT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.domain.Jsonable;
+import com.flowci.domain.Settings;
 import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +37,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
@@ -43,12 +46,14 @@ import org.springframework.http.converter.support.AllEncompassingFormHttpMessage
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * @author yang
  */
 @Log4j2
 @Configuration
+@Order(1)
 public class AgentConfig implements WebMvcConfigurer {
 
     private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(
@@ -57,6 +62,8 @@ public class AgentConfig implements WebMvcConfigurer {
         new ResourceHttpMessageConverter(),
         new AllEncompassingFormHttpMessageConverter()
     );
+
+    private final static RestTemplate RestTemplate = new RestTemplate(DefaultConverters);
 
     @Autowired
     private AgentProperties agentProperties;
@@ -80,9 +87,17 @@ public class AgentConfig implements WebMvcConfigurer {
 
     @Bean("restTemplate")
     public RestTemplate restTemplate() {
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.setMessageConverters(DefaultConverters);
-        return restTemplate;
+        return RestTemplate;
+    }
+
+    @Bean("agentSettings")
+    public Settings getConfigFromServer() {
+        URI uri = UriComponentsBuilder.fromHttpUrl(agentProperties.getServerUrl())
+            .queryParam("token", agentProperties.getToken())
+            .build()
+            .toUri();
+
+        return RestTemplate.getForObject(uri, Settings.class);
     }
 
     @Override

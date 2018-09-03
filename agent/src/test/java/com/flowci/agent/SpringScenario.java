@@ -16,8 +16,21 @@
 
 package com.flowci.agent;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+
+import com.flowci.domain.Jsonable;
+import com.flowci.domain.Settings;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import java.io.InputStream;
 import lombok.extern.log4j.Log4j2;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -29,6 +42,33 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public abstract class SpringScenario {
+
+    @ClassRule
+    public static WireMockRule wireMockRule = new WireMockRule(8088);
+
+    @BeforeClass
+    public static void mockAgentSettings() throws Throwable {
+        Settings.RabbitMQ mq = new Settings.RabbitMQ();
+        mq.setHost("127.0.0.1");
+        mq.setPort(5672);
+        mq.setUsername("guest");
+        mq.setPassword("guest");
+
+        Settings.Zookeeper zk = new Settings.Zookeeper();
+        zk.setHost("127.0.0.1:2181");
+        zk.setRoot("/flow-agent-test");
+
+        stubFor(get(urlPathEqualTo("/agents"))
+            .withQueryParam("token", equalTo("123-123-123"))
+            .willReturn(aResponse()
+                .withBody(Jsonable.getMapper().writeValueAsBytes(new Settings(mq, zk)))
+                .withHeader("Content-Type", "application/json")));
+    }
+
+    @Before
+    public void reset() {
+        WireMock.reset();
+    }
 
     protected InputStream load(String resource) {
         return SpringScenario.class.getClassLoader().getResourceAsStream(resource);

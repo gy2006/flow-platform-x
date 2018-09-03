@@ -25,4 +25,8 @@ import lombok.Data;
 public class AgentProperties {
 
     private String workspace;
+
+    private String token;
+
+    private String serverUrl;
 }
