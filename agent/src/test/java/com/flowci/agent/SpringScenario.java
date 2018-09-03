@@ -67,10 +67,12 @@ public abstract class SpringScenario {
         local.setToken(token);
         local.setTags(Sets.newHashSet("local", "test"));
 
+        String callbackQueueName = "queue.jobs.callback.test";
+
         stubFor(get(urlPathEqualTo("/agents"))
             .withQueryParam("token", equalTo(token))
             .willReturn(aResponse()
-                .withBody(Jsonable.getMapper().writeValueAsBytes(new Settings(local, mq, zk)))
+                .withBody(Jsonable.getMapper().writeValueAsBytes(new Settings(local, mq, zk, callbackQueueName)))
                 .withHeader("Content-Type", "application/json")));
     }
 

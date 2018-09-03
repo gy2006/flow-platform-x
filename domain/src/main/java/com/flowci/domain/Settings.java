@@ -35,10 +35,13 @@ public class Settings implements Serializable {
 
     private Zookeeper zookeeper;
 
-    public Settings(Agent agent, RabbitMQ queue, Zookeeper zookeeper) {
+    private String callbackQueueName;
+
+    public Settings(Agent agent, RabbitMQ queue, Zookeeper zookeeper, String callbackQueueName) {
         this.agent = agent;
         this.queue = queue;
         this.zookeeper = zookeeper;
+        this.callbackQueueName = callbackQueueName;
     }
 
     @Data

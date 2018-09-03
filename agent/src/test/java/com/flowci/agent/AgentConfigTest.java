@@ -54,5 +54,7 @@ public class AgentConfigTest extends SpringScenario {
         Assert.assertEquals("123-123-123", local.getToken());
         Assert.assertTrue(local.getTags().contains("local"));
         Assert.assertTrue(local.getTags().contains("test"));
+
+        Assert.assertEquals("queue.jobs.callback.test", agentSettings.getCallbackQueueName());
     }
 }
