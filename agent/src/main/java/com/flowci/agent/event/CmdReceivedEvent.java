@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.manager;
+package com.flowci.agent.event;
 
 import com.flowci.domain.Cmd;
+import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
 /**
  * @author yang
  */
-public interface CmdManager {
+public class CmdReceivedEvent extends ApplicationEvent {
 
-    void onCmdReceived(Cmd cmd);
+    @Getter
+    private final Cmd cmd;
 
+    public CmdReceivedEvent(Object source, Cmd cmd) {
+        super(source);
+        this.cmd = cmd;
+    }
 }

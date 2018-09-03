@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.agent;
+package com.flowci.agent.test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;

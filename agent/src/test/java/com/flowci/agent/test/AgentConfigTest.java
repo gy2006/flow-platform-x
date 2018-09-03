@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.agent;
+package com.flowci.agent.test;
 
 import com.flowci.domain.Agent;
 import com.flowci.domain.Settings;

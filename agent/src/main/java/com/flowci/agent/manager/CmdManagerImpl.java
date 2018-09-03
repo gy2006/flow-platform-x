@@ -16,13 +16,28 @@
 
 package com.flowci.agent.manager;
 
+import com.flowci.agent.dao.AgentCmdDao;
+import com.flowci.agent.event.CmdReceivedEvent;
 import com.flowci.domain.Cmd;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
 
 /**
  * @author yang
  */
-public interface CmdManager {
+@Component
+public class CmdManagerImpl implements CmdManager {
 
-    void onCmdReceived(Cmd cmd);
+    @Autowired
+    private AgentCmdDao agentCmdDao;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @Override
+    public void onCmdReceived(Cmd cmd) {
+        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, cmd));
+    }
 
 }

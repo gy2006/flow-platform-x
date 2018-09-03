@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.dao.test;
+package com.flowci.agent.test.dao;
 
-import com.flowci.agent.SpringScenario;
+import com.flowci.agent.test.SpringScenario;
 import com.flowci.agent.dao.AgentCmdDao;
 import com.flowci.agent.domain.AgentCmd;
 import com.google.common.collect.Lists;

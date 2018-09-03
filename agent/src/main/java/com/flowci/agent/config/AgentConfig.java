@@ -97,7 +97,10 @@ public class AgentConfig implements WebMvcConfigurer {
             .build()
             .toUri();
 
-        return RestTemplate.getForObject(uri, Settings.class);
+        Settings settings = RestTemplate.getForObject(uri, Settings.class);
+        log.info("Settings been loaded: {}", settings);
+
+        return settings;
     }
 
     @Override

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.executor.test;
+package com.flowci.agent.test.executor;
 
 import com.flowci.agent.executor.CmdExecutor;
 import com.flowci.agent.executor.Log;
