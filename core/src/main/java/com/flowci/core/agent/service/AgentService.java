@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package com.flowci.core.agent;
+package com.flowci.core.agent.service;
 
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
+import com.flowci.domain.Settings;
 import java.util.Set;
 
 /**
  * @author yang
  */
 public interface AgentService {
+
+    Settings connect(String token);
 
     /**
      * Get agent by id

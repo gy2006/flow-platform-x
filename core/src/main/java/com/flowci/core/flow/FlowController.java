@@ -16,7 +16,7 @@
 
 package com.flowci.core.flow;
 
-import com.flowci.core.domain.RequestMessage;
+import com.flowci.domain.http.RequestMessage;
 import com.flowci.core.flow.domain.Flow;
 import java.util.List;
 import java.util.Map;

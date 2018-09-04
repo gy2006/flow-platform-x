@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.core.agent;
+package com.flowci.domain.http;
 
-import com.flowci.domain.Agent;
-import com.flowci.domain.Agent.Status;
-import java.util.List;
-import java.util.Set;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * @author yang
  */
-public interface AgentDao extends MongoRepository<Agent, String> {
+@NoArgsConstructor
+@AllArgsConstructor
+public final class ResponseMessage<T> implements Serializable {
 
-    List<Agent> findAllByStatusAndTagsIn(Status status, Set<String> tags);
+    @Getter
+    private Integer code;
 
-    List<Agent> findAllByStatus(Status status);
+    @Getter
+    private String message;
+
+    @Getter
+    private T data;
 
 }

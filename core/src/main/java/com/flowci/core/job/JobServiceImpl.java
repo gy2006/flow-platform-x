@@ -17,7 +17,7 @@
 package com.flowci.core.job;
 
 import com.flowci.core.RequireCurrentUser;
-import com.flowci.core.agent.AgentService;
+import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;

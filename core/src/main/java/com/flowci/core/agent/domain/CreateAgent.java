@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.core.domain;
+package com.flowci.core.agent.domain;
 
-import java.io.Serializable;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.util.Set;
+import javax.validation.constraints.NotNull;
+import lombok.Data;
 
 /**
  * @author yang
  */
-@NoArgsConstructor
-@AllArgsConstructor
-public class RequestMessage<T> implements Serializable {
+@Data
+public class CreateAgent {
 
-    @Getter
-    @Setter
-    private T data;
+    @NotNull
+    private String name;
+
+    private Set<String> tags;
+
 }

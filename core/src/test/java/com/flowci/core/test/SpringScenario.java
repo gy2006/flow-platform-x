@@ -16,7 +16,7 @@
 
 package com.flowci.core.test;
 
-import com.flowci.core.agent.AgentDao;
+import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.test.SpringScenario.Config;
 import com.flowci.core.user.User;
 import com.flowci.core.user.UserService;

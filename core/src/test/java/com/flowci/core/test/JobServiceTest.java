@@ -16,7 +16,7 @@
 
 package com.flowci.core.test;
 
-import com.flowci.core.agent.AgentService;
+import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;

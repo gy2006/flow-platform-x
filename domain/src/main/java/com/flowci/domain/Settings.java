@@ -45,7 +45,7 @@ public class Settings implements Serializable {
     }
 
     @Data
-    public static class Zookeeper {
+    public static class Zookeeper implements Serializable {
 
         private String host;
 
@@ -53,7 +53,7 @@ public class Settings implements Serializable {
     }
 
     @Data
-    public static class RabbitMQ {
+    public static class RabbitMQ implements Serializable {
 
         private String host;
 

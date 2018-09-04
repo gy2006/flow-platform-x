@@ -14,27 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.core.domain;
+package com.flowci.domain.http;
 
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author yang
  */
 @NoArgsConstructor
 @AllArgsConstructor
-public final class ResponseMessage<T> implements Serializable {
+public class RequestMessage<T> implements Serializable {
 
     @Getter
-    private Integer code;
-
-    @Getter
-    private String message;
-
-    @Getter
+    @Setter
     private T data;
-
 }

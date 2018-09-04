@@ -16,7 +16,7 @@
 
 package com.flowci.core.test.agent;
 
-import com.flowci.core.agent.AgentService;
+import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.helper.ThreadHelper;

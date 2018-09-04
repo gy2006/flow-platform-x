@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package com.flowci.core.agent;
+package com.flowci.core.agent.service;
 
+import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
+import com.flowci.domain.Settings;
 import com.flowci.exception.NotFoundException;
+import com.flowci.util.ObjectsHelper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
@@ -77,6 +80,9 @@ public class AgentServiceImpl implements AgentService {
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
+    @Autowired
+    private Settings baseSettings;
+
     @PostConstruct
     public void initRootNode() {
         String root = zkProperties.getRoot();
@@ -92,6 +98,18 @@ public class AgentServiceImpl implements AgentService {
         } catch (ZookeeperException e) {
             log.error(e.getMessage());
         }
+    }
+
+    @Override
+    public Settings connect(String token) {
+        Agent target = agentDao.findByToken(token);
+        if (Objects.isNull(target)) {
+            throw new NotFoundException("Agent token {0} is not available", token);
+        }
+
+        Settings settings = ObjectsHelper.copy(baseSettings);
+        settings.setAgent(target);
+        return settings;
     }
 
     @Override

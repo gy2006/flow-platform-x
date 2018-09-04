@@ -72,6 +72,11 @@ public class VariableMap extends LinkedHashMap<Variable, String> implements Seri
         super();
     }
 
+    public VariableMap(Map<String, String> data) {
+        super(data.size());
+        load(data);
+    }
+
     public VariableMap merge(VariableMap other) {
         for (Map.Entry<Variable, String> entry : other.entrySet()) {
             put(entry.getKey(), entry.getValue());
@@ -106,11 +111,16 @@ public class VariableMap extends LinkedHashMap<Variable, String> implements Seri
         for (Map.Entry<Variable, String> entry : entrySet()) {
             map.put(entry.getKey().getName(), entry.getValue());
         }
+
         return map;
     }
 
     public void reset(Map<String, String> vars) {
         clear();
+        load(vars);
+    }
+
+    public void load(Map<String, String> vars) {
         for (Map.Entry<String, String> entry : vars.entrySet()) {
             putString(entry.getKey(), entry.getValue());
         }

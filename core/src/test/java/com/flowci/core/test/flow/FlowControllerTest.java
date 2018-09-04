@@ -23,8 +23,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.domain.RequestMessage;
-import com.flowci.core.domain.ResponseMessage;
+import com.flowci.domain.http.RequestMessage;
+import com.flowci.domain.http.ResponseMessage;
 import com.flowci.core.domain.StatusCode;
 import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;

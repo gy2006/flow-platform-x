@@ -16,7 +16,7 @@
 
 package com.flowci.core.adviser;
 
-import com.flowci.core.domain.ResponseMessage;
+import com.flowci.domain.http.ResponseMessage;
 import com.flowci.core.domain.StatusCode;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.io.InputStreamResource;
@@ -31,7 +31,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
  */
 @ControllerAdvice({
     "com.flowci.core.flow",
-    "com.flowci.core.job"
+    "com.flowci.core.job",
+    "com.flowci.core.agent"
 })
 public class ResponseMessageAdviser implements ResponseBodyAdvice {
 
