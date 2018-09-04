@@ -56,6 +56,10 @@ public class CmdManagerImpl implements CmdManager {
 
     private ThreadPoolTaskExecutor cmdThreadPool = createExecutor();
 
+    private final Object lock = new Object();
+
+    private Cmd current;
+
     @Override
     public Cmd get(String id) {
         Optional<AgentReceivedCmd> optional = receivedCmdDao.findById(id);
@@ -66,12 +70,24 @@ public class CmdManagerImpl implements CmdManager {
     }
 
     @Override
+    public Cmd getCurrent() {
+        synchronized (lock) {
+            return current;
+        }
+    }
+
+    @Override
     public void execute(Cmd cmd) {
-        Cmd saved = save(cmd);
-        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, saved));
+        if (hasCmdRunning()) {
+            log.debug("Cannot start cmd since {} is running", current);
+            return;
+        }
+
+        setCurrent(save(cmd));
+        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, current));
 
         cmdThreadPool.execute(() -> {
-            CmdExecutor cmdExecutor = new CmdExecutor(saved);
+            CmdExecutor cmdExecutor = new CmdExecutor(current);
             cmdExecutor.setProcessListener(new CmdProcessListener());
             cmdExecutor.setLoggingListener(new CmdLoggingListener());
             cmdExecutor.run();
@@ -81,7 +97,8 @@ public class CmdManagerImpl implements CmdManager {
             BeanUtils.copyProperties(executed, agentExecutedCmd);
             executedCmdDao.save(agentExecutedCmd);
 
-            applicationEventPublisher.publishEvent(new CmdCompleteEvent(this, saved, executed));
+            applicationEventPublisher.publishEvent(new CmdCompleteEvent(this, current, executed));
+            setCurrent(null);
         });
     }
 
@@ -89,6 +106,16 @@ public class CmdManagerImpl implements CmdManager {
     public void onCmdReceived(Cmd received) {
         log.debug("Cmd received: {}", received);
         execute(received);
+    }
+
+    private void setCurrent(Cmd cmd) {
+        synchronized (lock) {
+            current = cmd;
+        }
+    }
+
+    private boolean hasCmdRunning() {
+        return getCurrent() != null && cmdThreadPool.getActiveCount() > 0;
     }
 
     private Cmd save(Cmd cmd) {
