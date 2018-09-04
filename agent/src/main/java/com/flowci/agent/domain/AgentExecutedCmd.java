@@ -42,6 +42,16 @@ public class AgentExecutedCmd extends ExecutedCmd {
     }
 
     @Override
+    public Integer getCode() {
+        return super.getCode();
+    }
+
+    @Override
+    public Status getStatus() {
+        return super.getStatus();
+    }
+
+    @Override
     @Convert(converter = VariableMapConverter.class)
     public VariableMap getOutput() {
         return super.getOutput();

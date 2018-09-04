@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * @author yang
  */
-public class AgentCmdDaoTest extends SpringScenario {
+public class ReceivedCmdDaoTest extends SpringScenario {
 
     @Autowired
     private ReceivedCmdDao agentCmdDao;
