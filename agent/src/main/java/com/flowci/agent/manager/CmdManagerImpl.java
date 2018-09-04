@@ -16,7 +16,9 @@
 
 package com.flowci.agent.manager;
 
+import com.flowci.agent.dao.ExecutedCmdDao;
 import com.flowci.agent.dao.ReceivedCmdDao;
+import com.flowci.agent.domain.AgentExecutedCmd;
 import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
@@ -47,6 +49,9 @@ public class CmdManagerImpl implements CmdManager {
     private ReceivedCmdDao receivedCmdDao;
 
     @Autowired
+    private ExecutedCmdDao executedCmdDao;
+
+    @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
     private ThreadPoolTaskExecutor cmdThreadPool = createExecutor();
@@ -61,19 +66,29 @@ public class CmdManagerImpl implements CmdManager {
     }
 
     @Override
-    public void onCmdReceived(Cmd received) {
-        log.debug("Cmd received: {}", received);
-
-        Cmd cmd = save(received);
-        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, cmd));
+    public void execute(Cmd cmd) {
+        Cmd saved = save(cmd);
+        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, saved));
 
         cmdThreadPool.execute(() -> {
-            CmdExecutor cmdExecutor = new CmdExecutor(cmd);
+            CmdExecutor cmdExecutor = new CmdExecutor(saved);
             cmdExecutor.setProcessListener(new CmdProcessListener());
             cmdExecutor.setLoggingListener(new CmdLoggingListener());
             cmdExecutor.run();
-            applicationEventPublisher.publishEvent(new CmdCompleteEvent(this, cmd, cmdExecutor.getResult()));
+
+            ExecutedCmd executed = cmdExecutor.getResult();
+            AgentExecutedCmd agentExecutedCmd = new AgentExecutedCmd();
+            BeanUtils.copyProperties(executed, agentExecutedCmd);
+            executedCmdDao.save(agentExecutedCmd);
+
+            applicationEventPublisher.publishEvent(new CmdCompleteEvent(this, saved, executed));
         });
+    }
+
+    @Override
+    public void onCmdReceived(Cmd received) {
+        log.debug("Cmd received: {}", received);
+        execute(received);
     }
 
     private Cmd save(Cmd cmd) {

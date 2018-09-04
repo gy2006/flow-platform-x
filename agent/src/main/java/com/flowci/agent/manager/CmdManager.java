@@ -25,6 +25,8 @@ public interface CmdManager {
 
     Cmd get(String id);
 
+    void execute(Cmd cmd);
+
     void onCmdReceived(Cmd cmd);
 
 }
