@@ -16,7 +16,7 @@
 
 package com.flowci.agent.controller;
 
-import com.flowci.agent.manager.CmdManager;
+import com.flowci.agent.service.CmdService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CmdController {
 
     @Autowired
-    private CmdManager cmdManager;
+    private CmdService cmdManager;
 
     @PostMapping
     public void execute(@Validated @RequestBody CmdRequest body) {

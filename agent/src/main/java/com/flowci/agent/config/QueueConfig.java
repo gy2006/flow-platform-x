@@ -16,7 +16,7 @@
 
 package com.flowci.agent.config;
 
-import com.flowci.agent.manager.CmdManager;
+import com.flowci.agent.service.CmdService;
 import com.flowci.domain.Jsonable;
 import com.flowci.domain.Settings;
 import com.flowci.domain.Settings.RabbitMQ;
@@ -68,8 +68,8 @@ public class QueueConfig {
     }
 
     @Bean
-    public MessageListenerAdapter adapter(CmdManager cmdManager) {
-        MessageListenerAdapter adapter = new MessageListenerAdapter(cmdManager, "onCmdReceived");
+    public MessageListenerAdapter adapter(CmdService cmdService) {
+        MessageListenerAdapter adapter = new MessageListenerAdapter(cmdService, "onCmdReceived");
         adapter.setMessageConverter(queueMessageConverter);
         return adapter;
     }

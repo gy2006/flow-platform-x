@@ -14,31 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.domain.http;
+package com.flowci.agent.service;
 
-import java.io.Serializable;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.flowci.domain.Cmd;
 
 /**
  * @author yang
  */
-@NoArgsConstructor
-@AllArgsConstructor
-public final class ResponseMessage<T> implements Serializable {
+public interface CmdService {
 
-    @Getter
-    private Integer code;
+    Cmd get(String id);
 
-    @Getter
-    private String message;
+    Cmd getCurrent();
 
-    @Getter
-    private T data;
+    void execute(Cmd cmd);
 
-    public ResponseMessage(Integer code, T data) {
-        this.code = code;
-        this.data = data;
-    }
+    void onCmdReceived(Cmd cmd);
+
 }

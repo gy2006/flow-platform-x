@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.manager;
+package com.flowci.agent.service;
 
 import com.flowci.agent.dao.ExecutedCmdDao;
 import com.flowci.agent.dao.ReceivedCmdDao;
@@ -43,7 +43,7 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class CmdManagerImpl implements CmdManager {
+public class CmdServiceImpl implements CmdService {
 
     @Autowired
     private ReceivedCmdDao receivedCmdDao;

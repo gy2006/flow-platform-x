@@ -14,31 +14,16 @@
  * limitations under the License.
  */
 
-package com.flowci.domain.http;
-
-import java.io.Serializable;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+package com.flowci.agent.manager;
 
 /**
  * @author yang
  */
-@NoArgsConstructor
-@AllArgsConstructor
-public final class ResponseMessage<T> implements Serializable {
+public interface AgentManager {
 
-    @Getter
-    private Integer code;
+    /**
+     * Register agent on zk
+     */
+    void register();
 
-    @Getter
-    private String message;
-
-    @Getter
-    private T data;
-
-    public ResponseMessage(Integer code, T data) {
-        this.code = code;
-        this.data = data;
-    }
 }

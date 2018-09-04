@@ -25,6 +25,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Jsonable;
 import com.flowci.domain.Settings;
+import com.flowci.domain.http.ResponseMessage;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.Sets;
@@ -69,12 +70,13 @@ public abstract class SpringScenario {
         local.setToken(token);
         local.setTags(Sets.newHashSet("local", "test"));
 
-        String callbackQueueName = "queue.jobs.callback.test";
+        Settings settings = new Settings(local, mq, zk, "queue.jobs.callback.test");
+        ResponseMessage<Settings> responseBody = new ResponseMessage<>(200, settings);
 
         stubFor(get(urlPathEqualTo("/agents"))
             .withQueryParam("token", equalTo(token))
             .willReturn(aResponse()
-                .withBody(Jsonable.getMapper().writeValueAsBytes(new Settings(local, mq, zk, callbackQueueName)))
+                .withBody(Jsonable.getMapper().writeValueAsBytes(responseBody))
                 .withHeader("Content-Type", "application/json")));
     }
 

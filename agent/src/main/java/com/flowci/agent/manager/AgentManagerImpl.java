@@ -16,19 +16,15 @@
 
 package com.flowci.agent.manager;
 
-import com.flowci.domain.Cmd;
-
 /**
  * @author yang
  */
-public interface CmdManager {
+public class AgentManagerImpl implements AgentManager {
 
-    Cmd get(String id);
 
-    Cmd getCurrent();
 
-    void execute(Cmd cmd);
+    @Override
+    public void register() {
 
-    void onCmdReceived(Cmd cmd);
-
+    }
 }

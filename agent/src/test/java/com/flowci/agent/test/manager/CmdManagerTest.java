@@ -19,7 +19,7 @@ package com.flowci.agent.test.manager;
 import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
-import com.flowci.agent.manager.CmdManager;
+import com.flowci.agent.service.CmdService;
 import com.flowci.agent.test.SpringScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
@@ -50,7 +50,7 @@ public class CmdManagerTest extends SpringScenario {
     private Settings agentSettings;
 
     @Autowired
-    private CmdManager cmdManager;
+    private CmdService cmdManager;
 
     @Test
     public void should_receive_cmd_from_server() throws InterruptedException {
