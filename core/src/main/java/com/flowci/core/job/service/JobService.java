@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job;
+package com.flowci.core.job.service;
 
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
@@ -23,12 +23,23 @@ import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.domain.Agent;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.tree.NodeTree;
+import org.springframework.data.domain.Page;
 
 /**
  * @author yang
  */
 public interface JobService {
 
+    Job get(Flow flow, Long buildNumber);
+
+    /**
+     * List job for flow
+     */
+    Page<Job> list(Flow flow, int page, int size);
+
+    /**
+     * Create job by flow and yml
+     */
     Job create(Flow flow, Yml yml, Trigger trigger);
 
     /**

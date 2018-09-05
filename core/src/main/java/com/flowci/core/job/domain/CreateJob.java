@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.dao;
+package com.flowci.core.job.domain;
 
-import com.flowci.core.job.domain.Job;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import javax.validation.constraints.NotNull;
+import lombok.Data;
 
 /**
  * @author yang
  */
-@Repository
-public interface JobDao extends MongoRepository<Job, String> {
+@Data
+public class CreateJob {
 
-    Job findByFlowIdAndBuildNumber(String flowId, Long buildNumber);
+    @NotNull
+    private String flow;
 
-    Page<Job> findAllByFlowId(String flowId, Pageable pageable);
+    public CreateJob() {
+    }
+
+    public CreateJob(@NotNull String flow) {
+        this.flow = flow;
+    }
 }

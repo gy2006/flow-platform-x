@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test;
+package com.flowci.core.test.job;
 
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.job.JobService;
+import com.flowci.core.job.service.JobService;
 import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.Job;
@@ -29,6 +29,7 @@ import com.flowci.core.job.domain.Job.Status;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.util.CmdHelper;
+import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.ExecutedCmd;

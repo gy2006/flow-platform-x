@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job;
+package com.flowci.core.job.service;
 
-import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.flow.domain.Flow;
@@ -36,6 +35,7 @@ import com.flowci.core.job.event.StatusChangeEvent;
 import com.flowci.core.job.util.CmdHelper;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
+import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
@@ -58,6 +58,10 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
@@ -67,6 +71,8 @@ import org.springframework.stereotype.Service;
 @Log4j2
 @Service
 public class JobServiceImpl implements JobService {
+
+    private static final Sort SortByCreatedAt = Sort.by(Direction.DESC, "createdAt");
 
     @Autowired
     private ConfigProperties.Job jobProperties;
@@ -103,6 +109,22 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private AgentService agentService;
+
+    @Override
+    public Job get(Flow flow, Long buildNumber) {
+        Job job = jobDao.findByFlowIdAndBuildNumber(flow.getId(), buildNumber);
+        if (Objects.isNull(job)) {
+            throw new NotFoundException(
+                "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
+        }
+        return job;
+    }
+
+    @Override
+    public Page<Job> list(Flow flow, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, SortByCreatedAt);
+        return jobDao.findAllByFlowId(flow.getId(), pageable);
+    }
 
     @Override
     public Job create(Flow flow, Yml yml, Trigger trigger) {

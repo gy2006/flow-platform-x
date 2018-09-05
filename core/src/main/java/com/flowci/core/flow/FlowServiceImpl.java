@@ -24,6 +24,7 @@ import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
+import com.flowci.exception.NotFoundException;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
 import com.google.common.base.Strings;
@@ -72,7 +73,11 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Flow get(String name) {
-        return flowDao.findByNameAndCreatedBy(name, currentUserHelper.get().getId());
+        Flow flow = flowDao.findByNameAndCreatedBy(name, currentUserHelper.get().getId());
+        if (Objects.isNull(flow)) {
+            throw new NotFoundException("The flow with name {0} cannot found", name);
+        }
+        return flow;
     }
 
     @Override
