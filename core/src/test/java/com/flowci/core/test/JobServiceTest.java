@@ -16,8 +16,8 @@
 
 package com.flowci.core.test;
 
-import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.agent.event.CmdSentEvent;
+import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
@@ -79,7 +79,6 @@ public class JobServiceTest extends ZookeeperScenario {
     public void mockFlowAndYml() throws IOException {
         flow = flowService.create("hello");
         yml = flowService.saveYml(flow, StringHelper.toString(load("flow.yml")));
-        mockLogin();
     }
 
     @Before

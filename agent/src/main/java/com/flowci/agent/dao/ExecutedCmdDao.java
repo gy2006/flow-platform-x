@@ -17,13 +17,13 @@
 package com.flowci.agent.dao;
 
 import com.flowci.agent.domain.AgentExecutedCmd;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 /**
  * @author yang
  */
 @Repository
-public interface ExecutedCmdDao extends CrudRepository<AgentExecutedCmd, String> {
+public interface ExecutedCmdDao extends PagingAndSortingRepository<AgentExecutedCmd, String> {
 
 }
