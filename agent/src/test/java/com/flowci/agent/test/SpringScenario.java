@@ -80,13 +80,13 @@ public abstract class SpringScenario {
                 .withHeader("Content-Type", "application/json")));
     }
 
+    @Autowired
+    protected ApplicationEventMulticaster applicationEventMulticaster;
+
     @Before
     public void reset() {
         WireMock.reset();
     }
-
-    @Autowired
-    protected ApplicationEventMulticaster applicationEventMulticaster;
 
     @Before
     public void resetEventListener() {

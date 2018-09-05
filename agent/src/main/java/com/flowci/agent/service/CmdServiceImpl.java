@@ -29,12 +29,17 @@ import com.flowci.agent.executor.ProcessListener;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
+import java.util.Date;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +49,10 @@ import org.springframework.stereotype.Component;
 @Log4j2
 @Component
 public class CmdServiceImpl implements CmdService {
+
+    private static final Sort SortByReceivedAt = Sort.by(Direction.DESC, "receivedAt");
+
+    private static final Sort SortByStartAt = Sort.by(Direction.DESC, "startAt");
 
     @Autowired
     private ReceivedCmdDao receivedCmdDao;
@@ -74,6 +83,16 @@ public class CmdServiceImpl implements CmdService {
         synchronized (lock) {
             return current;
         }
+    }
+
+    @Override
+    public Page<AgentReceivedCmd> listReceivedCmd(int page, int size) {
+        return receivedCmdDao.findAll(PageRequest.of(page, size, SortByReceivedAt));
+    }
+
+    @Override
+    public Page<AgentExecutedCmd> listExecutedCmd(int page, int size) {
+        return executedCmdDao.findAll(PageRequest.of(page, size, SortByStartAt));
     }
 
     @Override
@@ -121,6 +140,8 @@ public class CmdServiceImpl implements CmdService {
     private Cmd save(Cmd cmd) {
         AgentReceivedCmd agentCmd = new AgentReceivedCmd();
         BeanUtils.copyProperties(cmd, agentCmd);
+
+        agentCmd.setReceivedAt(new Date());
         return receivedCmdDao.save(agentCmd);
     }
 

@@ -21,17 +21,24 @@ import com.flowci.agent.domain.converter.StringSetConverter;
 import com.flowci.agent.domain.converter.VariableMapConverter;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.VariableMap;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import lombok.Data;
 
 /**
  * @author yang
  */
+@Data
 @Entity(name = "cmd_received")
 public class AgentReceivedCmd extends Cmd {
+
+    @Column(name = "received_at")
+    private Date receivedAt;
 
     @Id
     @Override
@@ -52,12 +59,14 @@ public class AgentReceivedCmd extends Cmd {
     }
 
     @Override
+    @Column(name = "env_filters")
     @Convert(converter = StringSetConverter.class)
     public Set<String> getEnvFilters() {
         return super.getEnvFilters();
     }
 
     @Override
+    @Column(name = "work_dir")
     public String getWorkDir() {
         return super.getWorkDir();
     }

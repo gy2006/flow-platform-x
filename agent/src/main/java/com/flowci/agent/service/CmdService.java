@@ -16,7 +16,10 @@
 
 package com.flowci.agent.service;
 
+import com.flowci.agent.domain.AgentExecutedCmd;
+import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.domain.Cmd;
+import org.springframework.data.domain.Page;
 
 /**
  * @author yang
@@ -26,6 +29,10 @@ public interface CmdService {
     Cmd get(String id);
 
     Cmd getCurrent();
+
+    Page<AgentReceivedCmd> listReceivedCmd(int page, int size);
+
+    Page<AgentExecutedCmd> listExecutedCmd(int page, int size);
 
     void execute(Cmd cmd);
 

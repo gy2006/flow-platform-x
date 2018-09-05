@@ -20,6 +20,7 @@ import com.flowci.agent.domain.converter.VariableMapConverter;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import java.util.Date;
+import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -37,6 +38,7 @@ public class AgentExecutedCmd extends ExecutedCmd {
     }
 
     @Override
+    @Column(name = "process_id")
     public Integer getProcessId() {
         return super.getProcessId();
     }
@@ -58,11 +60,13 @@ public class AgentExecutedCmd extends ExecutedCmd {
     }
 
     @Override
+    @Column(name = "start_at")
     public Date getStartAt() {
         return super.getStartAt();
     }
 
     @Override
+    @Column(name = "finish_at")
     public Date getFinishAt() {
         return super.getFinishAt();
     }

@@ -16,6 +16,9 @@
 
 package com.flowci.agent.test.service;
 
+import com.flowci.agent.dao.ExecutedCmdDao;
+import com.flowci.agent.dao.ReceivedCmdDao;
+import com.flowci.agent.domain.AgentExecutedCmd;
 import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
@@ -29,14 +32,19 @@ import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.Settings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
+import org.springframework.data.domain.Page;
 
 /**
  * @author yang
@@ -51,6 +59,66 @@ public class CmdServiceTest extends SpringScenario {
 
     @Autowired
     private CmdService cmdManager;
+
+    @Autowired
+    private ExecutedCmdDao executedCmdDao;
+
+    @Autowired
+    private ReceivedCmdDao receivedCmdDao;
+
+    @Before
+    public void clean() {
+        receivedCmdDao.deleteAll();
+        executedCmdDao.deleteAll();
+    }
+
+    @Test
+    public void should_list_received_cmd_by_date() {
+        // init:
+        AgentReceivedCmd first = new AgentReceivedCmd();
+        first.setId("1");
+        first.setReceivedAt(new Date());
+        receivedCmdDao.save(first);
+
+        AgentReceivedCmd second = new AgentReceivedCmd();
+        second.setId("2");
+        second.setReceivedAt(Date.from(Instant.now().plus(10, ChronoUnit.SECONDS)));
+        receivedCmdDao.save(second);
+
+        // when:
+        Page<AgentReceivedCmd> page = cmdManager.listReceivedCmd(0, 10);
+
+        // then:
+        Assert.assertNotNull(page);
+        Assert.assertEquals(2, page.getTotalElements());
+        Assert.assertEquals("2", page.getContent().get(0).getId());
+        Assert.assertEquals("1", page.getContent().get(1).getId());
+    }
+
+    @Test
+    public void should_list_executed_cmd_by_start_at() {
+        // init:
+        AgentExecutedCmd first = new AgentExecutedCmd();
+        first.setId("1");
+        first.setStatus(Status.SUCCESS);
+        first.setStartAt(new Date());
+        executedCmdDao.save(first);
+
+        AgentExecutedCmd second = new AgentExecutedCmd();
+        second.setId("2");
+        second.setStatus(Status.SUCCESS);
+        second.setStartAt(Date.from(Instant.now().plus(10, ChronoUnit.SECONDS)));
+        executedCmdDao.save(second);
+
+        // when:
+        Page<AgentExecutedCmd> page = cmdManager.listExecutedCmd(0, 10);
+
+        // then:
+        Assert.assertNotNull(page);
+        Assert.assertEquals(2, page.getTotalElements());
+        Assert.assertEquals("2", page.getContent().get(0).getId());
+        Assert.assertEquals("1", page.getContent().get(1).getId());
+    }
 
     @Test
     public void should_receive_cmd_from_server() throws InterruptedException {
