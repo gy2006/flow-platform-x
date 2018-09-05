@@ -20,7 +20,7 @@ import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.user.CurrentUser;
+import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
@@ -39,7 +39,7 @@ import org.springframework.stereotype.Service;
 public class FlowServiceImpl implements FlowService {
 
     @Autowired
-    private CurrentUser currentUser;
+    private CurrentUserHelper currentUserHelper;
 
     @Autowired
     private FlowDao flowDao;
@@ -49,7 +49,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public List<Flow> list() {
-        return flowDao.findAllByCreatedBy(currentUser.get().getId());
+        return flowDao.findAllByCreatedBy(currentUserHelper.get().getId());
     }
 
     @Override
@@ -66,13 +66,13 @@ public class FlowServiceImpl implements FlowService {
         }
 
         Flow newFlow = new Flow(name);
-        newFlow.setCreatedBy(currentUser.get().getId());
+        newFlow.setCreatedBy(currentUserHelper.get().getId());
         return flowDao.save(newFlow);
     }
 
     @Override
     public Flow get(String name) {
-        return flowDao.findByNameAndCreatedBy(name, currentUser.get().getId());
+        return flowDao.findByNameAndCreatedBy(name, currentUserHelper.get().getId());
     }
 
     @Override
@@ -98,7 +98,7 @@ public class FlowServiceImpl implements FlowService {
         YmlParser.load(flow.getName(), yml);
 
         Yml ymlObj = new Yml(flow.getId(), yml);
-        ymlObj.setCreatedBy(currentUser.get().getId());
+        ymlObj.setCreatedBy(currentUserHelper.get().getId());
         return ymlDao.save(ymlObj);
     }
 
@@ -108,7 +108,7 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException("The flow id is missing");
         }
 
-        if (!Objects.equals(flow.getCreatedBy(), currentUser.get().getId())) {
+        if (!Objects.equals(flow.getCreatedBy(), currentUserHelper.get().getId())) {
             throw new AccessException("Illegal account for flow {0}", flow.getName());
         }
     }

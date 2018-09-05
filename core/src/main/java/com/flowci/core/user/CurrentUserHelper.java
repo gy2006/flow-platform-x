@@ -24,13 +24,13 @@ import org.springframework.stereotype.Component;
 /**
  * @author yang
  */
-@Component("currentUser")
-public final class CurrentUser {
+@Component("currentUserHelper")
+public class CurrentUserHelper {
 
     private final ThreadLocal<User> currentUser;
 
     @Autowired
-    public CurrentUser(ThreadLocal<User> currentUser) {
+    public CurrentUserHelper(ThreadLocal<User> currentUser) {
         this.currentUser = currentUser;
     }
 
@@ -46,7 +46,7 @@ public final class CurrentUser {
         currentUser.set(user);
     }
 
-    public void clean() {
+    public void reset() {
         currentUser.set(null);
     }
 }

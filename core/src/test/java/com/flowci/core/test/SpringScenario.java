@@ -18,6 +18,7 @@ package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.test.SpringScenario.Config;
+import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.core.user.User;
 import com.flowci.core.user.UserService;
 import com.flowci.domain.Agent;
@@ -60,9 +61,8 @@ public abstract class SpringScenario {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    @Getter
     @Autowired
-    private ThreadLocal<User> currentUser;
+    private CurrentUserHelper currentUserHelper;
 
     @Autowired
     private UserService userService;
@@ -106,6 +106,6 @@ public abstract class SpringScenario {
         if (Objects.isNull(user)) {
             user = userService.create("test@flow.ci", "12345");
         }
-        currentUser.set(user);
+        currentUserHelper.set(user);
     }
 }

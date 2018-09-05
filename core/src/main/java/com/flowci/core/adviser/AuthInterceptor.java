@@ -16,7 +16,7 @@
 
 package com.flowci.core.adviser;
 
-import com.flowci.core.user.CurrentUser;
+import com.flowci.core.user.CurrentUserHelper;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,15 +28,10 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class AuthInterceptor implements HandlerInterceptor {
 
     @Autowired
-    private CurrentUser currentUser;
+    private CurrentUserHelper currentUserHelper;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        return false;
-    }
-
-    @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-
+        return true;
     }
 }

@@ -22,6 +22,7 @@ import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpMethod.PUT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.adviser.AuthInterceptor;
 import com.flowci.core.user.User;
 import com.flowci.domain.Jsonable;
 import com.google.common.collect.Lists;
@@ -45,6 +46,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -96,6 +98,16 @@ public class AppConfig implements WebMvcConfigurer {
     @Bean("currentUser")
     public ThreadLocal<User> currentUser() {
         return new ThreadLocal<>();
+    }
+
+    @Bean
+    public AuthInterceptor authHandler() {
+        return new AuthInterceptor();
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(authHandler());
     }
 
     @Override

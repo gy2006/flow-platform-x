@@ -16,7 +16,7 @@
 
 package com.flowci.core.job;
 
-import com.flowci.core.user.CurrentUser;
+import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.flow.domain.Flow;
@@ -72,7 +72,7 @@ public class JobServiceImpl implements JobService {
     private ConfigProperties.Job jobProperties;
 
     @Autowired
-    private CurrentUser currentUser;
+    private CurrentUserHelper currentUserHelper;
 
     @Autowired
     private JobDao jobDao;
@@ -117,7 +117,7 @@ public class JobServiceImpl implements JobService {
         job.setKey(JobKeyBuilder.build(flow, buildNumber));
         job.setFlowId(flow.getId());
         job.setTrigger(trigger);
-        job.setCreatedBy(currentUser.get().getId());
+        job.setCreatedBy(currentUserHelper.get().getId());
         job.setBuildNumber(buildNumber);
         job.setCurrentPath(root.getPathAsString());
 
