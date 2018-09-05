@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-package com.flowci.core;
+package com.flowci.core.adviser;
 
-import com.flowci.core.user.User;
-import com.flowci.exception.CIException;
-import java.util.Objects;
+import com.flowci.core.user.CurrentUser;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
  * @author yang
  */
-public abstract class RequireCurrentUser {
+public class AuthInterceptor implements HandlerInterceptor {
 
     @Autowired
-    private ThreadLocal<User> currentUser;
+    private CurrentUser currentUser;
 
-    protected User getCurrentUser() {
-        User user = currentUser.get();
-        if (Objects.isNull(user)) {
-            throw new CIException("User logged in is required");
-        }
-        return user;
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        return false;
     }
 
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+
+    }
 }

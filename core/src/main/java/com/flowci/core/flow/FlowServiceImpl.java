@@ -16,11 +16,11 @@
 
 package com.flowci.core.flow;
 
-import com.flowci.core.RequireCurrentUser;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.user.CurrentUser;
 import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
@@ -36,7 +36,10 @@ import org.springframework.stereotype.Service;
  * @author yang
  */
 @Service
-public class FlowServiceImpl extends RequireCurrentUser implements FlowService {
+public class FlowServiceImpl implements FlowService {
+
+    @Autowired
+    private CurrentUser currentUser;
 
     @Autowired
     private FlowDao flowDao;
@@ -46,7 +49,7 @@ public class FlowServiceImpl extends RequireCurrentUser implements FlowService {
 
     @Override
     public List<Flow> list() {
-        return flowDao.findAllByCreatedBy(getCurrentUser().getId());
+        return flowDao.findAllByCreatedBy(currentUser.get().getId());
     }
 
     @Override
@@ -63,13 +66,13 @@ public class FlowServiceImpl extends RequireCurrentUser implements FlowService {
         }
 
         Flow newFlow = new Flow(name);
-        newFlow.setCreatedBy(getCurrentUser().getId());
+        newFlow.setCreatedBy(currentUser.get().getId());
         return flowDao.save(newFlow);
     }
 
     @Override
     public Flow get(String name) {
-        return flowDao.findByNameAndCreatedBy(name, getCurrentUser().getId());
+        return flowDao.findByNameAndCreatedBy(name, currentUser.get().getId());
     }
 
     @Override
@@ -95,7 +98,7 @@ public class FlowServiceImpl extends RequireCurrentUser implements FlowService {
         YmlParser.load(flow.getName(), yml);
 
         Yml ymlObj = new Yml(flow.getId(), yml);
-        ymlObj.setCreatedBy(getCurrentUser().getId());
+        ymlObj.setCreatedBy(currentUser.get().getId());
         return ymlDao.save(ymlObj);
     }
 
@@ -105,7 +108,7 @@ public class FlowServiceImpl extends RequireCurrentUser implements FlowService {
             throw new ArgumentException("The flow id is missing");
         }
 
-        if (!Objects.equals(flow.getCreatedBy(), getCurrentUser().getId())) {
+        if (!Objects.equals(flow.getCreatedBy(), currentUser.get().getId())) {
             throw new AccessException("Illegal account for flow {0}", flow.getName());
         }
     }

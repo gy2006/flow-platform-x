@@ -16,7 +16,7 @@
 
 package com.flowci.core.job;
 
-import com.flowci.core.RequireCurrentUser;
+import com.flowci.core.user.CurrentUser;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.flow.domain.Flow;
@@ -66,10 +66,13 @@ import org.springframework.stereotype.Service;
  */
 @Log4j2
 @Service
-public class JobServiceImpl extends RequireCurrentUser implements JobService {
+public class JobServiceImpl implements JobService {
 
     @Autowired
     private ConfigProperties.Job jobProperties;
+
+    @Autowired
+    private CurrentUser currentUser;
 
     @Autowired
     private JobDao jobDao;
@@ -114,7 +117,7 @@ public class JobServiceImpl extends RequireCurrentUser implements JobService {
         job.setKey(JobKeyBuilder.build(flow, buildNumber));
         job.setFlowId(flow.getId());
         job.setTrigger(trigger);
-        job.setCreatedBy(getCurrentUser().getId());
+        job.setCreatedBy(currentUser.get().getId());
         job.setBuildNumber(buildNumber);
         job.setCurrentPath(root.getPathAsString());
 
