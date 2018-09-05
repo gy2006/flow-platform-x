@@ -42,6 +42,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
@@ -58,6 +59,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class AppConfig implements WebMvcConfigurer {
 
     private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(
+        new StringHttpMessageConverter(),
         new ByteArrayHttpMessageConverter(),
         new MappingJackson2HttpMessageConverter(Jsonable.getMapper()),
         new ResourceHttpMessageConverter(),

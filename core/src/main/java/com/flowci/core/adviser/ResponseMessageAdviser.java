@@ -55,6 +55,10 @@ public class ResponseMessageAdviser implements ResponseBodyAdvice {
             return body;
         }
 
+        if (MediaType.TEXT_PLAIN.equals(selectedContentType)) {
+            return body;
+        }
+
         return new ResponseMessage<>(StatusCode.OK, SUCCESS_MESSAGE, body);
     }
 }

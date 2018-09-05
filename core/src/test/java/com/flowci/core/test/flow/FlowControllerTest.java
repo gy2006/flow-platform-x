@@ -23,13 +23,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.domain.http.RequestMessage;
-import com.flowci.domain.http.ResponseMessage;
 import com.flowci.core.domain.StatusCode;
 import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.http.ResponseMessage;
 import com.flowci.util.StringHelper;
 import java.util.HashMap;
 import java.util.List;
@@ -53,10 +52,6 @@ public class FlowControllerTest extends SpringScenario {
         new TypeReference<ResponseMessage<List<Flow>>>() {
         };
 
-    private final static TypeReference<ResponseMessage<String>> YmlType =
-        new TypeReference<ResponseMessage<String>>() {
-        };
-
     @Autowired
     private MvcMockHelper mvcMockHelper;
 
@@ -76,12 +71,11 @@ public class FlowControllerTest extends SpringScenario {
     @Before
     public void createFlowWithYml() throws Exception {
         String yml = StringHelper.toString(load("flow.yml"));
-        String jsonContent = objectMapper.writeValueAsString(new RequestMessage<>(yml));
 
         ResponseMessage<Flow> response = mvcMockHelper
             .expectSuccessAndReturnClass(post("/flows/" + flowName)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(jsonContent), FlowType);
+                .contentType(MediaType.TEXT_PLAIN)
+                .content(yml), FlowType);
 
         Assert.assertEquals(StatusCode.OK, response.getCode());
     }
@@ -94,11 +88,8 @@ public class FlowControllerTest extends SpringScenario {
         Assert.assertEquals(StatusCode.OK, getFlowResponse.getCode());
         Assert.assertEquals(flowName, getFlowResponse.getData().getName());
 
-        ResponseMessage<String> getYmlResponse = mvcMockHelper
-            .expectSuccessAndReturnClass(get("/flows/" + flowName + "/yml"), YmlType);
-
-        Assert.assertEquals(StatusCode.OK, getYmlResponse.getCode());
-        Assert.assertEquals(StringHelper.toString(load("flow.yml")), getYmlResponse.getData());
+        String ymlResponse = mvcMockHelper.expectSuccessAndReturnString(get("/flows/" + flowName + "/yml"));
+        Assert.assertEquals(StringHelper.toString(load("flow.yml")), ymlResponse);
     }
 
     @Test
@@ -137,7 +128,6 @@ public class FlowControllerTest extends SpringScenario {
             delete("/flows/" + flowName + "/variables"), ResponseMessage.class);
 
         Assert.assertEquals(StatusCode.OK, cleanVarResponse.getCode());
-
 
         // then:
         flow = flowService.get(flowName);

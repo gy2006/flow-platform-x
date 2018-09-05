@@ -16,12 +16,12 @@
 
 package com.flowci.core.flow;
 
-import com.flowci.domain.http.RequestMessage;
 import com.flowci.core.flow.domain.Flow;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -52,24 +52,24 @@ public class FlowController {
     }
 
     @PostMapping(value = "/{name}")
-    public Flow create(@PathVariable String name, @RequestBody(required = false) RequestMessage<String> yml) {
+    public Flow create(@PathVariable String name, @RequestBody(required = false) String yml) {
         Flow flow = flowService.create(name);
         if (!Objects.isNull(yml)) {
-            flowService.saveYml(flow, yml.getData());
+            flowService.saveYml(flow, yml);
         }
         return flow;
     }
 
-    @GetMapping(value = "/{name}/yml")
+    @GetMapping(value = "/{name}/yml", produces = MediaType.TEXT_PLAIN_VALUE)
     public String getYml(@PathVariable String name) {
         Flow flow = flowService.get(name);
         return flowService.getYml(flow).getRaw();
     }
 
     @PatchMapping("/{name}/yml")
-    public void updateYml(@PathVariable String name, @RequestBody RequestMessage<String> yml) {
+    public void updateYml(@PathVariable String name, @RequestBody String yml) {
         Flow flow = flowService.get(name);
-        flowService.saveYml(flow, yml.getData());
+        flowService.saveYml(flow, yml);
     }
 
     @PatchMapping("/{name}/variables")
