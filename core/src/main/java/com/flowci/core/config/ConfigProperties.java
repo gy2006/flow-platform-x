@@ -26,6 +26,8 @@ public class ConfigProperties {
 
     private String workspace;
 
+    private Boolean authEnabled;
+
     @Data
     public static class Admin {
 

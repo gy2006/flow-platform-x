@@ -107,7 +107,11 @@ public class AppConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(authHandler());
+        registry.addInterceptor(authHandler())
+            .addPathPatterns("/flows/**")
+            .addPathPatterns("/jobs/**")
+            .addPathPatterns("/agents/**")
+            .excludePathPatterns("/agents/connect");
     }
 
     @Override

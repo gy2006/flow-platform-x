@@ -16,7 +16,13 @@
 
 package com.flowci.core.adviser;
 
+import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.user.CurrentUserHelper;
+import com.flowci.core.user.User;
+import com.flowci.core.user.UserService;
+import com.flowci.exception.AuthenticationException;
+import com.google.common.base.Strings;
+import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +33,51 @@ import org.springframework.web.servlet.HandlerInterceptor;
  */
 public class AuthInterceptor implements HandlerInterceptor {
 
+    private static final String MagicToken = "helloflowciadmin";
+
+    private static final String HeaderToken = "Token";
+
+    private static final String ParameterToken = "token";
+
+    @Autowired
+    private ConfigProperties appProperties;
+
     @Autowired
     private CurrentUserHelper currentUserHelper;
 
+    @Autowired
+    private UserService userService;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (!appProperties.getAuthEnabled()) {
+            if (Objects.isNull(currentUserHelper.get())) {
+                return setAdminToCurrentUser();
+            }
+            return true;
+        }
+
+        currentUserHelper.reset();
+        String token = request.getHeader(HeaderToken);
+
+        if (Strings.isNullOrEmpty(token)) {
+            token = request.getParameter(ParameterToken);
+        }
+
+        if (Strings.isNullOrEmpty(token)) {
+            throw new AuthenticationException("Token is missing");
+        }
+
+        if (token.equals(MagicToken)) {
+            return setAdminToCurrentUser();
+        }
+
+        return true;
+    }
+
+    private boolean setAdminToCurrentUser() {
+        User defaultAdmin = userService.defaultAdmin();
+        currentUserHelper.set(defaultAdmin);
         return true;
     }
 }
