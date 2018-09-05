@@ -14,30 +14,34 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.test;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import lombok.Data;
 
 /**
  * @author yang
  */
-public final class Jsonable {
+@Data
+public class JsonablePage<T> {
 
-    private final static ObjectMapper Mapper = new ObjectMapper();
+    private int number;
 
-    static {
-        Mapper.setSerializationInclusion(Include.NON_NULL);
-        Mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
+    private int size;
 
-    public static ObjectMapper getMapper() {
-        return Mapper;
-    }
+    private int totalPages;
 
-    private Jsonable() {
+    private int numberOfElements;
 
-    }
+    private long totalElements;
 
+    private boolean previousPage;
+
+    private boolean first;
+
+    private boolean nextPage;
+
+    private boolean last;
+
+    private List<T> content;
 }

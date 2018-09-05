@@ -22,8 +22,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.domain.StatusCode;
+import com.flowci.core.helper.ThreadHelper;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
+import com.flowci.core.test.JsonablePage;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.http.ResponseMessage;
@@ -42,8 +44,13 @@ import org.springframework.http.MediaType;
 @FixMethodOrder(value = MethodSorters.JVM)
 public class JobControllerTest extends SpringScenario {
 
-    private static final TypeReference<ResponseMessage<Job>> JobType = new TypeReference<ResponseMessage<Job>>() {
-    };
+    private static final TypeReference<ResponseMessage<Job>> JobType =
+        new TypeReference<ResponseMessage<Job>>() {
+        };
+
+    private static final TypeReference<ResponseMessage<JsonablePage<Job>>> JobListType =
+        new TypeReference<ResponseMessage<JsonablePage<Job>>>() {
+        };
 
     @Autowired
     private MvcMockHelper mvcMockHelper;
@@ -73,6 +80,27 @@ public class JobControllerTest extends SpringScenario {
         Job loaded = response.getData();
         Assert.assertNotNull(loaded);
         Assert.assertEquals(created, loaded);
+    }
+
+    @Test
+    public void should_list_job_by_flow() throws Exception {
+        // init:
+        Job first = createJobForFlow(flow);
+        ThreadHelper.sleep(1000);
+
+        Job second = createJobForFlow(flow);
+
+        // when:
+        ResponseMessage<JsonablePage<Job>> message = mvcMockHelper
+            .expectSuccessAndReturnClass(get("/jobs/hello-flow"), JobListType);
+        Assert.assertEquals(StatusCode.OK, message.getCode());
+
+        // then:
+        JsonablePage<Job> page = message.getData();
+        Assert.assertEquals(2, page.getTotalElements());
+
+        Assert.assertEquals(second, page.getContent().get(0));
+        Assert.assertEquals(first, page.getContent().get(1));
     }
 
     public Job createJobForFlow(String name) throws Exception {
