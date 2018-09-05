@@ -18,6 +18,7 @@ package com.flowci.agent.controller;
 
 import com.flowci.domain.Cmd;
 import com.flowci.domain.VariableMap;
+import com.google.common.collect.Lists;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
@@ -48,6 +49,8 @@ public class CmdRequest implements Serializable {
     public Cmd toCmd() {
         Cmd cmd = new Cmd();
         cmd.setId(id);
+        cmd.setScripts(Lists.newArrayList(scripts));
+        cmd.setWorkDir(workDir);
         cmd.setTimeout(timeout);
         cmd.setInputs(new VariableMap(inputs));
         cmd.setEnvFilters(filter);

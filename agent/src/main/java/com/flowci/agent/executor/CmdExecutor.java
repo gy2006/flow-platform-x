@@ -161,6 +161,7 @@ public class CmdExecutor {
                 executor.shutdownNow();
             }
 
+            result.setFinishAt(new Date());
             processListener.onExecuted(result);
             log.trace("====== Logging executed ======");
 

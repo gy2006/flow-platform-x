@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.test.manager;
+package com.flowci.agent.test.service;
 
 import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.agent.event.CmdCompleteEvent;
@@ -41,7 +41,7 @@ import org.springframework.context.ApplicationListener;
 /**
  * @author yang
  */
-public class CmdManagerTest extends SpringScenario {
+public class CmdServiceTest extends SpringScenario {
 
     @Autowired
     private RabbitTemplate queueTemplate;
@@ -121,5 +121,8 @@ public class CmdManagerTest extends SpringScenario {
         Assert.assertEquals(0, executed.getCode().intValue());
         Assert.assertEquals(Status.SUCCESS, executed.getStatus());
         Assert.assertEquals("test1", executed.getOutput().getString("CMD_RUNNER_TEST_1"));
+
+        Assert.assertNotNull(executed.getStartAt());
+        Assert.assertNotNull(executed.getFinishAt());
     }
 }
