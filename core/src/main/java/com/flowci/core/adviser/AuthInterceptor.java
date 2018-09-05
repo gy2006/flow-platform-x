@@ -58,6 +58,16 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         currentUserHelper.reset();
+        String token = getToken(request);
+
+        if (token.equals(MagicToken)) {
+            return setAdminToCurrentUser();
+        }
+
+        return true;
+    }
+
+    private String getToken(HttpServletRequest request) {
         String token = request.getHeader(HeaderToken);
 
         if (Strings.isNullOrEmpty(token)) {
@@ -68,11 +78,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             throw new AuthenticationException("Token is missing");
         }
 
-        if (token.equals(MagicToken)) {
-            return setAdminToCurrentUser();
-        }
-
-        return true;
+        return token;
     }
 
     private boolean setAdminToCurrentUser() {
