@@ -30,7 +30,15 @@ import org.springframework.data.domain.Page;
  */
 public interface JobService {
 
+    /**
+     * Get job by flow and build number
+     */
     Job get(Flow flow, Long buildNumber);
+
+    /**
+     * Get latest job
+     */
+    Job getLatest(Flow flow);
 
     /**
      * List job for flow

@@ -83,6 +83,26 @@ public class JobControllerTest extends SpringScenario {
     }
 
     @Test
+    public void should_get_latest_job() throws Exception {
+        // init:
+        Job first = createJobForFlow(flow);
+        Assert.assertEquals(1, first.getBuildNumber().intValue());
+
+        Job second = createJobForFlow(flow);
+        Assert.assertEquals(2, second.getBuildNumber().intValue());
+
+        // when:
+        ResponseMessage<Job> response =
+            mvcMockHelper.expectSuccessAndReturnClass(get("/jobs/hello-flow/latest"), JobType);
+        Assert.assertEquals(StatusCode.OK, response.getCode());
+
+        // then:
+        Job latest = response.getData();
+        Assert.assertNotNull(latest);
+        Assert.assertEquals(2, latest.getBuildNumber().intValue());
+    }
+
+    @Test
     public void should_list_job_by_flow() throws Exception {
         // init:
         Job first = createJobForFlow(flow);

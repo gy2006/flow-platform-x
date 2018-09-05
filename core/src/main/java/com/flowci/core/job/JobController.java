@@ -23,6 +23,7 @@ import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.service.JobService;
+import com.flowci.exception.ArgumentException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
@@ -45,6 +46,8 @@ public class JobController {
 
     private static final String DefaultSize = "20";
 
+    private static final String ParameterLatest = "latest";
+
     @Autowired
     private FlowService flowService;
 
@@ -60,10 +63,20 @@ public class JobController {
         return jobService.list(flow, page, size);
     }
 
-    @GetMapping("/{flow}/{buildNumber}")
-    public Job get(@PathVariable("flow") String name, @PathVariable Long buildNumber) {
+    @GetMapping("/{flow}/{buildNumberOrLatest}")
+    public Job get(@PathVariable("flow") String name, @PathVariable String buildNumberOrLatest) {
         Flow flow = flowService.get(name);
-        return jobService.get(flow, buildNumber);
+
+        if (ParameterLatest.equals(buildNumberOrLatest)) {
+            return jobService.getLatest(flow);
+        }
+
+        try {
+            long buildNumber = Long.parseLong(buildNumberOrLatest);
+            return jobService.get(flow, buildNumber);
+        } catch (NumberFormatException e) {
+            throw new ArgumentException("Build number must be a integer");
+        }
     }
 
     @PostMapping
@@ -71,5 +84,11 @@ public class JobController {
         Flow flow = flowService.get(data.getFlow());
         Yml yml = flowService.getYml(flow);
         return jobService.create(flow, yml, Trigger.API);
+    }
+
+    @PostMapping("/run")
+    public Job createAndRun(@Validated @RequestBody CreateJob data) {
+        Job job = create(data);
+        return jobService.start(job);
     }
 }

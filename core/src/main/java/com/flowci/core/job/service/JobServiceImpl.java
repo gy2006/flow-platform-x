@@ -121,6 +121,12 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    public Job getLatest(Flow flow) {
+        JobNumber latest = jobNumberDao.findById(flow.getId()).get();
+        return get(flow, latest.getNumber());
+    }
+
+    @Override
     public Page<Job> list(Flow flow, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size, SortByCreatedAt);
         return jobDao.findAllByFlowId(flow.getId(), pageable);
