@@ -72,7 +72,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JobServiceImpl implements JobService {
 
-    private static final Sort SortByCreatedAt = Sort.by(Direction.DESC, "createdAt");
+    private static final Sort SortByBuildNumber = Sort.by(Direction.DESC, "buildNumber");
 
     @Autowired
     private ConfigProperties.Job jobProperties;
@@ -128,7 +128,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Page<Job> list(Flow flow, int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size, SortByCreatedAt);
+        PageRequest pageable = PageRequest.of(page, size, SortByBuildNumber);
         return jobDao.findAllByFlowId(flow.getId(), pageable);
     }
 

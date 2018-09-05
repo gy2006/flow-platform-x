@@ -30,6 +30,7 @@ import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -52,6 +53,11 @@ public class AgentControllerTest extends SpringScenario {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Before
+    public void login() {
+        mockLogin();
+    }
 
     @Test
     public void should_create_agent_and_connect() throws Throwable {
@@ -76,6 +82,7 @@ public class AgentControllerTest extends SpringScenario {
         Assert.assertTrue(agent.getTags().contains("test"));
 
         // when: request to connect agent
+        currentUserHelper.reset();
         ResponseMessage<Settings> settingsR = mvcMockHelper.expectSuccessAndReturnClass(
             get("/agents/connect").param("token", agent.getToken()), SettingsResponseType);
         Assert.assertEquals(StatusCode.OK, settingsR.getCode());

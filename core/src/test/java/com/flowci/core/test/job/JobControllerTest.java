@@ -22,7 +22,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.domain.StatusCode;
-import com.flowci.core.helper.ThreadHelper;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.test.JsonablePage;
@@ -106,8 +105,6 @@ public class JobControllerTest extends SpringScenario {
     public void should_list_job_by_flow() throws Exception {
         // init:
         Job first = createJobForFlow(flow);
-        ThreadHelper.sleep(1000);
-
         Job second = createJobForFlow(flow);
 
         // when:

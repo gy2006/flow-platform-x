@@ -59,10 +59,10 @@ public abstract class SpringScenario {
     }
 
     @Autowired
-    private MongoTemplate mongoTemplate;
+    protected CurrentUserHelper currentUserHelper;
 
     @Autowired
-    private CurrentUserHelper currentUserHelper;
+    private MongoTemplate mongoTemplate;
 
     @Autowired
     private UserService userService;
