@@ -26,6 +26,7 @@ import com.flowci.agent.service.CmdService;
 import com.flowci.agent.test.SpringScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdType;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.ExecutedCmd.Status;
 import com.flowci.domain.ObjectWrapper;
@@ -78,11 +79,13 @@ public class CmdServiceTest extends SpringScenario {
         AgentReceivedCmd first = new AgentReceivedCmd();
         first.setId("1");
         first.setReceivedAt(new Date());
+        first.setType(CmdType.SHELL);
         receivedCmdDao.save(first);
 
         AgentReceivedCmd second = new AgentReceivedCmd();
         second.setId("2");
         second.setReceivedAt(Date.from(Instant.now().plus(10, ChronoUnit.SECONDS)));
+        second.setType(CmdType.SHELL);
         receivedCmdDao.save(second);
 
         // when:
@@ -123,7 +126,7 @@ public class CmdServiceTest extends SpringScenario {
     @Test
     public void should_receive_cmd_from_server() throws InterruptedException {
         // init:
-        Cmd cmd = new Cmd("cmd.id.1");
+        Cmd cmd = new Cmd("cmd.id.1", CmdType.SHELL);
         cmd.setTimeout(10L);
         cmd.setScripts(Lists.newArrayList("echo hello"));
         cmd.setWorkDir("${HOME}");
@@ -161,7 +164,7 @@ public class CmdServiceTest extends SpringScenario {
     @Test
     public void should_execute_cmd_with_success_status() throws InterruptedException {
         // init: create cmd to run
-        Cmd cmd = new Cmd(UUID.randomUUID().toString());
+        Cmd cmd = new Cmd(UUID.randomUUID().toString(), CmdType.SHELL);
         cmd.setScripts(Lists.newArrayList(""
             + "echo \"test shell\"\n"
             + "export CMD_RUNNER_TEST_1=test1\n"

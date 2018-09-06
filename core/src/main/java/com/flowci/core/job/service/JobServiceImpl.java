@@ -198,7 +198,7 @@ public class JobServiceImpl implements JobService {
         Node node = tree.get(currentNodePath(job));
 
         try {
-            Cmd cmd = CmdHelper.create(job, node);
+            Cmd cmd = CmdHelper.createShell(job, node);
             agentService.dispatch(cmd, agent);
 
             if (job.getStatus() != Job.Status.RUNNING) {

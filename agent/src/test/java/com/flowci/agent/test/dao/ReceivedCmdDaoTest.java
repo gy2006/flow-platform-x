@@ -19,6 +19,7 @@ package com.flowci.agent.test.dao;
 import com.flowci.agent.test.SpringScenario;
 import com.flowci.agent.dao.ReceivedCmdDao;
 import com.flowci.agent.domain.AgentReceivedCmd;
+import com.flowci.domain.CmdType;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
@@ -37,6 +38,7 @@ public class ReceivedCmdDaoTest extends SpringScenario {
     public void should_save_and_load_agent_cmd() {
         AgentReceivedCmd cmd = new AgentReceivedCmd();
         cmd.setId("1-hello/world");
+        cmd.setType(CmdType.SHELL);
         cmd.getInputs().putString("hello", "world");
         cmd.setScripts(Lists.newArrayList("h2"));
         cmd.setEnvFilters(Sets.newHashSet("FLOW_"));

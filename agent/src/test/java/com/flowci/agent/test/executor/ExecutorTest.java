@@ -20,6 +20,7 @@ import com.flowci.agent.executor.CmdExecutor;
 import com.flowci.agent.executor.Log;
 import com.flowci.agent.executor.LoggingListener;
 import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdType;
 import com.flowci.domain.ExecutedCmd;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -46,7 +47,7 @@ public class ExecutorTest {
         String path = loader.getResource("test.sh").getFile();
         Runtime.getRuntime().exec("chmod +x " + path);
 
-        Cmd cmd = new Cmd("cmd.id");
+        Cmd cmd = new Cmd("cmd.id", CmdType.SHELL);
         cmd.setScripts(Lists.newArrayList(String.format("source %s", path)));
         cmd.setEnvFilters(Sets.newHashSet("CMD_RUNNER_TEST_", "OUTPUT_2"));
 
@@ -75,7 +76,7 @@ public class ExecutorTest {
         Runtime.getRuntime().exec("chmod +x " + path);
 
 
-        Cmd cmd = new Cmd("cmd.id");
+        Cmd cmd = new Cmd("cmd.id", CmdType.SHELL);
         cmd.setScripts(Lists.newArrayList(String.format("source %s", path)));
         cmd.setEnvFilters(Sets.newHashSet("CMD_RUNNER_TEST"));
 

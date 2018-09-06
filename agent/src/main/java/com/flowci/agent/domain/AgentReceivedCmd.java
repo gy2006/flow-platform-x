@@ -20,6 +20,7 @@ import com.flowci.agent.domain.converter.StringListConverter;
 import com.flowci.agent.domain.converter.StringSetConverter;
 import com.flowci.agent.domain.converter.VariableMapConverter;
 import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdType;
 import com.flowci.domain.VariableMap;
 import java.util.Date;
 import java.util.List;
@@ -44,6 +45,12 @@ public class AgentReceivedCmd extends Cmd {
     @Override
     public String getId() {
         return super.getId();
+    }
+
+    @Override
+    @Column(name = "cmd_type")
+    public CmdType getType() {
+        return super.getType();
     }
 
     @Override

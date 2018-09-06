@@ -38,6 +38,9 @@ public class Cmd implements Serializable {
     private String id;
 
     @NonNull
+    private CmdType type;
+
+    @NonNull
     private List<String> scripts = new LinkedList<>();
 
     private String workDir;
@@ -57,7 +60,8 @@ public class Cmd implements Serializable {
     @NonNull
     private Set<String> envFilters = Collections.emptySet();
 
-    public Cmd(String id) {
+    public Cmd(String id, CmdType type) {
         this.id = id;
+        this.type = type;
     }
 }

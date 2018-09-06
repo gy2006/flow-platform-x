@@ -18,6 +18,7 @@ package com.flowci.core.job.util;
 
 import com.flowci.core.job.domain.Job;
 import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdType;
 import com.flowci.domain.VariableMap;
 import com.flowci.tree.Node;
 import com.google.common.collect.Lists;
@@ -56,10 +57,10 @@ public class CmdHelper {
         return new CmdID(job.getId(), node.getPath().getPathInStr());
     }
 
-    public static Cmd create(Job job, Node node) {
+    public static Cmd createShell(Job job, Node node) {
         VariableMap variables = node.getEnvironments().merge(job.getContext());
 
-        Cmd cmd = new Cmd(createId(job, node).toString());
+        Cmd cmd = new Cmd(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(variables);
         cmd.setScripts(Lists.newArrayList(node.getScript()));
         return cmd;
