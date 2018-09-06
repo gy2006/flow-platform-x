@@ -112,11 +112,14 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job get(Flow flow, Long buildNumber) {
-        Job job = jobDao.findByFlowIdAndBuildNumber(flow.getId(), buildNumber);
+        String key = JobKeyBuilder.build(flow, buildNumber);
+        Job job = jobDao.findByKey(key);
+
         if (Objects.isNull(job)) {
             throw new NotFoundException(
                 "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
         }
+        
         return job;
     }
 

@@ -28,7 +28,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface JobDao extends MongoRepository<Job, String> {
 
-    Job findByFlowIdAndBuildNumber(String flowId, Long buildNumber);
+    Job findByKey(String key);
 
     Page<Job> findAllByFlowId(String flowId, Pageable pageable);
 }

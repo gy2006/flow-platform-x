@@ -202,6 +202,11 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     public Agent create(String name, Set<String> tags) {
+        Agent exist = agentDao.findByName(name);
+        if (exist != null) {
+            throw new DuplicateException("Agent name {0} is already defined", name);
+        }
+
         Agent agent = new Agent(name, tags);
         agent.setToken(UUID.randomUUID().toString());
 

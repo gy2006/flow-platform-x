@@ -68,7 +68,7 @@ public class AgentControllerTest extends SpringScenario {
     }
 
     @Test
-    public void should_has_duplicate_error_when_create_agent_with_same_name() throws Throwable {
+    public void should_duplicate_error_when_create_agent_with_same_name() throws Throwable {
         createAgent("same.name", null, StatusCode.OK);
         createAgent("same.name", null, ErrorCode.DUPLICATE);
     }
