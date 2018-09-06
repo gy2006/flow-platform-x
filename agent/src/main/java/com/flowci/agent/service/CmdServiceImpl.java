@@ -35,6 +35,8 @@ import java.util.Date;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -55,6 +57,12 @@ public class CmdServiceImpl implements CmdService {
     private static final Sort SortByReceivedAt = Sort.by(Direction.DESC, "receivedAt");
 
     private static final Sort SortByStartAt = Sort.by(Direction.DESC, "startAt");
+
+    @Autowired
+    private Queue callbackQueue;
+
+    @Autowired
+    private RabbitTemplate queueTemplate;
 
     @Autowired
     private ReceivedCmdDao receivedCmdDao;
@@ -107,9 +115,7 @@ public class CmdServiceImpl implements CmdService {
             return;
         }
 
-        setCurrent(save(cmd));
-        agentManager.changeStatus(Status.BUSY);
-        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, current));
+        onBeforeExecute(cmd);
 
         cmdThreadPool.execute(() -> {
             CmdExecutor cmdExecutor = new CmdExecutor(current);
@@ -117,14 +123,7 @@ public class CmdServiceImpl implements CmdService {
             cmdExecutor.setLoggingListener(new CmdLoggingListener());
             cmdExecutor.run();
 
-            ExecutedCmd executed = cmdExecutor.getResult();
-            AgentExecutedCmd agentExecutedCmd = new AgentExecutedCmd();
-            BeanUtils.copyProperties(executed, agentExecutedCmd);
-            executedCmdDao.save(agentExecutedCmd);
-
-            applicationEventPublisher.publishEvent(new CmdCompleteEvent(this, current, executed));
-            setCurrent(null);
-            agentManager.changeStatus(Status.IDLE);
+            onAfterExecute(cmdExecutor.getResult());
         });
     }
 
@@ -132,6 +131,23 @@ public class CmdServiceImpl implements CmdService {
     public void onCmdReceived(Cmd received) {
         log.debug("Cmd received: {}", received);
         execute(received);
+    }
+
+    private void onBeforeExecute(Cmd cmd) {
+        setCurrent(save(cmd));
+        agentManager.changeStatus(Status.BUSY);
+        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, current));
+    }
+
+    private void onAfterExecute(ExecutedCmd executed) {
+        AgentExecutedCmd agentExecutedCmd = new AgentExecutedCmd();
+        BeanUtils.copyProperties(executed, agentExecutedCmd);
+        executedCmdDao.save(agentExecutedCmd);
+
+        agentManager.changeStatus(Status.IDLE);
+        queueTemplate.convertAndSend(callbackQueue.getName(), executed);
+        setCurrent(null);
+        applicationEventPublisher.publishEvent(new CmdCompleteEvent(this, current, executed));
     }
 
     private void setCurrent(Cmd cmd) {
