@@ -19,6 +19,7 @@ package com.flowci.core.agent.service;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.Settings;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,9 +35,19 @@ public interface AgentService {
     Agent get(String id);
 
     /**
+     * Get agent by token
+     */
+    Agent getByToken(String token);
+
+    /**
      * Get zookeeper path
      */
     String getPath(Agent agent);
+
+    /**
+     * List agents
+     */
+    List<Agent> list();
 
     /**
      * Find agent by status and tags from database
@@ -46,6 +57,11 @@ public interface AgentService {
      * @throws com.flowci.exception.NotFoundException
      */
     Agent find(Agent.Status status, Set<String> tags);
+
+    /**
+     * Delete agent by token
+     */
+    Agent delete(String token);
 
     /**
      * Try to lock agent resource, and set agent status to BUSY

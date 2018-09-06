@@ -16,6 +16,7 @@
 
 package com.flowci.core.test.agent;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -28,7 +29,10 @@ import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
+import com.flowci.exception.ErrorCode;
 import com.google.common.collect.Sets;
+import java.util.List;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +46,10 @@ public class AgentControllerTest extends SpringScenario {
 
     private static final TypeReference<ResponseMessage<Agent>> AgentResponseType =
         new TypeReference<ResponseMessage<Agent>>() {
+        };
+
+    private static final TypeReference<ResponseMessage<List<Agent>>> AgentListResponseType =
+        new TypeReference<ResponseMessage<List<Agent>>>() {
         };
 
     private static final TypeReference<ResponseMessage<Settings>> SettingsResponseType =
@@ -60,20 +68,40 @@ public class AgentControllerTest extends SpringScenario {
     }
 
     @Test
+    public void should_list_agent() throws Throwable {
+        Agent first = createAgent("first.agent", null);
+        Agent second = createAgent("second.agent", null);
+
+        ResponseMessage<List<Agent>> response =
+            mvcMockHelper.expectSuccessAndReturnClass(get("/agents"), AgentListResponseType);
+        Assert.assertEquals(StatusCode.OK, response.getCode());
+
+        List<Agent> list = response.getData();
+        Assert.assertEquals(2, list.size());
+        Assert.assertTrue(list.contains(first));
+        Assert.assertTrue(list.contains(second));
+    }
+
+    @Test
+    public void should_delete_agent() throws Throwable {
+        Agent created = createAgent("should.delete", null);
+
+        ResponseMessage<Agent> responseOfDeleteAgent =
+            mvcMockHelper.expectSuccessAndReturnClass(delete("/agents/" + created.getToken()), AgentResponseType);
+        Assert.assertEquals(StatusCode.OK, responseOfDeleteAgent.getCode());
+        Assert.assertEquals(created, responseOfDeleteAgent.getData());
+
+        ResponseMessage<Agent> responseOfGetAgent =
+            mvcMockHelper.expectSuccessAndReturnClass(get("/agents/" + created.getToken()), AgentResponseType);
+        Assert.assertEquals(ErrorCode.NOT_FOUND, responseOfGetAgent.getCode());
+    }
+
+    @Test
     public void should_create_agent_and_connect() throws Throwable {
         // init:
-        CreateAgent create = new CreateAgent();
-        create.setName("hello.agent");
-        create.setTags(Sets.newHashSet("test"));
-
-        // when: request to create agent
-        ResponseMessage<Agent> agentR = mvcMockHelper.expectSuccessAndReturnClass(post("/agents")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsBytes(create)), AgentResponseType);
-        Assert.assertEquals(StatusCode.OK, agentR.getCode());
+        Agent agent = createAgent("hello.agent", Sets.newHashSet("test"));
 
         // then: verify agent
-        Agent agent = agentR.getData();
         Assert.assertNotNull(agent);
         Assert.assertNotNull(agent.getId());
         Assert.assertNotNull(agent.getToken());
@@ -98,5 +126,19 @@ public class AgentControllerTest extends SpringScenario {
         Assert.assertEquals(5672, settings.getQueue().getPort().intValue());
         Assert.assertEquals("guest", settings.getQueue().getUsername());
         Assert.assertEquals("guest", settings.getQueue().getPassword());
+    }
+
+    private Agent createAgent(String name, Set<String> tags) throws Exception {
+        CreateAgent create = new CreateAgent();
+        create.setName(name);
+        create.setTags(tags);
+
+        ResponseMessage<Agent> agentR = mvcMockHelper.expectSuccessAndReturnClass(post("/agents")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(create)), AgentResponseType);
+
+        Assert.assertEquals(StatusCode.OK, agentR.getCode());
+
+        return agentR.getData();
     }
 }

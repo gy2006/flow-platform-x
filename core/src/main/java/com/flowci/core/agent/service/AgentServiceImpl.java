@@ -102,11 +102,7 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     public Settings connect(String token) {
-        Agent target = agentDao.findByToken(token);
-        if (Objects.isNull(target)) {
-            throw new NotFoundException("Agent token {0} is not available", token);
-        }
-
+        Agent target = getByToken(token);
         Settings settings = ObjectsHelper.copy(baseSettings);
         settings.setAgent(target);
         return settings;
@@ -119,6 +115,20 @@ public class AgentServiceImpl implements AgentService {
             throw new NotFoundException("Agent {0} does not existed", id);
         }
         return optional.get();
+    }
+
+    @Override
+    public Agent getByToken(String token) {
+        Agent agent = agentDao.findByToken(token);
+        if (Objects.isNull(agent)) {
+            throw new NotFoundException("Agent token {0} is not available", token);
+        }
+        return agent;
+    }
+
+    @Override
+    public List<Agent> list() {
+        return agentDao.findAll();
     }
 
     @Override
@@ -143,6 +153,13 @@ public class AgentServiceImpl implements AgentService {
         }
 
         return agents.get(0);
+    }
+
+    @Override
+    public Agent delete(String token) {
+        Agent agent = getByToken(token);
+        agentDao.delete(agent);
+        return agent;
     }
 
     @Override

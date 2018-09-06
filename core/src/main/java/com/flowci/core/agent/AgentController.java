@@ -20,8 +20,11 @@ import com.flowci.core.agent.domain.CreateAgent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Settings;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,6 +41,16 @@ public class AgentController {
     @Autowired
     private AgentService agentService;
 
+    @GetMapping("/{token}")
+    public Agent getByToken(@PathVariable String token) {
+        return agentService.getByToken(token);
+    }
+
+    @GetMapping
+    public List<Agent> list() {
+        return agentService.list();
+    }
+
     @GetMapping("/connect")
     public Settings connect(@RequestParam String token) {
         return agentService.connect(token);
@@ -48,4 +61,8 @@ public class AgentController {
         return agentService.create(body.getName(), body.getTags());
     }
 
+    @DeleteMapping("/{token}")
+    public Agent delete(@PathVariable String token) {
+        return agentService.delete(token);
+    }
 }
