@@ -26,11 +26,14 @@ import com.flowci.domain.Agent;
 import com.flowci.domain.Jsonable;
 import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
+import com.flowci.zookeeper.ZookeeperClient;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.Sets;
 import java.io.InputStream;
 import lombok.extern.log4j.Log4j2;
+import org.apache.zookeeper.CreateMode;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -48,8 +51,15 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest
 public abstract class SpringScenario {
 
+    protected static final String RootNode = "/flow-agent-test";
+
+    protected static final String AgentID = "agent-id-123";
+
     @ClassRule
     public static WireMockRule wireMockRule = new WireMockRule(8088);
+
+    @ClassRule
+    public static ZookeeperClientRule zkRule = new ZookeeperClientRule("127.0.0.1:2181");
 
     @BeforeClass
     public static void mockAgentSettings() throws Throwable {
@@ -61,12 +71,12 @@ public abstract class SpringScenario {
 
         Settings.Zookeeper zk = new Settings.Zookeeper();
         zk.setHost("127.0.0.1:2181");
-        zk.setRoot("/flow-agent-test");
+        zk.setRoot(RootNode);
 
         String token = "123-123-123";
 
         Agent local = new Agent("hello.agent");
-        local.setId("agent.id.123");
+        local.setId(AgentID);
         local.setToken(token);
         local.setTags(Sets.newHashSet("local", "test"));
 
@@ -80,6 +90,18 @@ public abstract class SpringScenario {
                 .withHeader("Content-Type", "application/json")));
     }
 
+    @BeforeClass
+    public static void createRootNode() {
+        try {
+            zkRule.getClient().create(CreateMode.PERSISTENT, "/flow-agent-test", null);
+        } catch (Throwable ignore) {
+
+        }
+    }
+
+    @Autowired
+    private ZookeeperClient zk;
+
     @Autowired
     protected ApplicationEventMulticaster applicationEventMulticaster;
 
@@ -91,6 +113,13 @@ public abstract class SpringScenario {
     @Before
     public void resetEventListener() {
         applicationEventMulticaster.removeAllListeners();
+    }
+
+    @After
+    public void cleanNodes() {
+        for (String child : zk.children(RootNode)) {
+            zk.delete(RootNode + "/" + child, true);
+        }
     }
 
     protected InputStream load(String resource) {

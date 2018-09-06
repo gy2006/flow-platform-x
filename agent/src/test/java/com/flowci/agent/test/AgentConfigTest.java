@@ -49,7 +49,7 @@ public class AgentConfigTest extends SpringScenario {
         Assert.assertEquals("guest", queue.getPassword());
 
         Agent local = agentSettings.getAgent();
-        Assert.assertEquals("agent.id.123", local.getId());
+        Assert.assertEquals(AgentID, local.getId());
         Assert.assertEquals("hello.agent", local.getName());
         Assert.assertEquals("123-123-123", local.getToken());
         Assert.assertTrue(local.getTags().contains("local"));

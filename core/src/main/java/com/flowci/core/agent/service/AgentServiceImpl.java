@@ -213,7 +213,7 @@ public class AgentServiceImpl implements AgentService {
      */
     private void updateAgentStatus(Agent agent, Status status) {
         if (agent.getStatus() == status) {
-            log.debug("Cannot update agent {} status since status the same", agent);
+            log.debug("Do not update agent {} status since status the same", agent);
             return;
         }
 
@@ -234,7 +234,7 @@ public class AgentServiceImpl implements AgentService {
     private void syncLockNode(Agent agent, Type type) {
         String lockPath = getLockPath(agent);
 
-        if (type == Type.CHILD_ADDED) {
+        if (type == Type.CHILD_ADDED || type == Type.CHILD_UPDATED) {
             try {
                 zk.create(CreateMode.PERSISTENT, lockPath, null);
             } catch (Throwable ignore) {

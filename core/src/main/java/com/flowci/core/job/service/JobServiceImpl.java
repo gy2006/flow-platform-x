@@ -212,6 +212,7 @@ public class JobServiceImpl implements JobService {
     @Override
     @RabbitListener(queues = "${app.job.queue-name}")
     public void processJob(Job job) {
+        log.debug("Job {} received from queue", job.getId());
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
 
         if (!job.isPending()) {
@@ -245,9 +246,11 @@ public class JobServiceImpl implements JobService {
 
             // dispatch job to agent queue
             dispatch(job, available);
+            log.debug("Job {} been dispatched to agent {}", job.getId(), available.getName());
 
         } catch (NotFoundException e) {
             // re-enqueue to job while agent not found
+            log.debug("Agent not available, job {} retry", job.getId());
             retry(job);
         }
     }

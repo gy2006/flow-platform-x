@@ -26,6 +26,8 @@ import com.flowci.agent.executor.CmdExecutor;
 import com.flowci.agent.executor.Log;
 import com.flowci.agent.executor.LoggingListener;
 import com.flowci.agent.executor.ProcessListener;
+import com.flowci.agent.manager.AgentManager;
+import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
@@ -59,6 +61,9 @@ public class CmdServiceImpl implements CmdService {
 
     @Autowired
     private ExecutedCmdDao executedCmdDao;
+
+    @Autowired
+    private AgentManager agentManager;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -103,6 +108,7 @@ public class CmdServiceImpl implements CmdService {
         }
 
         setCurrent(save(cmd));
+        agentManager.changeStatus(Status.BUSY);
         applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, current));
 
         cmdThreadPool.execute(() -> {
@@ -118,6 +124,7 @@ public class CmdServiceImpl implements CmdService {
 
             applicationEventPublisher.publishEvent(new CmdCompleteEvent(this, current, executed));
             setCurrent(null);
+            agentManager.changeStatus(Status.IDLE);
         });
     }
 
