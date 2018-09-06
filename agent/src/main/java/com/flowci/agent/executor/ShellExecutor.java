@@ -53,7 +53,7 @@ import lombok.extern.log4j.Log4j2;
  * @author yang
  */
 @Log4j2
-public class CmdExecutor {
+public class ShellExecutor {
 
     private final static String LinuxBash = "/bin/bash";
 
@@ -108,7 +108,7 @@ public class CmdExecutor {
 
     private final String endTerm = String.format("=====EOF-%s=====", UUID.randomUUID());
 
-    public CmdExecutor(Cmd cmd) {
+    public ShellExecutor(Cmd cmd) {
         this.cmd = cmd;
         this.result = new ExecutedCmd(cmd.getId());
 

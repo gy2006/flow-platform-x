@@ -22,7 +22,7 @@ import com.flowci.agent.domain.AgentExecutedCmd;
 import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
-import com.flowci.agent.executor.CmdExecutor;
+import com.flowci.agent.executor.ShellExecutor;
 import com.flowci.agent.executor.Log;
 import com.flowci.agent.executor.LoggingListener;
 import com.flowci.agent.executor.ProcessListener;
@@ -118,7 +118,7 @@ public class CmdServiceImpl implements CmdService {
         onBeforeExecute(cmd);
 
         cmdThreadPool.execute(() -> {
-            CmdExecutor cmdExecutor = new CmdExecutor(current);
+            ShellExecutor cmdExecutor = new ShellExecutor(current);
             cmdExecutor.setProcessListener(new CmdProcessListener());
             cmdExecutor.setLoggingListener(new CmdLoggingListener());
             cmdExecutor.run();

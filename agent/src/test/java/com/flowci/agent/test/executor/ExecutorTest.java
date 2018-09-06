@@ -16,7 +16,7 @@
 
 package com.flowci.agent.test.executor;
 
-import com.flowci.agent.executor.CmdExecutor;
+import com.flowci.agent.executor.ShellExecutor;
 import com.flowci.agent.executor.Log;
 import com.flowci.agent.executor.LoggingListener;
 import com.flowci.domain.Cmd;
@@ -52,7 +52,7 @@ public class ExecutorTest {
         cmd.setEnvFilters(Sets.newHashSet("CMD_RUNNER_TEST_", "OUTPUT_2"));
 
         // run test.sh and export var start with CMD_RUNNER_TEST_ and OUTPUT_2
-        CmdExecutor executor = new CmdExecutor(cmd);
+        ShellExecutor executor = new ShellExecutor(cmd);
         executor.setLoggingListener(logListener);
         executor.run();
 
@@ -80,7 +80,7 @@ public class ExecutorTest {
         cmd.setScripts(Lists.newArrayList(String.format("source %s", path)));
         cmd.setEnvFilters(Sets.newHashSet("CMD_RUNNER_TEST"));
 
-        CmdExecutor executor = new CmdExecutor(cmd);
+        ShellExecutor executor = new ShellExecutor(cmd);
         executor.run();
 
         ExecutedCmd result = executor.getResult();

@@ -24,6 +24,7 @@ import com.flowci.tree.Node;
 import com.google.common.collect.Lists;
 import java.text.MessageFormat;
 import java.util.Base64;
+import java.util.UUID;
 import lombok.Data;
 
 /**
@@ -64,6 +65,10 @@ public class CmdHelper {
         cmd.setInputs(variables);
         cmd.setScripts(Lists.newArrayList(node.getScript()));
         return cmd;
+    }
+
+    public static Cmd createKill() {
+        return new Cmd(UUID.randomUUID().toString(), CmdType.KILL);
     }
 
     private CmdHelper() {
