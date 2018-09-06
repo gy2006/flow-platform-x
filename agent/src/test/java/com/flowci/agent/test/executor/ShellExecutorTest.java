@@ -22,16 +22,18 @@ import com.flowci.agent.executor.LoggingListener;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.ExecutedCmd.Status;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * @author yang
  */
-public class ExecutorTest {
+public class ShellExecutorTest {
 
     private LoggingListener logListener = new LoggingListener() {
 
@@ -86,6 +88,20 @@ public class ExecutorTest {
         ExecutedCmd result = executor.getResult();
         Assert.assertEquals(0, result.getOutput().size());
         Assert.assertNotEquals(0, result.getCode().intValue());
+    }
+
+    @Test
+    public void should_run_shell_with_timeout() {
+        Cmd cmd = new Cmd(UUID.randomUUID().toString(), CmdType.SHELL);
+        cmd.setScripts(Lists.newArrayList("echo '--- start ---' && sleep 9999 && echo '--- end ---'"));
+        cmd.setTimeout(2L);
+
+        ShellExecutor executor = new ShellExecutor(cmd);
+        executor.run();
+
+        ExecutedCmd result = executor.getResult();
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Status.TIMEOUT, result.getStatus());
     }
 
 }

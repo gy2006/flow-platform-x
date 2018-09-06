@@ -29,6 +29,7 @@ import com.flowci.agent.executor.ProcessListener;
 import com.flowci.agent.manager.AgentManager;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdType;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
 import java.util.Date;
@@ -92,13 +93,6 @@ public class CmdServiceImpl implements CmdService {
     }
 
     @Override
-    public Cmd getCurrent() {
-        synchronized (lock) {
-            return current;
-        }
-    }
-
-    @Override
     public Page<AgentReceivedCmd> listReceivedCmd(int page, int size) {
         return receivedCmdDao.findAll(PageRequest.of(page, size, SortByReceivedAt));
     }
@@ -110,21 +104,30 @@ public class CmdServiceImpl implements CmdService {
 
     @Override
     public void execute(Cmd cmd) {
-        if (hasCmdRunning()) {
-            log.debug("Cannot start cmd since {} is running", current);
+        if (cmd.getType() == CmdType.SHELL) {
+            if (hasCmdRunning()) {
+                log.debug("Cannot start cmd since {} is running", current);
+                return;
+            }
+
+            onBeforeExecute(cmd);
+
+            cmdThreadPool.execute(() -> {
+                ShellExecutor cmdExecutor = new ShellExecutor(current);
+                cmdExecutor.setProcessListener(new CmdProcessListener());
+                cmdExecutor.setLoggingListener(new CmdLoggingListener());
+                cmdExecutor.run();
+                onAfterExecute(cmdExecutor.getResult());
+            });
+
             return;
         }
 
-        onBeforeExecute(cmd);
-
-        cmdThreadPool.execute(() -> {
-            ShellExecutor cmdExecutor = new ShellExecutor(current);
-            cmdExecutor.setProcessListener(new CmdProcessListener());
-            cmdExecutor.setLoggingListener(new CmdLoggingListener());
-            cmdExecutor.run();
-
-            onAfterExecute(cmdExecutor.getResult());
-        });
+        if (cmd.getType() == CmdType.KILL) {
+            cmdThreadPool.setWaitForTasksToCompleteOnShutdown(false);
+            cmdThreadPool.shutdown();
+            cmdThreadPool.initialize();
+        }
     }
 
     @Override
@@ -148,6 +151,12 @@ public class CmdServiceImpl implements CmdService {
         queueTemplate.convertAndSend(callbackQueue.getName(), executed);
         setCurrent(null);
         applicationEventPublisher.publishEvent(new CmdCompleteEvent(this, current, executed));
+    }
+
+    private Cmd getCurrent() {
+        synchronized (lock) {
+            return current;
+        }
     }
 
     private void setCurrent(Cmd cmd) {
@@ -184,11 +193,6 @@ public class CmdServiceImpl implements CmdService {
         @Override
         public void onLogging(Log item) {
             log.debug("Log Received : {}", item);
-        }
-
-        @Override
-        public void onFinish() {
-
         }
     }
 

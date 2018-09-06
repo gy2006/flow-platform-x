@@ -59,7 +59,7 @@ public class CmdServiceTest extends SpringScenario {
     private Settings agentSettings;
 
     @Autowired
-    private CmdService cmdManager;
+    private CmdService cmdService;
 
     @Autowired
     private ExecutedCmdDao executedCmdDao;
@@ -89,7 +89,7 @@ public class CmdServiceTest extends SpringScenario {
         receivedCmdDao.save(second);
 
         // when:
-        Page<AgentReceivedCmd> page = cmdManager.listReceivedCmd(0, 10);
+        Page<AgentReceivedCmd> page = cmdService.listReceivedCmd(0, 10);
 
         // then:
         Assert.assertNotNull(page);
@@ -114,7 +114,7 @@ public class CmdServiceTest extends SpringScenario {
         executedCmdDao.save(second);
 
         // when:
-        Page<AgentExecutedCmd> page = cmdManager.listExecutedCmd(0, 10);
+        Page<AgentExecutedCmd> page = cmdService.listExecutedCmd(0, 10);
 
         // then:
         Assert.assertNotNull(page);
@@ -152,7 +152,7 @@ public class CmdServiceTest extends SpringScenario {
         Assert.assertNotNull(received);
         Assert.assertTrue(received instanceof AgentReceivedCmd);
         Assert.assertEquals(cmd, received);
-        Assert.assertEquals(cmd, cmdManager.get(cmd.getId()));
+        Assert.assertEquals(cmd, cmdService.get(cmd.getId()));
 
         Assert.assertEquals("${HOME}", received.getWorkDir());
         Assert.assertEquals(10L, received.getTimeout().longValue());
@@ -181,7 +181,7 @@ public class CmdServiceTest extends SpringScenario {
             counter.countDown();
         });
 
-        cmdManager.onCmdReceived(cmd);
+        cmdService.onCmdReceived(cmd);
 
         // then:
         counter.await(10, TimeUnit.SECONDS);
@@ -194,6 +194,57 @@ public class CmdServiceTest extends SpringScenario {
         Assert.assertEquals("test1", executed.getOutput().getString("CMD_RUNNER_TEST_1"));
 
         Assert.assertNotNull(executed.getStartAt());
+        Assert.assertNotNull(executed.getFinishAt());
+    }
+
+    @Test
+    public void should_execute_cmd_and_kill() throws Throwable {
+        // init:
+        Cmd cmd = new Cmd(UUID.randomUUID().toString(), CmdType.SHELL);
+        cmd.setScripts(Lists.newArrayList("echo '--- start ---' && sleep 9999 && echo '--- end ---'"));
+        cmd.setEnvFilters(Sets.newHashSet("CMD_RUNNER"));
+        cmd.setTimeout(10L);
+
+        // when: execute and kill
+        CountDownLatch counter = new CountDownLatch(1);
+        ObjectWrapper<ExecutedCmd> wrapper = new ObjectWrapper<>();
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdCompleteEvent>) event -> {
+            wrapper.setValue(event.getExecuted());
+            counter.countDown();
+        });
+
+        cmdService.execute(cmd);
+        Thread.sleep(1000);
+        cmdService.execute(new Cmd(UUID.randomUUID().toString(), CmdType.KILL));
+
+        // then:
+        counter.await(10, TimeUnit.SECONDS);
+
+        ExecutedCmd executed = wrapper.getValue();
+        Assert.assertNotNull(executed);
+        Assert.assertEquals(Status.KILLED, executed.getStatus());
+        Assert.assertNotNull(executed.getFinishAt());
+    }
+
+    @Test
+    public void should_execute_cmd_and_timeout() throws Throwable {
+        Cmd cmd = new Cmd(UUID.randomUUID().toString(), CmdType.SHELL);
+        cmd.setScripts(Lists.newArrayList("echo '--- start ---' && sleep 9999 && echo '--- end ---'"));
+        cmd.setTimeout(2L);
+
+        CountDownLatch counter = new CountDownLatch(1);
+        ObjectWrapper<ExecutedCmd> wrapper = new ObjectWrapper<>();
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdCompleteEvent>) event -> {
+            wrapper.setValue(event.getExecuted());
+            counter.countDown();
+        });
+
+        cmdService.execute(cmd);
+        Assert.assertTrue(counter.await(10, TimeUnit.SECONDS));
+
+        ExecutedCmd executed = wrapper.getValue();
+        Assert.assertNotNull(executed);
+        Assert.assertEquals(Status.TIMEOUT, executed.getStatus());
         Assert.assertNotNull(executed.getFinishAt());
     }
 }

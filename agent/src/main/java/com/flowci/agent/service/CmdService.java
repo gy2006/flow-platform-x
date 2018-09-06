@@ -28,8 +28,6 @@ public interface CmdService {
 
     Cmd get(String id);
 
-    Cmd getCurrent();
-
     Page<AgentReceivedCmd> listReceivedCmd(int page, int size);
 
     Page<AgentExecutedCmd> listExecutedCmd(int page, int size);

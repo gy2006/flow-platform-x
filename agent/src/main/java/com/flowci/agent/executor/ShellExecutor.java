@@ -63,9 +63,9 @@ public class ShellExecutor {
     // 1 mb buffer for std reader
     private final static int BufferSize = 1024 * 1024 * 1;
 
-    private final static int LoggingWaitSeconds = 30;
+    private final static int LoggingWaitSeconds = 5;
 
-    private final static int ShutdownWaitSeconds = 30;
+    private final static int ShutdownWaitSeconds = 0;
 
     private final static String LineSeparator = System.lineSeparator();
 
@@ -150,26 +150,24 @@ public class ShellExecutor {
                 result.setStatus(Status.TIMEOUT);
             }
 
-            log.trace("====== Process executed : {} ======", result.getCode());
+            result.setFinishAt(new Date());
+            processListener.onExecuted(result);
+            log.debug("====== Process executed : {} ======", result.getCode());
 
-            // wait for log thread with max 30 seconds to continue upload log
             logThreadCountDown.await(LoggingWaitSeconds, TimeUnit.SECONDS);
-            executor.shutdown();
+            log.debug("====== Logging executed ======");
 
-            // try to shutdown all threads with max 30 seconds waiting time
+            executor.shutdown();
             if (!executor.awaitTermination(ShutdownWaitSeconds, TimeUnit.SECONDS)) {
                 executor.shutdownNow();
             }
-
-            result.setFinishAt(new Date());
-            processListener.onExecuted(result);
-            log.trace("====== Logging executed ======");
+            log.debug("====== Executor Shutdown ======");
 
         } catch (InterruptedException e) {
             result.setStatus(Status.KILLED);
             result.setError(e.getMessage());
             processListener.onException(e);
-            log.trace("====== Interrupted ======");
+            log.debug("====== Interrupted ======");
         } catch (Throwable e) {
             result.setStatus(Status.EXCEPTION);
             result.setError(e.getMessage());
@@ -177,16 +175,8 @@ public class ShellExecutor {
             log.warn(e.getMessage());
         } finally {
             result.setFinishAt(new Date());
-            log.trace("====== Process Done ======");
+            log.debug("====== Process Done ======");
         }
-    }
-
-    public void destroy() {
-        if (Objects.isNull(process)) {
-            return;
-        }
-
-        process.destroy();
     }
 
     /**
@@ -260,7 +250,7 @@ public class ShellExecutor {
         return () -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is), BufferSize)) {
                 String line;
-                Integer count = 0;
+                int count = 0;
                 while ((line = reader.readLine()) != null) {
                     if (Objects.equals(line, endTerm)) {
                         readEnv(reader);
@@ -273,7 +263,7 @@ public class ShellExecutor {
 
             } finally {
                 stdThreadCountDown.countDown();
-                log.trace(" ===== {} Stream Reader Thread Finish =====", type);
+                log.debug(" ===== {} Stream Reader Thread Finish =====", type);
             }
         };
     }
