@@ -68,9 +68,15 @@ public class AgentControllerTest extends SpringScenario {
     }
 
     @Test
+    public void should_has_duplicate_error_when_create_agent_with_same_name() throws Throwable {
+        createAgent("same.name", null, StatusCode.OK);
+        createAgent("same.name", null, ErrorCode.DUPLICATE);
+    }
+
+    @Test
     public void should_list_agent() throws Throwable {
-        Agent first = createAgent("first.agent", null);
-        Agent second = createAgent("second.agent", null);
+        Agent first = createAgent("first.agent", null, StatusCode.OK);
+        Agent second = createAgent("second.agent", null, StatusCode.OK);
 
         ResponseMessage<List<Agent>> response =
             mvcMockHelper.expectSuccessAndReturnClass(get("/agents"), AgentListResponseType);
@@ -84,7 +90,7 @@ public class AgentControllerTest extends SpringScenario {
 
     @Test
     public void should_delete_agent() throws Throwable {
-        Agent created = createAgent("should.delete", null);
+        Agent created = createAgent("should.delete", null, StatusCode.OK);
 
         ResponseMessage<Agent> responseOfDeleteAgent =
             mvcMockHelper.expectSuccessAndReturnClass(delete("/agents/" + created.getToken()), AgentResponseType);
@@ -99,7 +105,7 @@ public class AgentControllerTest extends SpringScenario {
     @Test
     public void should_create_agent_and_connect() throws Throwable {
         // init:
-        Agent agent = createAgent("hello.agent", Sets.newHashSet("test"));
+        Agent agent = createAgent("hello.agent", Sets.newHashSet("test"), StatusCode.OK);
 
         // then: verify agent
         Assert.assertNotNull(agent);
@@ -128,7 +134,7 @@ public class AgentControllerTest extends SpringScenario {
         Assert.assertEquals("guest", settings.getQueue().getPassword());
     }
 
-    private Agent createAgent(String name, Set<String> tags) throws Exception {
+    private Agent createAgent(String name, Set<String> tags, Integer code) throws Exception {
         CreateAgent create = new CreateAgent();
         create.setName(name);
         create.setTags(tags);
@@ -137,8 +143,7 @@ public class AgentControllerTest extends SpringScenario {
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(create)), AgentResponseType);
 
-        Assert.assertEquals(StatusCode.OK, agentR.getCode());
-
+        Assert.assertEquals(code, agentR.getCode());
         return agentR.getData();
     }
 }

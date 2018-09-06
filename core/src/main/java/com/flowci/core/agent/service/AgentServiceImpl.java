@@ -24,6 +24,7 @@ import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.Settings;
+import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.util.ObjectsHelper;
 import com.flowci.zookeeper.ZookeeperClient;
@@ -47,6 +48,7 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -202,9 +204,14 @@ public class AgentServiceImpl implements AgentService {
     public Agent create(String name, Set<String> tags) {
         Agent agent = new Agent(name, tags);
         agent.setToken(UUID.randomUUID().toString());
-        agentDao.save(agent);
-        rabbitAdmin.declareQueue(new Queue(agent.getQueueName()));
-        return agent;
+
+        try {
+            agentDao.save(agent);
+            rabbitAdmin.declareQueue(new Queue(agent.getQueueName()));
+            return agent;
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateException("Agent name {0} is already defined", name);
+        }
     }
 
     @Override
