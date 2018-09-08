@@ -21,7 +21,18 @@ package com.flowci.domain;
  */
 public enum CmdType {
 
+    /**
+     * Execute shell script
+     */
     SHELL,
 
-    KILL
+    /**
+     * Kill running shell
+     */
+    KILL,
+
+    /**
+     * Close agent
+     */
+    CLOSE;
 }

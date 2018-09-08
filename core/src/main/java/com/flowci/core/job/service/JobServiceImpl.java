@@ -262,6 +262,10 @@ public class JobServiceImpl implements JobService {
     @RabbitListener(queues = "${app.job.callback-queue-name}")
     public void processCallback(ExecutedCmd execCmd) {
         CmdHelper.CmdID cmdId = CmdHelper.parseID(execCmd.getId());
+        if (Objects.isNull(cmdId)) {
+            log.debug("Illegal cmd callback: {}", execCmd.getId());
+            return;
+        }
 
         // get cmd related job
         Job job = jobDao.findById(cmdId.getJobId()).get();

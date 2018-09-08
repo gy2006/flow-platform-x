@@ -14,30 +14,34 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.controller;
+package com.flowci.agent.domain.request;
 
 import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdType;
 import com.flowci.domain.VariableMap;
+import com.flowci.util.StringHelper;
 import com.google.common.collect.Lists;
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
  * @author yang
  */
 @Data
-public class CmdRequest implements Serializable {
+public class StartCmd {
 
     private String id = UUID.randomUUID().toString();
 
-    @NotNull
-    private String scripts;
+    private CmdType type = CmdType.SHELL;
 
+    private String scripts = StringHelper.EMPTY;
+
+    /**
+     * Support env variable like ${HOME}
+     */
     private String workDir;
 
     private Long timeout = 1800L;
@@ -47,8 +51,7 @@ public class CmdRequest implements Serializable {
     private Set<String> filter = Collections.emptySet();
 
     public Cmd toCmd() {
-        Cmd cmd = new Cmd();
-        cmd.setId(id);
+        Cmd cmd = new Cmd(id, type);
         cmd.setScripts(Lists.newArrayList(scripts));
         cmd.setWorkDir(workDir);
         cmd.setTimeout(timeout);

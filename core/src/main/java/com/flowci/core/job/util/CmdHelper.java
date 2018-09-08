@@ -47,11 +47,15 @@ public class CmdHelper {
     }
 
     public static CmdID parseID(String id) {
-        byte[] decode = Base64.getDecoder().decode(id);
-        String idString = new String(decode);
-        int index = idString.indexOf('-');
+        try {
+            byte[] decode = Base64.getDecoder().decode(id);
+            String idString = new String(decode);
+            int index = idString.indexOf('-');
 
-        return new CmdID(idString.substring(0, index), idString.substring(index + 1));
+            return new CmdID(idString.substring(0, index), idString.substring(index + 1));
+        } catch (Throwable e) {
+            return null;
+        }
     }
 
     public static CmdID createId(Job job, Node node) {

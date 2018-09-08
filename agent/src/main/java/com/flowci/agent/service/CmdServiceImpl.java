@@ -22,10 +22,10 @@ import com.flowci.agent.domain.AgentExecutedCmd;
 import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
-import com.flowci.agent.executor.ShellExecutor;
 import com.flowci.agent.executor.Log;
 import com.flowci.agent.executor.LoggingListener;
 import com.flowci.agent.executor.ProcessListener;
+import com.flowci.agent.executor.ShellExecutor;
 import com.flowci.agent.manager.AgentManager;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
@@ -40,7 +40,8 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -75,7 +76,7 @@ public class CmdServiceImpl implements CmdService {
     private AgentManager agentManager;
 
     @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    private ApplicationContext context;
 
     private ThreadPoolTaskExecutor cmdThreadPool = createExecutor();
 
@@ -110,7 +111,9 @@ public class CmdServiceImpl implements CmdService {
                 return;
             }
 
-            onBeforeExecute(cmd);
+            setCurrent(save(cmd));
+            agentManager.changeStatus(Status.BUSY);
+            context.publishEvent(new CmdReceivedEvent(this, current));
 
             cmdThreadPool.execute(() -> {
                 ShellExecutor cmdExecutor = new ShellExecutor(current);
@@ -127,6 +130,13 @@ public class CmdServiceImpl implements CmdService {
             cmdThreadPool.setWaitForTasksToCompleteOnShutdown(false);
             cmdThreadPool.shutdown();
             cmdThreadPool.initialize();
+            return;
+        }
+
+        if (cmd.getType() == CmdType.CLOSE) {
+            int exitCode = SpringApplication.exit(context);
+            log.info("Agent closed");
+            System.exit(exitCode);
         }
     }
 
@@ -134,12 +144,6 @@ public class CmdServiceImpl implements CmdService {
     public void onCmdReceived(Cmd received) {
         log.debug("Cmd received: {}", received);
         execute(received);
-    }
-
-    private void onBeforeExecute(Cmd cmd) {
-        setCurrent(save(cmd));
-        agentManager.changeStatus(Status.BUSY);
-        applicationEventPublisher.publishEvent(new CmdReceivedEvent(this, current));
     }
 
     private void onAfterExecute(ExecutedCmd executed) {
@@ -150,7 +154,7 @@ public class CmdServiceImpl implements CmdService {
         agentManager.changeStatus(Status.IDLE);
         queueTemplate.convertAndSend(callbackQueue.getName(), executed);
         setCurrent(null);
-        applicationEventPublisher.publishEvent(new CmdCompleteEvent(this, current, executed));
+        context.publishEvent(new CmdCompleteEvent(this, current, executed));
     }
 
     private Cmd getCurrent() {

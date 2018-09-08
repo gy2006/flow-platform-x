@@ -16,6 +16,7 @@
 
 package com.flowci.agent.controller;
 
+import com.flowci.agent.domain.request.StartCmd;
 import com.flowci.agent.service.CmdService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -35,7 +36,7 @@ public class CmdController {
     private CmdService cmdManager;
 
     @PostMapping
-    public void execute(@Validated @RequestBody CmdRequest body) {
+    public void execute(@Validated @RequestBody StartCmd body) {
         cmdManager.execute(body.toCmd());
     }
 
