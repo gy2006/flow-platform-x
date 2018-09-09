@@ -23,6 +23,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.context.annotation.Configuration;
@@ -35,6 +36,7 @@ import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 /**
  * @author yang
  */
+@Log4j2
 @Configuration
 @EnableMongoAuditing
 public class MongoConfig extends AbstractMongoConfiguration {
@@ -47,6 +49,7 @@ public class MongoConfig extends AbstractMongoConfiguration {
 
     @Override
     public MongoClient mongoClient() {
+        log.info("Mongo URI: {}", mongoProperties.getUri());
         MongoClientURI uri = new MongoClientURI(mongoProperties.getUri());
         return new MongoClient(uri);
     }
