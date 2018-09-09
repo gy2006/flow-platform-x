@@ -27,8 +27,11 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.test.JsonablePage;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.ExecutedCmd.Status;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.util.StringHelper;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -49,6 +52,10 @@ public class JobControllerTest extends SpringScenario {
 
     private static final TypeReference<ResponseMessage<JsonablePage<Job>>> JobListType =
         new TypeReference<ResponseMessage<JsonablePage<Job>>>() {
+        };
+
+    private static final TypeReference<ResponseMessage<List<ExecutedCmd>>> JobStepsType =
+        new TypeReference<ResponseMessage<List<ExecutedCmd>>>() {
         };
 
     @Autowired
@@ -118,6 +125,23 @@ public class JobControllerTest extends SpringScenario {
 
         Assert.assertEquals(second, page.getContent().get(0));
         Assert.assertEquals(first, page.getContent().get(1));
+    }
+
+    @Test
+    public void should_list_job_steps_by_flow_and_build_number() throws Exception {
+        // init:
+        createJobForFlow(flow);
+
+        // when:
+        ResponseMessage<List<ExecutedCmd>> message = mvcMockHelper
+            .expectSuccessAndReturnClass(get("/jobs/hello-flow/1/steps"), JobStepsType);
+        Assert.assertEquals(StatusCode.OK, message.getCode());
+
+        // then:
+        List<ExecutedCmd> steps = message.getData();
+        Assert.assertEquals(2, steps.size());
+        Assert.assertEquals(Status.PENDING, steps.get(0).getStatus());
+        Assert.assertEquals(Status.PENDING, steps.get(1).getStatus());
     }
 
     public Job createJobForFlow(String name) throws Exception {

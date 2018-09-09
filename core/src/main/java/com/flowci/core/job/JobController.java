@@ -23,7 +23,9 @@ import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.service.JobService;
+import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.ArgumentException;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
@@ -77,6 +79,12 @@ public class JobController {
         } catch (NumberFormatException e) {
             throw new ArgumentException("Build number must be a integer");
         }
+    }
+
+    @GetMapping("/{flow}/{buildNumberOrLatest}/steps")
+    public List<ExecutedCmd> getSteps(@PathVariable("flow") String name, @PathVariable String buildNumberOrLatest) {
+        Job job = get(name, buildNumberOrLatest);
+        return jobService.listSteps(job);
     }
 
     @PostMapping

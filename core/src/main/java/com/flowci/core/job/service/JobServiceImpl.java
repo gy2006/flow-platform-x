@@ -33,6 +33,7 @@ import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.StatusChangeEvent;
 import com.flowci.core.job.util.CmdHelper;
+import com.flowci.core.job.util.CmdHelper.CmdID;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
 import com.flowci.core.user.CurrentUserHelper;
@@ -46,9 +47,13 @@ import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
+import com.google.common.collect.Lists;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
@@ -94,6 +99,9 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private Cache jobTreeCache;
+
+    @Autowired
+    private Cache jobStepCache;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -160,6 +168,15 @@ public class JobServiceImpl implements JobService {
         JobYml jobYml = new JobYml(job.getId(), flow.getName(), yml.getRaw());
         jobYmlDao.save(jobYml);
 
+        // init job steps as executed cmd
+        NodeTree tree = getTree(job);
+        List<ExecutedCmd> steps = new LinkedList<>();
+        for (Node node : tree.getOrdered()) {
+            CmdID id = CmdHelper.createId(job, node);
+            steps.add(new ExecutedCmd(id.toString()));
+        }
+        executedCmdDao.insert(steps);
+
         return job;
     }
 
@@ -183,6 +200,22 @@ public class JobServiceImpl implements JobService {
             JobYml yml = jobYmlDao.findById(job.getId()).get();
             Node root = YmlParser.load(yml.getName(), yml.getRaw());
             return NodeTree.create(root);
+        });
+    }
+
+    @Override
+    public List<ExecutedCmd> listSteps(Job job) {
+        return jobStepCache.get(job.getId(), () -> {
+            NodeTree tree = getTree(job);
+            List<Node> nodes = tree.getOrdered();
+
+            List<String> cmdIdsInStr = new ArrayList<>(nodes.size());
+            for (Node node : nodes) {
+                CmdID cmdId = CmdHelper.createId(job, node);
+                cmdIdsInStr.add(cmdId.toString());
+            }
+
+            return Lists.newArrayList(executedCmdDao.findAllById(cmdIdsInStr));
         });
     }
 

@@ -41,7 +41,7 @@ public class JobConfig {
     public CacheManager cacheManager() {
         Caffeine<Object, Object> cache = Caffeine.newBuilder()
             .maximumSize(100)
-            .expireAfterWrite(30, TimeUnit.SECONDS);
+            .expireAfterWrite(120, TimeUnit.SECONDS);
 
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
         cacheManager.setCaffeine(cache);
@@ -51,5 +51,10 @@ public class JobConfig {
     @Bean("jobTreeCache")
     public Cache jobTreeCache(CacheManager jobCacheManager) {
         return jobCacheManager.getCache("JOB_TREE");
+    }
+
+    @Bean("jobStepCache")
+    public Cache jobStepCache(CacheManager jobCacheManager) {
+        return jobCacheManager.getCache("JOB_STEPS");
     }
 }
