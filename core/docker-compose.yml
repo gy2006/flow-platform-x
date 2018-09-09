@@ -1,0 +1,47 @@
+version: '3'
+services:
+  flowci-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: flowci-core:latest
+    container_name: flowci-core
+    ports:
+    - "8080:8080"
+    environment:
+      FLOWCI_WORKSPACE: ${HOME}/.flowci
+      FLOWCI_SERVER_ADDRESS: 127.0.0.1
+      FLOWCI_SERVER_PORT: 8080
+      FLOWCI_DEFAULT_ADMIN_EMAIL: admin@flow.ci
+      FLOWCI_DEFAULT_ADMIN_PASSWORD: 12345
+      FLOWCI_MONGODB_URI: mongodb://flowci-db:27017/flow_ci_db
+      FLOWCI_ZK_EMBEDDED: "false"
+      FLOWCI_ZK_HOST: 127.0.0.1:2181
+      FLOWCI_RABBITMQ_HOST: 127.0.0.1
+      FLOWCI_RABBITMQ_PORT: 5672
+      FLOWCI_RABBITMQ_USERNAME: guest
+      FLOWCI_RABBITMQ_PASSWORD: guest
+    depends_on:
+    - flowci-db
+    - flowci-zk
+    - flowci-rabbitmq
+
+  flowci-db:
+    image: mongo:3.6.2-jessie
+    ports:
+    - "27017:27017"
+    volumes:
+    - ${HOME}/.flowci/db:/data/db
+
+  flowci-zk:
+    image: zookeeper:3.4
+    ports:
+    - "2181:2181"
+    environment:
+      ZOO_STANDALONE_ENABLED: "true"
+
+  flowci-rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+    - "5672:5672"
+    - "15672:15672"
