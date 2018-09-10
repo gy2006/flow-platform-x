@@ -19,11 +19,13 @@ package com.flowci.tree;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.YmlException;
 import com.google.common.base.Strings;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import lombok.NoArgsConstructor;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.DumperOptions.FlowStyle;
@@ -114,12 +116,15 @@ public class YmlParser {
 
         public String name;
 
+        public Selector selector = new Selector();
+
         public Map<String, String> envs = new LinkedHashMap<>();
 
         public List<ChildNodeWrapper> steps = new LinkedList<>();
 
         public Node toNode(int ignore) {
             Node node = new Node(name);
+            node.setSelector(selector);
             setEnvs(node);
             setChildren(node);
             return node;

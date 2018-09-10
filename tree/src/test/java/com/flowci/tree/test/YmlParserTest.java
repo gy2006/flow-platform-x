@@ -35,7 +35,6 @@ import org.junit.Test;
  */
 public class YmlParserTest {
 
-
     private String content;
 
     @Before
@@ -53,6 +52,8 @@ public class YmlParserTest {
         Assert.assertEquals("root", root.getName());
         Assert.assertEquals("echo hello", root.getEnv("FLOW_WORKSPACE"));
         Assert.assertEquals("echo version", root.getEnv("FLOW_VERSION"));
+        Assert.assertTrue(root.getSelector().getTags().contains("ios"));
+        Assert.assertTrue(root.getSelector().getTags().contains("local"));
 
         // verify steps
         List<Node> steps = root.getChildren();

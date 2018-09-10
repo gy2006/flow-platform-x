@@ -47,6 +47,11 @@ public class Node implements Serializable {
     private VariableMap environments = new VariableMap();
 
     /**
+     * Agent tags to set node running on which agent
+     */
+    private Selector selector;
+
+    /**
      * Node execute script, can be null
      */
     private String script;
@@ -56,6 +61,9 @@ public class Node implements Serializable {
      */
     private String condition;
 
+    /**
+     * Plugin name
+     */
     private String plugin;
 
     /**
