@@ -64,6 +64,11 @@ public interface AgentService {
     Agent delete(String token);
 
     /**
+     * Set agent tags by token
+     */
+    Agent setTags(String token, Set<String> tags);
+
+    /**
      * Try to lock agent resource, and set agent status to BUSY
      */
     Boolean tryLock(Agent agent);

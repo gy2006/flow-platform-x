@@ -165,6 +165,14 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
+    public Agent setTags(String token, Set<String> tags) {
+        Agent agent = getByToken(token);
+        agent.setTags(tags);
+        agentDao.save(agent);
+        return agent;
+    }
+
+    @Override
     public Boolean tryLock(Agent agent) {
         // check agent is available form db
         Agent reload = get(agent.getId());
@@ -211,7 +219,7 @@ public class AgentServiceImpl implements AgentService {
         agent.setToken(UUID.randomUUID().toString());
 
         try {
-            agentDao.save(agent);
+            agentDao.insert(agent);
             rabbitAdmin.declareQueue(new Queue(agent.getQueueName()));
             return agent;
         } catch (DuplicateKeyException e) {

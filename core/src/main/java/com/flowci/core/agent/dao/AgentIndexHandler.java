@@ -34,8 +34,14 @@ public class AgentIndexHandler {
     protected MongoOperations mongoOps;
 
     @PostConstruct
-    public void createNameIndex() {
+    public void createIndexOnName() {
         mongoOps.indexOps(Agent.class)
             .ensureIndex(new Index().on("name", Direction.ASC).unique());
+    }
+
+    @PostConstruct
+    public void createIndexOnToken() {
+        mongoOps.indexOps(Agent.class)
+            .ensureIndex(new Index().on("token", Direction.ASC).unique());
     }
 }
