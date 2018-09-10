@@ -1,0 +1,17 @@
+version: '3'
+services:
+  flowci-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: flowci-agent:latest
+    container_name: flowci-agent
+    ports:
+    - "8088:8088"
+    environment:
+      FLOWCI_AGENT_WORKSPACE: ${HOME}/.flow.ci.agent
+      FLOWCI_AGENT_ADDRESS: 0.0.0.0
+      FLOWCI_AGENT_PORT: 8080
+      FLOWCI_AGENT_LOG_LEVEL: INFO
+      FLOWCI_AGENT_TOKEN: ca9b8be2-c0e5-4b86-8fdc-b92d921597a0
+      FLOWCI_AGENT_SERVER_URL: 127.0.0.1:8080

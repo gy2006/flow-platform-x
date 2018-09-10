@@ -1,7 +1,7 @@
 From openjdk:8
 
-ENV WORKER=/flow.ci
-ENV JAR=flow-ci-core.jar
+ENV WORKER=/flow.ci.agent
+ENV JAR=flow-ci-agent.jar
 
 WORKDIR $WORKER
 

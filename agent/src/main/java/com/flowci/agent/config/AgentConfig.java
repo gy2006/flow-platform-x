@@ -98,6 +98,7 @@ public class AgentConfig implements WebMvcConfigurer {
     @Bean("agentSettings")
     public Settings getConfigFromServer() {
         URI uri = UriComponentsBuilder.fromHttpUrl(agentProperties.getServerUrl())
+            .pathSegment("agents", "connect")
             .queryParam("token", agentProperties.getToken())
             .build()
             .toUri();
