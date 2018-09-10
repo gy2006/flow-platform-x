@@ -83,7 +83,7 @@ public abstract class SpringScenario {
         Settings settings = new Settings(local, mq, zk, "queue.jobs.callback.test");
         ResponseMessage<Settings> responseBody = new ResponseMessage<>(200, settings);
 
-        stubFor(get(urlPathEqualTo("/agents"))
+        stubFor(get(urlPathEqualTo("/agents/connect"))
             .withQueryParam("token", equalTo(token))
             .willReturn(aResponse()
                 .withBody(Jsonable.getMapper().writeValueAsBytes(responseBody))

@@ -19,6 +19,7 @@ package com.flowci.core.job.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.domain.Mongoable;
 import com.flowci.domain.VariableMap;
+import com.flowci.tree.Selector;
 import java.util.Date;
 import java.util.Objects;
 import lombok.Data;
@@ -118,6 +119,8 @@ public class Job extends Mongoable {
     private Status status = Status.PENDING;
 
     private Date expireAt;
+
+    private Selector agentSelector;
 
     private String agentId;
 

@@ -86,14 +86,14 @@ public class AgentServiceTest extends ZookeeperScenario {
         executor.initialize();
 
         // when:
-        Agent agent = agentService.find(Status.OFFLINE, ImmutableSet.of("android"));
+        Agent agent = agentService.find(Status.OFFLINE, ImmutableSet.of("android")).get(0);
         Assert.assertNotNull(agent);
 
         // when: make agent online
         mockAgentOnline(agentService.getPath(idle));
 
         // then: find available agent
-        Agent available = agentService.find(Status.IDLE, null);
+        Agent available = agentService.find(Status.IDLE, null).get(0);
         Assert.assertEquals(idle, available);
 
         // when: try lock agent in multiple thread

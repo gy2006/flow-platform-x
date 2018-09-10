@@ -56,6 +56,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -159,6 +160,7 @@ public class JobServiceImpl implements JobService {
         job.setCreatedBy(currentUserHelper.get().getId());
         job.setBuildNumber(buildNumber);
         job.setCurrentPath(root.getPathAsString());
+        job.setAgentSelector(root.getSelector());
 
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
@@ -257,9 +259,21 @@ public class JobServiceImpl implements JobService {
         }
 
         try {
-            // find available agent and tryLock
-            Agent available = agentService.find(Status.IDLE, null);
-            Boolean isLocked = agentService.tryLock(available);
+            // find available agents
+            Set<String> agentTags = job.getAgentSelector().getTags();
+            List<Agent> availableList = agentService.find(Status.IDLE, agentTags);
+
+            // try to lock it
+            Boolean isLocked = Boolean.FALSE;
+            Agent available = null;
+
+            for (Agent agent : availableList) {
+                isLocked = agentService.tryLock(agent);
+                if (isLocked) {
+                    available = agent;
+                    break;
+                }
+            }
 
             // re-enqueue to job while agent been locked by other
             if (!isLocked) {

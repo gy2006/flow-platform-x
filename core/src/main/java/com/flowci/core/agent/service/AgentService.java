@@ -56,7 +56,7 @@ public interface AgentService {
      * @param tags Agent tags, optional
      * @throws com.flowci.exception.NotFoundException
      */
-    Agent find(Agent.Status status, Set<String> tags);
+    List<Agent> find(Agent.Status status, Set<String> tags);
 
     /**
      * Delete agent by token

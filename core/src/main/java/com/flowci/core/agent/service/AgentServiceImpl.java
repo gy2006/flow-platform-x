@@ -140,7 +140,7 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public Agent find(Status status, Set<String> tags) {
+    public List<Agent> find(Status status, Set<String> tags) {
         List<Agent> agents;
 
         if (Objects.isNull(tags) || tags.isEmpty()) {
@@ -154,7 +154,7 @@ public class AgentServiceImpl implements AgentService {
             throw new NotFoundException("Agent not found by status : {0} and tags: {1}", status.name(), tagsInStr);
         }
 
-        return agents.get(0);
+        return agents;
     }
 
     @Override
