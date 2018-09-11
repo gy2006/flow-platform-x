@@ -21,7 +21,6 @@ import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.StatusException;
-import com.flowci.util.CipherHelper;
 import com.flowci.util.CipherHelper.RSA;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -48,19 +47,21 @@ public class CredentialServiceImpl implements CredentialService {
     @Override
     public Credential createRSA(String name) {
         try {
-            RSAKeyPair rsaKeyPair = new RSAKeyPair(RSA.buildKeyPair(RSA.SIZE_1024));
-            rsaKeyPair.setName(name);
-            return credentialDao.insert(rsaKeyPair);
+            return createRSA(name, RSA.buildKeyPair(RSA.SIZE_1024));
         } catch (NoSuchAlgorithmException e) {
             log.error(e.getMessage());
             throw new StatusException("Unable to generate RSA key pair");
-        } catch (DuplicateKeyException e) {
-            throw new DuplicateException("Credential name '{}' is already defined", name);
         }
     }
 
     @Override
     public Credential createRSA(String name, KeyPair rasKeyPair) {
-        return null;
+        try {
+            RSAKeyPair rsaKeyPair = new RSAKeyPair(rasKeyPair);
+            rsaKeyPair.setName(name);
+            return credentialDao.insert(rsaKeyPair);
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateException("Credential name '{}' is already defined", name);
+        }
     }
 }
