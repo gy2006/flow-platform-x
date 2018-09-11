@@ -14,35 +14,18 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.service;
+package com.flowci.core.credential.domain;
 
-import com.flowci.core.credential.domain.Credential;
-import java.security.KeyPair;
-import java.util.List;
+import javax.validation.constraints.NotNull;
+import lombok.Data;
 
 /**
  * @author yang
  */
-public interface CredentialService {
+@Data
+public class CreateCredential {
 
-    /**
-     * List credential for current user
-     */
-    List<Credential> list();
-
-    /**
-     * Get credential for current user
-     */
-    Credential get(String name);
-
-    /**
-     * Create and auto generate rsa key pair
-     */
-    Credential createRSA(String name);
-
-    /**
-     * Create and set rsa key pair
-     */
-    Credential createRSA(String name, KeyPair rasKeyPair);
+    @NotNull
+    private String name;
 
 }

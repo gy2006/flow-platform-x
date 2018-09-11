@@ -17,13 +17,15 @@
 package com.flowci.core.credential.domain;
 
 import java.security.KeyPair;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author yang
  */
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 public final class RSAKeyPair extends Credential {
 

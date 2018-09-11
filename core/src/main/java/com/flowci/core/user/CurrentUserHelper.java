@@ -42,6 +42,10 @@ public class CurrentUserHelper {
         return user;
     }
 
+    public String getUserId() {
+        return get().getId();
+    }
+
     public void set(User user) {
         currentUser.set(user);
     }

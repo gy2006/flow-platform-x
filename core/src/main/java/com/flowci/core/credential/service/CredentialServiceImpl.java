@@ -19,11 +19,13 @@ package com.flowci.core.credential.service;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.StatusException;
 import com.flowci.util.CipherHelper.RSA;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -39,9 +41,17 @@ public class CredentialServiceImpl implements CredentialService {
     @Autowired
     private CredentialDao credentialDao;
 
+    @Autowired
+    private CurrentUserHelper currentUserHelper;
+
+    @Override
+    public List<Credential> list() {
+        return credentialDao.findAllByCreatedByOrderByCreatedAt(currentUserHelper.getUserId());
+    }
+
     @Override
     public Credential get(String name) {
-        return credentialDao.findByName(name);
+        return credentialDao.findByNameAndCreatedBy(name, currentUserHelper.getUserId());
     }
 
     @Override
@@ -59,6 +69,7 @@ public class CredentialServiceImpl implements CredentialService {
         try {
             RSAKeyPair rsaKeyPair = new RSAKeyPair(rasKeyPair);
             rsaKeyPair.setName(name);
+            rsaKeyPair.setCreatedBy(currentUserHelper.getUserId());
             return credentialDao.insert(rsaKeyPair);
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Credential name '{}' is already defined", name);

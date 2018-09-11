@@ -32,25 +32,19 @@ import org.springframework.data.annotation.LastModifiedDate;
  */
 @EqualsAndHashCode(of = {"id"})
 @ToString(of = {"id"})
+@Getter
+@Setter
 public abstract class Mongoable implements Serializable {
 
     @Id
-    @Getter
-    @Setter
     @NonNull
     protected String id;
 
-    @Getter
-    @Setter
     @CreatedDate
     protected Date createdAt;
 
-    @Getter
-    @Setter
     @LastModifiedDate
     protected Date updatedAt;
 
-    @Getter
-    @Setter
     protected String createdBy;
 }
