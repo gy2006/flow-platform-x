@@ -21,53 +21,47 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.Setter;
 
 /**
  * @author yang
  */
+@Data
+@NoArgsConstructor
 @EqualsAndHashCode(of = {"id"})
 public class Cmd implements Serializable {
 
-    @Getter
-    @Setter
     @NonNull
     private String id;
 
-    @Getter
-    @Setter
     @NonNull
-    private List<String> scripts;
+    private CmdType type;
 
-    @Getter
-    @Setter
+    @NonNull
+    private List<String> scripts = new LinkedList<>();
+
     private String workDir;
 
     /**
      * Cmd timeout in seconds
      */
-    @Getter
-    @Setter
     @NonNull
     private Long timeout = 1800L;
 
-    @Getter
-    @Setter
     @NonNull
     private VariableMap inputs = new VariableMap();
 
     /**
      * Output env filters
      */
-    @Getter
-    @Setter
     @NonNull
     private Set<String> envFilters = Collections.emptySet();
 
-    public Cmd(String id) {
+    public Cmd(String id, CmdType type) {
         this.id = id;
+        this.type = type;
     }
 }

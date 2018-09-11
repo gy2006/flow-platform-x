@@ -1,26 +1,37 @@
-flow:
-  - envs:
-      FLOW_WORKSPACE: "echo hello"
-      FLOW_VERSION: "echo version"
+name: root
+envs:
+  FLOW_WORKSPACE: "echo hello"
+  FLOW_VERSION: "echo version"
 
-    steps:
-     - condition: |
-         println(FLOW_WORKSPACE)
-         true
+selector:
+  tags:
+  - ios
+  - local
 
-       envs:
-         FLOW_WORKSPACE: "echo step"
-         FLOW_VERSION: "echo step version"
+crendtional:
+    - 1
+    - 2
+    - 3
 
-       allowFailure: true
 
-       steps:
-        - name: step11
-          script: "echo 1"
+steps:
+ - condition: |
+     println(FLOW_WORKSPACE)
+     true
 
-        - name: step12
-          script: "echo 2"
+   envs:
+     FLOW_WORKSPACE: "echo step"
+     FLOW_VERSION: "echo step version"
 
-     - name: step2
-       allowFailure: false
-       script: "echo 2"
+   allowFailure: true
+
+   steps:
+    - name: step11
+      script: "echo 1"
+
+    - name: step12
+      script: "echo 2"
+
+ - name: step2
+   allowFailure: false
+   script: "echo 2"

@@ -33,28 +33,37 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements UserService {
 
     @Autowired
-    private ConfigProperties config;
+    private ConfigProperties.Admin adminProperties;
 
     @Autowired
     private UserDao userDao;
 
     @PostConstruct
     public void initAdmin() {
-        String adminEmail = config.getAdmin().getEmail();
-        String adminPassword = config.getAdmin().getPassword();
+        String adminEmail = adminProperties.getDefaultEmail();
+        String adminPassword = adminProperties.getDefaultPassword();
 
-        create(adminEmail, adminPassword);
-        log.info("Admin {} been initialized", adminEmail);
+        try {
+            create(adminEmail, adminPassword);
+            log.info("Admin {} been initialized", adminEmail);
+        } catch (DuplicateException ignore) {
+
+        }
+    }
+
+    @Override
+    public User defaultAdmin() {
+        String email = adminProperties.getDefaultEmail();
+        return userDao.findByEmail(email);
     }
 
     @Override
     public User create(String email, String password) {
         if (!Objects.isNull(getByEmail(email))) {
-            throw new DuplicateException("Email {} is already existed", email);
+            throw new DuplicateException("Email {0} is already existed", email);
         }
 
-        new User(email, HashingHelper.md5(password));
-        return userDao.save(new User(email, password));
+        return userDao.save(new User(email, HashingHelper.md5(password)));
     }
 
     @Override

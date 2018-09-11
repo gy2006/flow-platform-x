@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,41 +16,51 @@
 
 package com.flowci.domain;
 
+import static com.flowci.domain.ExecutedCmd.Status.EXCEPTION;
+import static com.flowci.domain.ExecutedCmd.Status.KILLED;
+import static com.flowci.domain.ExecutedCmd.Status.SUCCESS;
+import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.ImmutableSet;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Objects;
+import java.util.Set;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 /**
  * @author yang
  */
-@RequiredArgsConstructor
+@Data
+@NoArgsConstructor
 @EqualsAndHashCode(of = {"id"})
-public final class ExecutedCmd implements Serializable {
+public class ExecutedCmd implements Serializable {
 
     public final static Integer CODE_TIMEOUT = -100;
+
+    private final static Set<Status> FailureStatus = ImmutableSet.of(
+        EXCEPTION,
+        KILLED,
+        TIMEOUT
+    );
 
     public enum Status {
 
         PENDING(-1),
 
-        SENT(0),
+        RUNNING(1),
 
-        RUNNING(1), // current cmd
-
-        EXECUTED(2), // current cmd
+        SUCCESS(2), // current cmd
 
         EXCEPTION(3),
 
         KILLED(3),
 
-        REJECTED(3),
-
-        TIMEOUT_KILL(4),
-
-        STOPPED(4);
+        TIMEOUT(4);
 
         @Getter
         private Integer level;
@@ -60,41 +70,63 @@ public final class ExecutedCmd implements Serializable {
         }
     }
 
-    @Getter
-    private final String id;
+    private String id;
 
-    @Getter
-    @Setter
+    /**
+     * Process id
+     */
     private Integer processId;
 
-    @Getter
-    @Setter
+    /**
+     * Cmd execution status
+     */
     private Status status = Status.PENDING;
 
     /**
      * Linux shell exit code
      */
-    @Getter
-    @Setter
     private Integer code;
 
-    @Getter
-    @Setter
+    /**
+     * Cmd output
+     */
     private VariableMap output = new VariableMap();
 
-    @Getter
-    @Setter
-    private Long startAt;
+    /**
+     * Cmd start at timestamp
+     */
+    private Date startAt;
 
-    @Getter
-    @Setter
-    private Long finishAt;
+    /**
+     * Cmd finish at timestamp
+     */
+    private Date finishAt;
 
+    /**
+     * Error message
+     */
+    private String error;
+
+    public ExecutedCmd(String id) {
+        this.id = id;
+    }
+
+    @JsonIgnore
+    public boolean isSuccess() {
+        return status == SUCCESS;
+    }
+
+    @JsonIgnore
+    public boolean isFailure() {
+        return FailureStatus.contains(status);
+    }
+
+    @JsonIgnore
     public Long getDuration() {
         if (Objects.isNull(startAt) || Objects.isNull(finishAt)) {
             return -1L;
         }
 
-        return finishAt - startAt;
+        return finishAt.getTime() - startAt.getTime();
     }
 }

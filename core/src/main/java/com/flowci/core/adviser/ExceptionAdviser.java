@@ -16,7 +16,7 @@
 
 package com.flowci.core.adviser;
 
-import com.flowci.core.domain.ResponseMessage;
+import com.flowci.domain.http.ResponseMessage;
 import com.flowci.core.domain.StatusCode;
 import com.flowci.exception.CIException;
 import com.flowci.exception.ErrorCode;

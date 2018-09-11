@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package com.flowci.tree.test;
 
-import com.flowci.domain.node.Node;
-import com.flowci.domain.node.NodePath;
+import com.flowci.tree.Node;
+import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
 import com.google.common.io.Files;
@@ -35,7 +35,6 @@ import org.junit.Test;
  */
 public class YmlParserTest {
 
-
     private String content;
 
     @Before
@@ -47,15 +46,17 @@ public class YmlParserTest {
 
     @Test
     public void should_get_node_from_yml() {
-        Node node = YmlParser.load(content);
+        Node root = YmlParser.load("root", content);
 
         // verify flow
-        Assert.assertEquals("root", node.getName());
-        Assert.assertEquals("echo hello", node.getEnv("FLOW_WORKSPACE"));
-        Assert.assertEquals("echo version", node.getEnv("FLOW_VERSION"));
+        Assert.assertEquals("root", root.getName());
+        Assert.assertEquals("echo hello", root.getEnv("FLOW_WORKSPACE"));
+        Assert.assertEquals("echo version", root.getEnv("FLOW_VERSION"));
+        Assert.assertTrue(root.getSelector().getTags().contains("ios"));
+        Assert.assertTrue(root.getSelector().getTags().contains("local"));
 
         // verify steps
-        List<Node> steps = node.getChildren();
+        List<Node> steps = root.getChildren();
         Assert.assertEquals(2, steps.size());
 
         Node step1 = steps.get(0);
@@ -83,7 +84,7 @@ public class YmlParserTest {
 
     @Test
     public void should_get_correct_relationship_on_node_tree() {
-        Node root = YmlParser.load(content);
+        Node root = YmlParser.load("hello", content);
         NodeTree tree = NodeTree.create(root);
         Assert.assertEquals(root, tree.getRoot());
 
@@ -118,7 +119,7 @@ public class YmlParserTest {
 
     @Test
     public void should_parse_to_yml_from_node() {
-        Node root = YmlParser.load(content);
+        Node root = YmlParser.load("default", content);
         String parsed = YmlParser.parse(root);
         Assert.assertNotNull(parsed);
     }

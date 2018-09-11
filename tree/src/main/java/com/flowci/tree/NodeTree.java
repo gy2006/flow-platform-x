@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 package com.flowci.tree;
 
-import com.flowci.domain.VariableMap;
-import com.flowci.domain.node.Node;
-import com.flowci.domain.node.NodePath;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,18 +40,10 @@ public class NodeTree {
         return new NodeTree(root);
     }
 
-    public static NodeTree create(String yml) {
-        Node root = YmlParser.load(yml);
-        return new NodeTree(root);
-    }
-
     private final Map<NodePath, NodeWithIndex> cached = new HashMap<>(DEFAULT_SIZE);
 
     @Getter
     private final List<Node> ordered = new ArrayList<>(DEFAULT_SIZE);
-
-    @Getter
-    private final VariableMap sharedContext = new VariableMap();
 
     @Getter
     private Node root;

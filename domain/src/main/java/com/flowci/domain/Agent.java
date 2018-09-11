@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,23 @@
 
 package com.flowci.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * @author yang
  */
+@Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = {"id"})
 public class Agent implements Serializable {
 
-    private final static int DefaultTagSize = 10;
+    public final static String PATH_SLASH = "/";
 
     public enum Status {
 
@@ -39,35 +40,58 @@ public class Agent implements Serializable {
 
         BUSY,
 
-        IDLE
+        IDLE;
+
+        public byte[] getBytes() {
+            return this.toString().getBytes();
+        }
+
+        public static Status fromBytes(byte[] bytes) {
+            return Status.valueOf(new String(bytes));
+        }
     }
 
-    @Getter
-    @Setter
     private String id;
 
-    @Getter
-    @Setter
     private String name;
 
-    @Getter
-    @Setter
     private String token;
 
-    @Getter
-    private Set<String> tags = new HashSet<String>(DefaultTagSize);
+    private Set<String> tags = Collections.emptySet();
 
-    @Getter
-    @Setter
     private Status status = Status.OFFLINE;
 
-    public Agent(String id, String name) {
-        this.id = id;
+    public Agent(String name) {
         this.name = name;
     }
 
+    public Agent(String name, Set<String> tags) {
+        this.name = name;
+        this.tags = tags;
+    }
+
+    @JsonIgnore
+    public boolean isBusy() {
+        return isOnline() && status == Status.BUSY;
+    }
+
+    @JsonIgnore
+    public boolean isIdle() {
+        return isOnline() && status == Status.IDLE;
+    }
+
+    @JsonIgnore
+    public boolean isOffline() {
+        return status == Status.OFFLINE;
+    }
+
+    @JsonIgnore
+    public boolean isOnline() {
+        return !isOffline();
+    }
+
+    @JsonIgnore
     public String getQueueName() {
         return "queue.agent." + id;
     }
-
 }

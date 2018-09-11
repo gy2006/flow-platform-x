@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,21 @@ package com.flowci.exception;
  */
 public final class ErrorCode {
 
-    public final static int ERROR = 400;
+    public static final Integer ERROR = 400;
 
-    public final static int INVALID_ARGUMENT = 401;
+    public static final Integer AUTH_FAILURE = 401;
 
-    public static final int PARSE_YML = 402;
+    public static final Integer INVALID_ARGUMENT = 402;
 
-    public static final int DUPLICATE = 403;
+    public static final Integer PARSE_YML_OR_JSON = 403;
 
-    public static final int NOT_FOUND = 404;
+    public static final Integer NOT_FOUND = 404;
+
+    public static final Integer DUPLICATE = 405;
+
+    public static final Integer ILLEGAL_ACCESS = 406;
+
+    public static final Integer ILLEGAL_STATUS = 407;
 
     private ErrorCode() {
 

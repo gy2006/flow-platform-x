@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,17 +26,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * @author yang
  */
-public class UserServiceTest extends SpringTest {
+public class UserServiceTest extends SpringScenario {
 
     @Autowired
     private UserService userService;
 
     @Autowired
-    private ConfigProperties config;
+    private ConfigProperties.Admin adminProperties;
 
     @Test
     public void should_init_admin_user() {
-        User admin = userService.getByEmail(config.getAdmin().getEmail());
+        User admin = userService.getByEmail(adminProperties.getDefaultEmail());
         Assert.assertNotNull(admin);
     }
 

@@ -16,11 +16,13 @@
 
 package com.flowci.core.flow.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.domain.Mongoable;
+import com.flowci.domain.VariableMap;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -28,6 +30,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * @author yang
  */
 @Document(collection = "flow")
+@NoArgsConstructor
+@ToString(of = {"name"}, callSuper = true)
 public final class Flow extends Mongoable {
 
     @Getter
@@ -36,11 +40,12 @@ public final class Flow extends Mongoable {
     @Indexed(name = "index_flow_name")
     private String name;
 
-    /**
-     * Raw yml string and ignore on json format
-     */
     @Getter
     @Setter
-    @JsonIgnore
-    private String yml;
+    @NonNull
+    private VariableMap variables = new VariableMap();
+
+    public Flow(String name) {
+        this.name = name;
+    }
 }

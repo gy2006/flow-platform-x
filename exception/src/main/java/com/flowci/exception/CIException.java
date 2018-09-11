@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public class CIException extends RuntimeException {
         super(MessageFormat.format(message, params), cause);
     }
 
-    public int getCode() {
+    public Integer getCode() {
         return ErrorCode.ERROR;
     }
 }

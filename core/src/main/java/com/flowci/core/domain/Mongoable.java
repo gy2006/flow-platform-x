@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,25 +32,19 @@ import org.springframework.data.annotation.LastModifiedDate;
  */
 @EqualsAndHashCode(of = {"id"})
 @ToString(of = {"id"})
+@Getter
+@Setter
 public abstract class Mongoable implements Serializable {
 
     @Id
-    @Getter
-    @Setter
     @NonNull
-    private String id;
+    protected String id;
 
-    @Getter
-    @Setter
     @CreatedDate
-    private Date createdAt;
+    protected Date createdAt;
 
-    @Getter
-    @Setter
     @LastModifiedDate
-    private Date updatedAt;
+    protected Date updatedAt;
 
-    @Getter
-    @Setter
-    private String createdBy;
+    protected String createdBy;
 }

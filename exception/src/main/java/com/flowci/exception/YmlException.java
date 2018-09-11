@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class YmlException extends CIException {
     }
 
     @Override
-    public int getCode() {
-        return ErrorCode.PARSE_YML;
+    public Integer getCode() {
+        return ErrorCode.PARSE_YML_OR_JSON;
     }
 }

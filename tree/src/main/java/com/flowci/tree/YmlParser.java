@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,15 @@
 package com.flowci.tree;
 
 import com.flowci.domain.VariableMap;
-import com.flowci.domain.node.Node;
 import com.flowci.exception.YmlException;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import lombok.NoArgsConstructor;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.DumperOptions.FlowStyle;
@@ -33,6 +33,7 @@ import org.yaml.snakeyaml.DumperOptions.LineBreak;
 import org.yaml.snakeyaml.DumperOptions.ScalarStyle;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.error.YAMLException;
 import org.yaml.snakeyaml.representer.Representer;
 
 /**
@@ -40,11 +41,9 @@ import org.yaml.snakeyaml.representer.Representer;
  */
 public class YmlParser {
 
-    private final static String DEFAULT_ROOT_NAME = "root";
-
     private final static String DEFAULT_CHILD_NAME_PREFIX = "step-";
 
-    private final static Constructor ROOT_YML_CONSTRUCTOR = new Constructor(RootYmlWrapper.class);
+    private final static Constructor ROOT_YML_CONSTRUCTOR = new Constructor(RootNodeWrapper.class);
 
     private final static Representer ORDERED_SKIP_EMPTY_REPRESENTER = new OrderedSkipEmptyRepresenter();
 
@@ -64,52 +63,35 @@ public class YmlParser {
     /**
      * Create Node instance from yml
      */
-    public static synchronized Node load(String yml) {
+    public static synchronized Node load(String defaultName, String yml) {
         Yaml yaml = new Yaml(ROOT_YML_CONSTRUCTOR);
-        RootYmlWrapper node = yaml.load(yml);
 
-        // verify flow node
-        if (Objects.isNull(node.flow)) {
-            throw new YmlException("The 'flow' content must be defined");
+        try {
+            RootNodeWrapper root = yaml.load(yml);
+            // set default flow name if not defined in yml
+            if (Strings.isNullOrEmpty(root.name)) {
+                root.name = defaultName;
+            }
+
+            // steps must be provided
+            List<ChildNodeWrapper> steps = root.steps;
+            if (Objects.isNull(steps) || steps.isEmpty()) {
+                throw new YmlException("The 'step' must be defined");
+            }
+
+            return root.toNode(0);
+        } catch (YAMLException e) {
+            throw new YmlException(e.getMessage());
         }
-
-        // current version only support single flow
-        if (node.flow.size() > 1) {
-            throw new YmlException("Unsupported multiple flows definition");
-        }
-
-        // steps must be provided
-        RootNodeWrapper flow = node.flow.get(0);
-        List<ChildNodeWrapper> steps = flow.steps;
-
-        if (Objects.isNull(steps) || steps.isEmpty()) {
-            throw new YmlException("The 'step' must be defined");
-        }
-
-        return flow.toNode(0);
     }
 
     public static synchronized String parse(Node root) {
         RootNodeWrapper rootWrapper = RootNodeWrapper.fromNode(root);
-        RootYmlWrapper ymlWrapper = new RootYmlWrapper(rootWrapper);
 
         Yaml yaml = new Yaml(ROOT_YML_CONSTRUCTOR, ORDERED_SKIP_EMPTY_REPRESENTER, DUMPER_OPTIONS);
-        String dump = yaml.dump(ymlWrapper);
+        String dump = yaml.dump(rootWrapper);
         dump = dump.substring(dump.indexOf(LINE_BREAK.getString()) + 1);
         return dump;
-    }
-
-    /**
-     * Represent YML root flow
-     */
-    @NoArgsConstructor
-    private static class RootYmlWrapper {
-
-        public List<RootNodeWrapper> flow;
-
-        public RootYmlWrapper(RootNodeWrapper root) {
-            this.flow = Lists.newArrayList(root);
-        }
     }
 
     @NoArgsConstructor
@@ -132,15 +114,17 @@ public class YmlParser {
             return wrapper;
         }
 
-        /**
-         * Environment variables
-         */
+        public String name;
+
+        public Selector selector = new Selector();
+
         public Map<String, String> envs = new LinkedHashMap<>();
 
         public List<ChildNodeWrapper> steps = new LinkedList<>();
 
-        public Node toNode(int index) {
-            Node node = new Node(DEFAULT_ROOT_NAME);
+        public Node toNode(int ignore) {
+            Node node = new Node(name);
+            node.setSelector(selector);
             setEnvs(node);
             setChildren(node);
             return node;
@@ -149,7 +133,7 @@ public class YmlParser {
         void setEnvs(Node node) {
             VariableMap environments = node.getEnvironments();
             for (Map.Entry<String, String> entry : envs.entrySet()) {
-                environments.addString(entry.getKey(), entry.getValue());
+                environments.putString(entry.getKey(), entry.getValue());
             }
         }
 
@@ -185,8 +169,6 @@ public class YmlParser {
 
             return wrapper;
         }
-
-        public String name;
 
         public String script;
 

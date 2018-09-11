@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,52 @@
 
 package com.flowci.core.config;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 /**
  * @author yang
  */
+@Data
 public class ConfigProperties {
 
-    @Getter
-    private final Admin admin = new Admin();
+    private String workspace;
 
+    private Boolean authEnabled;
+
+    @Data
     public static class Admin {
 
-        @Getter
-        @Setter
-        private String email;
+        private String defaultEmail;
 
-        @Getter
-        @Setter
-        private String password;
+        private String defaultPassword;
     }
 
+    @Data
+    public static class Job {
+
+        private String queueName;
+
+        private String callbackQueueName;
+
+        private Long expireInSeconds;
+
+        private Long retryWaitingSeconds;
+    }
+
+
+    @Data
+    public static class Zookeeper {
+
+        private Boolean embedded;
+
+        private String host;
+
+        private String root;
+
+        private Integer timeout;
+
+        private Integer retry;
+
+        private String dataDir;
+    }
 }

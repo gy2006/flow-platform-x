@@ -22,42 +22,68 @@ import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpMethod.PUT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.adviser.AuthInterceptor;
 import com.flowci.core.user.User;
+import com.flowci.domain.Jsonable;
 import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import javax.annotation.PostConstruct;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * @author yang
  */
+@Log4j2
 @Configuration
-@EnableMongoAuditing
+@EnableCaching
 public class AppConfig implements WebMvcConfigurer {
 
-    private final static ObjectMapper ObjectMapper = new ObjectMapper();
-
     private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(
+        new StringHttpMessageConverter(),
         new ByteArrayHttpMessageConverter(),
-        new MappingJackson2HttpMessageConverter(ObjectMapper),
+        new MappingJackson2HttpMessageConverter(Jsonable.getMapper()),
         new ResourceHttpMessageConverter(),
         new AllEncompassingFormHttpMessageConverter()
     );
 
+    @Autowired
+    private ConfigProperties appProperties;
+
+    @PostConstruct
+    public void initWorkspace() {
+        try {
+            Path path = Paths.get(appProperties.getWorkspace());
+            Files.createDirectory(path);
+        } catch (FileAlreadyExistsException ignore) {
+
+        } catch (IOException e) {
+            log.error("Unable to init workspace directory: {}", appProperties.getWorkspace());
+        }
+    }
+
     @Bean("objectMapper")
     public ObjectMapper objectMapper() {
-        return ObjectMapper;
+        return Jsonable.getMapper();
     }
 
     @Bean("restTemplate")
@@ -76,10 +102,18 @@ public class AppConfig implements WebMvcConfigurer {
         return new ThreadLocal<>();
     }
 
-    @Bean("config")
-    @ConfigurationProperties(prefix = "app")
-    public ConfigProperties config() {
-        return new ConfigProperties();
+    @Bean
+    public AuthInterceptor authHandler() {
+        return new AuthInterceptor();
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(authHandler())
+            .addPathPatterns("/flows/**")
+            .addPathPatterns("/jobs/**")
+            .addPathPatterns("/agents/**")
+            .excludePathPatterns("/agents/connect");
     }
 
     @Override

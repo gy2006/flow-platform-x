@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,22 @@
 
 package com.flowci.domain;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.KeyDeserializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.flowci.domain.Variable.ValueType;
+import com.flowci.domain.VariableMap.VariableKeyDeserializer;
+import com.flowci.domain.VariableMap.VariableKeySerializer;
+import com.flowci.util.StringHelper;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,48 +39,91 @@ import java.util.Objects;
 /**
  * @author yang
  */
-public class VariableMap implements Serializable {
+@JsonSerialize(keyUsing = VariableKeySerializer.class)
+@JsonDeserialize(keyUsing = VariableKeyDeserializer.class)
+public class VariableMap extends LinkedHashMap<Variable, String> implements Serializable {
 
-    private final static Map<ValueType, ValueTypeValidator> ValueValidators = new HashMap<>(1);
+    /**
+     * Convert Variable object to base64 string
+     */
+    public static class VariableKeySerializer extends JsonSerializer<Variable> {
 
-    static {
-        ValueValidators.put(ValueType.LIST, new ListValidator());
+        @Override
+        public void serialize(Variable value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            String json = Jsonable.getMapper().writeValueAsString(value);
+            String variableKey = StringHelper.toBase64(json);
+            gen.writeFieldName(variableKey);
+        }
     }
 
-    private final Map<Variable, Object> values = new HashMap<>(10);
+    /**
+     * Convert base64 string to Variable
+     */
+    public static class VariableKeyDeserializer extends KeyDeserializer {
 
-    public int size() {
-        return values.size();
+        @Override
+        public Object deserializeKey(String base64, DeserializationContext ctxt) throws IOException {
+            String json = StringHelper.fromBase64(base64);
+            return Jsonable.getMapper().readValue(json, Variable.class);
+        }
     }
 
-    public void addString(String key, String value) {
+    public VariableMap() {
+        super();
+    }
+
+    public VariableMap(Map<String, String> data) {
+        super(data.size());
+        load(data);
+    }
+
+    public VariableMap merge(VariableMap other) {
+        for (Map.Entry<Variable, String> entry : other.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
+        return this;
+    }
+
+    public void putString(String key, String value) {
         Variable var = new Variable(key);
-        values.put(var, value);
+        put(var, value);
     }
 
-    public void addInt(String key, Integer value) {
+    public void putInt(String key, Integer value) {
         Variable var = new Variable(key, ValueType.INT);
-        values.put(var, value);
+        put(var, value.toString());
     }
 
     public String getString(String key) {
-        return values.get(new Variable(key)).toString();
+        return get(new Variable(key));
     }
 
     public Integer getInteger(String key) {
-        return (Integer) values.get(new Variable(key));
+        return Integer.parseInt(get(new Variable(key)));
     }
 
     public Map<String, String> toStringMap() {
-        if (values.isEmpty()) {
+        if (isEmpty()) {
             return Collections.emptyMap();
         }
 
-        Map<String, String> map = new HashMap<>(values.size());
-        for (Map.Entry<Variable, Object> entry : values.entrySet()) {
-            map.put(entry.getKey().getName(), entry.getValue().toString());
+        Map<String, String> map = new HashMap<>(size());
+        for (Map.Entry<Variable, String> entry : entrySet()) {
+            map.put(entry.getKey().getName(), entry.getValue());
         }
+
         return map;
+    }
+
+    public void reset(Map<String, String> vars) {
+        clear();
+        load(vars);
+    }
+
+    public void load(Map<String, String> vars) {
+        for (Map.Entry<String, String> entry : vars.entrySet()) {
+            putString(entry.getKey(), entry.getValue());
+        }
     }
 
     private interface ValueTypeValidator {
