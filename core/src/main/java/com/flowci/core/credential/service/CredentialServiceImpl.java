@@ -23,6 +23,8 @@ import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.StatusException;
 import com.flowci.util.CipherHelper.RSA;
+import com.flowci.util.CipherHelper.StringKeyPair;
+import java.io.IOException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -57,15 +59,20 @@ public class CredentialServiceImpl implements CredentialService {
     @Override
     public Credential createRSA(String name) {
         try {
-            return createRSA(name, RSA.buildKeyPair(RSA.SIZE_1024));
-        } catch (NoSuchAlgorithmException e) {
+            String email = currentUserHelper.get().getEmail();
+
+            KeyPair keyPair = RSA.buildKeyPair(RSA.SIZE_1024);
+            StringKeyPair stringKeyPair = RSA.encodeAsOpenSSH(keyPair, email);
+
+            return createRSA(name, stringKeyPair);
+        } catch (NoSuchAlgorithmException | IOException e) {
             log.error(e.getMessage());
             throw new StatusException("Unable to generate RSA key pair");
         }
     }
 
     @Override
-    public Credential createRSA(String name, KeyPair rasKeyPair) {
+    public Credential createRSA(String name, StringKeyPair rasKeyPair) {
         try {
             RSAKeyPair rsaKeyPair = new RSAKeyPair(rasKeyPair);
             rsaKeyPair.setName(name);

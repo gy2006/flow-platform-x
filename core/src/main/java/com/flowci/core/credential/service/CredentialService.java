@@ -17,7 +17,7 @@
 package com.flowci.core.credential.service;
 
 import com.flowci.core.credential.domain.Credential;
-import java.security.KeyPair;
+import com.flowci.util.CipherHelper.StringKeyPair;
 import java.util.List;
 
 /**
@@ -43,6 +43,6 @@ public interface CredentialService {
     /**
      * Create and set rsa key pair
      */
-    Credential createRSA(String name, KeyPair rasKeyPair);
+    Credential createRSA(String name, StringKeyPair rasKeyPair);
 
 }
