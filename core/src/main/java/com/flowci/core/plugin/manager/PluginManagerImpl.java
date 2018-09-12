@@ -49,7 +49,6 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
-import org.springframework.util.FileSystemUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -127,19 +126,25 @@ public class PluginManagerImpl implements PluginManager {
 
     private Plugin clone(PluginRepo repo) throws GitAPIException, IOException {
         File dir = getPluginRepoDir(repo.getName());
-        FileSystemUtils.deleteRecursively(dir);
+        GitProgressMonitor monitor = new GitProgressMonitor(repo.getSource(), dir);
 
-        Git git = null;
-        try {
-            git = Git.cloneRepository()
-                .setDirectory(dir)
-                .setURI(repo.getSource())
-                .setProgressMonitor(new GitProgressMonitor(repo.getSource(), dir))
-                .call();
-        } finally {
-            if (git != null) {
-                git.close();
+        // pull from git when local repo exist
+        if (Files.exists(dir.toPath())) {
+            log.debug("The plugin repo existed: {}", repo);
+
+            try (Git git = Git.open(dir)) {
+                git.pull().setProgressMonitor(monitor).call();
             }
+
+            return load(dir, repo);
+        }
+
+        // clone from git
+        try (Git ignored = Git.cloneRepository()
+            .setDirectory(dir)
+            .setURI(repo.getSource())
+            .setProgressMonitor(monitor)
+            .call()) {
         }
 
         return load(dir, repo);
