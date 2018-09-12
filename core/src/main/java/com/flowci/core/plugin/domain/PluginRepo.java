@@ -14,30 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.plugin;
+package com.flowci.core.plugin.domain;
 
-import com.flowci.domain.Variable;
 import com.flowci.domain.Version;
-import java.io.Serializable;
-import java.util.List;
+import java.util.Set;
 import lombok.Data;
 
 /**
  * @author yang
  */
 @Data
-public class Plugin implements Serializable {
+public class PluginRepo {
 
     private String name;
 
+    private String source;
+
+    private String description;
+
+    private Set<String> labels;
+
+    private String author;
+
     private Version version;
-
-    private List<Variable> inputs;
-
-    private String script;
-
-    public Plugin(String name, Version version) {
-        this.name = name;
-        this.version = version;
-    }
 }

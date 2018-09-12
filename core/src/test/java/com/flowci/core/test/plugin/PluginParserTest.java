@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.flowci.plugin.test;
+package com.flowci.core.test.plugin;
 
+import com.flowci.core.plugin.domain.Plugin;
+import com.flowci.core.plugin.domain.PluginParser;
 import com.flowci.domain.Version;
-import com.flowci.plugin.Plugin;
-import com.flowci.plugin.YmlParser;
 import java.io.InputStream;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,15 +26,15 @@ import org.junit.Test;
 /**
  * @author yang
  */
-public class YmlParserTest {
+public class PluginParserTest {
 
     @Test
     public void should_parse_yml_to_plugin() {
-        InputStream is = YmlParserTest.class.getClassLoader().getResourceAsStream("plugin.yml");
-        Plugin plugin = YmlParser.parse(is);
+        InputStream is = PluginParserTest.class.getClassLoader().getResourceAsStream("plugin.yml");
+        Plugin plugin = PluginParser.parse(is);
         Assert.assertNotNull(plugin);
 
-        Assert.assertEquals("git-clone", plugin.getName());
+        Assert.assertEquals("gitclone", plugin.getName());
         Assert.assertEquals(Version.of(0, 0, 1, null), plugin.getVersion());
         Assert.assertEquals(3, plugin.getInputs().size());
     }

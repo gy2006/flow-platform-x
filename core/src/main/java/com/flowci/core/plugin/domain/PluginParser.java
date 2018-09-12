@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.plugin;
+package com.flowci.core.plugin.domain;
 
 import com.flowci.domain.Variable;
 import com.flowci.domain.Variable.ValueType;
@@ -31,7 +31,7 @@ import org.yaml.snakeyaml.Yaml;
 /**
  * @author yang
  */
-public class YmlParser {
+public class PluginParser {
 
     public static Plugin parse(InputStream is) {
         Yaml yaml = YamlHelper.create(PluginWrapper.class);

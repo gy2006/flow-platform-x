@@ -428,7 +428,7 @@ public class JobServiceImpl implements JobService {
             setJobStatus(job, Job.Status.ENQUEUE, null);
             return job;
         } catch (Throwable e) {
-            throw new StatusException("Unable to enqueue the job {} since {}", job.getId(), e.getMessage());
+            throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());
         }
     }
 

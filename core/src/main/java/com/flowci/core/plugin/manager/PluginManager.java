@@ -14,30 +14,18 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test;
+package com.flowci.core.plugin.manager;
 
-import com.flowci.core.config.ConfigProperties;
-import com.flowci.core.user.User;
-import com.flowci.core.user.UserService;
-import org.junit.Assert;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.flowci.core.plugin.domain.PluginRepo;
+import java.util.List;
 
 /**
  * @author yang
  */
-public class UserServiceTest extends SpringScenario {
+public interface PluginManager {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ConfigProperties.Admin adminProperties;
-
-    @Test
-    public void should_init_admin_user() {
-        User admin = userService.getByEmail(adminProperties.getDefaultEmail());
-        Assert.assertNotNull(admin);
-    }
-
+    /**
+     * Load plugin repo info
+     */
+    List<PluginRepo> load(String repoUrl);
 }

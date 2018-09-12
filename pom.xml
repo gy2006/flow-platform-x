@@ -16,7 +16,6 @@
     <module>exception</module>
     <module>tree</module>
     <module>zookeeper</module>
-    <module>plugin</module>
   </modules>
 
   <properties>
@@ -180,6 +179,12 @@
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
         <version>${snakeyaml.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.jgit</groupId>
+        <artifactId>org.eclipse.jgit</artifactId>
+        <version>5.0.3.201809091024-r</version>
       </dependency>
 
       <dependency>
