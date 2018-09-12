@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package com.flowci.plugin;
+package com.flowci.core.domain;
 
 /**
  * @author yang
  */
-public class Parser {
+public class Variables {
 
+    public static final String SERVER_URL = "FLOWCI_SERVER_URL";
+
+    public static final String FLOW_NAME = "FLOWCI_FLOW_NAME";
+
+    public static final String JOB_BUILD_NUMBER = "FLOWCI_JOB_BUILD_NUM";
+
+    private Variables() {
+    }
 }

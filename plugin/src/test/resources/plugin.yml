@@ -1,6 +1,6 @@
 name: git-clone
 version: 0.0.1
-input:
+inputs:
 - name: FLOWCI_GIT_URL
   type: string
   required: true

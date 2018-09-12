@@ -32,9 +32,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author yang
@@ -123,36 +121,6 @@ public class VariableMap extends LinkedHashMap<Variable, String> implements Seri
     public void load(Map<String, String> vars) {
         for (Map.Entry<String, String> entry : vars.entrySet()) {
             putString(entry.getKey(), entry.getValue());
-        }
-    }
-
-    private interface ValueTypeValidator {
-
-        /**
-         * Validate value is match the type
-         *
-         * @throws IllegalArgumentException if not matched
-         */
-        void validate(Variable variable, Object value);
-    }
-
-    private static class ListValidator implements ValueTypeValidator {
-
-        @Override
-        public void validate(Variable variable, Object value) {
-            List<String> values = variable.getValues();
-
-            if (Objects.isNull(values)) {
-                return;
-            }
-
-            if (!(value instanceof String)) {
-                throw new IllegalArgumentException("The list value item should be String");
-            }
-
-            if (!values.contains(value)) {
-                throw new IllegalArgumentException("The value should be one of " + String.join(",", values));
-            }
         }
     }
 }

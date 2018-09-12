@@ -18,6 +18,7 @@ package com.flowci.core.job.service;
 
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.helper.ThreadHelper;
@@ -41,6 +42,7 @@ import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
 import com.flowci.tree.Node;
@@ -79,6 +81,9 @@ import org.springframework.stereotype.Service;
 public class JobServiceImpl implements JobService {
 
     private static final Sort SortByBuildNumber = Sort.by(Direction.DESC, "buildNumber");
+
+    @Autowired
+    private ConfigProperties appProperties;
 
     @Autowired
     private ConfigProperties.Job jobProperties;
@@ -162,6 +167,13 @@ public class JobServiceImpl implements JobService {
         job.setCurrentPath(root.getPathAsString());
         job.setAgentSelector(root.getSelector());
 
+        // init job context
+        VariableMap jobContext = job.getContext();
+        jobContext.putString(Variables.SERVER_URL, appProperties.getServerAddress());
+        jobContext.putString(Variables.FLOW_NAME, flow.getName());
+        jobContext.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
+
+        // set expire at
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
         jobDao.save(job);

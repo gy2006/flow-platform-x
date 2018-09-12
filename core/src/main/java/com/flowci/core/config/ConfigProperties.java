@@ -28,6 +28,8 @@ public class ConfigProperties {
 
     private Boolean authEnabled;
 
+    private String serverAddress;
+
     @Data
     public static class Admin {
 

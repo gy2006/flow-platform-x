@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
-package com.flowci.plugin;
+package com.flowci.plugin.test;
 
-import com.flowci.domain.Variable;
 import com.flowci.domain.Version;
-import java.io.Serializable;
-import java.util.List;
-import lombok.Data;
+import com.flowci.plugin.Plugin;
+import com.flowci.plugin.YmlParser;
+import java.io.InputStream;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author yang
  */
-@Data
-public class Plugin implements Serializable {
+public class YmlParserTest {
 
-    private String name;
+    @Test
+    public void should_parse_yml_to_plugin() {
+        InputStream is = YmlParserTest.class.getClassLoader().getResourceAsStream("plugin.yml");
+        Plugin plugin = YmlParser.parse(is);
+        Assert.assertNotNull(plugin);
 
-    private Version version;
-
-    private List<Variable> inputs;
-
-    private String script;
-
-    public Plugin(String name, Version version) {
-        this.name = name;
-        this.version = version;
+        Assert.assertEquals("git-clone", plugin.getName());
+        Assert.assertEquals(Version.of(0, 0, 1, null), plugin.getVersion());
+        Assert.assertEquals(3, plugin.getInputs().size());
     }
+
 }
