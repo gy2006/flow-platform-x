@@ -2,18 +2,10 @@ name: root
 envs:
   FLOW_WORKSPACE: "echo hello"
   FLOW_VERSION: "echo version"
-
 selector:
   tags:
   - ios
   - local
-
-crendtional:
-    - 1
-    - 2
-    - 3
-
-
 steps:
  - condition: |
      println(FLOW_WORKSPACE)

@@ -18,23 +18,18 @@ package com.flowci.tree;
 
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.YmlException;
+import com.flowci.util.YamlHelper;
 import com.google.common.base.Strings;
-import java.util.HashSet;
+import com.google.common.collect.ImmutableMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import lombok.NoArgsConstructor;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.DumperOptions.FlowStyle;
 import org.yaml.snakeyaml.DumperOptions.LineBreak;
-import org.yaml.snakeyaml.DumperOptions.ScalarStyle;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
-import org.yaml.snakeyaml.representer.Representer;
 
 /**
  * @author yang
@@ -43,28 +38,25 @@ public class YmlParser {
 
     private final static String DEFAULT_CHILD_NAME_PREFIX = "step-";
 
-    private final static Constructor ROOT_YML_CONSTRUCTOR = new Constructor(RootNodeWrapper.class);
-
-    private final static Representer ORDERED_SKIP_EMPTY_REPRESENTER = new OrderedSkipEmptyRepresenter();
-
-    private final static DumperOptions DUMPER_OPTIONS = new DumperOptions();
-
     private final static LineBreak LINE_BREAK = LineBreak.getPlatformLineBreak();
 
-    static {
-        DUMPER_OPTIONS.setIndent(2);
-        DUMPER_OPTIONS.setIndicatorIndent(0);
-        DUMPER_OPTIONS.setExplicitStart(true);
-        DUMPER_OPTIONS.setDefaultFlowStyle(FlowStyle.BLOCK);
-        DUMPER_OPTIONS.setDefaultScalarStyle(ScalarStyle.PLAIN);
-        DUMPER_OPTIONS.setLineBreak(LINE_BREAK);
-    }
+    private final static Map<String, Integer> FieldsOrder = ImmutableMap.<String, Integer>builder()
+        .put("name", 1)
+        .put("envs", 2)
+        .put("selector", 3)
+        .put("allowFailure", 4)
+        .put("isFinal", 5)
+        .put("condition", 6)
+        .put("plugin", 7)
+        .put("script", 8)
+        .put("steps", 9)
+        .build();
 
     /**
      * Create Node instance from yml
      */
     public static synchronized Node load(String defaultName, String yml) {
-        Yaml yaml = new Yaml(ROOT_YML_CONSTRUCTOR);
+        Yaml yaml = YamlHelper.create(RootNodeWrapper.class);
 
         try {
             RootNodeWrapper root = yaml.load(yml);
@@ -87,8 +79,7 @@ public class YmlParser {
 
     public static synchronized String parse(Node root) {
         RootNodeWrapper rootWrapper = RootNodeWrapper.fromNode(root);
-
-        Yaml yaml = new Yaml(ROOT_YML_CONSTRUCTOR, ORDERED_SKIP_EMPTY_REPRESENTER, DUMPER_OPTIONS);
+        Yaml yaml = YamlHelper.create(FieldsOrder, RootNodeWrapper.class);
         String dump = yaml.dump(rootWrapper);
         dump = dump.substring(dump.indexOf(LINE_BREAK.getString()) + 1);
         return dump;

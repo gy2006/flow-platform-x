@@ -16,6 +16,7 @@
     <module>exception</module>
     <module>tree</module>
     <module>zookeeper</module>
+    <module>plugin</module>
   </modules>
 
   <properties>
