@@ -14,36 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.core.plugin.domain;
+package com.flowci.core.plugin.config;
 
-import com.flowci.domain.Variable;
-import com.flowci.domain.Version;
-import java.io.Serializable;
-import java.util.List;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import com.flowci.core.helper.ThreadHelper;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * @author yang
  */
-@Getter
-@Setter
-@EqualsAndHashCode(of = {"name"})
-@ToString(of = {"name", "version"})
-public class Plugin implements Serializable {
+@Configuration
+public class PluginConfig {
 
-    private String name;
-
-    private Version version;
-
-    private List<Variable> inputs;
-
-    private String script;
-
-    public Plugin(String name, Version version) {
-        this.name = name;
-        this.version = version;
+    @Bean("repoCloneExecutor")
+    public ThreadPoolTaskExecutor repoCloneExecutor() {
+        return ThreadHelper.createTaskExecutor(2, 2, 100, "plugin-repo-clone-");
     }
+
 }

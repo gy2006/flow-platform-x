@@ -16,6 +16,7 @@
 
 package com.flowci.core.plugin.manager;
 
+import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginRepo;
 import java.util.List;
 
@@ -24,8 +25,15 @@ import java.util.List;
  */
 public interface PluginManager {
 
+    Plugin get(String name);
+
     /**
      * Load plugin repo info
      */
     List<PluginRepo> load(String repoUrl);
+
+    /**
+     * Git clone plugin repos in Async
+     */
+    void clone(List<PluginRepo> repos);
 }

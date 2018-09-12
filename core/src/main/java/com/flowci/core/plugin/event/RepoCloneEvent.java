@@ -14,36 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.core.plugin.domain;
+package com.flowci.core.plugin.event;
 
-import com.flowci.domain.Variable;
-import com.flowci.domain.Version;
-import java.io.Serializable;
-import java.util.List;
-import lombok.EqualsAndHashCode;
+import com.flowci.core.plugin.domain.Plugin;
 import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import org.springframework.context.ApplicationEvent;
 
 /**
  * @author yang
  */
-@Getter
-@Setter
-@EqualsAndHashCode(of = {"name"})
-@ToString(of = {"name", "version"})
-public class Plugin implements Serializable {
+public class RepoCloneEvent extends ApplicationEvent {
 
-    private String name;
+    @Getter
+    private final Plugin plugin;
 
-    private Version version;
-
-    private List<Variable> inputs;
-
-    private String script;
-
-    public Plugin(String name, Version version) {
-        this.name = name;
-        this.version = version;
+    public RepoCloneEvent(Object source, Plugin plugin) {
+        super(source);
+        this.plugin = plugin;
     }
 }

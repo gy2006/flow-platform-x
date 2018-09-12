@@ -21,24 +21,33 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 
+import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginRepo;
+import com.flowci.core.plugin.event.RepoCloneEvent;
 import com.flowci.core.plugin.manager.PluginManager;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.Version;
 import com.flowci.util.StringHelper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 
 /**
  * @author yang
  */
 public class PluginManagerTest extends SpringScenario {
+
+    private static final String RepoURL = "http://localhost:8000/plugin/repo.json";
 
     @ClassRule
     public static WireMockRule wireMockRule = new WireMockRule(8000);
@@ -46,11 +55,18 @@ public class PluginManagerTest extends SpringScenario {
     @Autowired
     private PluginManager pluginManager;
 
-    @Test
-    public void should_load_plugin_repos_from_url() throws IOException {
-        mockPluginRepo();
+    @Before
+    public void mockPluginRepo() throws IOException {
+        InputStream load = load("plugin-repo.json");
+        stubFor(get(urlPathEqualTo("/plugin/repo.json"))
+            .willReturn(aResponse()
+                .withBody(StringHelper.toString(load))
+                .withHeader("Content-Type", "application/json")));
+    }
 
-        List<PluginRepo> repos = pluginManager.load("http://localhost:8000/plugin/repo.json");
+    @Test
+    public void should_load_plugin_repos_from_url() {
+        List<PluginRepo> repos = pluginManager.load(RepoURL);
         Assert.assertEquals(1, repos.size());
 
         PluginRepo repo = repos.get(0);
@@ -61,11 +77,24 @@ public class PluginManagerTest extends SpringScenario {
         Assert.assertEquals(Version.parse("0.0.1"), repo.getVersion());
     }
 
-    private void mockPluginRepo() throws IOException {
-        InputStream load = load("plugin-repo.json");
-        stubFor(get(urlPathEqualTo("/plugin/repo.json"))
-            .willReturn(aResponse()
-                .withBody(StringHelper.toString(load))
-                .withHeader("Content-Type", "application/json")));
+    @Test
+    public void should_clone_plugin_repo() throws Throwable {
+        // init:
+        List<PluginRepo> repos = pluginManager.load(RepoURL);
+
+        // init counter
+        CountDownLatch counter = new CountDownLatch(1);
+        ObjectWrapper<Plugin> pluginWrapper = new ObjectWrapper<>();
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<RepoCloneEvent>) event -> {
+            pluginWrapper.setValue(event.getPlugin());
+            counter.countDown();
+        });
+
+        // when:
+        pluginManager.clone(repos);
+        counter.await(30, TimeUnit.SECONDS);
+
+        // then:
+        Assert.assertNotNull(pluginWrapper.getValue());
     }
 }
