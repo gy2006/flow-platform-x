@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package com.flowci.core.adviser;
+package com.flowci.core.open;
 
-import com.flowci.domain.http.ResponseMessage;
 import com.flowci.core.domain.StatusCode;
+import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.CIException;
-import com.flowci.exception.ErrorCode;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -31,35 +28,20 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 /**
  * @author yang
  */
-@Log4j2
-@ControllerAdvice({
-    "com.flowci.core.flow",
-    "com.flowci.core.job",
-    "com.flowci.core.agent",
-    "com.flowci.core.credentials"
-})
-public class ExceptionAdviser {
+@ControllerAdvice({"com.flowci.core.open"})
+public class ExceptionAdviceForOpenAPI {
 
     @ResponseBody
-    @ResponseStatus(HttpStatus.OK)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseMessage<Object> methodArgumentNotValidException(MethodArgumentNotValidException e) {
-        String defaultMessage = e.getBindingResult().getFieldError().getDefaultMessage();
-        return new ResponseMessage<>(ErrorCode.INVALID_ARGUMENT, defaultMessage, null);
-    }
-
-    @ResponseBody
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(CIException.class)
     public ResponseMessage<Object> ciException(CIException e) {
         return new ResponseMessage<>(e.getCode(), e.getMessage(), null);
     }
 
     @ResponseBody
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(Throwable.class)
     public ResponseMessage<Object> fatalException(Throwable e) {
-        log.error(e);
         return new ResponseMessage<>(StatusCode.FATAL, e.getMessage(), null);
     }
 }
