@@ -115,6 +115,7 @@ public class AppConfig implements WebMvcConfigurer {
             .addPathPatterns("/flows/**")
             .addPathPatterns("/jobs/**")
             .addPathPatterns("/agents/**")
+            .addPathPatterns("/credentials/**")
             .excludePathPatterns("/agents/connect");
     }
 
