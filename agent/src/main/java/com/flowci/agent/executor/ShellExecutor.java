@@ -144,10 +144,8 @@ public class ShellExecutor {
             // wait for max process timeout
             if (process.waitFor(cmd.getTimeout(), TimeUnit.SECONDS)) {
                 result.setCode(process.exitValue());
-                result.setStatus(Status.SUCCESS);
             } else {
                 result.setCode(ExecutedCmd.CODE_TIMEOUT);
-                result.setStatus(Status.TIMEOUT);
             }
 
             result.setFinishAt(new Date());
