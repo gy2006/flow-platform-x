@@ -19,7 +19,7 @@ package com.flowci.core.job.manager;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.manager.PluginManager;
+import com.flowci.core.plugin.manager.PluginService;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.Variable;
@@ -39,7 +39,7 @@ import org.springframework.stereotype.Repository;
 public class CmdManagerImpl implements CmdManager {
 
     @Autowired
-    private PluginManager pluginManager;
+    private PluginService pluginService;
 
     @Override
     public CmdId createId(Job job, Node node) {
@@ -52,7 +52,7 @@ public class CmdManagerImpl implements CmdManager {
         String script = node.getScript();
 
         if (node.hasPlugin()) {
-            Plugin plugin = pluginManager.get(node.getPlugin());
+            Plugin plugin = pluginService.get(node.getPlugin());
             verifyPluginInput(variables, plugin);
             script = plugin.getScript();
         }

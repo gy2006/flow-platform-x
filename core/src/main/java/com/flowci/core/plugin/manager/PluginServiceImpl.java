@@ -31,11 +31,12 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -47,6 +48,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -57,7 +59,7 @@ import org.springframework.web.client.RestTemplate;
  */
 @Log4j2
 @Component
-public class PluginManagerImpl implements PluginManager {
+public class PluginServiceImpl implements PluginService {
 
     private static final ParameterizedTypeReference<List<PluginRepo>> RepoListType =
         new ParameterizedTypeReference<List<PluginRepo>>() {
@@ -72,16 +74,24 @@ public class PluginManagerImpl implements PluginManager {
     private ConfigProperties appProperties;
 
     @Autowired
+    private ConfigProperties.Plugin pluginProperties;
+
+    @Autowired
     private ThreadPoolTaskExecutor repoCloneExecutor;
 
     @Autowired
     private ApplicationContext context;
 
-    private Map<String, Plugin> pluginMap = new HashMap<>(0);
+    private Map<String, Plugin> installed = new ConcurrentHashMap<>(10);
+
+    @Override
+    public Collection<Plugin> list() {
+        return installed.values();
+    }
 
     @Override
     public Plugin get(String name) {
-        Plugin plugin = pluginMap.get(name);
+        Plugin plugin = installed.get(name);
         if (Objects.isNull(plugin)) {
             throw new NotFoundException("The plugin {0} is not found", name);
         }
@@ -108,14 +118,11 @@ public class PluginManagerImpl implements PluginManager {
 
     @Override
     public void clone(List<PluginRepo> repos) {
-        pluginMap.clear();
-        pluginMap = new HashMap<>(repos.size());
-
         for (PluginRepo repo : repos) {
             repoCloneExecutor.execute(() -> {
                 try {
                     Plugin plugin = clone(repo);
-                    pluginMap.put(repo.getName(), plugin);
+                    installed.put(repo.getName(), plugin);
                     context.publishEvent(new RepoCloneEvent(this, plugin));
                     log.info("Plugin {} been clone", plugin);
                 } catch (CIException e) {
@@ -125,6 +132,17 @@ public class PluginManagerImpl implements PluginManager {
                 }
             });
         }
+    }
+
+    @Scheduled(fixedRate = 1000 * 3600)
+    public void scheduleSync() {
+        if (!pluginProperties.getAutoUpdate()) {
+            return;
+        }
+
+        String repoUrl = pluginProperties.getDefaultRepo();
+        List<PluginRepo> repos = load(repoUrl);
+        clone(repos);
     }
 
     private Plugin clone(PluginRepo repo) throws GitAPIException, IOException {

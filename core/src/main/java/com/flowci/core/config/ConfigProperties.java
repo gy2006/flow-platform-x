@@ -50,6 +50,14 @@ public class ConfigProperties {
         private Long retryWaitingSeconds;
     }
 
+    @Data
+    public static class Plugin {
+
+        private String defaultRepo;
+
+        private Boolean autoUpdate;
+    }
+
 
     @Data
     public static class Zookeeper {

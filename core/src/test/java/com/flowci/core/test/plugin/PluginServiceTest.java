@@ -24,7 +24,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginRepo;
 import com.flowci.core.plugin.event.RepoCloneEvent;
-import com.flowci.core.plugin.manager.PluginManager;
+import com.flowci.core.plugin.manager.PluginService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.Version;
@@ -45,7 +45,7 @@ import org.springframework.context.ApplicationListener;
 /**
  * @author yang
  */
-public class PluginManagerTest extends SpringScenario {
+public class PluginServiceTest extends SpringScenario {
 
     private static final String RepoURL = "http://localhost:8000/plugin/repo.json";
 
@@ -53,7 +53,7 @@ public class PluginManagerTest extends SpringScenario {
     public static WireMockRule wireMockRule = new WireMockRule(8000);
 
     @Autowired
-    private PluginManager pluginManager;
+    private PluginService pluginService;
 
     @Before
     public void mockPluginRepo() throws IOException {
@@ -66,7 +66,7 @@ public class PluginManagerTest extends SpringScenario {
 
     @Test
     public void should_load_plugin_repos_from_url() {
-        List<PluginRepo> repos = pluginManager.load(RepoURL);
+        List<PluginRepo> repos = pluginService.load(RepoURL);
         Assert.assertEquals(1, repos.size());
 
         PluginRepo repo = repos.get(0);
@@ -80,7 +80,7 @@ public class PluginManagerTest extends SpringScenario {
     @Test
     public void should_clone_plugin_repo() throws Throwable {
         // init:
-        List<PluginRepo> repos = pluginManager.load(RepoURL);
+        List<PluginRepo> repos = pluginService.load(RepoURL);
 
         // init counter
         CountDownLatch counter = new CountDownLatch(1);
@@ -91,7 +91,7 @@ public class PluginManagerTest extends SpringScenario {
         });
 
         // when:
-        pluginManager.clone(repos);
+        pluginService.clone(repos);
         counter.await(30, TimeUnit.SECONDS);
 
         // then:

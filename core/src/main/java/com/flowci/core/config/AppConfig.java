@@ -45,6 +45,7 @@ import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -56,6 +57,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Log4j2
 @Configuration
 @EnableCaching
+@EnableScheduling
 public class AppConfig implements WebMvcConfigurer {
 
     private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(

@@ -14,26 +14,28 @@
  * limitations under the License.
  */
 
-package com.flowci.core.plugin.manager;
+package com.flowci.core.plugin;
 
 import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.domain.PluginRepo;
-import java.util.List;
+import com.flowci.core.plugin.manager.PluginService;
+import java.util.Collection;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author yang
  */
-public interface PluginManager {
+@RestController
+@RequestMapping("/plugins")
+public class PluginController {
 
-    Plugin get(String name);
+    @Autowired
+    private PluginService pluginService;
 
-    /**
-     * Load plugin repo info
-     */
-    List<PluginRepo> load(String repoUrl);
-
-    /**
-     * Git clone plugin repos in Async
-     */
-    void clone(List<PluginRepo> repos);
+    @GetMapping("/installed")
+    public Collection<Plugin> installed() {
+        return pluginService.list();
+    }
 }
