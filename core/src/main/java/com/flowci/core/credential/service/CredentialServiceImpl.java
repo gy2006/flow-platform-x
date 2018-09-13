@@ -79,7 +79,7 @@ public class CredentialServiceImpl implements CredentialService {
             rsaKeyPair.setCreatedBy(currentUserHelper.getUserId());
             return credentialDao.insert(rsaKeyPair);
         } catch (DuplicateKeyException e) {
-            throw new DuplicateException("Credential name '{}' is already defined", name);
+            throw new DuplicateException("Credential name {0} is already defined", name);
         }
     }
 }
