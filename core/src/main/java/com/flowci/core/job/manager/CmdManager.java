@@ -14,29 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.core.plugin.domain;
+package com.flowci.core.job.manager;
 
-import com.flowci.domain.Version;
-import java.util.Set;
-import lombok.Data;
-import lombok.ToString;
+import com.flowci.core.job.domain.CmdId;
+import com.flowci.core.job.domain.Job;
+import com.flowci.domain.Cmd;
+import com.flowci.tree.Node;
 
 /**
  * @author yang
  */
-@Data
-@ToString(of = {"name", "version", "source"})
-public class PluginRepo {
+public interface CmdManager {
 
-    private String name;
+    CmdId createId(Job job, Node node);
 
-    private String source;
+    Cmd createShellCmd(Job job, Node node);
 
-    private String description;
-
-    private Set<String> labels;
-
-    private String author;
-
-    private Version version;
+    Cmd createKillCmd();
 }

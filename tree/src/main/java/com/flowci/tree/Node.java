@@ -16,7 +16,9 @@
 
 package com.flowci.tree;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.domain.VariableMap;
+import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
@@ -93,5 +95,10 @@ public class Node implements Serializable {
 
     public String getEnv(String name) {
         return environments.getString(name);
+    }
+
+    @JsonIgnore
+    public boolean hasPlugin() {
+        return !Strings.isNullOrEmpty(plugin);
     }
 }

@@ -21,14 +21,14 @@ import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.job.service.JobService;
 import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Status;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
-import com.flowci.core.job.util.CmdHelper;
+import com.flowci.core.job.manager.CmdManager;
+import com.flowci.core.job.service.JobService;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
@@ -71,6 +71,9 @@ public class JobServiceTest extends ZookeeperScenario {
 
     @Autowired
     private AgentService agentService;
+
+    @Autowired
+    private CmdManager cmdManager;
 
     private Flow flow;
 
@@ -153,7 +156,7 @@ public class JobServiceTest extends ZookeeperScenario {
         Node first = tree.next(tree.getRoot().getPath());
 
         Cmd cmd = targetCmd.getValue();
-        Assert.assertEquals(CmdHelper.createId(job, first).toString(), cmd.getId());
+        Assert.assertEquals(cmdManager.createId(job, first).toString(), cmd.getId());
         Assert.assertEquals("echo step version", cmd.getInputs().getString("FLOW_VERSION"));
         Assert.assertEquals("echo step", cmd.getInputs().getString("FLOW_WORKSPACE"));
         Assert.assertEquals("echo hello\n", cmd.getScripts().get(0));
@@ -172,7 +175,7 @@ public class JobServiceTest extends ZookeeperScenario {
         VariableMap output = new VariableMap();
         output.putString("HELLO_WORLD", "hello.world");
 
-        ExecutedCmd executedCmd = new ExecutedCmd(CmdHelper.createId(job, firstNode).toString());
+        ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
 
@@ -195,7 +198,7 @@ public class JobServiceTest extends ZookeeperScenario {
         output = new VariableMap();
         output.putString("HELLO_JAVA", "hello.java");
 
-        executedCmd = new ExecutedCmd(CmdHelper.createId(job, secondNode).toString());
+        executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
 
@@ -226,7 +229,7 @@ public class JobServiceTest extends ZookeeperScenario {
         VariableMap output = new VariableMap();
         output.putString("HELLO_WORLD", "hello.world");
 
-        ExecutedCmd executedCmd = new ExecutedCmd(CmdHelper.createId(job, firstNode).toString());
+        ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString());
         executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
         executedCmd.setOutput(output);
 
@@ -247,7 +250,7 @@ public class JobServiceTest extends ZookeeperScenario {
         output = new VariableMap();
         output.putString("HELLO_TIMEOUT", "hello.timeout");
 
-        executedCmd = new ExecutedCmd(CmdHelper.createId(job, secondNode).toString());
+        executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString());
         executedCmd.setStatus(ExecutedCmd.Status.TIMEOUT);
         executedCmd.setOutput(output);
         executedCmd.setError("timeout");

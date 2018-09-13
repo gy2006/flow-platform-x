@@ -77,7 +77,7 @@ public class PluginManagerImpl implements PluginManager {
     @Autowired
     private ApplicationContext context;
 
-    private final Map<String, Plugin> pluginMap = new HashMap<>(10);
+    private Map<String, Plugin> pluginMap = new HashMap<>(0);
 
     @Override
     public Plugin get(String name) {
@@ -108,6 +108,9 @@ public class PluginManagerImpl implements PluginManager {
 
     @Override
     public void clone(List<PluginRepo> repos) {
+        pluginMap.clear();
+        pluginMap = new HashMap<>(repos.size());
+
         for (PluginRepo repo : repos) {
             repoCloneExecutor.execute(() -> {
                 try {
@@ -125,6 +128,8 @@ public class PluginManagerImpl implements PluginManager {
     }
 
     private Plugin clone(PluginRepo repo) throws GitAPIException, IOException {
+        log.info("Start to load plugin: {}", repo);
+
         File dir = getPluginRepoDir(repo.getName());
         GitProgressMonitor monitor = new GitProgressMonitor(repo.getSource(), dir);
 
