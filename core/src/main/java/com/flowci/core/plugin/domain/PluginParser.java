@@ -76,6 +76,8 @@ public class PluginParser {
         @NonNull
         public String name;
 
+        public String alias;
+
         @NonNull
         public String type;
 
@@ -85,6 +87,7 @@ public class PluginParser {
         public Variable toVariable() {
             Variable var = new Variable(name, ValueType.valueOf(type.toUpperCase()));
             var.setRequired(required);
+            var.setAlias(alias);
             return var;
         }
     }
