@@ -74,7 +74,7 @@ public class CmdManagerImpl implements CmdManager {
             String value = context.getString(variable.getName());
             if (Strings.isNullOrEmpty(value) && variable.isRequired()) {
                 throw new ArgumentException(
-                    "The input '{0}' is required for plugin '{1}'", variable.getName(), plugin.getName());
+                    "The input {0} is required for plugin {1}", variable.getName(), plugin.getName());
             }
         }
     }

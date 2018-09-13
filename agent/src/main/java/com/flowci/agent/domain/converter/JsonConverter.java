@@ -29,25 +29,25 @@ import javax.persistence.AttributeConverter;
  *
  * @author yang
  */
-public abstract class JsonConverter<T> implements AttributeConverter<T, String> {
+public abstract class JsonConverter<T> implements AttributeConverter<T, byte[]> {
 
     private final static ObjectMapper ObjectMapper = Jsonable.getMapper();
 
     public abstract TypeReference<T> getTypeReference();
 
     @Override
-    public String convertToDatabaseColumn(T attribute) {
+    public byte[] convertToDatabaseColumn(T attribute) {
         try {
-            return ObjectMapper.writeValueAsString(attribute);
+            return ObjectMapper.writeValueAsBytes(attribute);
         } catch (JsonProcessingException e) {
             throw new JsonException(e.getMessage());
         }
     }
 
     @Override
-    public T convertToEntityAttribute(String dbData) {
+    public T convertToEntityAttribute(byte[] data) {
         try {
-            return ObjectMapper.readValue(dbData, getTypeReference());
+            return ObjectMapper.readValue(data, getTypeReference());
         } catch (IOException e) {
             throw new JsonException(e.getMessage());
         }
