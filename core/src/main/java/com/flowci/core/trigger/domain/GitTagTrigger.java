@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package com.flowci.core.trigger.service;
-
-import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitTagTrigger;
-import java.io.InputStream;
+package com.flowci.core.trigger.domain;
 
 /**
  * @author yang
  */
-public interface GitTriggerService {
+public class GitTagTrigger extends GitPushTrigger {
 
-    GitPushTrigger onPush(InputStream stream);
-
-    GitTagTrigger onTag(InputStream stream);
+    public GitTagTrigger() {
+        setEvent(GitEvent.TAG);
+    }
 }

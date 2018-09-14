@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,17 @@
 
 package com.flowci.core.trigger.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.trigger.domain.GitPushTrigger;
+import com.flowci.core.trigger.domain.GitTagTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.Author;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.exception.ArgumentException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+import java.util.Objects;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +39,7 @@ public class GithubTriggerService implements GitTriggerService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Override
     public GitPushTrigger onPush(InputStream stream) {
         try {
             PushObject pushObject = objectMapper.readValue(stream, PushObject.class);
@@ -45,20 +49,29 @@ public class GithubTriggerService implements GitTriggerService {
         }
     }
 
+    @Override
+    public GitTagTrigger onTag(InputStream stream) {
+        try {
+            TagObject tagObject = objectMapper.readValue(stream, TagObject.class);
+            return tagObject.toTrigger();
+        } catch (IOException e) {
+            throw new ArgumentException("Unable to parse Github tag event data");
+        }
+    }
+
     private static class PushObject {
 
         public String ref;
 
         public String compare;
 
-        public List<CommitObject> commits;
+        @JsonProperty("head_commit")
+        public CommitObject commit;
 
         public GitPushTrigger toTrigger() {
-            if (commits.isEmpty()) {
+            if (Objects.isNull(commit)) {
                 throw new ArgumentException("On commits data on Github push event");
             }
-
-            CommitObject commit = commits.get(0);
 
             GitPushTrigger trigger = new GitPushTrigger();
             trigger.setSource(GitSource.GITHUB);
@@ -78,6 +91,17 @@ public class GithubTriggerService implements GitTriggerService {
             trigger.setAuthor(author);
 
             return trigger;
+        }
+    }
+
+    private static class TagObject extends PushObject {
+
+        public GitTagTrigger toTrigger() {
+            GitPushTrigger pushTrigger = super.toTrigger();
+
+            GitTagTrigger tagTrigger = new GitTagTrigger();
+            BeanUtils.copyProperties(pushTrigger, tagTrigger, "event");
+            return tagTrigger;
         }
     }
 
