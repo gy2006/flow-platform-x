@@ -7,8 +7,8 @@ services:
     image: flowci/agent:latest
     container_name: flowci-agent
     network_mode: "host"
-    ports:
-    - "8088:8088"
+#    ports:
+#    - "8088:8088"
     environment:
       FLOWCI_SERVER_URL: http://127.0.0.1:8080
       FLOWCI_AGENT_TOKEN: ca9b8be2-c0e5-4b86-8fdc-b92d921597a0
