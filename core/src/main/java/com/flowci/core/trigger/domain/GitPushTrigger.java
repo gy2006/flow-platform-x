@@ -16,6 +16,8 @@
 
 package com.flowci.core.trigger.domain;
 
+import java.io.Serializable;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,6 +27,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class GitPushTrigger extends GitTrigger {
+
+    private Author author;
 
     private String commitId;
 
@@ -40,5 +44,15 @@ public class GitPushTrigger extends GitTrigger {
 
     public GitPushTrigger() {
         setEvent(GitEvent.PUSH);
+    }
+
+    @Data
+    public static class Author implements Serializable {
+
+        private String name;
+
+        private String username;
+
+        private String email;
     }
 }

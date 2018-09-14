@@ -34,8 +34,6 @@ public abstract class GitTrigger implements Serializable {
 
     private GitEvent event;
 
-    private Author author;
-
     public enum GitSource {
 
         GITLAB,
@@ -58,17 +56,5 @@ public abstract class GitTrigger implements Serializable {
         PR_CLOSE,
 
         TAG;
-    }
-
-    @Data
-    public static class Author implements Serializable {
-
-        private String id;
-
-        private String name;
-
-        private String username;
-
-        private String email;
     }
 }

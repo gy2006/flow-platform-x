@@ -17,6 +17,7 @@
 package com.flowci.core.test.trigger;
 
 import com.flowci.core.test.SpringScenario;
+import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTagTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
@@ -78,5 +79,26 @@ public class GithubTriggerServiceTest extends SpringScenario {
         Assert.assertEquals("yang.guo", trigger.getAuthor().getName());
         Assert.assertEquals("gy@fir.im", trigger.getAuthor().getEmail());
         Assert.assertEquals("yang-guo-2016", trigger.getAuthor().getUsername());
+    }
+
+    @Test
+    public void should_parse_pr_open_event() {
+        InputStream stream = load("github/webhook_pr_open.json");
+        GitPrTrigger trigger = gitHubTriggerService.onPullRequest(stream);
+
+        Assert.assertNotNull(trigger);
+        Assert.assertEquals(GitEvent.PR_OPEN, trigger.getEvent());
+        Assert.assertEquals(GitSource.GITHUB, trigger.getSource());
+
+        Assert.assertEquals("2", trigger.getNumber());
+        Assert.assertEquals("Update settings.gradle", trigger.getTitle());
+        Assert.assertEquals("pr...", trigger.getBody());
+        Assert.assertEquals("2017-08-08T03:07:15Z", trigger.getTime());
+        Assert.assertEquals("https://github.com/yang-guo-2016/Test/pull/2", trigger.getUrl());
+        Assert.assertEquals("1", trigger.getNumOfCommits());
+        Assert.assertEquals("1", trigger.getNumOfFileChanges());
+
+        Assert.assertEquals("23307997", trigger.getSender().getId());
+        Assert.assertEquals("yang-guo-2016", trigger.getSender().getUsername());
     }
 }

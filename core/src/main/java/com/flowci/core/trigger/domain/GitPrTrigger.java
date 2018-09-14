@@ -14,21 +14,40 @@
  * limitations under the License.
  */
 
-package com.flowci.core.trigger.service;
+package com.flowci.core.trigger.domain;
 
-import com.flowci.core.trigger.domain.GitPrTrigger;
-import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitTagTrigger;
-import java.io.InputStream;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author yang
  */
-public interface GitTriggerService {
+@Getter
+@Setter
+public class GitPrTrigger extends GitTrigger {
 
-    GitPushTrigger onPush(InputStream stream);
+    private String title;
 
-    GitTagTrigger onTag(InputStream stream);
+    private String body;
 
-    GitPrTrigger onPullRequest(InputStream stream);
+    private String url;
+
+    private String number;
+
+    private String time;
+
+    private String numOfCommits;
+
+    private String numOfFileChanges;
+
+    private Sender sender;
+
+    @Getter
+    @Setter
+    public static class Sender {
+
+        private String id;
+
+        private String username;
+    }
 }

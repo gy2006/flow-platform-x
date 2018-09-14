@@ -18,9 +18,12 @@ package com.flowci.core.trigger.service;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.trigger.domain.GitPrTrigger;
+import com.flowci.core.trigger.domain.GitPrTrigger.Sender;
 import com.flowci.core.trigger.domain.GitPushTrigger;
+import com.flowci.core.trigger.domain.GitPushTrigger.Author;
 import com.flowci.core.trigger.domain.GitTagTrigger;
-import com.flowci.core.trigger.domain.GitTrigger.Author;
+import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.exception.ArgumentException;
 import java.io.IOException;
@@ -56,6 +59,16 @@ public class GithubTriggerService implements GitTriggerService {
             return tagObject.toTrigger();
         } catch (IOException e) {
             throw new ArgumentException("Unable to parse Github tag event data");
+        }
+    }
+
+    @Override
+    public GitPrTrigger onPullRequest(InputStream stream) {
+        try {
+            PrObject prObject = objectMapper.readValue(stream, PrObject.class);
+            return prObject.toTrigger();
+        } catch (IOException e) {
+            throw new ArgumentException("Unable to parse Github PR event data");
         }
     }
 
@@ -103,6 +116,71 @@ public class GithubTriggerService implements GitTriggerService {
             BeanUtils.copyProperties(pushTrigger, tagTrigger, "event");
             return tagTrigger;
         }
+    }
+
+    private static class PrObject {
+
+        public static final String PrOpen = "opened";
+
+        public static final String PrClosed = "closed";
+
+        public String action;
+
+        public String number;
+
+        @JsonProperty("pull_request")
+        public PrBody prBody;
+
+        @JsonProperty("sender")
+        public PrSender prSender;
+
+        public GitPrTrigger toTrigger() {
+            GitPrTrigger trigger = new GitPrTrigger();
+            trigger.setEvent(action.equals(PrOpen) ? GitEvent.PR_OPEN : GitEvent.PR_CLOSE);
+            trigger.setSource(GitSource.GITHUB);
+
+            trigger.setNumber(number);
+            trigger.setBody(prBody.body);
+            trigger.setTitle(prBody.title);
+            trigger.setUrl(prBody.url);
+            trigger.setTime(prBody.time);
+            trigger.setNumOfCommits(prBody.numOfCommits);
+            trigger.setNumOfFileChanges(prBody.numOfFileChanges);
+
+            Sender sender = new Sender();
+            sender.setId(prSender.id);
+            sender.setUsername(prSender.username);
+            trigger.setSender(sender);
+
+            return trigger;
+        }
+    }
+
+    private static class PrBody {
+
+        @JsonProperty("html_url")
+        public String url;
+
+        public String title;
+
+        public String body;
+
+        @JsonProperty("created_at")
+        public String time;
+
+        @JsonProperty("commits")
+        public String numOfCommits;
+
+        @JsonProperty("changed_files")
+        public String numOfFileChanges;
+    }
+
+    private static class PrSender {
+
+        public String id;
+
+        @JsonProperty("login")
+        public String username;
     }
 
     private static class CommitObject {
