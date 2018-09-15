@@ -19,7 +19,6 @@ package com.flowci.core.test.trigger;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitTagTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.core.trigger.service.GitTriggerService;
@@ -39,7 +38,7 @@ public class GithubTriggerServiceTest extends SpringScenario {
     @Test
     public void should_parse_push_event() {
         InputStream stream = load("github/webhook_push.json");
-        GitPushTrigger trigger = gitHubTriggerService.onPush(stream);
+        GitPushTrigger trigger = gitHubTriggerService.onPushOrTag(stream);
 
         Assert.assertNotNull(trigger);
         Assert.assertEquals(GitEvent.PUSH, trigger.getEvent());
@@ -62,7 +61,7 @@ public class GithubTriggerServiceTest extends SpringScenario {
     @Test
     public void should_parse_tag_event() {
         InputStream stream = load("github/webhook_tag.json");
-        GitTagTrigger trigger = gitHubTriggerService.onTag(stream);
+        GitPushTrigger trigger = gitHubTriggerService.onPushOrTag(stream);
 
         Assert.assertNotNull(trigger);
         Assert.assertEquals(GitEvent.TAG, trigger.getEvent());

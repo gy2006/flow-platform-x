@@ -18,7 +18,6 @@ package com.flowci.core.trigger.service;
 
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitTagTrigger;
 import java.io.InputStream;
 
 /**
@@ -26,9 +25,7 @@ import java.io.InputStream;
  */
 public interface GitTriggerService {
 
-    GitPushTrigger onPush(InputStream stream);
-
-    GitTagTrigger onTag(InputStream stream);
+    GitPushTrigger onPushOrTag(InputStream stream);
 
     GitPrTrigger onPullRequest(InputStream stream);
 }

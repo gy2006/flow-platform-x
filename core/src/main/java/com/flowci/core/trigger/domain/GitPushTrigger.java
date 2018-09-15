@@ -42,10 +42,6 @@ public class GitPushTrigger extends GitTrigger {
 
     private String commitUrl;
 
-    public GitPushTrigger() {
-        setEvent(GitEvent.PUSH);
-    }
-
     @Data
     public static class Author implements Serializable {
 

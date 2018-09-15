@@ -19,18 +19,16 @@ package com.flowci.core.trigger.service;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.trigger.domain.GitPrTrigger;
-import com.flowci.core.trigger.domain.GitPrTrigger.Source;
 import com.flowci.core.trigger.domain.GitPrTrigger.Sender;
+import com.flowci.core.trigger.domain.GitPrTrigger.Source;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger.Author;
-import com.flowci.core.trigger.domain.GitTagTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.exception.ArgumentException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,22 +42,12 @@ public class GithubTriggerService implements GitTriggerService {
     private ObjectMapper objectMapper;
 
     @Override
-    public GitPushTrigger onPush(InputStream stream) {
+    public GitPushTrigger onPushOrTag(InputStream stream) {
         try {
             PushObject pushObject = objectMapper.readValue(stream, PushObject.class);
             return pushObject.toTrigger();
         } catch (IOException e) {
             throw new ArgumentException("Unable to parse Github push event data");
-        }
-    }
-
-    @Override
-    public GitTagTrigger onTag(InputStream stream) {
-        try {
-            TagObject tagObject = objectMapper.readValue(stream, TagObject.class);
-            return tagObject.toTrigger();
-        } catch (IOException e) {
-            throw new ArgumentException("Unable to parse Github tag event data");
         }
     }
 
@@ -75,12 +63,20 @@ public class GithubTriggerService implements GitTriggerService {
 
     private static class PushObject {
 
+        private static final String TagRefPrefix = "refs/tags";
+
+        private static final String PushRefPrefix = "refs/heads";
+
         public String ref;
 
         public String compare;
 
         @JsonProperty("head_commit")
         public CommitObject commit;
+
+        private GitEvent getEvent() {
+            return ref.startsWith(TagRefPrefix) ? GitEvent.TAG : GitEvent.PUSH;
+        }
 
         public GitPushTrigger toTrigger() {
             if (Objects.isNull(commit)) {
@@ -89,6 +85,7 @@ public class GithubTriggerService implements GitTriggerService {
 
             GitPushTrigger trigger = new GitPushTrigger();
             trigger.setSource(GitSource.GITHUB);
+            trigger.setEvent(getEvent());
 
             trigger.setCommitId(commit.id);
             trigger.setMessage(commit.message);
@@ -105,17 +102,6 @@ public class GithubTriggerService implements GitTriggerService {
             trigger.setAuthor(author);
 
             return trigger;
-        }
-    }
-
-    private static class TagObject extends PushObject {
-
-        public GitTagTrigger toTrigger() {
-            GitPushTrigger pushTrigger = super.toTrigger();
-
-            GitTagTrigger tagTrigger = new GitTagTrigger();
-            BeanUtils.copyProperties(pushTrigger, tagTrigger, "event");
-            return tagTrigger;
         }
     }
 

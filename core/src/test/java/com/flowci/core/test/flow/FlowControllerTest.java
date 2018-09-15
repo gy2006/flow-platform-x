@@ -44,13 +44,8 @@ import org.springframework.http.MediaType;
  */
 public class FlowControllerTest extends SpringScenario {
 
-    private final static TypeReference<ResponseMessage<Flow>> FlowType =
-        new TypeReference<ResponseMessage<Flow>>() {
-        };
-
-    private final static TypeReference<ResponseMessage<List<Flow>>> ListFlowType =
-        new TypeReference<ResponseMessage<List<Flow>>>() {
-        };
+    @Autowired
+    private FlowMockHelper flowMockHelper;
 
     @Autowired
     private MvcMockHelper mvcMockHelper;
@@ -71,19 +66,13 @@ public class FlowControllerTest extends SpringScenario {
     @Before
     public void createFlowWithYml() throws Exception {
         String yml = StringHelper.toString(load("flow.yml"));
-
-        ResponseMessage<Flow> response = mvcMockHelper
-            .expectSuccessAndReturnClass(post("/flows/" + flowName)
-                .contentType(MediaType.TEXT_PLAIN)
-                .content(yml), FlowType);
-
-        Assert.assertEquals(StatusCode.OK, response.getCode());
+        flowMockHelper.crate(flowName, yml);
     }
 
     @Test
     public void should_get_flow_and_yml() throws Exception {
         ResponseMessage<Flow> getFlowResponse = mvcMockHelper
-            .expectSuccessAndReturnClass(get("/flows/" + flowName), FlowType);
+            .expectSuccessAndReturnClass(get("/flows/" + flowName), FlowMockHelper.FlowType);
 
         Assert.assertEquals(StatusCode.OK, getFlowResponse.getCode());
         Assert.assertEquals(flowName, getFlowResponse.getData().getName());
@@ -95,7 +84,7 @@ public class FlowControllerTest extends SpringScenario {
     @Test
     public void should_list_flows() throws Exception {
         ResponseMessage<List<Flow>> listFlowResponse = mvcMockHelper
-            .expectSuccessAndReturnClass(get("/flows"), ListFlowType);
+            .expectSuccessAndReturnClass(get("/flows"), FlowMockHelper.ListFlowType);
 
         Assert.assertEquals(StatusCode.OK, listFlowResponse.getCode());
         Assert.assertEquals(1, listFlowResponse.getData().size());

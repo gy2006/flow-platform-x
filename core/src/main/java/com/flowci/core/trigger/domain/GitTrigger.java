@@ -17,7 +17,6 @@
 package com.flowci.core.trigger.domain;
 
 import java.io.Serializable;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
