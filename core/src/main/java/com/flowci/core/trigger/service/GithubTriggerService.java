@@ -19,6 +19,7 @@ package com.flowci.core.trigger.service;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.trigger.domain.GitPrTrigger;
+import com.flowci.core.trigger.domain.GitPrTrigger.Source;
 import com.flowci.core.trigger.domain.GitPrTrigger.Sender;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger.Author;
@@ -146,6 +147,21 @@ public class GithubTriggerService implements GitTriggerService {
             trigger.setTime(prBody.time);
             trigger.setNumOfCommits(prBody.numOfCommits);
             trigger.setNumOfFileChanges(prBody.numOfFileChanges);
+            trigger.setMerged(prBody.merged);
+
+            Source head = new Source();
+            head.setCommit(prBody.head.sha);
+            head.setRef(prBody.head.ref);
+            head.setRepoName(prBody.head.repo.fullName);
+            head.setRepoUrl(prBody.head.repo.url);
+            trigger.setHead(head);
+
+            Source base = new Source();
+            base.setCommit(prBody.base.sha);
+            base.setRef(prBody.base.ref);
+            base.setRepoName(prBody.base.repo.fullName);
+            base.setRepoUrl(prBody.base.repo.url);
+            trigger.setBase(base);
 
             Sender sender = new Sender();
             sender.setId(prSender.id);
@@ -168,11 +184,37 @@ public class GithubTriggerService implements GitTriggerService {
         @JsonProperty("created_at")
         public String time;
 
+        public PrSource head;
+
+        public PrSource base;
+
         @JsonProperty("commits")
         public String numOfCommits;
 
         @JsonProperty("changed_files")
         public String numOfFileChanges;
+
+        public Boolean merged;
+    }
+
+    private static class PrSource {
+
+        public String ref;
+
+        public String sha;
+
+        public PrRepo repo;
+    }
+
+    private static class PrRepo {
+
+        public String id;
+
+        @JsonProperty("full_name")
+        public String fullName;
+
+        @JsonProperty("html_url")
+        public String url;
     }
 
     private static class PrSender {

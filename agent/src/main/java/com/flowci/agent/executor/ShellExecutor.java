@@ -148,6 +148,7 @@ public class ShellExecutor {
                 result.setCode(ExecutedCmd.CODE_TIMEOUT);
             }
 
+            result.setStatusByCode();
             result.setFinishAt(new Date());
             processListener.onExecuted(result);
             log.debug("====== Process executed : {} ======", result.getCode());

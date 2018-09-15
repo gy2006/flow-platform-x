@@ -22,6 +22,7 @@ import static com.flowci.domain.ExecutedCmd.Status.SUCCESS;
 import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
 import java.io.Serializable;
 import java.util.Date;
@@ -113,20 +114,14 @@ public class ExecutedCmd implements Serializable {
         this.id = id;
     }
 
-    /**
-     * Set code and status
-     */
-    public void setCode(int exitCode) {
-        this.code = exitCode;
-
+    @JsonProperty
+    public void setStatusByCode() {
         if (this.code.equals(CODE_SUCCESS)) {
             this.status = SUCCESS;
-            return;
         }
 
         if (this.code > CODE_SUCCESS) {
             this.status = EXCEPTION;
-            return;
         }
 
         if (this.code.equals(CODE_TIMEOUT)) {

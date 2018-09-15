@@ -42,6 +42,13 @@ public class GitPrTrigger extends GitTrigger {
 
     private Sender sender;
 
+    private Boolean merged;
+
+    private Source head;
+
+    private Source base;
+
+
     @Getter
     @Setter
     public static class Sender {
@@ -49,5 +56,18 @@ public class GitPrTrigger extends GitTrigger {
         private String id;
 
         private String username;
+    }
+
+    @Getter
+    @Setter
+    public static class Source {
+
+        private String ref;
+
+        private String commit;
+
+        private String repoName;
+
+        private String repoUrl;
     }
 }

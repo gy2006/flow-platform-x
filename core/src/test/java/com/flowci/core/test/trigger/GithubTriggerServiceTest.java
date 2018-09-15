@@ -97,6 +97,49 @@ public class GithubTriggerServiceTest extends SpringScenario {
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/pull/2", trigger.getUrl());
         Assert.assertEquals("1", trigger.getNumOfCommits());
         Assert.assertEquals("1", trigger.getNumOfFileChanges());
+        Assert.assertEquals(Boolean.FALSE, trigger.getMerged());
+
+        Assert.assertEquals("8e7b8fb631ffcae6ae68338d0d16b381fdea4f31", trigger.getHead().getCommit());
+        Assert.assertEquals("developer", trigger.getHead().getRef());
+        Assert.assertEquals("yang-guo-2016/Test", trigger.getHead().getRepoName());
+        Assert.assertEquals("https://github.com/yang-guo-2016/Test", trigger.getHead().getRepoUrl());
+
+        Assert.assertEquals("ed6003bb96bd06cc75e38beb1176c5e9123ec607", trigger.getBase().getCommit());
+        Assert.assertEquals("master", trigger.getBase().getRef());
+        Assert.assertEquals("yang-guo-2016/Test", trigger.getBase().getRepoName());
+        Assert.assertEquals("https://github.com/yang-guo-2016/Test", trigger.getBase().getRepoUrl());
+
+        Assert.assertEquals("23307997", trigger.getSender().getId());
+        Assert.assertEquals("yang-guo-2016", trigger.getSender().getUsername());
+    }
+
+    @Test
+    public void should_parse_pr_close_event() {
+        InputStream stream = load("github/webhook_pr_close.json");
+        GitPrTrigger trigger = gitHubTriggerService.onPullRequest(stream);
+
+        Assert.assertNotNull(trigger);
+        Assert.assertEquals(GitEvent.PR_CLOSE, trigger.getEvent());
+        Assert.assertEquals(GitSource.GITHUB, trigger.getSource());
+
+        Assert.assertEquals("7", trigger.getNumber());
+        Assert.assertEquals("Update settings.gradle title", trigger.getTitle());
+        Assert.assertEquals("hello desc", trigger.getBody());
+        Assert.assertEquals("2017-08-08T06:26:35Z", trigger.getTime());
+        Assert.assertEquals("https://github.com/yang-guo-2016/Test/pull/7", trigger.getUrl());
+        Assert.assertEquals("1", trigger.getNumOfCommits());
+        Assert.assertEquals("1", trigger.getNumOfFileChanges());
+        Assert.assertEquals(Boolean.TRUE, trigger.getMerged());
+
+        Assert.assertEquals("1d1de876084ef656e522f360b88c1e96acf6b806", trigger.getHead().getCommit());
+        Assert.assertEquals("developer", trigger.getHead().getRef());
+        Assert.assertEquals("yang-guo-2016/Test", trigger.getHead().getRepoName());
+        Assert.assertEquals("https://github.com/yang-guo-2016/Test", trigger.getHead().getRepoUrl());
+
+        Assert.assertEquals("4e4e3750cd468f245bd9f0f938c4b5f76e1bc5b0", trigger.getBase().getCommit());
+        Assert.assertEquals("master", trigger.getBase().getRef());
+        Assert.assertEquals("yang-guo-2016/Test", trigger.getBase().getRepoName());
+        Assert.assertEquals("https://github.com/yang-guo-2016/Test", trigger.getBase().getRepoUrl());
 
         Assert.assertEquals("23307997", trigger.getSender().getId());
         Assert.assertEquals("yang-guo-2016", trigger.getSender().getUsername());
