@@ -25,6 +25,7 @@ import com.flowci.core.job.service.JobService;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.service.GitTriggerService;
+import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.google.common.base.Strings;
 import java.util.HashMap;
@@ -88,9 +89,8 @@ public class WebhookController {
         Flow flow = flowService.get(flowName);
         Yml yml = flowService.getYml(flow);
 
-        // TODO: create git event context
-
-        Job job = jobService.create(flow, yml, getJobTrigger(trigger));
+        VariableMap gitInput = trigger.toVariableMap();
+        Job job = jobService.create(flow, yml, getJobTrigger(trigger), gitInput);
         jobService.start(job);
         log.debug("Start job {} from git event {} from {}", job.getId(), trigger.getEvent(), trigger.getSource());
     }

@@ -24,6 +24,7 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.service.JobService;
 import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,7 +92,7 @@ public class JobController {
     public Job create(@Validated @RequestBody CreateJob data) {
         Flow flow = flowService.get(data.getFlow());
         Yml yml = flowService.getYml(flow);
-        return jobService.create(flow, yml, Trigger.API);
+        return jobService.create(flow, yml, Trigger.API, VariableMap.EMPTY);
     }
 
     @PostMapping("/run")

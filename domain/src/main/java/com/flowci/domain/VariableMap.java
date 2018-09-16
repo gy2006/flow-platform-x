@@ -41,6 +41,8 @@ import java.util.Map;
 @JsonDeserialize(keyUsing = VariableKeyDeserializer.class)
 public class VariableMap extends LinkedHashMap<Variable, String> implements Serializable {
 
+    public static final VariableMap EMPTY = new VariableMap(0);
+
     /**
      * Convert Variable object to base64 string
      */

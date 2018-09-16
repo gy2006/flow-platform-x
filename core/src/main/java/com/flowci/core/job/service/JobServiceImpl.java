@@ -153,7 +153,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job create(Flow flow, Yml yml, Trigger trigger) {
+    public Job create(Flow flow, Yml yml, Trigger trigger, VariableMap input) {
         // verify yml and parse to Node
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
@@ -171,7 +171,7 @@ public class JobServiceImpl implements JobService {
         job.setAgentSelector(root.getSelector());
 
         // init job context
-        VariableMap defaultContext = initJobContext(flow, buildNumber);
+        VariableMap defaultContext = initJobContext(flow, buildNumber, input);
         job.getContext().merge(defaultContext);
 
         // set expire at
@@ -360,11 +360,16 @@ public class JobServiceImpl implements JobService {
         handleFailureCmd(job, execCmd);
     }
 
-    private VariableMap initJobContext(Flow flow, Long buildNumber) {
-        VariableMap context = new VariableMap();
+    private VariableMap initJobContext(Flow flow, Long buildNumber, VariableMap input) {
+        VariableMap context = new VariableMap(20);
         context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
         context.putString(Variables.FLOW_NAME, flow.getName());
         context.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
+
+        if (input != null && !input.isEmpty()) {
+            context.merge(input);
+        }
+
         return context;
     }
 

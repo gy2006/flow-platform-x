@@ -22,6 +22,7 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.domain.Agent;
 import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.VariableMap;
 import com.flowci.tree.NodeTree;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -49,7 +50,7 @@ public interface JobService {
     /**
      * Create job by flow and yml
      */
-    Job create(Flow flow, Yml yml, Trigger trigger);
+    Job create(Flow flow, Yml yml, Trigger trigger, VariableMap input);
 
     /**
      * Send to job queue
