@@ -54,14 +54,24 @@ public class Node implements Serializable {
     private Selector selector;
 
     /**
+     * Node start condition
+     */
+    private Condition condition = new Condition();
+
+    /**
+     * Node before groovy script;
+     */
+    private String before;
+
+    /**
      * Node execute script, can be null
      */
     private String script;
 
     /**
-     * Condition script
+     * Node after groovy script
      */
-    private String condition;
+    private String after;
 
     /**
      * Plugin name

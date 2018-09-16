@@ -2,12 +2,22 @@ name: root
 envs:
   FLOW_WORKSPACE: "echo hello"
   FLOW_VERSION: "echo version"
+
+condition:
+  branches:
+    - "develop"
+    - "master"
+    - "feature/*"
+  tags:
+    - "*"
+
 selector:
   tags:
   - ios
   - local
+
 steps:
- - condition: |
+ - before: |
      println(FLOW_WORKSPACE)
      true
 
@@ -27,3 +37,5 @@ steps:
  - name: step2
    allowFailure: false
    script: "echo 2"
+   after: |
+     true

@@ -43,30 +43,32 @@ public class YmlParser {
     private final static Map<String, Integer> FieldsOrder = ImmutableMap.<String, Integer>builder()
         .put("name", 1)
         .put("envs", 2)
-        .put("selector", 3)
-        .put("allowFailure", 4)
-        .put("isFinal", 5)
-        .put("condition", 6)
+        .put("condition", 3)
+        .put("selector", 4)
+        .put("allowFailure", 5)
+        .put("isFinal", 6)
         .put("plugin", 7)
-        .put("script", 8)
-        .put("steps", 9)
+        .put("before", 8)
+        .put("script", 9)
+        .put("after", 10)
+        .put("steps", 11)
         .build();
 
     /**
      * Create Node instance from yml
      */
     public static synchronized Node load(String defaultName, String yml) {
-        Yaml yaml = YamlHelper.create(RootNodeWrapper.class);
+        Yaml yaml = YamlHelper.create(RootWrapper.class);
 
         try {
-            RootNodeWrapper root = yaml.load(yml);
+            RootWrapper root = yaml.load(yml);
             // set default flow name if not defined in yml
             if (Strings.isNullOrEmpty(root.name)) {
                 root.name = defaultName;
             }
 
             // steps must be provided
-            List<ChildNodeWrapper> steps = root.steps;
+            List<ChildWrapper> steps = root.steps;
             if (Objects.isNull(steps) || steps.isEmpty()) {
                 throw new YmlException("The 'step' must be defined");
             }
@@ -78,18 +80,18 @@ public class YmlParser {
     }
 
     public static synchronized String parse(Node root) {
-        RootNodeWrapper rootWrapper = RootNodeWrapper.fromNode(root);
-        Yaml yaml = YamlHelper.create(FieldsOrder, RootNodeWrapper.class);
+        RootWrapper rootWrapper = RootWrapper.fromNode(root);
+        Yaml yaml = YamlHelper.create(FieldsOrder, RootWrapper.class);
         String dump = yaml.dump(rootWrapper);
         dump = dump.substring(dump.indexOf(LINE_BREAK.getString()) + 1);
         return dump;
     }
 
     @NoArgsConstructor
-    private static class RootNodeWrapper {
+    private static class RootWrapper {
 
-        public static RootNodeWrapper fromNode(Node node) {
-            RootNodeWrapper wrapper = new RootNodeWrapper();
+        public static RootWrapper fromNode(Node node) {
+            RootWrapper wrapper = new RootWrapper();
 
             // set envs
             VariableMap environments = node.getEnvironments();
@@ -99,7 +101,7 @@ public class YmlParser {
 
             // set children
             for (Node child : node.getChildren()) {
-                wrapper.steps.add(ChildNodeWrapper.fromNode(child));
+                wrapper.steps.add(ChildWrapper.fromNode(child));
             }
 
             return wrapper;
@@ -109,13 +111,16 @@ public class YmlParser {
 
         public Selector selector = new Selector();
 
+        public Condition condition = new Condition();
+
         public Map<String, String> envs = new LinkedHashMap<>();
 
-        public List<ChildNodeWrapper> steps = new LinkedList<>();
+        public List<ChildWrapper> steps = new LinkedList<>();
 
         public Node toNode(int ignore) {
             Node node = new Node(name);
             node.setSelector(selector);
+            node.setCondition(condition);
             setEnvs(node);
             setChildren(node);
             return node;
@@ -130,16 +135,16 @@ public class YmlParser {
 
         void setChildren(Node node) {
             int index = 1;
-            for (ChildNodeWrapper child : steps) {
+            for (ChildWrapper child : steps) {
                 node.getChildren().add(child.toNode(index++));
             }
         }
     }
 
-    private static class ChildNodeWrapper extends RootNodeWrapper {
+    private static class ChildWrapper extends RootWrapper {
 
-        public static ChildNodeWrapper fromNode(Node node) {
-            ChildNodeWrapper wrapper = new ChildNodeWrapper();
+        public static ChildWrapper fromNode(Node node) {
+            ChildWrapper wrapper = new ChildWrapper();
 
             // set envs
             VariableMap environments = node.getEnvironments();
@@ -152,16 +157,19 @@ public class YmlParser {
             wrapper.plugin = node.getPlugin();
             wrapper.allowFailure = node.isAllowFailure() == Node.ALLOW_FAILURE_DEFAULT ? null : node.isAllowFailure();
             wrapper.isFinal = node.isFinal() == Node.IS_FINAL_DEFAULT ? null : node.isFinal();
-            wrapper.condition = node.getCondition();
 
             for (Node child : node.getChildren()) {
-                wrapper.steps.add(ChildNodeWrapper.fromNode(child));
+                wrapper.steps.add(ChildWrapper.fromNode(child));
             }
 
             return wrapper;
         }
 
+        public String before;
+
         public String script;
+
+        public String after;
 
         public String plugin;
 
@@ -169,15 +177,14 @@ public class YmlParser {
 
         public Boolean isFinal = false;
 
-        public String condition;
-
         @Override
         public Node toNode(int index) {
             Node node = new Node(Strings.isNullOrEmpty(name) ? DEFAULT_CHILD_NAME_PREFIX + index : name);
+            node.setBefore(before);
             node.setScript(script);
+            node.setAfter(after);
             node.setPlugin(plugin);
             node.setAllowFailure(allowFailure);
-            node.setCondition(condition);
             node.setFinal(isFinal);
             setEnvs(node);
             setChildren(node);

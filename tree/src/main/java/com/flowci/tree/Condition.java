@@ -17,17 +17,21 @@
 package com.flowci.tree;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.Set;
-import lombok.Data;
+import java.util.LinkedList;
+import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * Agent selector
+ * Git Trigger Condition
  *
  * @author yang
  */
-@Data
-public class Selector implements Serializable {
+@Getter
+@Setter
+public class Condition implements Serializable {
 
-    private Set<String> tags = Collections.emptySet();
+    private List<String> branches = new LinkedList<>();
+
+    private List<String> tags = new LinkedList<>();
 }
