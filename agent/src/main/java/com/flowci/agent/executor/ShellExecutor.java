@@ -116,7 +116,7 @@ public class ShellExecutor {
         this.pBuilder = new ProcessBuilder(LinuxBash).directory(getWorkDir(cmd).toFile());
 
         // init inputs env
-        this.pBuilder.environment().putAll(cmd.getInputs().toStringMap());
+        this.pBuilder.environment().putAll(cmd.getInputs());
 
         // support exit value
         this.cmd.getScripts().add(0, "set -e");

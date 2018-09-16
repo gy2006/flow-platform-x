@@ -93,7 +93,7 @@ public class YmlParser {
 
             // set envs
             VariableMap environments = node.getEnvironments();
-            for (Map.Entry<String, String> entry : environments.toStringMap().entrySet()) {
+            for (Map.Entry<String, String> entry : environments.entrySet()) {
                 wrapper.envs.put(entry.getKey(), entry.getValue());
             }
 
@@ -143,7 +143,7 @@ public class YmlParser {
 
             // set envs
             VariableMap environments = node.getEnvironments();
-            for (Map.Entry<String, String> entry : environments.toStringMap().entrySet()) {
+            for (Map.Entry<String, String> entry : environments.entrySet()) {
                 wrapper.envs.put(entry.getKey(), entry.getValue());
             }
 

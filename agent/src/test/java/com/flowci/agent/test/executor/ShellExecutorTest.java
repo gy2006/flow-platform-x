@@ -65,7 +65,7 @@ public class ShellExecutorTest {
         Assert.assertNotNull(result.getStartAt());
         Assert.assertNotNull(result.getFinishAt());
 
-        Map<String, String> output = result.getOutput().toStringMap();
+        Map<String, String> output = result.getOutput();
         Assert.assertEquals(2, output.size());
         Assert.assertEquals("test1", output.get("CMD_RUNNER_TEST_1"));
         Assert.assertEquals("test2", output.get("OUTPUT_2"));

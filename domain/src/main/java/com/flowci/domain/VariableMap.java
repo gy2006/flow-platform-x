@@ -16,57 +16,16 @@
 
 package com.flowci.domain;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.KeyDeserializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.flowci.domain.Variable.ValueType;
-import com.flowci.domain.VariableMap.VariableKeyDeserializer;
-import com.flowci.domain.VariableMap.VariableKeySerializer;
-import com.flowci.util.StringHelper;
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * @author yang
  */
-@JsonSerialize(keyUsing = VariableKeySerializer.class)
-@JsonDeserialize(keyUsing = VariableKeyDeserializer.class)
-public class VariableMap extends LinkedHashMap<Variable, String> implements Serializable {
+public class VariableMap extends LinkedHashMap<String, String> implements Serializable {
 
     public static final VariableMap EMPTY = new VariableMap(0);
-
-    /**
-     * Convert Variable object to base64 string
-     */
-    public static class VariableKeySerializer extends JsonSerializer<Variable> {
-
-        @Override
-        public void serialize(Variable value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            String json = Jsonable.getMapper().writeValueAsString(value);
-            String variableKey = StringHelper.toBase64(json);
-            gen.writeFieldName(variableKey);
-        }
-    }
-
-    /**
-     * Convert base64 string to Variable
-     */
-    public static class VariableKeyDeserializer extends KeyDeserializer {
-
-        @Override
-        public Object deserializeKey(String base64, DeserializationContext ctxt) throws IOException {
-            String json = StringHelper.fromBase64(base64);
-            return Jsonable.getMapper().readValue(json, Variable.class);
-        }
-    }
 
     public VariableMap() {
         super();
@@ -82,41 +41,18 @@ public class VariableMap extends LinkedHashMap<Variable, String> implements Seri
     }
 
     public VariableMap merge(VariableMap other) {
-        for (Map.Entry<Variable, String> entry : other.entrySet()) {
+        for (Map.Entry<String, String> entry : other.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }
         return this;
     }
 
     public void putString(String key, String value) {
-        Variable var = new Variable(key);
-        put(var, value);
-    }
-
-    public void putInt(String key, Integer value) {
-        Variable var = new Variable(key, ValueType.INT);
-        put(var, value.toString());
+        put(key, value);
     }
 
     public String getString(String key) {
-        return get(new Variable(key));
-    }
-
-    public Integer getInteger(String key) {
-        return Integer.parseInt(get(new Variable(key)));
-    }
-
-    public Map<String, String> toStringMap() {
-        if (isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        Map<String, String> map = new HashMap<>(size());
-        for (Map.Entry<Variable, String> entry : entrySet()) {
-            map.put(entry.getKey().getName(), entry.getValue());
-        }
-
-        return map;
+        return get(key);
     }
 
     public void reset(Map<String, String> vars) {
