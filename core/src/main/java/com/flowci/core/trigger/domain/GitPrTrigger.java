@@ -16,6 +16,7 @@
 
 package com.flowci.core.trigger.domain;
 
+import com.flowci.domain.VariableMap;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -48,6 +49,10 @@ public class GitPrTrigger extends GitTrigger {
 
     private Source base;
 
+    @Override
+    public VariableMap toVariableMap() {
+        return super.toVariableMap();
+    }
 
     @Getter
     @Setter

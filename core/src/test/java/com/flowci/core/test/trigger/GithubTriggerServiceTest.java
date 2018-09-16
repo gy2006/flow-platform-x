@@ -16,12 +16,24 @@
 
 package com.flowci.core.test.trigger;
 
+import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_BRANCH;
+import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_ID;
+import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_MESSAGE;
+import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_TIME;
+import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_URL;
+import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_USER;
+import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMPARE_URL;
+import static com.flowci.core.trigger.domain.GitTrigger.Variables.*;
+
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
+import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
+import com.flowci.core.trigger.domain.GitTrigger.Variables;
 import com.flowci.core.trigger.service.GitTriggerService;
+import com.flowci.domain.VariableMap;
 import java.io.InputStream;
 import org.junit.Assert;
 import org.junit.Test;
@@ -56,6 +68,30 @@ public class GithubTriggerServiceTest extends SpringScenario {
         Assert.assertEquals("yang.guo", trigger.getAuthor().getName());
         Assert.assertEquals("gy@fir.im", trigger.getAuthor().getEmail());
         Assert.assertEquals("yang-guo-2016", trigger.getAuthor().getUsername());
+    }
+
+    @Test
+    public void should_parse_push_event_and_create_variables() {
+        InputStream stream = load("github/webhook_push.json");
+        GitPushTrigger trigger = gitHubTriggerService.onPushOrTag(stream);
+
+        VariableMap variables = trigger.toVariableMap();
+        Assert.assertNotNull(variables);
+
+        Assert.assertEquals("PUSH", variables.getString(GIT_EVENT));
+        Assert.assertEquals("GITHUB", variables.getString(GIT_SOURCE));
+
+        Assert.assertEquals("master", variables.getString(GIT_BRANCH));
+        Assert.assertEquals("https://github.com/yang-guo-2016/Test/compare/5a1e8ee1007b...40d0dd6e8e94",
+            variables.getString(GIT_COMPARE_URL));
+
+        Assert.assertEquals("40d0dd6e8e942643d794d7ed8d27610fb8729914", variables.getString(GIT_COMMIT_ID));
+        Assert.assertEquals("fdafadsf\n\ndfsdafad", variables.getString(GIT_COMMIT_MESSAGE));
+        Assert.assertEquals("2017-08-08T11:19:05+08:00", variables.getString(GIT_COMMIT_TIME));
+        Assert.assertEquals("https://github.com/yang-guo-2016/Test/commit/40d0dd6e8e942643d794d7ed8d27610fb8729914",
+            variables.getString(GIT_COMMIT_URL));
+        Assert.assertEquals("gy@fir.im", variables.getString(GIT_COMMIT_USER));
+
     }
 
     @Test

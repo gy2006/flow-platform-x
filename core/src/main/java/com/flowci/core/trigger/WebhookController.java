@@ -88,6 +88,8 @@ public class WebhookController {
         Flow flow = flowService.get(flowName);
         Yml yml = flowService.getYml(flow);
 
+        // TODO: create git event context
+
         Job job = jobService.create(flow, yml, getJobTrigger(trigger));
         jobService.start(job);
         log.debug("Start job {} from git event {} from {}", job.getId(), trigger.getEvent(), trigger.getSource());

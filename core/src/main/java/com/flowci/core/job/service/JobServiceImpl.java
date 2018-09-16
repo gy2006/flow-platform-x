@@ -136,7 +136,7 @@ public class JobServiceImpl implements JobService {
             throw new NotFoundException(
                 "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
         }
-        
+
         return job;
     }
 
@@ -171,10 +171,8 @@ public class JobServiceImpl implements JobService {
         job.setAgentSelector(root.getSelector());
 
         // init job context
-        VariableMap jobContext = job.getContext();
-        jobContext.putString(Variables.SERVER_URL, appProperties.getServerAddress());
-        jobContext.putString(Variables.FLOW_NAME, flow.getName());
-        jobContext.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
+        VariableMap defaultContext = initJobContext(flow, buildNumber);
+        job.getContext().merge(defaultContext);
 
         // set expire at
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
@@ -360,6 +358,14 @@ public class JobServiceImpl implements JobService {
         }
 
         handleFailureCmd(job, execCmd);
+    }
+
+    private VariableMap initJobContext(Flow flow, Long buildNumber) {
+        VariableMap context = new VariableMap();
+        context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
+        context.putString(Variables.FLOW_NAME, flow.getName());
+        context.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
+        return context;
     }
 
     private void handleFailureCmd(Job job, ExecutedCmd execCmd) {

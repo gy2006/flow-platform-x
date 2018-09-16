@@ -16,6 +16,9 @@
 
 package com.flowci.core.trigger.domain;
 
+import com.flowci.domain.VariableMap;
+import com.flowci.util.StringHelper;
+import com.google.common.base.Strings;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.Getter;
@@ -42,6 +45,34 @@ public class GitPushTrigger extends GitTrigger {
 
     private String commitUrl;
 
+    @Override
+    public VariableMap toVariableMap() {
+        VariableMap map = super.toVariableMap();
+
+        map.putString(Variables.GIT_BRANCH, getBranchName());
+        map.putString(Variables.GIT_COMPARE_URL, compareUrl);
+
+        map.putString(Variables.GIT_COMMIT_ID, commitId);
+        map.putString(Variables.GIT_COMMIT_MESSAGE, message);
+        map.putString(Variables.GIT_COMMIT_TIME, time);
+        map.putString(Variables.GIT_COMMIT_URL, commitUrl);
+        map.putString(Variables.GIT_COMMIT_USER, author.email);
+        return map;
+    }
+
+    private String getBranchName() {
+        if (Strings.isNullOrEmpty(ref)) {
+            return StringHelper.EMPTY;
+        }
+
+        int index = ref.lastIndexOf('/');
+        if (index == -1) {
+            return StringHelper.EMPTY;
+        }
+
+        return ref.substring(index + 1);
+    }
+
     @Data
     public static class Author implements Serializable {
 
@@ -50,5 +81,23 @@ public class GitPushTrigger extends GitTrigger {
         private String username;
 
         private String email;
+    }
+
+    public static class Variables {
+
+        public static final String GIT_BRANCH = "FLOWCI_GIT_BRANCH";
+
+        public static final String GIT_COMPARE_URL = "FLOWCI_GIT_COMPARE_URL";
+
+        public static final String GIT_COMMIT_ID = "FLOWCI_GIT_COMMIT_ID";
+
+        public static final String GIT_COMMIT_MESSAGE = "FLOWCI_GIT_COMMIT_MESSAGE";
+
+        public static final String GIT_COMMIT_TIME = "FLOWCI_GIT_COMMIT_TIME";
+
+        public static final String GIT_COMMIT_URL = "FLOWCI_GIT_COMMIT_URL";
+
+        public static final String GIT_COMMIT_USER = "FLOWCI_GIT_COMMIT_USER";
+
     }
 }

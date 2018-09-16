@@ -16,6 +16,7 @@
 
 package com.flowci.core.trigger.domain;
 
+import com.flowci.domain.VariableMap;
 import java.io.Serializable;
 import lombok.Getter;
 import lombok.Setter;
@@ -54,6 +55,21 @@ public abstract class GitTrigger implements Serializable {
 
         PR_CLOSE,
 
-        TAG;
+        TAG
+    }
+
+    public static class Variables {
+
+        public static final String GIT_SOURCE = "FLOWCI_GIT_SOURCE";
+
+        public static final String GIT_EVENT = "FLOWCI_GIT_EVENT";
+
+    }
+
+    public VariableMap toVariableMap() {
+        VariableMap map = new VariableMap(10);
+        map.putString(Variables.GIT_SOURCE, source.name());
+        map.putString(Variables.GIT_EVENT, event.name());
+        return map;
     }
 }

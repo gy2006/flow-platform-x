@@ -70,6 +70,10 @@ public class VariableMap extends LinkedHashMap<Variable, String> implements Seri
         super();
     }
 
+    public VariableMap(int size) {
+        super(size);
+    }
+
     public VariableMap(Map<String, String> data) {
         super(data.size());
         load(data);
