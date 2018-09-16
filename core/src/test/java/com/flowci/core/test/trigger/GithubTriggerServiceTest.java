@@ -23,15 +23,14 @@ import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT
 import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_URL;
 import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_USER;
 import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMPARE_URL;
-import static com.flowci.core.trigger.domain.GitTrigger.Variables.*;
+import static com.flowci.core.trigger.domain.GitTrigger.Variables.GIT_EVENT;
+import static com.flowci.core.trigger.domain.GitTrigger.Variables.GIT_SOURCE;
 
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
-import com.flowci.core.trigger.domain.GitTrigger.Variables;
 import com.flowci.core.trigger.service.GitTriggerService;
 import com.flowci.domain.VariableMap;
 import java.io.InputStream;
@@ -62,7 +61,7 @@ public class GithubTriggerServiceTest extends SpringScenario {
             trigger.getCommitUrl());
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/compare/5a1e8ee1007b...40d0dd6e8e94",
             trigger.getCompareUrl());
-        Assert.assertEquals("refs/heads/master", trigger.getRef());
+        Assert.assertEquals("master", trigger.getRef());
         Assert.assertEquals("2017-08-08T11:19:05+08:00", trigger.getTime());
 
         Assert.assertEquals("yang.guo", trigger.getAuthor().getName());
@@ -108,7 +107,7 @@ public class GithubTriggerServiceTest extends SpringScenario {
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/commit/26d1d0fa6ee44a8f4e02250d13e84bf02722f5e7",
             trigger.getCommitUrl());
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/compare/v1.6", trigger.getCompareUrl());
-        Assert.assertEquals("refs/tags/v1.6", trigger.getRef());
+        Assert.assertEquals("v1.6", trigger.getRef());
         Assert.assertEquals("2017-08-08T13:19:55+08:00", trigger.getTime());
 
         Assert.assertEquals("yang.guo", trigger.getAuthor().getName());

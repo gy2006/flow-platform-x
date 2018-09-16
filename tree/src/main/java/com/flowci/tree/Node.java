@@ -54,9 +54,9 @@ public class Node implements Serializable {
     private Selector selector;
 
     /**
-     * Node start condition
+     * Node start filter
      */
-    private Condition condition = new Condition();
+    private Filter filter = new Filter();
 
     /**
      * Node before groovy script;

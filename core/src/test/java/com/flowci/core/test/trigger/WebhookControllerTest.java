@@ -46,14 +46,14 @@ public class WebhookControllerTest extends SpringScenario {
     private MvcMockHelper mvcMockHelper;
 
     @Before
-    public void createFlow() throws Exception {
+    public void login() {
         mockLogin();
-        String yml = StringHelper.toString(load("flow.yml"));
-        flowMockHelper.crate("github-test", yml);
     }
 
     @Test
     public void should_start_job_from_github_push_event() throws Exception {
+        String yml = StringHelper.toString(load("flow.yml"));
+        flowMockHelper.crate("github-test", yml);
         String payload = StringHelper.toString(load("github/webhook_push.json"));
 
         CountDownLatch waitForJobCreated = new CountDownLatch(1);
@@ -71,5 +71,28 @@ public class WebhookControllerTest extends SpringScenario {
 
         Assert.assertTrue(waitForJobCreated.await(10, TimeUnit.SECONDS));
         Assert.assertNotNull(jobCreated.getValue());
+    }
+
+    @Test
+    public void should_not_start_job_form_github_push_event_since_branch_not_match() throws Exception {
+        String yml = StringHelper.toString(load("flow-with-filter.yml"));
+        flowMockHelper.crate("github-test", yml);
+        String payload = StringHelper.toString(load("github/webhook_push.json"));
+
+        CountDownLatch waitForJobCreated = new CountDownLatch(1);
+        ObjectWrapper<Job> jobCreated = new ObjectWrapper<>();
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobCreatedEvent>) event -> {
+            jobCreated.setValue(event.getJob());
+            waitForJobCreated.countDown();
+        });
+
+        mvcMockHelper.expectSuccessAndReturnString(
+            post("/webhooks/github-test")
+                .header("X-GitHub-Event", "push")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload));
+
+        Assert.assertFalse(waitForJobCreated.await(1, TimeUnit.SECONDS));
+        Assert.assertNull(jobCreated.getValue());
     }
 }

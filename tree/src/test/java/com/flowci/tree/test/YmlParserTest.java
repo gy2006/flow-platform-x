@@ -56,8 +56,8 @@ public class YmlParserTest {
         Assert.assertTrue(root.getSelector().getTags().contains("ios"));
         Assert.assertTrue(root.getSelector().getTags().contains("local"));
 
-        Assert.assertEquals(3, root.getCondition().getBranches().size());
-        Assert.assertEquals(1, root.getCondition().getTags().size());
+        Assert.assertEquals(3, root.getFilter().getBranches().size());
+        Assert.assertEquals(1, root.getFilter().getTags().size());
 
         // verify steps
         List<Node> steps = root.getChildren();

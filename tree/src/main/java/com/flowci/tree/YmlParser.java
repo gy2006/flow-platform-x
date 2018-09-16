@@ -111,7 +111,7 @@ public class YmlParser {
 
         public Selector selector = new Selector();
 
-        public Condition condition = new Condition();
+        public Filter filter = new Filter();
 
         public Map<String, String> envs = new LinkedHashMap<>();
 
@@ -120,7 +120,7 @@ public class YmlParser {
         public Node toNode(int ignore) {
             Node node = new Node(name);
             node.setSelector(selector);
-            node.setCondition(condition);
+            node.setFilter(filter);
             setEnvs(node);
             setChildren(node);
             return node;

@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.tree;
+package com.flowci.tree.test;
 
-import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
+import com.flowci.tree.Filter;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * Git Trigger Condition
- *
  * @author yang
  */
-@Getter
-@Setter
-public class Condition implements Serializable {
+public class FilterTest {
 
-    private List<String> branches = new LinkedList<>();
+    @Test
+    public void should_match_branches_regular_expression() {
+        Filter condition = new Filter();
+        condition.getBranches().add("feature/.+");
 
-    private List<String> tags = new LinkedList<>();
+        Assert.assertTrue(condition.isMatchBranch("feature/fb_123"));
+    }
 }

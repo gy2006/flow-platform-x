@@ -22,11 +22,15 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.service.JobService;
+import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.service.GitTriggerService;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
+import com.flowci.tree.Filter;
+import com.flowci.tree.Node;
+import com.flowci.tree.YmlParser;
 import com.google.common.base.Strings;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,17 +86,36 @@ public class WebhookController {
             return;
         }
 
-        createAndStartJob(name, trigger);
+        // get related flow and yml
+        Flow flow = flowService.get(name);
+        Yml yml = flowService.getYml(flow);
+        Node root = YmlParser.load(flow.getName(), yml.getRaw());
+
+        if (canStartJob(root, trigger)) {
+            VariableMap gitInput = trigger.toVariableMap();
+            Job job = jobService.create(flow, yml, getJobTrigger(trigger), gitInput);
+            jobService.start(job);
+            log.debug("Start job {} from git event {} from {}", job.getId(), trigger.getEvent(), trigger.getSource());
+            return;
+        }
+
+        log.info("Trigger filter not matched {}", root.getFilter());
     }
 
-    private void createAndStartJob(String flowName, GitTrigger trigger) {
-        Flow flow = flowService.get(flowName);
-        Yml yml = flowService.getYml(flow);
+    private boolean canStartJob(Node root, GitTrigger trigger) {
+        Filter condition = root.getFilter();
 
-        VariableMap gitInput = trigger.toVariableMap();
-        Job job = jobService.create(flow, yml, getJobTrigger(trigger), gitInput);
-        jobService.start(job);
-        log.debug("Start job {} from git event {} from {}", job.getId(), trigger.getEvent(), trigger.getSource());
+        if (trigger.getEvent() == GitEvent.PUSH) {
+            GitPushTrigger pushTrigger = (GitPushTrigger) trigger;
+            return condition.isMatchBranch(pushTrigger.getRef());
+        }
+
+        if (trigger.getEvent() == GitEvent.TAG) {
+            GitPushTrigger tagTrigger = (GitPushTrigger) trigger;
+            return condition.isMatchTag(tagTrigger.getRef());
+        }
+
+        return true;
     }
 
     /**

@@ -17,8 +17,6 @@
 package com.flowci.core.trigger.domain;
 
 import com.flowci.domain.VariableMap;
-import com.flowci.util.StringHelper;
-import com.google.common.base.Strings;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.Getter;
@@ -49,7 +47,7 @@ public class GitPushTrigger extends GitTrigger {
     public VariableMap toVariableMap() {
         VariableMap map = super.toVariableMap();
 
-        map.putString(Variables.GIT_BRANCH, getBranchName());
+        map.putString(Variables.GIT_BRANCH, ref);
         map.putString(Variables.GIT_COMPARE_URL, compareUrl);
 
         map.putString(Variables.GIT_COMMIT_ID, commitId);
@@ -58,19 +56,6 @@ public class GitPushTrigger extends GitTrigger {
         map.putString(Variables.GIT_COMMIT_URL, commitUrl);
         map.putString(Variables.GIT_COMMIT_USER, author.email);
         return map;
-    }
-
-    private String getBranchName() {
-        if (Strings.isNullOrEmpty(ref)) {
-            return StringHelper.EMPTY;
-        }
-
-        int index = ref.lastIndexOf('/');
-        if (index == -1) {
-            return StringHelper.EMPTY;
-        }
-
-        return ref.substring(index + 1);
     }
 
     @Data

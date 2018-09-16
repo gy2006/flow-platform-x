@@ -26,6 +26,8 @@ import com.flowci.core.trigger.domain.GitPushTrigger.Author;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.exception.ArgumentException;
+import com.flowci.util.StringHelper;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
@@ -61,6 +63,19 @@ public class GithubTriggerService implements GitTriggerService {
         }
     }
 
+    private static String getBranchName(String ref) {
+        if (Strings.isNullOrEmpty(ref)) {
+            return StringHelper.EMPTY;
+        }
+
+        int index = ref.lastIndexOf('/');
+        if (index == -1) {
+            return StringHelper.EMPTY;
+        }
+
+        return ref.substring(index + 1);
+    }
+
     private static class PushObject {
 
         private static final String TagRefPrefix = "refs/tags";
@@ -91,7 +106,7 @@ public class GithubTriggerService implements GitTriggerService {
             trigger.setMessage(commit.message);
             trigger.setCommitUrl(commit.url);
             trigger.setCompareUrl(compare);
-            trigger.setRef(ref);
+            trigger.setRef(getBranchName(ref));
             trigger.setTime(commit.timestamp);
 
             // set commit author info
