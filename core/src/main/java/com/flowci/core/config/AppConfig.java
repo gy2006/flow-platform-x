@@ -18,6 +18,7 @@ package com.flowci.core.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.adviser.AuthInterceptor;
+import com.flowci.core.adviser.CrosInterceptor;
 import com.flowci.core.user.User;
 import com.flowci.domain.Jsonable;
 import com.google.common.collect.Lists;
@@ -42,8 +43,6 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -54,8 +53,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @EnableCaching
 @EnableScheduling
-@EnableWebMvc
-public class AppConfig implements WebMvcConfigurer {
+public class AppConfig {
 
     private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(
         new StringHttpMessageConverter(),
@@ -106,24 +104,34 @@ public class AppConfig implements WebMvcConfigurer {
         return new AuthInterceptor();
     }
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(authHandler())
-            .addPathPatterns("/flows/**")
-            .addPathPatterns("/jobs/**")
-            .addPathPatterns("/agents/**")
-            .addPathPatterns("/credentials/**")
-            .excludePathPatterns("/agents/connect");
-    }
+    @Bean
+    public WebMvcConfigurer webMvcConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addInterceptors(InterceptorRegistry registry) {
+                registry.addInterceptor(new CrosInterceptor());
+                registry.addInterceptor(authHandler())
+                    .addPathPatterns("/flows/**")
+                    .addPathPatterns("/jobs/**")
+                    .addPathPatterns("/agents/**")
+                    .addPathPatterns("/credentials/**")
+                    .excludePathPatterns("/agents/connect");
+            }
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**");
-    }
+//            @Override
+//            public void addCorsMappings(CorsRegistry registry) {
+//                registry.addMapping("/**")
+//                    .allowedOrigins("*")
+//                    .allowedMethods(GET.name(), POST.name(), DELETE.name(), PATCH.name())
+//                    .allowCredentials(true)
+//                    .allowedHeaders("Origin", "Content-Type", "Accept", "X-Requested-With", "Token");
+//            }
 
-    @Override
-    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        converters.clear();
-        converters.addAll(DefaultConverters);
+            @Override
+            public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+                converters.clear();
+                converters.addAll(DefaultConverters);
+            }
+        };
     }
 }
