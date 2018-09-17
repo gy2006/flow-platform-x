@@ -1,6 +1,6 @@
 version: '3'
 services:
-  flowci-core:
+  flowci-agent:
     image: flowci/agent:latest
     network_mode: "host"
     ports:
