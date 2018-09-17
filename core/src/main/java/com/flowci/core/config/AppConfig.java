@@ -16,11 +16,6 @@
 
 package com.flowci.core.config;
 
-import static org.springframework.http.HttpMethod.DELETE;
-import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpMethod.POST;
-import static org.springframework.http.HttpMethod.PUT;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.adviser.AuthInterceptor;
 import com.flowci.core.user.User;
@@ -48,6 +43,7 @@ import org.springframework.http.converter.support.AllEncompassingFormHttpMessage
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -58,6 +54,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @EnableCaching
 @EnableScheduling
+@EnableWebMvc
 public class AppConfig implements WebMvcConfigurer {
 
     private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(
@@ -121,10 +118,7 @@ public class AppConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-            .allowedOrigins("*")
-            .allowedMethods(GET.name(), POST.name(), PUT.name(), DELETE.name())
-            .allowedHeaders("*");
+        registry.addMapping("/**");
     }
 
     @Override
