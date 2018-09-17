@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: flowci-core:latest
+    image: flowci/core:latest
     container_name: flowci-core
     ports:
     - "8080:8080"
