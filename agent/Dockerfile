@@ -1,4 +1,4 @@
-From openjdk:8
+From flowci/agent-base
 
 ENV WORKER=/flow.ci.agent
 ENV JAR=flow-ci-agent.jar

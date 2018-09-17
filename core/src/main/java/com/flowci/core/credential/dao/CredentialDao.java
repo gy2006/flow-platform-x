@@ -29,6 +29,8 @@ public interface CredentialDao extends MongoRepository<Credential, String> {
 
     List<Credential> findAllByCreatedByOrderByCreatedAt(String createdBy);
 
+    Credential findByName(String name);
+
     Credential findByNameAndCreatedBy(String name, String createdBy);
 
 }

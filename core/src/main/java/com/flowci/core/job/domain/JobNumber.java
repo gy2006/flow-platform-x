@@ -26,7 +26,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 /**
  * @author yang
  */
-@Document
+@Document(collection = "job_number")
 @NoArgsConstructor
 public class JobNumber {
 

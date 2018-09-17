@@ -28,6 +28,8 @@ public class ConfigProperties {
 
     private Boolean authEnabled;
 
+    private String serverAddress;
+
     @Data
     public static class Admin {
 
@@ -46,6 +48,14 @@ public class ConfigProperties {
         private Long expireInSeconds;
 
         private Long retryWaitingSeconds;
+    }
+
+    @Data
+    public static class Plugin {
+
+        private String defaultRepo;
+
+        private Boolean autoUpdate;
     }
 
 

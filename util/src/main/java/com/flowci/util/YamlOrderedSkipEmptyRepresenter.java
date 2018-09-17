@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.flowci.tree;
+package com.flowci.util;
 
-import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,18 +34,7 @@ import org.yaml.snakeyaml.representer.Representer;
 /**
  * @author yang
  */
-class OrderedSkipEmptyRepresenter extends Representer {
-
-    private final Map<String, Integer> order = ImmutableMap.<String, Integer>builder()
-        .put("name", 1)
-        .put("envs", 2)
-        .put("allowFailure", 3)
-        .put("isFinal", 4)
-        .put("condition", 5)
-        .put("plugin", 6)
-        .put("script", 7)
-        .put("steps", 8)
-        .build();
+public class YamlOrderedSkipEmptyRepresenter extends Representer {
 
     private final PropertySorter sorter = new PropertySorter();
 
@@ -63,6 +51,12 @@ class OrderedSkipEmptyRepresenter extends Representer {
 
             return index1.compareTo(index2);
         }
+    }
+
+    private final Map<String, Integer> order;
+
+    public YamlOrderedSkipEmptyRepresenter(Map<String, Integer> fieldsOrder) {
+        this.order = fieldsOrder;
     }
 
     @Override

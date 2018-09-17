@@ -22,6 +22,8 @@ import java.util.Set;
 import lombok.Data;
 
 /**
+ * Agent selector
+ *
  * @author yang
  */
 @Data

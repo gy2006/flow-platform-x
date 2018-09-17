@@ -45,6 +45,7 @@ import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -56,6 +57,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Log4j2
 @Configuration
 @EnableCaching
+@EnableScheduling
 public class AppConfig implements WebMvcConfigurer {
 
     private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(
@@ -89,8 +91,8 @@ public class AppConfig implements WebMvcConfigurer {
     @Bean("restTemplate")
     public RestTemplate restTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setReadTimeout(5000);
-        factory.setConnectTimeout(15000);
+        factory.setReadTimeout(1000 * 15);
+        factory.setConnectTimeout(1000 * 15);
 
         RestTemplate restTemplate = new RestTemplate(factory);
         restTemplate.setMessageConverters(DefaultConverters);
@@ -113,6 +115,7 @@ public class AppConfig implements WebMvcConfigurer {
             .addPathPatterns("/flows/**")
             .addPathPatterns("/jobs/**")
             .addPathPatterns("/agents/**")
+            .addPathPatterns("/credentials/**")
             .excludePathPatterns("/agents/connect");
     }
 

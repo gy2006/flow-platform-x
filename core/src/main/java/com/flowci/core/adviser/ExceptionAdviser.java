@@ -32,7 +32,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * @author yang
  */
 @Log4j2
-@ControllerAdvice
+@ControllerAdvice({
+    "com.flowci.core.flow",
+    "com.flowci.core.job",
+    "com.flowci.core.agent",
+    "com.flowci.core.credentials"
+})
 public class ExceptionAdviser {
 
     @ResponseBody

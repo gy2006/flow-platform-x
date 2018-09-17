@@ -16,18 +16,27 @@
 
 package com.flowci.core.test;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
 import com.flowci.core.agent.dao.AgentDao;
+import com.flowci.core.domain.StatusCode;
+import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.test.SpringScenario.Config;
+import com.flowci.core.test.flow.FlowMockHelper;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.core.user.User;
 import com.flowci.core.user.UserService;
 import com.flowci.domain.Agent;
+import com.flowci.domain.http.ResponseMessage;
+import com.flowci.util.StringHelper;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -38,6 +47,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 
 /**
@@ -55,6 +65,11 @@ public abstract class SpringScenario {
         @Bean("mvcMockHelper")
         public MvcMockHelper mvcMockHelper() {
             return new MvcMockHelper();
+        }
+
+        @Bean("flowMockHelper")
+        public FlowMockHelper flowMockHelper() {
+            return new FlowMockHelper();
         }
     }
 

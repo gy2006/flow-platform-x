@@ -103,12 +103,14 @@ public class CmdServiceTest extends SpringScenario {
         // init:
         AgentExecutedCmd first = new AgentExecutedCmd();
         first.setId("1");
+        first.setCode(0);
         first.setStatus(Status.SUCCESS);
         first.setStartAt(new Date());
         executedCmdDao.save(first);
 
         AgentExecutedCmd second = new AgentExecutedCmd();
         second.setId("2");
+        second.setCode(0);
         second.setStatus(Status.SUCCESS);
         second.setStartAt(Date.from(Instant.now().plus(10, ChronoUnit.SECONDS)));
         executedCmdDao.save(second);

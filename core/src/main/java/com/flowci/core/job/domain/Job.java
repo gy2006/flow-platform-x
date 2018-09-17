@@ -56,9 +56,14 @@ public class Job extends Mongoable {
         PUSH,
 
         /**
-         * Git PR event
+         * Git PR open event
          */
-        PR,
+        PR_OPEN,
+
+        /**
+         * Git PR close event
+         */
+        PR_CLOSE,
 
         /**
          * Git tag event

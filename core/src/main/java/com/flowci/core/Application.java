@@ -54,6 +54,12 @@ public class Application {
         return new ConfigProperties.Job();
     }
 
+    @Bean("pluginProperties")
+    @ConfigurationProperties(prefix = "app.plugin")
+    public ConfigProperties.Plugin pluginProperties() {
+        return new ConfigProperties.Plugin();
+    }
+
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }

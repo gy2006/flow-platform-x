@@ -52,8 +52,12 @@ public class YmlParserTest {
         Assert.assertEquals("root", root.getName());
         Assert.assertEquals("echo hello", root.getEnv("FLOW_WORKSPACE"));
         Assert.assertEquals("echo version", root.getEnv("FLOW_VERSION"));
+
         Assert.assertTrue(root.getSelector().getTags().contains("ios"));
         Assert.assertTrue(root.getSelector().getTags().contains("local"));
+
+        Assert.assertEquals(3, root.getFilter().getBranches().size());
+        Assert.assertEquals(1, root.getFilter().getTags().size());
 
         // verify steps
         List<Node> steps = root.getChildren();
@@ -63,9 +67,10 @@ public class YmlParserTest {
         Assert.assertEquals("step-1", step1.getName()); // step-1 is default name
         Assert.assertEquals("echo step", step1.getEnv("FLOW_WORKSPACE"));
         Assert.assertEquals("echo step version", step1.getEnv("FLOW_VERSION"));
-        Assert.assertNotNull(step1.getCondition());
+
         Assert.assertTrue(step1.isAllowFailure());
         Assert.assertFalse(step1.isFinal());
+        Assert.assertEquals("println(FLOW_WORKSPACE)\ntrue\n", step1.getBefore());
 
         Node step11 = step1.getChildren().get(0);
         Assert.assertNotNull(step11);
@@ -79,7 +84,7 @@ public class YmlParserTest {
 
         Node step2 = steps.get(1);
         Assert.assertEquals("step2", step2.getName());
-        Assert.assertNull(step2.getCondition());
+        Assert.assertEquals("true\n", step2.getAfter());
     }
 
     @Test

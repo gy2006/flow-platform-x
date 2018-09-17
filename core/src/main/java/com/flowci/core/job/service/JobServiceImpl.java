@@ -18,6 +18,7 @@ package com.flowci.core.job.service;
 
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.helper.ThreadHelper;
@@ -25,6 +26,7 @@ import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobNumberDao;
 import com.flowci.core.job.dao.JobYmlDao;
+import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobNumber;
@@ -32,8 +34,7 @@ import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.StatusChangeEvent;
-import com.flowci.core.job.util.CmdHelper;
-import com.flowci.core.job.util.CmdHelper.CmdID;
+import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
 import com.flowci.core.user.CurrentUserHelper;
@@ -41,6 +42,7 @@ import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
 import com.flowci.tree.Node;
@@ -81,6 +83,9 @@ public class JobServiceImpl implements JobService {
     private static final Sort SortByBuildNumber = Sort.by(Direction.DESC, "buildNumber");
 
     @Autowired
+    private ConfigProperties appProperties;
+
+    @Autowired
     private ConfigProperties.Job jobProperties;
 
     @Autowired
@@ -119,6 +124,9 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private AgentService agentService;
 
+    @Autowired
+    private CmdManager cmdManager;
+
     @Override
     public Job get(Flow flow, Long buildNumber) {
         String key = JobKeyBuilder.build(flow, buildNumber);
@@ -128,7 +136,7 @@ public class JobServiceImpl implements JobService {
             throw new NotFoundException(
                 "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
         }
-        
+
         return job;
     }
 
@@ -145,7 +153,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job create(Flow flow, Yml yml, Trigger trigger) {
+    public Job create(Flow flow, Yml yml, Trigger trigger, VariableMap input) {
         // verify yml and parse to Node
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
@@ -162,6 +170,11 @@ public class JobServiceImpl implements JobService {
         job.setCurrentPath(root.getPathAsString());
         job.setAgentSelector(root.getSelector());
 
+        // init job context
+        VariableMap defaultContext = initJobContext(flow, buildNumber, input);
+        job.getContext().merge(defaultContext);
+
+        // set expire at
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
         jobDao.save(job);
@@ -174,7 +187,7 @@ public class JobServiceImpl implements JobService {
         NodeTree tree = getTree(job);
         List<ExecutedCmd> steps = new LinkedList<>();
         for (Node node : tree.getOrdered()) {
-            CmdID id = CmdHelper.createId(job, node);
+            CmdId id = cmdManager.createId(job, node);
             steps.add(new ExecutedCmd(id.toString()));
         }
         executedCmdDao.insert(steps);
@@ -213,7 +226,7 @@ public class JobServiceImpl implements JobService {
 
             List<String> cmdIdsInStr = new ArrayList<>(nodes.size());
             for (Node node : nodes) {
-                CmdID cmdId = CmdHelper.createId(job, node);
+                CmdId cmdId = cmdManager.createId(job, node);
                 cmdIdsInStr.add(cmdId.toString());
             }
 
@@ -233,7 +246,7 @@ public class JobServiceImpl implements JobService {
         Node node = tree.get(currentNodePath(job));
 
         try {
-            Cmd cmd = CmdHelper.createShell(job, node);
+            Cmd cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
 
             if (job.getStatus() != Job.Status.RUNNING) {
@@ -308,7 +321,7 @@ public class JobServiceImpl implements JobService {
     @Override
     @RabbitListener(queues = "${app.job.callback-queue-name}")
     public void processCallback(ExecutedCmd execCmd) {
-        CmdHelper.CmdID cmdId = CmdHelper.parseID(execCmd.getId());
+        CmdId cmdId = CmdId.parse(execCmd.getId());
         if (Objects.isNull(cmdId)) {
             log.debug("Illegal cmd callback: {}", execCmd.getId());
             return;
@@ -345,6 +358,19 @@ public class JobServiceImpl implements JobService {
         }
 
         handleFailureCmd(job, execCmd);
+    }
+
+    private VariableMap initJobContext(Flow flow, Long buildNumber, VariableMap input) {
+        VariableMap context = new VariableMap(20);
+        context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
+        context.putString(Variables.FLOW_NAME, flow.getName());
+        context.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
+
+        if (input != null && !input.isEmpty()) {
+            context.merge(input);
+        }
+
+        return context;
     }
 
     private void handleFailureCmd(Job job, ExecutedCmd execCmd) {
@@ -416,7 +442,7 @@ public class JobServiceImpl implements JobService {
             setJobStatus(job, Job.Status.ENQUEUE, null);
             return job;
         } catch (Throwable e) {
-            throw new StatusException("Unable to enqueue the job {} since {}", job.getId(), e.getMessage());
+            throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());
         }
     }
 

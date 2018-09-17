@@ -22,6 +22,7 @@ import static com.flowci.domain.ExecutedCmd.Status.SUCCESS;
 import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
 import java.io.Serializable;
 import java.util.Date;
@@ -41,6 +42,8 @@ import lombok.NoArgsConstructor;
 public class ExecutedCmd implements Serializable {
 
     public final static Integer CODE_TIMEOUT = -100;
+
+    public final static Integer CODE_SUCCESS = 0;
 
     private final static Set<Status> FailureStatus = ImmutableSet.of(
         EXCEPTION,
@@ -109,6 +112,21 @@ public class ExecutedCmd implements Serializable {
 
     public ExecutedCmd(String id) {
         this.id = id;
+    }
+
+    @JsonProperty
+    public void setStatusByCode() {
+        if (this.code.equals(CODE_SUCCESS)) {
+            this.status = SUCCESS;
+        }
+
+        if (this.code > CODE_SUCCESS) {
+            this.status = EXCEPTION;
+        }
+
+        if (this.code.equals(CODE_TIMEOUT)) {
+            this.status = TIMEOUT;
+        }
     }
 
     @JsonIgnore

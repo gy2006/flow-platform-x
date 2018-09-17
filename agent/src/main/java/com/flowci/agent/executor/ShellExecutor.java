@@ -116,7 +116,7 @@ public class ShellExecutor {
         this.pBuilder = new ProcessBuilder(LinuxBash).directory(getWorkDir(cmd).toFile());
 
         // init inputs env
-        this.pBuilder.environment().putAll(cmd.getInputs().toStringMap());
+        this.pBuilder.environment().putAll(cmd.getInputs());
 
         // support exit value
         this.cmd.getScripts().add(0, "set -e");
@@ -144,12 +144,11 @@ public class ShellExecutor {
             // wait for max process timeout
             if (process.waitFor(cmd.getTimeout(), TimeUnit.SECONDS)) {
                 result.setCode(process.exitValue());
-                result.setStatus(Status.SUCCESS);
             } else {
                 result.setCode(ExecutedCmd.CODE_TIMEOUT);
-                result.setStatus(Status.TIMEOUT);
             }
 
+            result.setStatusByCode();
             result.setFinishAt(new Date());
             processListener.onExecuted(result);
             log.debug("====== Process executed : {} ======", result.getCode());

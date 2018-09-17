@@ -43,6 +43,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
@@ -61,14 +62,22 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Order(1)
 public class AgentConfig implements WebMvcConfigurer {
 
-    private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(
+    private static final List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(
         new ByteArrayHttpMessageConverter(),
         new MappingJackson2HttpMessageConverter(Jsonable.getMapper()),
         new ResourceHttpMessageConverter(),
         new AllEncompassingFormHttpMessageConverter()
     );
 
-    private static final RestTemplate RestTemplate = new RestTemplate(DefaultConverters);
+    private static final SimpleClientHttpRequestFactory HttpClientFactory = new SimpleClientHttpRequestFactory();
+
+    private static final RestTemplate RestTemplate = new RestTemplate(HttpClientFactory);
+
+    static {
+        HttpClientFactory.setReadTimeout(1000 * 15);
+        HttpClientFactory.setConnectTimeout(1000 * 15);
+        RestTemplate.setMessageConverters(DefaultConverters);
+    }
 
     @Autowired
     private AgentProperties agentProperties;

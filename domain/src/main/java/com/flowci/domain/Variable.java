@@ -17,7 +17,6 @@
 package com.flowci.domain;
 
 import java.io.Serializable;
-import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,6 +26,8 @@ import lombok.ToString;
 /**
  * @author yang
  */
+@Getter
+@Setter
 @ToString(of = {"name", "valueType"})
 @EqualsAndHashCode(of = {"name"})
 @NoArgsConstructor
@@ -36,29 +37,16 @@ public class Variable implements Serializable {
 
         STRING,
 
-        INT,
-
-        LIST
+        INT
     }
 
-    @Getter
-    @Setter
     private String name;
 
-    @Getter
-    @Setter
     private String alias;
 
-    @Getter
-    @Setter
     private ValueType valueType = ValueType.STRING;
 
-    /**
-     * Available values
-     */
-    @Getter
-    @Setter
-    private List<String> values;
+    private boolean required = true;
 
     public Variable(String name) {
         this.name = name;

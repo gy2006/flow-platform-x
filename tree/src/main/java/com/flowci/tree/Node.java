@@ -16,7 +16,9 @@
 
 package com.flowci.tree;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.domain.VariableMap;
+import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,14 +54,24 @@ public class Node implements Serializable {
     private Selector selector;
 
     /**
+     * Node start filter
+     */
+    private Filter filter = new Filter();
+
+    /**
+     * Node before groovy script;
+     */
+    private String before;
+
+    /**
      * Node execute script, can be null
      */
     private String script;
 
     /**
-     * Condition script
+     * Node after groovy script
      */
-    private String condition;
+    private String after;
 
     /**
      * Plugin name
@@ -93,5 +105,10 @@ public class Node implements Serializable {
 
     public String getEnv(String name) {
         return environments.getString(name);
+    }
+
+    @JsonIgnore
+    public boolean hasPlugin() {
+        return !Strings.isNullOrEmpty(plugin);
     }
 }

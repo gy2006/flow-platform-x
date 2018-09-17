@@ -80,11 +80,11 @@ public class CipherHelper {
         public static StringKeyPair encodeAsOpenSSH(KeyPair pair, String user) throws IOException {
             StringKeyPair stringKeyPair = new StringKeyPair();
             stringKeyPair.publicKey = encodeAsOpenSSH((RSAPublicKey) pair.getPublic(), user);
-            stringKeyPair.privateKey = "-----BEGIN RSA PRIVATE KEY-----\n"
-                + Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded())
+            stringKeyPair.privateKey = "-----BEGIN RSA PRIVATE KEY-----"
+                + "\n"
+                + Base64.getMimeEncoder().encodeToString(pair.getPrivate().getEncoded())
                 + "\n"
                 + "-----END RSA PRIVATE KEY-----";
-
             return stringKeyPair;
         }
 
@@ -98,9 +98,8 @@ public class CipherHelper {
          */
         private static String encodeAsOpenSSH(RSAPublicKey pk, String user) throws IOException {
             try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                byte[] data = new byte[] {0, 0, 0, 7, 's', 's', 'h', '-', 'r', 's', 'a'};
+                byte[] data = new byte[]{0, 0, 0, 7, 's', 's', 'h', '-', 'r', 's', 'a'};
                 out.write(data);
-
 
                 /* Encode the public exponent */
                 byte[] bytesForPublicExponent = pk.getPublicExponent().toByteArray();
@@ -119,10 +118,10 @@ public class CipherHelper {
 
         private static void encodeUInt32(int value, OutputStream out) throws IOException {
             byte[] tmp = new byte[4];
-            tmp[0] = (byte)((value >>> 24) & 0xff);
-            tmp[1] = (byte)((value >>> 16) & 0xff);
-            tmp[2] = (byte)((value >>> 8) & 0xff);
-            tmp[3] = (byte)(value & 0xff);
+            tmp[0] = (byte) ((value >>> 24) & 0xff);
+            tmp[1] = (byte) ((value >>> 16) & 0xff);
+            tmp[2] = (byte) ((value >>> 8) & 0xff);
+            tmp[3] = (byte) (value & 0xff);
             out.write(tmp);
         }
 
