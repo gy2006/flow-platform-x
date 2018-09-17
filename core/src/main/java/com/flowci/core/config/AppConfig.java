@@ -118,15 +118,6 @@ public class AppConfig {
                     .excludePathPatterns("/agents/connect");
             }
 
-//            @Override
-//            public void addCorsMappings(CorsRegistry registry) {
-//                registry.addMapping("/**")
-//                    .allowedOrigins("*")
-//                    .allowedMethods(GET.name(), POST.name(), DELETE.name(), PATCH.name())
-//                    .allowCredentials(true)
-//                    .allowedHeaders("Origin", "Content-Type", "Accept", "X-Requested-With", "Token");
-//            }
-
             @Override
             public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
                 converters.clear();
