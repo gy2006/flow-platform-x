@@ -16,6 +16,7 @@
 
 package com.flowci.core.job.manager;
 
+import com.flowci.core.domain.Variables;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
@@ -61,6 +62,7 @@ public class CmdManagerImpl implements CmdManager {
         Cmd cmd = new Cmd(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(variables);
         cmd.setScripts(Lists.newArrayList(script));
+        cmd.setWorkDir(variables.get(Variables.AGENT_WORKSPACE));
         return cmd;
     }
 

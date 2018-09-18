@@ -27,6 +27,8 @@ public class Variables {
 
     public static final String JOB_BUILD_NUMBER = "FLOWCI_JOB_BUILD_NUM";
 
+    public static final String AGENT_WORKSPACE = "FLOWCI_AGENT_WORKSPACE";
+
     private Variables() {
     }
 }

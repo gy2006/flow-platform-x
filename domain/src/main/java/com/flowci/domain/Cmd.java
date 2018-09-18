@@ -16,6 +16,8 @@
 
 package com.flowci.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -63,5 +65,10 @@ public class Cmd implements Serializable {
     public Cmd(String id, CmdType type) {
         this.id = id;
         this.type = type;
+    }
+
+    @JsonIgnore
+    public boolean hasWorkDir() {
+        return !Strings.isNullOrEmpty(workDir);
     }
 }

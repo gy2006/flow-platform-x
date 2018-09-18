@@ -16,6 +16,7 @@
 
 package com.flowci.agent.service;
 
+import com.flowci.agent.config.AgentProperties;
 import com.flowci.agent.dao.ExecutedCmdDao;
 import com.flowci.agent.dao.ReceivedCmdDao;
 import com.flowci.agent.domain.AgentExecutedCmd;
@@ -59,6 +60,9 @@ public class CmdServiceImpl implements CmdService {
     private static final Sort SortByReceivedAt = Sort.by(Direction.DESC, "receivedAt");
 
     private static final Sort SortByStartAt = Sort.by(Direction.DESC, "startAt");
+
+    @Autowired
+    private AgentProperties agentProperties;
 
     @Autowired
     private Queue callbackQueue;
@@ -114,6 +118,10 @@ public class CmdServiceImpl implements CmdService {
             setCurrent(save(cmd));
             agentManager.changeStatus(Status.BUSY);
             context.publishEvent(new CmdReceivedEvent(this, current));
+
+            if (!current.hasWorkDir()) {
+                current.setWorkDir(agentProperties.getWorkspace());
+            }
 
             cmdThreadPool.execute(() -> {
                 ShellExecutor cmdExecutor = new ShellExecutor(current);
