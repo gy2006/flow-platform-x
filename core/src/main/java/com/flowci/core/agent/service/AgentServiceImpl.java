@@ -182,15 +182,15 @@ public class AgentServiceImpl implements AgentService {
 
         try {
             // check agent status from zk
-            String zkPath = getPath(reload);
+            String zkPath = getPath(agent);
             Status status = Status.fromBytes(zk.get(zkPath));
             if (status != Status.IDLE) {
                 return false;
             }
 
             // lock and set status to busy
-            String zkLockPath = getLockPath(reload);
-            zk.lock(zkLockPath, path -> updateAgentStatus(reload, Status.BUSY));
+            String zkLockPath = getLockPath(agent);
+            zk.lock(zkLockPath, path -> updateAgentStatus(agent, Status.BUSY));
             return true;
         } catch (ZookeeperException e) {
             log.debug(e);
@@ -205,6 +205,7 @@ public class AgentServiceImpl implements AgentService {
             return;
         }
 
+        updateAgentStatus(agent, Status.IDLE);
         // TODO: send STOP cmd to agent
     }
 

@@ -256,6 +256,7 @@ public class JobServiceImpl implements JobService {
             return true;
         } catch (Throwable e) {
             setJobStatus(job, Job.Status.FAILURE, e.getMessage());
+            agentService.tryRelease(agent);
             return false;
         }
     }
