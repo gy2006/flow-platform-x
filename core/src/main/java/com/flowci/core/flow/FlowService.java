@@ -41,6 +41,11 @@ public interface FlowService {
     Flow get(String name);
 
     /**
+     * Delete flow and yml
+     */
+    Flow delete(String name);
+
+    /**
      * Update flow name or variables
      */
     void update(Flow flow);

@@ -81,6 +81,17 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
+    public Flow delete(String name) {
+        Flow flow = get(name);
+        Yml yml = getYml(flow);
+
+        ymlDao.delete(yml);
+        flowDao.delete(flow);
+
+        return flow;
+    }
+
+    @Override
     public void update(Flow flow) {
         verifyFlowIdAndUser(flow);
         flowDao.save(flow);

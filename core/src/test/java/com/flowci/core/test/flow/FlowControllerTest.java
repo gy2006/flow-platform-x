@@ -70,7 +70,7 @@ public class FlowControllerTest extends SpringScenario {
     }
 
     @Test
-    public void should_get_flow_and_yml() throws Exception {
+    public void should_get_flow_and_yml_then_delete() throws Exception {
         ResponseMessage<Flow> getFlowResponse = mvcMockHelper
             .expectSuccessAndReturnClass(get("/flows/" + flowName), FlowMockHelper.FlowType);
 
@@ -79,6 +79,10 @@ public class FlowControllerTest extends SpringScenario {
 
         String ymlResponse = mvcMockHelper.expectSuccessAndReturnString(get("/flows/" + flowName + "/yml"));
         Assert.assertEquals(StringHelper.toString(load("flow.yml")), ymlResponse);
+
+        ResponseMessage<Flow> deleted = mvcMockHelper
+            .expectSuccessAndReturnClass(delete("/flows/" + flowName), FlowMockHelper.FlowType);
+        Assert.assertEquals(StatusCode.OK, deleted.getCode());
     }
 
     @Test
