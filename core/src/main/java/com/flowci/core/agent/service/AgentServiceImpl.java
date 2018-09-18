@@ -331,6 +331,7 @@ public class AgentServiceImpl implements AgentService {
 
             if (event.getType() == Type.CHILD_REMOVED) {
                 syncLockNode(agent, Type.CHILD_REMOVED);
+                updateAgentStatus(agent, Status.OFFLINE);
                 log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_REMOVED, agent.getName(), Status.OFFLINE);
                 return;
             }
