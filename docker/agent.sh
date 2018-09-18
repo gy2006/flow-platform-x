@@ -14,7 +14,7 @@ export AGENT_SERVER_URL=${1}
 export AGENT_TOKEN=${2}
 OPERATION_CMD=${3}
 
-BASE_CMD=docker-compose -f docker-compose.agent.yml
+BASE_CMD="docker-compose -f docker-compose.agent.yml"
 
 if [[ $OPERATION_CMD = 'up' ]]; then
   ${BASE_CMD} up -d
