@@ -4,8 +4,8 @@ services:
     image: flowci/core:latest
     container_name: flowci-core
     network_mode: "host"
-    ports:
-    - "8080:8080"
+#    ports:
+#    - "8080:8080"
     environment:
       FLOWCI_LOG_LEVEL: INFO
       FLOWCI_WORKSPACE: /data
@@ -32,8 +32,8 @@ services:
     image: mongo:3.6.2-jessie
     container_name: flowci-db
     network_mode: "host"
-    ports:
-    - "27017:27017"
+#    ports:
+#    - "27017:27017"
     volumes:
     - ${HOME}/.flow.ci/mongodb:/data/db
 
@@ -41,15 +41,15 @@ services:
     image: zookeeper:3.4
     container_name: flowci-zk-01
     network_mode: "host"
-    ports:
-    - "2181:2181"
-    - "2888:2888"
-    - "3888:3888"
+#    ports:
+#    - "2181:2181"
+#    - "2888:2888"
+#    - "3888:3888"
 
   flowci-rabbitmq:
     image: rabbitmq:3-management
     container_name: flowci-rabbitmq
     network_mode: "host"
-    ports:
-    - "5672:5672"
-    - "15672:15672"
+#    ports:
+#    - "5672:5672"
+#    - "15672:15672"
