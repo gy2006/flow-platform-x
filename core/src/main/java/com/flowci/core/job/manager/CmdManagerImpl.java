@@ -49,20 +49,22 @@ public class CmdManagerImpl implements CmdManager {
 
     @Override
     public Cmd createShellCmd(Job job, Node node) {
-        VariableMap variables = node.getEnvironments().merge(job.getContext());
+        VariableMap inputs = new VariableMap(job.getContext());
+        inputs.merge(node.getEnvironments());
+
         String script = node.getScript();
 
         if (node.hasPlugin()) {
             Plugin plugin = pluginService.get(node.getPlugin());
-            verifyPluginInput(variables, plugin);
+            verifyPluginInput(inputs, plugin);
             script = plugin.getScript();
         }
 
         // create cmd based on plugin
         Cmd cmd = new Cmd(createId(job, node).toString(), CmdType.SHELL);
-        cmd.setInputs(variables);
+        cmd.setInputs(inputs);
         cmd.setScripts(Lists.newArrayList(script));
-        cmd.setWorkDir(variables.get(Variables.AGENT_WORKSPACE));
+        cmd.setWorkDir(inputs.get(Variables.AGENT_WORKSPACE));
         return cmd;
     }
 
