@@ -171,7 +171,7 @@ public class JobServiceImpl implements JobService {
         job.setAgentSelector(root.getSelector());
 
         // init job context
-        VariableMap defaultContext = initJobContext(flow, buildNumber, input);
+        VariableMap defaultContext = initJobContext(flow, buildNumber, root.getEnvironments(), input);
         job.getContext().merge(defaultContext);
 
         // set expire at
@@ -361,13 +361,17 @@ public class JobServiceImpl implements JobService {
         handleFailureCmd(job, execCmd);
     }
 
-    private VariableMap initJobContext(Flow flow, Long buildNumber, VariableMap input) {
+    private VariableMap initJobContext(Flow flow, Long buildNumber, VariableMap... inputs) {
         VariableMap context = new VariableMap(20);
         context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
         context.putString(Variables.FLOW_NAME, flow.getName());
         context.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
 
-        if (input != null && !input.isEmpty()) {
+        if (Objects.isNull(inputs)) {
+            return context;
+        }
+
+        for (VariableMap input : inputs) {
             context.merge(input);
         }
 
