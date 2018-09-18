@@ -10,3 +10,5 @@ services:
       FLOWCI_AGENT_TOKEN: ${AGENT_TOKEN}
       FLOWCI_AGENT_PORT: 8088
       FLOWCI_AGENT_LOG_LEVEL: INFO
+    volumes:
+      - ${HOME}/.flow.ci.agent:/root/.flow.ci.agent
