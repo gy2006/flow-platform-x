@@ -255,17 +255,21 @@ public class AgentServiceImpl implements AgentService {
         }
 
         agent.setStatus(status);
-
-        // update zookeeper status if new status not same with zk
         String path = getPath(agent);
-        Status current = Status.fromBytes(zk.get(path));
-        if (current != status) {
-            zk.set(path, status.getBytes());
-        }
 
-        // update database status
-        agentDao.save(agent);
-        applicationEventPublisher.publishEvent(new StatusChangeEvent(this, agent));
+        try {
+            // try update zookeeper status if new status not same with zk
+            Status current = Status.fromBytes(zk.get(path));
+            if (current != status) {
+                zk.set(path, status.getBytes());
+            }
+        } catch (ZookeeperException e) {
+            log.warn("Unable to update status on zk node: {}", e.getMessage());
+        } finally {
+            // update database status
+            agentDao.save(agent);
+            applicationEventPublisher.publishEvent(new StatusChangeEvent(this, agent));
+        }
     }
 
     private void syncLockNode(Agent agent, Type type) {
@@ -332,7 +336,8 @@ public class AgentServiceImpl implements AgentService {
             if (event.getType() == Type.CHILD_REMOVED) {
                 syncLockNode(agent, Type.CHILD_REMOVED);
                 updateAgentStatus(agent, Status.OFFLINE);
-                log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_REMOVED, agent.getName(), Status.OFFLINE);
+                log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_REMOVED, agent.getName(),
+                    Status.OFFLINE);
                 return;
             }
 
