@@ -29,6 +29,7 @@
     <caffeine.version>2.6.2</caffeine.version>
     <h2.version>1.4.197</h2.version>
     <wiremock.version>2.18.0</wiremock.version>
+    <swagger2.version>2.7.0</swagger2.version>
   </properties>
 
   <build>
@@ -185,6 +186,18 @@
         <groupId>org.eclipse.jgit</groupId>
         <artifactId>org.eclipse.jgit</artifactId>
         <version>5.0.3.201809091024-r</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-swagger2</artifactId>
+        <version>${swagger2.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-swagger-ui</artifactId>
+        <version>${swagger2.version}</version>
       </dependency>
 
       <dependency>
