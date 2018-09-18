@@ -83,6 +83,8 @@ public class PluginServiceImpl implements PluginService {
 
     private Map<String, Plugin> installed = new ConcurrentHashMap<>(10);
 
+    private final Object reloadLock = new Object();
+
     @Override
     public Collection<Plugin> list() {
         return installed.values();
@@ -126,15 +128,22 @@ public class PluginServiceImpl implements PluginService {
         }
     }
 
+    @Override
+    public void reload() {
+        synchronized (reloadLock) {
+            String repoUrl = pluginProperties.getDefaultRepo();
+            List<PluginRepo> repos = load(repoUrl);
+            clone(repos);
+        }
+    }
+
     @Scheduled(fixedRate = 1000 * 3600)
     public void scheduleSync() {
         if (!pluginProperties.getAutoUpdate()) {
             return;
         }
 
-        String repoUrl = pluginProperties.getDefaultRepo();
-        List<PluginRepo> repos = load(repoUrl);
-        clone(repos);
+        reload();
     }
 
     private Plugin clone(PluginRepo repo) throws GitAPIException, IOException {
