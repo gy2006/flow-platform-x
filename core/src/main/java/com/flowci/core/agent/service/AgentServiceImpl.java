@@ -194,6 +194,7 @@ public class AgentServiceImpl implements AgentService {
             return true;
         } catch (ZookeeperException e) {
             log.debug(e);
+            updateAgentStatus(agent, Status.OFFLINE);
             return false;
         }
     }
@@ -265,9 +266,10 @@ public class AgentServiceImpl implements AgentService {
                 zk.set(path, status.getBytes());
             }
         } catch (ZookeeperException e) {
+            // set agent to offline when zk exception
+            agent.setStatus(Status.OFFLINE);
             log.warn("Unable to update status on zk node: {}", e.getMessage());
         } finally {
-            // update database status
             agentDao.save(agent);
             applicationEventPublisher.publishEvent(new StatusChangeEvent(this, agent));
         }
