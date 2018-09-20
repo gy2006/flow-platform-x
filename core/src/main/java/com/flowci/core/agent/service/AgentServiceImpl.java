@@ -102,6 +102,28 @@ public class AgentServiceImpl implements AgentService {
         }
     }
 
+    @PostConstruct
+    public void initAgentsFromZK() {
+        for (Agent agent : agentDao.findAll()) {
+            String zkPath = getPath(agent);
+            String zkLockPath = getLockPath(agent);
+
+            // set to offline if zk node not exist
+            if (!zk.exist(zkPath)) {
+                agent.setStatus(Status.OFFLINE);
+                agentDao.save(agent);
+                zk.delete(zkLockPath, false);
+                continue;
+            }
+
+            // sync status and lock node
+            Status status = getStatusFromZk(agent);
+            agent.setStatus(status);
+            agentDao.save(agent);
+            syncLockNode(agent, Type.CHILD_ADDED);
+        }
+    }
+
     @Override
     public Settings connect(String token) {
         Agent target = getByToken(token);
@@ -182,8 +204,7 @@ public class AgentServiceImpl implements AgentService {
 
         try {
             // check agent status from zk
-            String zkPath = getPath(agent);
-            Status status = Status.fromBytes(zk.get(zkPath));
+            Status status = getStatusFromZk(agent);
             if (status != Status.IDLE) {
                 return false;
             }
@@ -194,7 +215,6 @@ public class AgentServiceImpl implements AgentService {
             return true;
         } catch (ZookeeperException e) {
             log.debug(e);
-            updateAgentStatus(agent, Status.OFFLINE);
             return false;
         }
     }
@@ -261,7 +281,7 @@ public class AgentServiceImpl implements AgentService {
 
         try {
             // try update zookeeper status if new status not same with zk
-            Status current = Status.fromBytes(zk.get(path));
+            Status current = getStatusFromZk(agent);
             if (current != status) {
                 zk.set(path, status.getBytes());
             }
@@ -298,6 +318,11 @@ public class AgentServiceImpl implements AgentService {
 
     private String getLockPath(Agent agent) {
         return getPath(agent) + LockPathSuffix;
+    }
+
+    private Status getStatusFromZk(Agent agent) {
+        byte[] statusInBytes = zk.get(getPath(agent));
+        return Status.fromBytes(statusInBytes);
     }
 
     private class RootNodeListener implements PathChildrenCacheListener {
@@ -345,8 +370,7 @@ public class AgentServiceImpl implements AgentService {
             }
 
             if (event.getType() == Type.CHILD_UPDATED) {
-                byte[] statusInBytes = zk.get(event.getData().getPath());
-                Status status = Status.fromBytes(statusInBytes);
+                Status status = getStatusFromZk(agent);
                 updateAgentStatus(agent, status);
                 log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_UPDATED, agent.getName(), status);
             }
