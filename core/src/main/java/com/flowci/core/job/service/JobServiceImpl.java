@@ -16,6 +16,8 @@
 
 package com.flowci.core.job.service;
 
+import static com.flowci.core.trigger.domain.GitTrigger.Variables.GIT_AUTHOR;
+
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.domain.Variables;
@@ -165,7 +167,6 @@ public class JobServiceImpl implements JobService {
         job.setKey(JobKeyBuilder.build(flow, buildNumber));
         job.setFlowId(flow.getId());
         job.setTrigger(trigger);
-        job.setCreatedBy(currentUserHelper.get().getId());
         job.setBuildNumber(buildNumber);
         job.setCurrentPath(root.getPathAsString());
         job.setAgentSelector(root.getSelector());
@@ -173,6 +174,14 @@ public class JobServiceImpl implements JobService {
         // init job context
         VariableMap defaultContext = initJobContext(flow, buildNumber, root.getEnvironments(), input);
         job.getContext().merge(defaultContext);
+
+        // setup created by form login user or git event author
+        if (currentUserHelper.hasLogin()) {
+            job.setCreatedBy(currentUserHelper.get().getId());
+        } else {
+            String createdBy = job.getContext().get(GIT_AUTHOR, "Unknown");
+            job.setCreatedBy(createdBy);
+        }
 
         // set expire at
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);

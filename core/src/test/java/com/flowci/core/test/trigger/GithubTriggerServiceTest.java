@@ -21,7 +21,6 @@ import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT
 import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_MESSAGE;
 import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_TIME;
 import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_URL;
-import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMMIT_USER;
 import static com.flowci.core.trigger.domain.GitPushTrigger.Variables.GIT_COMPARE_URL;
 import static com.flowci.core.trigger.domain.GitTrigger.Variables.GIT_EVENT;
 import static com.flowci.core.trigger.domain.GitTrigger.Variables.GIT_SOURCE;
@@ -29,6 +28,7 @@ import static com.flowci.core.trigger.domain.GitTrigger.Variables.GIT_SOURCE;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
+import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.core.trigger.service.GitTriggerService;
@@ -89,7 +89,7 @@ public class GithubTriggerServiceTest extends SpringScenario {
         Assert.assertEquals("2017-08-08T11:19:05+08:00", variables.getString(GIT_COMMIT_TIME));
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/commit/40d0dd6e8e942643d794d7ed8d27610fb8729914",
             variables.getString(GIT_COMMIT_URL));
-        Assert.assertEquals("gy@fir.im", variables.getString(GIT_COMMIT_USER));
+        Assert.assertEquals("gy@fir.im", variables.getString(GitTrigger.Variables.GIT_AUTHOR));
 
     }
 

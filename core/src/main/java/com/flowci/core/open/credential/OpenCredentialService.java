@@ -14,30 +14,36 @@
  * limitations under the License.
  */
 
-package com.flowci.core.open;
+package com.flowci.core.open.credential;
 
+import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.exception.NotFoundException;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 
 /**
  * @author yang
  */
-@RestController
-@RequestMapping("/open/credential")
-public class OpenCredentialController {
+@Service
+public class OpenCredentialService {
 
     @Autowired
-    private OpenCredentialService openCredentialService;
+    private CredentialDao credentialDao;
 
-    @GetMapping("/rsa/{name}/private")
-    public String getRsaPrivateKey(@PathVariable String name) {
-        Credential credential = openCredentialService.get(name, RSAKeyPair.class);
-        RSAKeyPair pair = (RSAKeyPair) credential;
-        return pair.getPrivateKey();
+    public Credential get(String name, Class<? extends Credential> target) {
+        Credential credential = credentialDao.findByName(name);
+
+        if (Objects.isNull(credential)) {
+            throw new NotFoundException("Credential {0} is not found", name);
+        }
+
+        if (credential.getClass().equals(target)) {
+            return credential;
+        }
+
+        throw new NotFoundException("Credential {0} is not found", name);
     }
+
 }

@@ -60,9 +60,20 @@ public abstract class GitTrigger implements Serializable {
 
     public static class Variables {
 
+        /**
+         * Git event source
+         */
         public static final String GIT_SOURCE = "FLOWCI_GIT_SOURCE";
 
+        /**
+         * Git event type
+         */
         public static final String GIT_EVENT = "FLOWCI_GIT_EVENT";
+
+        /**
+         * Should be email of the git user who start an event
+         */
+        public static final String GIT_AUTHOR = "FLOWCI_GIT_AUTHOR";
 
     }
 

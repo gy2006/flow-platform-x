@@ -49,12 +49,12 @@ public class GitPushTrigger extends GitTrigger {
 
         map.putString(Variables.GIT_BRANCH, ref);
         map.putString(Variables.GIT_COMPARE_URL, compareUrl);
+        map.putString(GitTrigger.Variables.GIT_AUTHOR, author.email);
 
         map.putString(Variables.GIT_COMMIT_ID, commitId);
         map.putString(Variables.GIT_COMMIT_MESSAGE, message);
         map.putString(Variables.GIT_COMMIT_TIME, time);
         map.putString(Variables.GIT_COMMIT_URL, commitUrl);
-        map.putString(Variables.GIT_COMMIT_USER, author.email);
         return map;
     }
 
@@ -81,8 +81,5 @@ public class GitPushTrigger extends GitTrigger {
         public static final String GIT_COMMIT_TIME = "FLOWCI_GIT_COMMIT_TIME";
 
         public static final String GIT_COMMIT_URL = "FLOWCI_GIT_COMMIT_URL";
-
-        public static final String GIT_COMMIT_USER = "FLOWCI_GIT_COMMIT_USER";
-
     }
 }
