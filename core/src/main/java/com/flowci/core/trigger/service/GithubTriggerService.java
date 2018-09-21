@@ -49,7 +49,7 @@ public class GithubTriggerService implements GitTriggerService {
             PushObject pushObject = objectMapper.readValue(stream, PushObject.class);
             return pushObject.toTrigger();
         } catch (IOException e) {
-            throw new ArgumentException("Unable to parse Github push event data");
+            throw new ArgumentException("Unable to parse Github push event data: {0}", e.getMessage());
         }
     }
 
@@ -89,6 +89,8 @@ public class GithubTriggerService implements GitTriggerService {
         @JsonProperty("head_commit")
         public CommitObject commit;
 
+        public AuthorObject pusher;
+
         private GitEvent getEvent() {
             return ref.startsWith(TagRefPrefix) ? GitEvent.TAG : GitEvent.PUSH;
         }
@@ -110,11 +112,7 @@ public class GithubTriggerService implements GitTriggerService {
             trigger.setTime(commit.timestamp);
 
             // set commit author info
-            Author author = new Author();
-            author.setEmail(commit.author.email);
-            author.setName(commit.author.name);
-            author.setUsername(commit.author.username);
-            trigger.setAuthor(author);
+            trigger.setAuthor(pusher.toAuthor());
 
             return trigger;
         }
@@ -235,8 +233,6 @@ public class GithubTriggerService implements GitTriggerService {
         public String timestamp;
 
         public String url;
-
-        public AuthorObject author;
     }
 
     private static class AuthorObject {
@@ -246,6 +242,14 @@ public class GithubTriggerService implements GitTriggerService {
         public String email;
 
         public String username;
+
+        public Author toAuthor() {
+            Author author = new Author();
+            author.setEmail(email);
+            author.setName(name);
+            author.setUsername(username);
+            return author;
+        }
 
     }
 }

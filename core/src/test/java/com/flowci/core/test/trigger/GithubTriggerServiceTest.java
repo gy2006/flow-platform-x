@@ -64,9 +64,9 @@ public class GithubTriggerServiceTest extends SpringScenario {
         Assert.assertEquals("master", trigger.getRef());
         Assert.assertEquals("2017-08-08T11:19:05+08:00", trigger.getTime());
 
-        Assert.assertEquals("yang.guo", trigger.getAuthor().getName());
+        Assert.assertEquals("yang-guo-2016", trigger.getAuthor().getName());
         Assert.assertEquals("gy@fir.im", trigger.getAuthor().getEmail());
-        Assert.assertEquals("yang-guo-2016", trigger.getAuthor().getUsername());
+        Assert.assertNull(trigger.getAuthor().getUsername());
     }
 
     @Test
@@ -110,9 +110,9 @@ public class GithubTriggerServiceTest extends SpringScenario {
         Assert.assertEquals("v1.6", trigger.getRef());
         Assert.assertEquals("2017-08-08T13:19:55+08:00", trigger.getTime());
 
-        Assert.assertEquals("yang.guo", trigger.getAuthor().getName());
+        Assert.assertEquals("yang-guo-2016", trigger.getAuthor().getName());
         Assert.assertEquals("gy@fir.im", trigger.getAuthor().getEmail());
-        Assert.assertEquals("yang-guo-2016", trigger.getAuthor().getUsername());
+        Assert.assertNull(trigger.getAuthor().getUsername());
     }
 
     @Test
