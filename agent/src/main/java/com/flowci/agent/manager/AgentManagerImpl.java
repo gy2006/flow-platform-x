@@ -56,18 +56,6 @@ public class AgentManagerImpl implements AgentManager {
         log.info("Agent {} been registered on zk", path);
     }
 
-    @Override
-    public boolean changeStatus(Status status) {
-        String path = getPath();
-        try {
-            zk.set(path, status.getBytes());
-            return true;
-        } catch (Throwable e) {
-            log.error("Cannot change agent status to {}", status);
-            return false;
-        }
-    }
-
     private boolean hasRootNode() {
         String root = agentSettings.getZookeeper().getRoot();
         return zk.exist(root);

@@ -227,7 +227,6 @@ public class AgentServiceImpl implements AgentService {
         }
 
         updateAgentStatus(agent, Status.IDLE);
-        // TODO: send STOP cmd to agent
     }
 
     @Override

@@ -116,7 +116,6 @@ public class CmdServiceImpl implements CmdService {
             }
 
             setCurrent(save(cmd));
-            agentManager.changeStatus(Status.BUSY);
             context.publishEvent(new CmdReceivedEvent(this, current));
 
             if (!current.hasWorkDir()) {
@@ -159,7 +158,6 @@ public class CmdServiceImpl implements CmdService {
         BeanUtils.copyProperties(executed, agentExecutedCmd);
         executedCmdDao.save(agentExecutedCmd);
 
-        agentManager.changeStatus(Status.IDLE);
         queueTemplate.convertAndSend(callbackQueue.getName(), executed);
         setCurrent(null);
         context.publishEvent(new CmdCompleteEvent(this, current, executed));

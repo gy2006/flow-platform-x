@@ -396,11 +396,15 @@ public class JobServiceImpl implements JobService {
         Node current = tree.get(path);
         Node next = tree.next(path);
 
-        // set job status
+        // set job status and release agent
         // - no more node to be executed
         // - current node not allow failure
         if (Objects.isNull(next) || !current.isAllowFailure()) {
             setJobStatus(job, jobStatus, execCmd.getError());
+
+            Agent agent = agentService.get(job.getAgentId());
+            agentService.tryRelease(agent);
+
             log.info("Job {} been executed with status {}", job.getId(), jobStatus);
             return;
         }
@@ -412,8 +416,13 @@ public class JobServiceImpl implements JobService {
         NodeTree tree = getTree(job);
         Node next = tree.next(currentNodePath(job));
 
+        // set job status to success and release agent
         if (Objects.isNull(next)) {
             setJobStatus(job, Job.Status.SUCCESS, null);
+
+            Agent agent = agentService.get(job.getAgentId());
+            agentService.tryRelease(agent);
+
             log.info("Job {} been executed", job.getId());
             return;
         }
