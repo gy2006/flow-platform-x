@@ -26,6 +26,8 @@ public class AgentProperties {
 
     private String workspace;
 
+    private String loggingDir;
+
     private String token;
 
     private String serverUrl;

@@ -84,14 +84,14 @@ public class AgentConfig implements WebMvcConfigurer {
 
     @PostConstruct
     public void initWorkspace() {
-        try {
-            Path path = Paths.get(agentProperties.getWorkspace());
-            Files.createDirectory(path);
-        } catch (FileAlreadyExistsException ignore) {
+        Path path = Paths.get(agentProperties.getWorkspace());
+        initDir(path, "Unable to init workspace");
+    }
 
-        } catch (IOException e) {
-            log.error("Unable to init workspace directory: {}", agentProperties.getWorkspace());
-        }
+    @PostConstruct
+    public void initLoggingDir() {
+        Path path = Paths.get(agentProperties.getLoggingDir());
+        initDir(path, "Unable to init logging dir");
     }
 
     @Bean("objectMapper")
@@ -143,5 +143,15 @@ public class AgentConfig implements WebMvcConfigurer {
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         converters.clear();
         converters.addAll(DefaultConverters);
+    }
+
+    private void initDir(Path path, String errMsg) {
+        try {
+            Files.createDirectories(path);
+        } catch (FileAlreadyExistsException ignore) {
+
+        } catch (IOException e) {
+            log.error("{}: {}", errMsg, path);
+        }
     }
 }

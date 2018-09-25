@@ -28,14 +28,12 @@ import com.flowci.agent.executor.LoggingListener;
 import com.flowci.agent.executor.ProcessListener;
 import com.flowci.agent.executor.ShellExecutor;
 import com.flowci.agent.manager.AgentManager;
-import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
 import java.util.Date;
 import java.util.Optional;
-import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -124,8 +122,8 @@ public class CmdServiceImpl implements CmdService {
 
             cmdThreadPool.execute(() -> {
                 ShellExecutor cmdExecutor = new ShellExecutor(current);
-                cmdExecutor.setProcessListener(new CmdProcessListener());
-                cmdExecutor.setLoggingListener(new CmdLoggingListener());
+                cmdExecutor.setProcessListener(new CmdProcessListener(cmd));
+                cmdExecutor.setLoggingListener(new CmdLoggingListener(cmd));
                 cmdExecutor.run();
                 onAfterExecute(cmdExecutor.getResult());
             });
@@ -200,6 +198,12 @@ public class CmdServiceImpl implements CmdService {
 
     private class CmdLoggingListener implements LoggingListener {
 
+        private final Cmd cmd;
+
+        public CmdLoggingListener(Cmd cmd) {
+            this.cmd = cmd;
+        }
+
         @Override
         public void onLogging(Log item) {
             log.debug("Log Received : {}", item);
@@ -208,8 +212,13 @@ public class CmdServiceImpl implements CmdService {
 
     private class CmdProcessListener implements ProcessListener {
 
-        @Getter
         private ExecutedCmd executed;
+
+        private final Cmd cmd;
+
+        public CmdProcessListener(Cmd cmd) {
+            this.cmd = cmd;
+        }
 
         @Override
         public void onStarted(ExecutedCmd executed) {
