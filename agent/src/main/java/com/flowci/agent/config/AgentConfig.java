@@ -88,7 +88,7 @@ public class AgentConfig implements WebMvcConfigurer {
     }
 
     @Bean("loggingDir")
-    public Path initLoggingDir() {
+    public Path loggingDir() {
         Path path = Paths.get(agentProperties.getLoggingDir());
         return initDir(path, "Unable to init logging dir");
     }

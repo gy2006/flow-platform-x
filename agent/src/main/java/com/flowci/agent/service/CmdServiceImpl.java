@@ -73,7 +73,10 @@ public class CmdServiceImpl implements CmdService {
     private static final Page<String> LogNotFound = new PageImpl<>(ImmutableList.of("Log does not existed on agent"));
 
     @Autowired
-    private AgentProperties agentProperties;
+    private Path workspace;
+
+    @Autowired
+    private Path loggingDir;
 
     @Autowired
     private Queue callbackQueue;
@@ -149,7 +152,7 @@ public class CmdServiceImpl implements CmdService {
             context.publishEvent(new CmdReceivedEvent(this, current));
 
             if (!current.hasWorkDir()) {
-                current.setWorkDir(agentProperties.getWorkspace());
+                current.setWorkDir(workspace.toString());
             }
 
             cmdThreadPool.execute(() -> {
@@ -239,7 +242,7 @@ public class CmdServiceImpl implements CmdService {
     }
 
     private Path getCmdLogPath(String id) {
-        return Paths.get(agentProperties.getLoggingDir(), id + ".log");
+        return Paths.get(loggingDir.toString(), id + ".log");
     }
 
     private class CmdLoggingListener implements LoggingListener {
