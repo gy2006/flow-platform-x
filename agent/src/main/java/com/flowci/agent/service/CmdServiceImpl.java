@@ -31,14 +31,18 @@ import com.flowci.domain.Cmd;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
+import com.google.common.collect.ImmutableList;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -47,7 +51,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -63,6 +69,8 @@ public class CmdServiceImpl implements CmdService {
     private static final Sort SortByReceivedAt = Sort.by(Direction.DESC, "receivedAt");
 
     private static final Sort SortByStartAt = Sort.by(Direction.DESC, "startAt");
+
+    private static final Page<String> LogNotFound = new PageImpl<>(ImmutableList.of("Log does not existed on agent"));
 
     @Autowired
     private AgentProperties agentProperties;
@@ -95,6 +103,28 @@ public class CmdServiceImpl implements CmdService {
             return optional.get();
         }
         throw new NotFoundException("Cmd {0} is not found", id);
+    }
+
+    @Override
+    public Page<String> getLogs(String id, Pageable pageable) {
+        Path logPath = getCmdLogPath(id);
+
+        if (!Files.exists(logPath)) {
+            return LogNotFound;
+        }
+
+        ExecutedCmd executedCmd = getExecutedCmd(id);
+        int i = pageable.getPageNumber() * pageable.getPageSize();
+
+        try (Stream<String> lines = Files.lines(logPath)) {
+            List<String> logs = lines.skip(i)
+                .limit(pageable.getPageSize())
+                .collect(Collectors.toList());
+
+            return new PageImpl<>(logs, pageable, executedCmd.getLogSize());
+        } catch (IOException e) {
+            return LogNotFound;
+        }
     }
 
     @Override
@@ -163,6 +193,16 @@ public class CmdServiceImpl implements CmdService {
         context.publishEvent(new CmdCompleteEvent(this, current, executed));
     }
 
+    private ExecutedCmd getExecutedCmd(String id) {
+        Optional<AgentExecutedCmd> optional = executedCmdDao.findById(id);
+
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+
+        throw new NotFoundException("Executed Cmd {0} is not found", id);
+    }
+
     private Cmd getCurrent() {
         synchronized (lock) {
             return current;
@@ -198,6 +238,10 @@ public class CmdServiceImpl implements CmdService {
         return executor;
     }
 
+    private Path getCmdLogPath(String id) {
+        return Paths.get(agentProperties.getLoggingDir(), id + ".log");
+    }
+
     private class CmdLoggingListener implements LoggingListener {
 
         private final Cmd cmd;
@@ -215,11 +259,12 @@ public class CmdServiceImpl implements CmdService {
             try {
                 writer.write(item.getContent());
                 writer.newLine();
-            } catch (IOException ignore) { }
+            } catch (IOException ignore) {
+            }
         }
 
         @Override
-        public void onFinish() {
+        public void onFinish(long size) {
             if (Objects.isNull(writer)) {
                 return;
             }
@@ -231,8 +276,8 @@ public class CmdServiceImpl implements CmdService {
         }
 
         private void initWriter() {
-            Path path = Paths.get(agentProperties.getLoggingDir(), cmd.getId() + ".log");
             try {
+                Path path = getCmdLogPath(cmd.getId());
                 writer = Files.newBufferedWriter(path);
             } catch (IOException ignore) {
 

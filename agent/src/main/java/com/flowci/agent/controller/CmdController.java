@@ -19,10 +19,15 @@ package com.flowci.agent.controller;
 import com.flowci.agent.domain.request.StartCmd;
 import com.flowci.agent.service.CmdService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -38,6 +43,13 @@ public class CmdController {
     @PostMapping
     public void execute(@Validated @RequestBody StartCmd body) {
         cmdManager.execute(body.toCmd());
+    }
+
+    @GetMapping("/{id}/logs")
+    public Page<String> logs(@PathVariable String id,
+                             @RequestParam(required = false, defaultValue = "0") int page,
+                             @RequestParam(required = false, defaultValue = "50") int size) {
+        return cmdManager.getLogs(id, PageRequest.of(page, size));
     }
 
 }

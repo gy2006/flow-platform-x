@@ -34,6 +34,6 @@ public final class Log implements Serializable {
 
     private final String content;
 
-    private final Integer number;
+    private long number;
 
 }

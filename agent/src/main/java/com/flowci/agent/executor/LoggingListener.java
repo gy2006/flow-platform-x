@@ -24,7 +24,7 @@ public interface LoggingListener {
     default void onLogging(Log item) {
     }
 
-    default void onFinish() {
+    default void onFinish(long size) {
     }
 
 }

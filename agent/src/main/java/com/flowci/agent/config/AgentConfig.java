@@ -34,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -82,16 +81,16 @@ public class AgentConfig implements WebMvcConfigurer {
     @Autowired
     private AgentProperties agentProperties;
 
-    @PostConstruct
-    public void initWorkspace() {
+    @Bean("workspace")
+    public Path workspace() {
         Path path = Paths.get(agentProperties.getWorkspace());
-        initDir(path, "Unable to init workspace");
+        return initDir(path, "Unable to init workspace");
     }
 
-    @PostConstruct
-    public void initLoggingDir() {
+    @Bean("loggingDir")
+    public Path initLoggingDir() {
         Path path = Paths.get(agentProperties.getLoggingDir());
-        initDir(path, "Unable to init logging dir");
+        return initDir(path, "Unable to init logging dir");
     }
 
     @Bean("objectMapper")
@@ -145,13 +144,14 @@ public class AgentConfig implements WebMvcConfigurer {
         converters.addAll(DefaultConverters);
     }
 
-    private void initDir(Path path, String errMsg) {
+    private Path initDir(Path path, String errMsg) {
         try {
-            Files.createDirectories(path);
+            return Files.createDirectories(path);
         } catch (FileAlreadyExistsException ignore) {
-
+            return path;
         } catch (IOException e) {
             log.error("{}: {}", errMsg, path);
+            throw new RuntimeException(e.getMessage());
         }
     }
 }

@@ -110,6 +110,11 @@ public class ExecutedCmd implements Serializable {
      */
     private String error;
 
+    /**
+     * Num of line of the log
+     */
+    private Long logSize;
+
     public ExecutedCmd(String id) {
         this.id = id;
     }

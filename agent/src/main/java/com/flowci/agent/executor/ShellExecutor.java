@@ -221,6 +221,8 @@ public class ShellExecutor {
 
     private Runnable createCmdLoggingReader() {
         return () -> {
+            long lineNum = 0;
+
             try {
                 while (true) {
                     if (stdThreadCountDown.getCount() == 0 && loggingQueue.size() == 0) {
@@ -228,17 +230,23 @@ public class ShellExecutor {
                     }
 
                     Log log = loggingQueue.poll();
-                    if (log == null) {
+
+                    if (Objects.isNull(log)) {
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException ignored) {
+
                         }
-                    } else {
-                        loggingListener.onLogging(log);
+
+                        continue;
                     }
+
+                    log.setNumber(++lineNum);
+                    result.setLogSize(lineNum);
+                    loggingListener.onLogging(log);
                 }
             } finally {
-                loggingListener.onFinish();
+                loggingListener.onFinish(lineNum);
                 logThreadCountDown.countDown();
                 log.trace(" ===== Logging Reader Thread Finish =====");
             }
@@ -249,14 +257,12 @@ public class ShellExecutor {
         return () -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is), BufferSize)) {
                 String line;
-                int count = 0;
                 while ((line = reader.readLine()) != null) {
                     if (Objects.equals(line, endTerm)) {
                         readEnv(reader);
                         break;
                     }
-                    count += 1;
-                    loggingQueue.add(Log.of(type, line, count));
+                    loggingQueue.add(Log.of(type, line));
                 }
             } catch (IOException ignore) {
 
