@@ -22,6 +22,7 @@ import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpMethod.PUT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.domain.AgentConnect;
 import com.flowci.domain.Jsonable;
 import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
@@ -36,6 +37,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.ParameterizedTypeReference;
@@ -81,6 +83,9 @@ public class AgentConfig implements WebMvcConfigurer {
     @Autowired
     private AgentProperties agentProperties;
 
+    @Autowired
+    private ServerProperties serverProperties;
+
     @Bean("workspace")
     public Path workspace() {
         Path path = Paths.get(agentProperties.getWorkspace());
@@ -107,7 +112,6 @@ public class AgentConfig implements WebMvcConfigurer {
     public Settings getConfigFromServer() {
         URI uri = UriComponentsBuilder.fromHttpUrl(agentProperties.getServerUrl())
             .pathSegment("agents", "connect")
-            .queryParam("token", agentProperties.getToken())
             .build()
             .toUri();
 
@@ -115,8 +119,12 @@ public class AgentConfig implements WebMvcConfigurer {
             new ParameterizedTypeReference<ResponseMessage<Settings>>() {
             };
 
+        AgentConnect body = new AgentConnect();
+        body.setPort(serverProperties.getPort());
+        body.setToken(agentProperties.getToken());
+
         try {
-            RequestEntity<Object> requestEntity = new RequestEntity<>(HttpMethod.GET, uri);
+            RequestEntity<Object> requestEntity = new RequestEntity<>(body, HttpMethod.POST, uri);
             ResponseMessage<Settings> message = RestTemplate.exchange(requestEntity, type).getBody();
 
             if (message.getCode() != 200) {

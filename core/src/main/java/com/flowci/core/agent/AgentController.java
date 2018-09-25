@@ -19,9 +19,11 @@ package com.flowci.core.agent;
 import com.flowci.core.agent.domain.CreateAgent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.domain.Agent;
+import com.flowci.domain.AgentConnect;
 import com.flowci.domain.Settings;
 import java.util.List;
 import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,9 +55,11 @@ public class AgentController {
         return agentService.list();
     }
 
-    @GetMapping("/connect")
-    public Settings connect(@RequestParam String token) {
-        return agentService.connect(token);
+    @PostMapping("/connect")
+    public Settings connect(@RequestBody AgentConnect connect, HttpServletRequest request) {
+        String agentIp = request.getRemoteHost();
+        Integer port = connect.getPort();
+        return agentService.connect(connect.getToken());
     }
 
     @PostMapping()
