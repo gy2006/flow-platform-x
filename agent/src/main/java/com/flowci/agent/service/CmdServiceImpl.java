@@ -27,12 +27,17 @@ import com.flowci.agent.executor.Log;
 import com.flowci.agent.executor.LoggingListener;
 import com.flowci.agent.executor.ProcessListener;
 import com.flowci.agent.executor.ShellExecutor;
-import com.flowci.agent.manager.AgentManager;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
@@ -73,9 +78,6 @@ public class CmdServiceImpl implements CmdService {
 
     @Autowired
     private ExecutedCmdDao executedCmdDao;
-
-    @Autowired
-    private AgentManager agentManager;
 
     @Autowired
     private ApplicationContext context;
@@ -200,13 +202,41 @@ public class CmdServiceImpl implements CmdService {
 
         private final Cmd cmd;
 
+        private BufferedWriter writer;
+
         public CmdLoggingListener(Cmd cmd) {
             this.cmd = cmd;
+            initWriter();
         }
 
         @Override
         public void onLogging(Log item) {
             log.debug("Log Received : {}", item);
+            try {
+                writer.write(item.getContent());
+                writer.newLine();
+            } catch (IOException ignore) { }
+        }
+
+        @Override
+        public void onFinish() {
+            if (Objects.isNull(writer)) {
+                return;
+            }
+
+            try {
+                writer.close();
+            } catch (IOException ignore) {
+            }
+        }
+
+        private void initWriter() {
+            Path path = Paths.get(agentProperties.getLoggingDir(), cmd.getId() + ".log");
+            try {
+                writer = Files.newBufferedWriter(path);
+            } catch (IOException ignore) {
+
+            }
         }
     }
 
