@@ -57,6 +57,8 @@ public class Agent implements Serializable {
 
     private String token;
 
+    private String host;
+
     private Set<String> tags = Collections.emptySet();
 
     private Status status = Status.OFFLINE;

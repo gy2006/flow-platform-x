@@ -125,8 +125,11 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public Settings connect(String token) {
+    public Settings connect(String token, String ip, Integer port) {
         Agent target = getByToken(token);
+        target.setHost("http://" + ip + ":" + port);
+        agentDao.save(target);
+
         Settings settings = ObjectsHelper.copy(baseSettings);
         settings.setAgent(target);
         return settings;
