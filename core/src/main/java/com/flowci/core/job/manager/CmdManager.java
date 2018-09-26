@@ -20,15 +20,21 @@ import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.domain.Cmd;
 import com.flowci.tree.Node;
+import org.springframework.data.domain.Page;
 
 /**
  * @author yang
  */
 public interface CmdManager {
-
+    
     CmdId createId(Job job, Node node);
 
     Cmd createShellCmd(Job job, Node node);
 
     Cmd createKillCmd();
+
+    /**
+     * Get logs from agent
+     */
+    Page<String> getLogs(String agentHost, String cmdId);
 }
