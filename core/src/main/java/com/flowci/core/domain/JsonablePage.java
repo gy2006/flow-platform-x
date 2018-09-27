@@ -16,11 +16,16 @@
 
 package com.flowci.core.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.io.IOException;
 import java.util.Collections;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 /**
@@ -30,25 +35,18 @@ import org.springframework.data.domain.Pageable;
 @Setter
 public class JsonablePage<T> extends PageImpl<T> {
 
+    public static class PageableDeserializer extends JsonDeserializer<Pageable> {
+
+        @Override
+        public Pageable deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            JsonNode node = p.getCodec().readTree(p);
+            int pageNumber = node.get("pageNumber").asInt();
+            int pageSize = node.get("pageSize").asInt();
+            return PageRequest.of(pageNumber, pageSize);
+        }
+    }
+
     public JsonablePage() {
         super(Collections.emptyList());
-    }
-
-    @Override
-    @JsonIgnore
-    public Pageable nextPageable() {
-        return super.nextPageable();
-    }
-
-    @Override
-    @JsonIgnore
-    public Pageable previousPageable() {
-        return super.previousPageable();
-    }
-
-    @Override
-    @JsonIgnore
-    public Pageable getPageable() {
-        return super.getPageable();
     }
 }

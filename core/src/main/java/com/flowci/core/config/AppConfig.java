@@ -17,11 +17,13 @@
 package com.flowci.core.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flowci.core.adviser.AuthInterceptor;
 import com.flowci.core.adviser.CrosInterceptor;
+import com.flowci.core.domain.JsonablePage;
 import com.flowci.core.user.User;
 import com.flowci.domain.Jsonable;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -34,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -55,13 +58,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableScheduling
 public class AppConfig {
 
-    private final static List<HttpMessageConverter<?>> DefaultConverters = Lists.newArrayList(
-        new StringHttpMessageConverter(),
-        new ByteArrayHttpMessageConverter(),
-        new MappingJackson2HttpMessageConverter(Jsonable.getMapper()),
-        new ResourceHttpMessageConverter(),
-        new AllEncompassingFormHttpMessageConverter()
-    );
+    private static final ObjectMapper Mapper = Jsonable.getMapper();
+
+    static {
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Pageable.class, new JsonablePage.PageableDeserializer());
+        Mapper.registerModule(module);
+    }
 
     @Autowired
     private ConfigProperties appProperties;
@@ -78,19 +81,30 @@ public class AppConfig {
         }
     }
 
+    @Bean
+    public List<HttpMessageConverter<?>> defaultConverters() {
+        return ImmutableList.of(
+            new StringHttpMessageConverter(),
+            new ByteArrayHttpMessageConverter(),
+            new MappingJackson2HttpMessageConverter(Mapper),
+            new ResourceHttpMessageConverter(),
+            new AllEncompassingFormHttpMessageConverter()
+        );
+    }
+
     @Bean("objectMapper")
     public ObjectMapper objectMapper() {
-        return Jsonable.getMapper();
+        return Mapper;
     }
 
     @Bean("restTemplate")
-    public RestTemplate restTemplate() {
+    public RestTemplate restTemplate(List<HttpMessageConverter<?>> defaultConverters) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setReadTimeout(1000 * 15);
         factory.setConnectTimeout(1000 * 15);
 
         RestTemplate restTemplate = new RestTemplate(factory);
-        restTemplate.setMessageConverters(DefaultConverters);
+        restTemplate.setMessageConverters(defaultConverters);
         return restTemplate;
     }
 
@@ -105,7 +119,7 @@ public class AppConfig {
     }
 
     @Bean
-    public WebMvcConfigurer webMvcConfigurer() {
+    public WebMvcConfigurer webMvcConfigurer(List<HttpMessageConverter<?>> defaultConverters) {
         return new WebMvcConfigurer() {
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
@@ -121,7 +135,7 @@ public class AppConfig {
             @Override
             public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
                 converters.clear();
-                converters.addAll(DefaultConverters);
+                converters.addAll(defaultConverters);
             }
         };
     }
