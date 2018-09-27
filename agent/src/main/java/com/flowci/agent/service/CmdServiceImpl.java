@@ -116,6 +116,7 @@ public class CmdServiceImpl implements CmdService {
         Path logPath = getCmdLogPath(id);
 
         if (Files.notExists(logPath)) {
+            log.debug("Log not found for cmd {} at {}", id, logPath);
             return LogNotFound;
         }
 
