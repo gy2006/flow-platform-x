@@ -17,6 +17,7 @@
 package com.flowci.core.job.manager;
 
 import com.flowci.core.domain.Variables;
+import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
@@ -56,6 +57,9 @@ public class CmdManagerImpl implements CmdManager {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private ExecutedCmdDao executedCmdDao;
 
     @Override
     public CmdId createId(Job job, Node node) {

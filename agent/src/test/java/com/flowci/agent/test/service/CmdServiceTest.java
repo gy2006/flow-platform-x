@@ -59,6 +59,9 @@ import org.springframework.data.domain.PageRequest;
 public class CmdServiceTest extends SpringScenario {
 
     @Autowired
+    private Path loggingDir;
+
+    @Autowired
     private RabbitTemplate queueTemplate;
 
     @Autowired
@@ -258,9 +261,13 @@ public class CmdServiceTest extends SpringScenario {
 
     @Test
     public void should_get_logs_with_page() throws IOException {
+        // init: folder and log file
+        Path file = Paths.get(loggingDir.toString(), "mock-cmd-id.log");
+        Files.deleteIfExists(file);
+        Files.createFile(file);
+
         // init: mock logs
         long size = 1000;
-        Path file = Paths.get(folder.getRoot().toString(), "logs", "mock.log");
 
         try (BufferedWriter writer = Files.newBufferedWriter(file)) {
             for (int i = 0; i < size; i++) {
@@ -270,11 +277,11 @@ public class CmdServiceTest extends SpringScenario {
         }
 
         AgentExecutedCmd entity = new AgentExecutedCmd();
-        entity.setId("mock");
+        entity.setId("mock-cmd-id");
         entity.setLogSize(size);
         executedCmdDao.save(entity);
 
-        Page<String> logs = cmdService.getLogs("mock", PageRequest.of(1, 10));
+        Page<String> logs = cmdService.getLogs("mock-cmd-id", PageRequest.of(1, 10));
         Assert.assertNotNull(logs);
         Assert.assertEquals(size, logs.getTotalElements());
         Assert.assertEquals("hello:10", logs.getContent().get(0));

@@ -16,25 +16,21 @@
 
 package com.flowci.core.job.manager;
 
-import com.flowci.core.job.domain.CmdId;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
-import com.flowci.domain.Cmd;
-import com.flowci.tree.Node;
-import org.springframework.data.domain.Page;
+import com.flowci.core.job.domain.JobYml;
+import com.flowci.tree.NodeTree;
 
 /**
  * @author yang
  */
-public interface CmdManager {
+public interface YmlManager {
 
-    CmdId createId(Job job, Node node);
-
-    Cmd createShellCmd(Job job, Node node);
-
-    Cmd createKillCmd();
+    JobYml create(Flow flow, Job job, Yml yml);
 
     /**
-     * Get logs from agent
+     * Get node tree from job
      */
-    Page<String> getLogs(String agentHost, String cmdId);
+    NodeTree getTree(Job job);
 }

@@ -28,6 +28,7 @@ import com.flowci.core.job.domain.Job.Status;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.manager.CmdManager;
+import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.service.JobService;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
@@ -75,6 +76,9 @@ public class JobServiceTest extends ZookeeperScenario {
     @Autowired
     private CmdManager cmdManager;
 
+    @Autowired
+    private YmlManager ymlManager;
+
     private Flow flow;
 
     private Yml yml;
@@ -103,7 +107,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: create and start job
         Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
-        NodeTree tree = jobService.getTree(job);
+        NodeTree tree = ymlManager.getTree(job);
 
         Assert.assertEquals(Status.PENDING, job.getStatus());
         Assert.assertEquals(tree.getRoot().getPath(), NodePath.create(job.getCurrentPath()));
@@ -112,7 +116,7 @@ public class JobServiceTest extends ZookeeperScenario {
         Assert.assertEquals(Status.ENQUEUE, job.getStatus());
 
         Assert.assertNotNull(job);
-        Assert.assertNotNull(jobService.getTree(job));
+        Assert.assertNotNull(ymlManager.getTree(job));
 
         // then: confirm job is received from queue
         waitForJobFromQueue.await(10, TimeUnit.SECONDS);
@@ -168,7 +172,7 @@ public class JobServiceTest extends ZookeeperScenario {
         Agent agent = agentService.create("hello.agent", null);
         Job job = prepareJobForRunningStatus(agent);
 
-        NodeTree tree = jobService.getTree(job);
+        NodeTree tree = ymlManager.getTree(job);
         Node firstNode = tree.next(tree.getRoot().getPath());
 
         // when: cmd of first node been executed
@@ -222,7 +226,7 @@ public class JobServiceTest extends ZookeeperScenario {
         Agent agent = agentService.create("hello.agent", null);
         Job job = prepareJobForRunningStatus(agent);
 
-        NodeTree tree = jobService.getTree(job);
+        NodeTree tree = ymlManager.getTree(job);
         Node firstNode = tree.next(tree.getRoot().getPath());
 
         // when: cmd of first node with failure
@@ -271,7 +275,7 @@ public class JobServiceTest extends ZookeeperScenario {
         // init: job to mock the first node been send to agent
         Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
 
-        NodeTree tree = jobService.getTree(job);
+        NodeTree tree = ymlManager.getTree(job);
         Node firstNode = tree.next(tree.getRoot().getPath());
 
         job.setAgentId(agent.getId());

@@ -16,7 +16,6 @@
 
 package com.flowci.agent.service;
 
-import com.flowci.agent.config.AgentProperties;
 import com.flowci.agent.dao.ExecutedCmdDao;
 import com.flowci.agent.dao.ReceivedCmdDao;
 import com.flowci.agent.domain.AgentExecutedCmd;
@@ -112,7 +111,7 @@ public class CmdServiceImpl implements CmdService {
     public Page<String> getLogs(String id, Pageable pageable) {
         Path logPath = getCmdLogPath(id);
 
-        if (!Files.exists(logPath)) {
+        if (Files.notExists(logPath)) {
             return LogNotFound;
         }
 

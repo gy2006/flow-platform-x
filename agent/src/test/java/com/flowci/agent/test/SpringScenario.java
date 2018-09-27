@@ -18,13 +18,14 @@ package com.flowci.agent.test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 
 import com.flowci.agent.config.AgentProperties;
 import com.flowci.agent.test.SpringScenario.Config;
 import com.flowci.domain.Agent;
+import com.flowci.domain.AgentConnect;
 import com.flowci.domain.Jsonable;
 import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
@@ -96,8 +97,7 @@ public abstract class SpringScenario {
         Settings settings = new Settings(local, mq, zk, "queue.jobs.callback.test");
         ResponseMessage<Settings> responseBody = new ResponseMessage<>(200, settings);
 
-        stubFor(get(urlPathEqualTo("/agents/connect"))
-            .withQueryParam("token", equalTo(Token))
+        stubFor(post(urlPathEqualTo("/agents/connect"))
             .willReturn(aResponse()
                 .withBody(Jsonable.getMapper().writeValueAsBytes(responseBody))
                 .withHeader("Content-Type", "application/json")));
@@ -115,19 +115,6 @@ public abstract class SpringScenario {
     @TestConfiguration
     static class Config {
 
-        @Bean
-        @Primary
-        public AgentProperties mock() throws IOException {
-            File mockWorkspace = folder.newFolder("workspace");
-            File mockLogDir = folder.newFolder("logs");
-
-            AgentProperties p = new AgentProperties();
-            p.setWorkspace(mockWorkspace.toString());
-            p.setLoggingDir(mockLogDir.toString());
-            p.setServerUrl("http://localhost:8088");
-            p.setToken(Token);
-            return p;
-        }
     }
 
     @Autowired

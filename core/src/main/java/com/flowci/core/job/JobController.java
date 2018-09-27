@@ -23,6 +23,7 @@ import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.service.JobService;
+import com.flowci.core.job.service.StepService;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
@@ -57,6 +58,9 @@ public class JobController {
     @Autowired
     private JobService jobService;
 
+    @Autowired
+    private StepService stepService;
+
     @GetMapping("/{flow}")
     public Page<Job> list(@PathVariable("flow") String name,
                           @RequestParam(required = false, defaultValue = DefaultPage) int page,
@@ -85,7 +89,7 @@ public class JobController {
     @GetMapping("/{flow}/{buildNumberOrLatest}/steps")
     public List<ExecutedCmd> getSteps(@PathVariable("flow") String name, @PathVariable String buildNumberOrLatest) {
         Job job = get(name, buildNumberOrLatest);
-        return jobService.listSteps(job);
+        return stepService.list(job);
     }
 
     @PostMapping

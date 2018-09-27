@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.manager;
+package com.flowci.core.job.service;
 
-import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
-import com.flowci.domain.Cmd;
-import com.flowci.tree.Node;
-import org.springframework.data.domain.Page;
+import com.flowci.domain.ExecutedCmd;
+import java.util.List;
 
 /**
  * @author yang
  */
-public interface CmdManager {
+public interface StepService {
 
-    CmdId createId(Job job, Node node);
-
-    Cmd createShellCmd(Job job, Node node);
-
-    Cmd createKillCmd();
+    List<ExecutedCmd> init(Job job);
 
     /**
-     * Get logs from agent
+     * List step of executed cmd for job
      */
-    Page<String> getLogs(String agentHost, String cmdId);
+    List<ExecutedCmd> list(Job job);
+
+
+    void update(ExecutedCmd cmd);
+
 }

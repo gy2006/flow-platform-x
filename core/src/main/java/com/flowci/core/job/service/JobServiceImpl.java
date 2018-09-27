@@ -24,19 +24,17 @@ import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.helper.ThreadHelper;
-import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobNumberDao;
-import com.flowci.core.job.dao.JobYmlDao;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobNumber;
-import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.StatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
+import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
 import com.flowci.core.user.CurrentUserHelper;
@@ -51,10 +49,8 @@ import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
-import com.google.common.collect.Lists;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -66,7 +62,6 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -97,19 +92,7 @@ public class JobServiceImpl implements JobService {
     private JobDao jobDao;
 
     @Autowired
-    private JobYmlDao jobYmlDao;
-
-    @Autowired
     private JobNumberDao jobNumberDao;
-
-    @Autowired
-    private ExecutedCmdDao executedCmdDao;
-
-    @Autowired
-    private Cache jobTreeCache;
-
-    @Autowired
-    private Cache jobStepCache;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -124,10 +107,16 @@ public class JobServiceImpl implements JobService {
     private ThreadPoolTaskExecutor retryExecutor;
 
     @Autowired
+    private CmdManager cmdManager;
+
+    @Autowired
+    private YmlManager ymlManager;
+
+    @Autowired
     private AgentService agentService;
 
     @Autowired
-    private CmdManager cmdManager;
+    private StepService stepService;
 
     @Override
     public Job get(Flow flow, Long buildNumber) {
@@ -189,18 +178,10 @@ public class JobServiceImpl implements JobService {
         jobDao.save(job);
 
         // create job yml
-        JobYml jobYml = new JobYml(job.getId(), flow.getName(), yml.getRaw());
-        jobYmlDao.save(jobYml);
+        ymlManager.create(flow, job, yml);
 
         // init job steps as executed cmd
-        NodeTree tree = getTree(job);
-        List<ExecutedCmd> steps = new LinkedList<>();
-        for (Node node : tree.getOrdered()) {
-            CmdId id = cmdManager.createId(job, node);
-            steps.add(new ExecutedCmd(id.toString()));
-        }
-        executedCmdDao.insert(steps);
-
+        stepService.init(job);
         return job;
     }
 
@@ -218,32 +199,6 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public NodeTree getTree(Job job) {
-        return jobTreeCache.get(job.getId(), () -> {
-            log.debug("Load node tree for job: {}", job.getId());
-            JobYml yml = jobYmlDao.findById(job.getId()).get();
-            Node root = YmlParser.load(yml.getName(), yml.getRaw());
-            return NodeTree.create(root);
-        });
-    }
-
-    @Override
-    public List<ExecutedCmd> listSteps(Job job) {
-        return jobStepCache.get(job.getId(), () -> {
-            NodeTree tree = getTree(job);
-            List<Node> nodes = tree.getOrdered();
-
-            List<String> cmdIdsInStr = new ArrayList<>(nodes.size());
-            for (Node node : nodes) {
-                CmdId cmdId = cmdManager.createId(job, node);
-                cmdIdsInStr.add(cmdId.toString());
-            }
-
-            return Lists.newArrayList(executedCmdDao.findAllById(cmdIdsInStr));
-        });
-    }
-
-    @Override
     public boolean isExpired(Job job) {
         Instant expireAt = job.getExpireAt().toInstant();
         return Instant.now().compareTo(expireAt) == 1;
@@ -251,7 +206,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public boolean dispatch(Job job, Agent agent) {
-        NodeTree tree = getTree(job);
+        NodeTree tree = ymlManager.getTree(job);
         Node node = tree.get(currentNodePath(job));
 
         try {
@@ -304,7 +259,7 @@ public class JobServiceImpl implements JobService {
                 return;
             }
 
-            NodeTree tree = getTree(job);
+            NodeTree tree = ymlManager.getTree(job);
             Node next = tree.next(currentNodePath(job));
 
             if (Objects.isNull(next)) {
@@ -354,7 +309,7 @@ public class JobServiceImpl implements JobService {
         }
 
         // save executed cmd
-        executedCmdDao.save(execCmd);
+        stepService.update(execCmd);
         log.debug("Executed cmd {} been recorded", execCmd);
 
         // merge job context
@@ -390,7 +345,7 @@ public class JobServiceImpl implements JobService {
     private void handleFailureCmd(Job job, ExecutedCmd execCmd) {
         Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus());
 
-        NodeTree tree = getTree(job);
+        NodeTree tree = ymlManager.getTree(job);
         NodePath path = currentNodePath(job);
 
         Node current = tree.get(path);
@@ -413,7 +368,7 @@ public class JobServiceImpl implements JobService {
     }
 
     private void handleSuccessCmd(Job job) {
-        NodeTree tree = getTree(job);
+        NodeTree tree = ymlManager.getTree(job);
         Node next = tree.next(currentNodePath(job));
 
         // set job status to success and release agent
