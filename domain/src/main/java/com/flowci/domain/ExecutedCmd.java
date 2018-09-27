@@ -113,7 +113,7 @@ public class ExecutedCmd implements Serializable {
     /**
      * Num of line of the log
      */
-    private Long logSize;
+    private Long logSize = -1L;
 
     public ExecutedCmd(String id) {
         this.id = id;

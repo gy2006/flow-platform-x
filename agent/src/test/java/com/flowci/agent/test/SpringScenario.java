@@ -17,15 +17,12 @@
 package com.flowci.agent.test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 
-import com.flowci.agent.config.AgentProperties;
 import com.flowci.agent.test.SpringScenario.Config;
 import com.flowci.domain.Agent;
-import com.flowci.domain.AgentConnect;
 import com.flowci.domain.Jsonable;
 import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
@@ -33,8 +30,6 @@ import com.flowci.zookeeper.ZookeeperClient;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.Sets;
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import lombok.extern.log4j.Log4j2;
 import org.apache.zookeeper.CreateMode;
@@ -47,8 +42,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;

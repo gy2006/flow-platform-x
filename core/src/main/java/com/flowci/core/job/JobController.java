@@ -87,9 +87,18 @@ public class JobController {
     }
 
     @GetMapping("/{flow}/{buildNumberOrLatest}/steps")
-    public List<ExecutedCmd> getSteps(@PathVariable("flow") String name, @PathVariable String buildNumberOrLatest) {
+    public List<ExecutedCmd> getSteps(@PathVariable("flow") String name,
+                                      @PathVariable String buildNumberOrLatest) {
         Job job = get(name, buildNumberOrLatest);
         return stepService.list(job);
+    }
+
+    @GetMapping("/{flow}/{buildNumber}/{executedCmdId}")
+    public Page<String> getStepLog(@PathVariable String flow,
+                                   @PathVariable String buildNumber,
+                                   @PathVariable String executedCmdId) {
+        Job job = get(flow, buildNumber);
+        return stepService.logs(job, executedCmdId);
     }
 
     @PostMapping

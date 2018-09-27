@@ -19,6 +19,7 @@ package com.flowci.core.job.service;
 import com.flowci.core.job.domain.Job;
 import com.flowci.domain.ExecutedCmd;
 import java.util.List;
+import org.springframework.data.domain.Page;
 
 /**
  * @author yang
@@ -31,6 +32,11 @@ public interface StepService {
      * List step of executed cmd for job
      */
     List<ExecutedCmd> list(Job job);
+
+    /**
+     * Get logs from agent
+     */
+    Page<String> logs(Job job, String executedCmdId);
 
 
     void update(ExecutedCmd cmd);

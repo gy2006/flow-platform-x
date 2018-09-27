@@ -16,22 +16,38 @@
 
 package com.flowci.core.job.service;
 
+import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.domain.JsonablePage;
 import com.flowci.core.job.dao.ExecutedCmdDao;
+import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
+import com.flowci.domain.Agent;
 import com.flowci.domain.ExecutedCmd;
+import com.flowci.exception.NotFoundException;
+import com.flowci.exception.StatusException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodeTree;
 import com.google.common.collect.Lists;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * @author yang
@@ -40,6 +56,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class StepServiceImpl implements StepService {
 
+    private static final ParameterizedTypeReference<JsonablePage<String>> AgentLogsType =
+        new ParameterizedTypeReference<JsonablePage<String>>() {
+        };
+
     @Autowired
     private Cache jobStepCache;
 
@@ -47,10 +67,19 @@ public class StepServiceImpl implements StepService {
     private ExecutedCmdDao executedCmdDao;
 
     @Autowired
+    private JobDao jobDao;
+
+    @Autowired
     private YmlManager ymlManager;
 
     @Autowired
     private CmdManager cmdManager;
+
+    @Autowired
+    private AgentService agentService;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Override
     public List<ExecutedCmd> init(Job job) {
@@ -82,7 +111,43 @@ public class StepServiceImpl implements StepService {
     }
 
     @Override
+    public Page<String> logs(Job job, String executedCmdId) {
+        CmdId cmdId = CmdId.parse(executedCmdId);
+
+        if (!getJob(cmdId.getJobId()).equals(job)) {
+            throw new StatusException("Job does not matched");
+        }
+
+        Agent agent = agentService.get(job.getAgentId());
+
+        if (!agent.hasHost()) {
+            throw new StatusException("Agent host not available");
+        }
+
+        URI agentUri = UriComponentsBuilder.fromHttpUrl(agent.getHost())
+            .pathSegment("cmd", executedCmdId, "logs")
+            .build()
+            .toUri();
+
+        try {
+            RequestEntity<Object> request = new RequestEntity<>(HttpMethod.GET, agentUri);
+            ResponseEntity<JsonablePage<String>> entity = restTemplate.exchange(request, AgentLogsType);
+            return entity.getBody();
+        } catch (RestClientException e) {
+            throw new StatusException("Agent not available: {0}", e.getMessage());
+        }
+    }
+
+    @Override
     public void update(ExecutedCmd cmd) {
         executedCmdDao.save(cmd);
+    }
+
+    private Job getJob(String id) {
+        Optional<Job> optional = jobDao.findById(id);
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+        throw new NotFoundException("Job {0} is not existed");
     }
 }

@@ -21,10 +21,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.domain.JsonablePage;
 import com.flowci.core.domain.StatusCode;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.test.JsonablePage;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.ExecutedCmd;
