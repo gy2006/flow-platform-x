@@ -30,6 +30,7 @@ import com.flowci.exception.ArgumentException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -96,9 +97,11 @@ public class JobController {
     @GetMapping("/{flow}/{buildNumber}/{executedCmdId}")
     public Page<String> getStepLog(@PathVariable String flow,
                                    @PathVariable String buildNumber,
-                                   @PathVariable String executedCmdId) {
+                                   @PathVariable String executedCmdId,
+                                   @RequestParam(required = false, defaultValue = "0") int page,
+                                   @RequestParam(required = false, defaultValue = "50") int size) {
         Job job = get(flow, buildNumber);
-        return stepService.logs(job, executedCmdId);
+        return stepService.logs(job, executedCmdId, PageRequest.of(page, size));
     }
 
     @PostMapping

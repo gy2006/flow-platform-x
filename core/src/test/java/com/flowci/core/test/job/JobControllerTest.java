@@ -38,6 +38,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 
 /**
@@ -120,7 +121,7 @@ public class JobControllerTest extends SpringScenario {
         Assert.assertEquals(StatusCode.OK, message.getCode());
 
         // then:
-        JsonablePage<Job> page = message.getData();
+        Page<Job> page = message.getData().toPage();
         Assert.assertEquals(2, page.getTotalElements());
 
         Assert.assertEquals(second, page.getContent().get(0));

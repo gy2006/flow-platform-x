@@ -41,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -111,7 +112,7 @@ public class StepServiceImpl implements StepService {
     }
 
     @Override
-    public Page<String> logs(Job job, String executedCmdId) {
+    public Page<String> logs(Job job, String executedCmdId, Pageable pageable) {
         CmdId cmdId = CmdId.parse(executedCmdId);
 
         if (!getJob(cmdId.getJobId()).equals(job)) {
@@ -126,13 +127,15 @@ public class StepServiceImpl implements StepService {
 
         URI agentUri = UriComponentsBuilder.fromHttpUrl(agent.getHost())
             .pathSegment("cmd", executedCmdId, "logs")
+            .queryParam("page", pageable.getPageNumber())
+            .queryParam("size", pageable.getPageSize())
             .build()
             .toUri();
 
         try {
             RequestEntity<Object> request = new RequestEntity<>(HttpMethod.GET, agentUri);
             ResponseEntity<JsonablePage<String>> entity = restTemplate.exchange(request, AgentLogsType);
-            return entity.getBody();
+            return entity.getBody().toPage();
         } catch (RestClientException e) {
             throw new StatusException("Agent not available: {0}", e.getMessage());
         }
