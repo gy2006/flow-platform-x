@@ -52,7 +52,11 @@ public class AgentManagerImpl implements AgentManager {
         }
 
         String path = getPath();
-        zk.create(CreateMode.EPHEMERAL, path, Status.IDLE.getBytes());
+
+        if (!zk.exist(path)) {
+            zk.create(CreateMode.EPHEMERAL, path, Status.IDLE.getBytes());
+        }
+
         log.info("Agent {} been registered on zk", path);
     }
 
