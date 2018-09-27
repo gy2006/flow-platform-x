@@ -69,7 +69,11 @@ public class CmdServiceImpl implements CmdService {
 
     private static final Sort SortByStartAt = Sort.by(Direction.DESC, "startAt");
 
-    private static final Page<String> LogNotFound = new PageImpl<>(ImmutableList.of("Log does not existed on agent"));
+    private static final Page<String> LogNotFound = new PageImpl<>(
+        ImmutableList.of("Log does not existed on agent"),
+        PageRequest.of(0, 1),
+        1L
+    );
 
     @Autowired
     private Path workspace;
