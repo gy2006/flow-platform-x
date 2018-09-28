@@ -55,7 +55,7 @@ public class ShellExecutorTest {
 
         // run test.sh and export var start with CMD_RUNNER_TEST_ and OUTPUT_2
         ShellExecutor executor = new ShellExecutor(cmd);
-        executor.setLoggingListener(logListener);
+        executor.getLoggingListeners().add(logListener);
         executor.run();
 
         ExecutedCmd result = executor.getResult();

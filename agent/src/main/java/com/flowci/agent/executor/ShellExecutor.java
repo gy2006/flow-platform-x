@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
@@ -44,7 +45,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -79,17 +79,13 @@ public class ShellExecutor {
     private final ProcessBuilder pBuilder;
 
     @Getter
+    private final List<LoggingListener> loggingListeners = new LinkedList<>();
+
+    @Getter
+    private final List<ProcessListener> processListeners = new LinkedList<>();
+
+    @Getter
     private Process process;
-
-    @Getter
-    @Setter
-    private LoggingListener loggingListener = new LoggingListener() {
-    };
-
-    @Getter
-    @Setter
-    private ProcessListener processListener = new ProcessListener() {
-    };
 
     private final ThreadPoolExecutor executor = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.SECONDS,
         new LinkedBlockingQueue<>(),
@@ -129,7 +125,10 @@ public class ShellExecutor {
 
             process = pBuilder.start();
             result.setProcessId(getPid(process));
-            processListener.onStarted(result);
+
+            for (ProcessListener processListener : processListeners) {
+                processListener.onStarted(result);
+            }
 
             // thread to send cmd list to bash
             executor.execute(createCmdListExec(process.getOutputStream(), cmd.getScripts()));
@@ -150,7 +149,11 @@ public class ShellExecutor {
 
             result.setStatusByCode();
             result.setFinishAt(new Date());
-            processListener.onExecuted(result);
+
+            for (ProcessListener processListener : processListeners) {
+                processListener.onExecuted(result);
+            }
+
             log.debug("====== Process executed : {} ======", result.getCode());
 
             logThreadCountDown.await(LoggingWaitSeconds, TimeUnit.SECONDS);
@@ -165,12 +168,20 @@ public class ShellExecutor {
         } catch (InterruptedException e) {
             result.setStatus(Status.KILLED);
             result.setError(e.getMessage());
-            processListener.onException(e);
+
+            for (ProcessListener processListener : processListeners) {
+                processListener.onException(e);
+            }
+
             log.debug("====== Interrupted ======");
         } catch (Throwable e) {
             result.setStatus(Status.EXCEPTION);
             result.setError(e.getMessage());
-            processListener.onException(e);
+
+            for (ProcessListener processListener : processListeners) {
+                processListener.onException(e);
+            }
+
             log.warn(e.getMessage());
         } finally {
             result.setFinishAt(new Date());
@@ -243,10 +254,17 @@ public class ShellExecutor {
 
                     log.setNumber(++lineNum);
                     result.setLogSize(lineNum);
-                    loggingListener.onLogging(log);
+
+                    for (LoggingListener loggingListener : loggingListeners) {
+                        loggingListener.onLogging(log);
+                    }
+
                 }
             } finally {
-                loggingListener.onFinish(lineNum);
+                for (LoggingListener loggingListener : loggingListeners) {
+                    loggingListener.onFinish(lineNum);
+                }
+
                 logThreadCountDown.countDown();
                 log.trace(" ===== Logging Reader Thread Finish =====");
             }

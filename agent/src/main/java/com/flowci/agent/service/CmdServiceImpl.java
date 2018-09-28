@@ -22,8 +22,6 @@ import com.flowci.agent.domain.AgentExecutedCmd;
 import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
-import com.flowci.agent.executor.Log;
-import com.flowci.agent.executor.LoggingListener;
 import com.flowci.agent.executor.ProcessListener;
 import com.flowci.agent.executor.ShellExecutor;
 import com.flowci.domain.Cmd;
@@ -31,14 +29,12 @@ import com.flowci.domain.CmdType;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
 import com.google.common.collect.ImmutableList;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -161,8 +157,8 @@ public class CmdServiceImpl implements CmdService {
 
             cmdThreadPool.execute(() -> {
                 ShellExecutor cmdExecutor = new ShellExecutor(current);
-                cmdExecutor.setProcessListener(new CmdProcessListener(cmd));
-                cmdExecutor.setLoggingListener(new CmdLoggingListener(cmd));
+                cmdExecutor.getProcessListeners().add(new CmdProcessListener(cmd));
+                cmdExecutor.getLoggingListeners().add(new CmdLoggingWriter(cmd, getCmdLogPath(cmd.getId())));
                 cmdExecutor.run();
                 onAfterExecute(cmdExecutor.getResult());
             });
@@ -249,49 +245,6 @@ public class CmdServiceImpl implements CmdService {
         return Paths.get(loggingDir.toString(), id + ".log");
     }
 
-    private class CmdLoggingListener implements LoggingListener {
-
-        private final Cmd cmd;
-
-        private BufferedWriter writer;
-
-        public CmdLoggingListener(Cmd cmd) {
-            this.cmd = cmd;
-            initWriter();
-        }
-
-        @Override
-        public void onLogging(Log item) {
-            log.debug("Log Received : {}", item);
-            try {
-                writer.write(item.getContent());
-                writer.newLine();
-            } catch (IOException ignore) {
-            }
-        }
-
-        @Override
-        public void onFinish(long size) {
-            if (Objects.isNull(writer)) {
-                return;
-            }
-
-            try {
-                writer.close();
-            } catch (IOException ignore) {
-            }
-        }
-
-        private void initWriter() {
-            try {
-                Path path = getCmdLogPath(cmd.getId());
-                writer = Files.newBufferedWriter(path);
-            } catch (IOException ignore) {
-
-            }
-        }
-    }
-
     private class CmdProcessListener implements ProcessListener {
 
         private ExecutedCmd executed;
@@ -316,9 +269,6 @@ public class CmdServiceImpl implements CmdService {
 
         @Override
         public void onException(Throwable e) {
-            if (executed != null) {
-                executed.setError(e.getMessage());
-            }
             log.debug("Cmd Exception : {}", e);
         }
     }
