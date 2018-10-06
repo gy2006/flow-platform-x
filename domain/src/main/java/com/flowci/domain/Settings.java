@@ -37,11 +37,15 @@ public class Settings implements Serializable {
 
     private String callbackQueueName;
 
-    public Settings(Agent agent, RabbitMQ queue, Zookeeper zookeeper, String callbackQueueName) {
+    private String logsExchangeName;
+
+    public Settings(Agent agent, RabbitMQ queue, Zookeeper zookeeper, String callbackQueueName,
+                    String logsExchangeName) {
         this.agent = agent;
         this.queue = queue;
         this.zookeeper = zookeeper;
         this.callbackQueueName = callbackQueueName;
+        this.logsExchangeName = logsExchangeName;
     }
 
     @Data
