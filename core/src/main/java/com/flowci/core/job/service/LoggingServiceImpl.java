@@ -16,8 +16,8 @@
 
 package com.flowci.core.job.service;
 
-import com.flowci.domain.LogItem;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,8 @@ public class LoggingServiceImpl implements LoggingService {
 
     @Override
     @RabbitListener(queues = "#{logsQueue.getName()}", containerFactory = "logsContainerFactory")
-    public void processLogItem(LogItem item) {
-        log.debug(item);
+    public void processLogItem(Message message) {
+        String logItemAsString = new String(message.getBody());
+        log.debug(logItemAsString);
     }
 }

@@ -28,6 +28,7 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,9 +41,9 @@ import org.springframework.context.annotation.Configuration;
 @EnableRabbit
 public class QueueConfig {
 
-    private static final String LoggingExchange = "flowci-logging";
+    private static final String LoggingExchange = "cmd.logs";
 
-    private final Jackson2JsonMessageConverter queueMessageConverter =
+    private final Jackson2JsonMessageConverter jsonMessageConverter =
         new Jackson2JsonMessageConverter(Jsonable.getMapper());
 
     @Autowired
@@ -86,28 +87,29 @@ public class QueueConfig {
 
     @Bean("jobAndCallbackContainerFactory")
     public SimpleRabbitListenerContainerFactory jobAndCallbackContainerFactory(ConnectionFactory connectionFactory) {
-        return createContainerFactory(connectionFactory, 1);
+        return createContainerFactory(connectionFactory, 1, jsonMessageConverter);
     }
 
     @Bean("logsContainerFactory")
     public SimpleRabbitListenerContainerFactory logsContainerFactory(ConnectionFactory connectionFactory) {
-        return createContainerFactory(connectionFactory, 5);
+        return createContainerFactory(connectionFactory, 5, null);
     }
 
     @Bean("queueTemplate")
     public RabbitTemplate rabbitTemplate(ConnectionFactory factory) {
         RabbitTemplate template = new RabbitTemplate(factory);
-        template.setMessageConverter(queueMessageConverter);
+        template.setMessageConverter(jsonMessageConverter);
         return template;
     }
 
     private SimpleRabbitListenerContainerFactory createContainerFactory(ConnectionFactory connectionFactory,
-                                                                        int concurrent) {
+                                                                        int concurrent,
+                                                                        MessageConverter converter) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setConcurrentConsumers(concurrent);
         factory.setMaxConcurrentConsumers(concurrent);
-        factory.setMessageConverter(queueMessageConverter);
+        factory.setMessageConverter(converter);
         return factory;
     }
 }

@@ -16,13 +16,13 @@
 
 package com.flowci.core.job.service;
 
-import com.flowci.domain.LogItem;
+import org.springframework.amqp.core.Message;
 
 /**
  * @author yang
  */
 public interface LoggingService {
 
-    void processLogItem(LogItem item);
+    void processLogItem(Message message);
 
 }

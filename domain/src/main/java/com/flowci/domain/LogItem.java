@@ -36,6 +36,10 @@ public final class LogItem implements Serializable {
         STDERR,
     }
 
+    private static final char Splitter = '#';
+
+    private String cmdId;
+
     private Type type;
 
     private String content;
@@ -45,5 +49,14 @@ public final class LogItem implements Serializable {
     private LogItem(Type type, String content) {
         this.type = type;
         this.content = content;
+    }
+
+    /**
+     * To byte array ex: cmdid#type#number#content
+     *
+     */
+    public byte[] toBytes() {
+        String raw = cmdId + Splitter + type + Splitter + number + Splitter + content;
+        return raw.getBytes();
     }
 }

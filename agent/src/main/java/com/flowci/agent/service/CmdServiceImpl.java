@@ -81,6 +81,9 @@ public class CmdServiceImpl implements CmdService {
     private Queue callbackQueue;
 
     @Autowired
+    private String logsExchange;
+
+    @Autowired
     private RabbitTemplate queueTemplate;
 
     @Autowired
@@ -159,6 +162,7 @@ public class CmdServiceImpl implements CmdService {
                 ShellExecutor cmdExecutor = new ShellExecutor(current);
                 cmdExecutor.getProcessListeners().add(new CmdProcessListener(cmd));
                 cmdExecutor.getLoggingListeners().add(new CmdLoggingWriter(cmd, getCmdLogPath(cmd.getId())));
+                cmdExecutor.getLoggingListeners().add(new CmdLoggingSender(cmd, queueTemplate, logsExchange));
                 cmdExecutor.run();
                 onAfterExecute(cmdExecutor.getResult());
             });

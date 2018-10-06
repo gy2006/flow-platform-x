@@ -87,7 +87,7 @@ public abstract class SpringScenario {
         local.setToken(Token);
         local.setTags(Sets.newHashSet("local", "test"));
 
-        Settings settings = new Settings(local, mq, zk, "queue.jobs.callback.test");
+        Settings settings = new Settings(local, mq, zk, "queue.jobs.callback.test", "cmd.logs.exchange");
         ResponseMessage<Settings> responseBody = new ResponseMessage<>(200, settings);
 
         stubFor(post(urlPathEqualTo("/agents/connect"))

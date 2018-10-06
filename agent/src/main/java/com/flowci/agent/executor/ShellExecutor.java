@@ -253,6 +253,7 @@ public class ShellExecutor {
                         continue;
                     }
 
+                    log.setCmdId(cmd.getId());
                     log.setNumber(++lineNum);
                     result.setLogSize(lineNum);
 
