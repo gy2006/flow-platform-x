@@ -16,11 +16,13 @@
 
 package com.flowci.core.job.service;
 
+import com.flowci.domain.LogItem;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 /**
@@ -31,12 +33,27 @@ import org.springframework.stereotype.Service;
 public class LoggingServiceImpl implements LoggingService {
 
     @Autowired
+    private String topicForLogs;
+
+    @Autowired
     private Queue logsQueue;
+
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
 
     @Override
     @RabbitListener(queues = "#{logsQueue.getName()}", containerFactory = "logsContainerFactory")
     public void processLogItem(Message message) {
         String logItemAsString = new String(message.getBody());
         log.debug(logItemAsString);
+
+        // find cmd id from log item string
+        int firstIndex = logItemAsString.indexOf(LogItem.SPLITTER);
+        String cmdId = logItemAsString.substring(0, firstIndex);
+        String destination = topicForLogs + "/" + cmdId;
+
+        // send string message without cmd id
+        String body = logItemAsString.substring(firstIndex + 1);
+        simpMessagingTemplate.convertAndSend(destination, body);
     }
 }

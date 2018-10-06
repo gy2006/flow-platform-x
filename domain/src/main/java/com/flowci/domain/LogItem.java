@@ -36,7 +36,7 @@ public final class LogItem implements Serializable {
         STDERR,
     }
 
-    private static final char Splitter = '#';
+    public static final char SPLITTER = '#';
 
     private String cmdId;
 
@@ -56,7 +56,7 @@ public final class LogItem implements Serializable {
      *
      */
     public byte[] toBytes() {
-        String raw = cmdId + Splitter + type + Splitter + number + Splitter + content;
+        String raw = cmdId + SPLITTER + type + SPLITTER + number + SPLITTER + content;
         return raw.getBytes();
     }
 }
