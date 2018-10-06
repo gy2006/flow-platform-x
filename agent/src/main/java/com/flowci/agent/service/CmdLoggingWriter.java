@@ -16,7 +16,7 @@
 
 package com.flowci.agent.service;
 
-import com.flowci.agent.executor.Log;
+import com.flowci.domain.LogItem;
 import com.flowci.agent.executor.LoggingListener;
 import com.flowci.domain.Cmd;
 import java.io.BufferedWriter;
@@ -52,7 +52,7 @@ public class CmdLoggingWriter implements LoggingListener {
     }
 
     @Override
-    public void onLogging(Log item) {
+    public void onLogging(LogItem item) {
         log.debug("Log Received : {}", item);
         try {
             writer.write(item.getContent());

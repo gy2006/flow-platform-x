@@ -225,7 +225,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    @RabbitListener(queues = "${app.job.queue-name}")
+    @RabbitListener(queues = "${app.job.queue-name}", containerFactory = "jobAndCallbackContainerFactory")
     public void processJob(Job job) {
         log.debug("Job {} received from queue", job.getId());
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
@@ -283,7 +283,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    @RabbitListener(queues = "${app.job.callback-queue-name}")
+    @RabbitListener(queues = "${app.job.callback-queue-name}", containerFactory = "jobAndCallbackContainerFactory")
     public void processCallback(ExecutedCmd execCmd) {
         CmdId cmdId = CmdId.parse(execCmd.getId());
         if (Objects.isNull(cmdId)) {

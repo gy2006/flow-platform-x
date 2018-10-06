@@ -17,7 +17,7 @@
 package com.flowci.agent.test.executor;
 
 import com.flowci.agent.executor.ShellExecutor;
-import com.flowci.agent.executor.Log;
+import com.flowci.domain.LogItem;
 import com.flowci.agent.executor.LoggingListener;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.CmdType;
@@ -38,7 +38,7 @@ public class ShellExecutorTest {
     private LoggingListener logListener = new LoggingListener() {
 
         @Override
-        public void onLogging(Log log) {
+        public void onLogging(LogItem log) {
             System.out.println(log);
         }
     };

@@ -14,19 +14,26 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.executor;
+package com.flowci.domain;
 
-import com.flowci.domain.LogItem;
+import java.io.Serializable;
+import lombok.Data;
 
 /**
  * @author yang
  */
-public interface LoggingListener {
+@Data(staticConstructor = "of")
+public final class LogItem implements Serializable {
 
-    default void onLogging(LogItem item) {
+    public enum Type {
+        STDOUT,
+        STDERR,
     }
 
-    default void onFinish(long size) {
-    }
+    private final Type type;
+
+    private final String content;
+
+    private long number;
 
 }

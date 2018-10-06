@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2018 fir.im
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.executor;
+package com.flowci.agent.service;
 
-import java.io.Serializable;
-import lombok.Data;
+import com.flowci.domain.LogItem;
+import com.flowci.agent.executor.LoggingListener;
 
 /**
  * @author yang
  */
-@Data(staticConstructor = "of")
-public final class Log implements Serializable {
+public class CmdLoggingSender implements LoggingListener {
 
-    public enum Type {
-        STDOUT,
-        STDERR,
+    @Override
+    public void onLogging(LogItem item) {
+
     }
-
-    private final Type type;
-
-    private final String content;
-
-    private long number;
-
 }

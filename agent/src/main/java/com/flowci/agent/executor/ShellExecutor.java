@@ -19,6 +19,7 @@ package com.flowci.agent.executor;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.ExecutedCmd.Status;
+import com.flowci.domain.LogItem;
 import com.flowci.util.UnixHelper;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -100,7 +101,7 @@ public class ShellExecutor {
 
     private final CountDownLatch logThreadCountDown = new CountDownLatch(1);
 
-    private final Queue<Log> loggingQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<LogItem> loggingQueue = new ConcurrentLinkedQueue<>();
 
     private final String endTerm = String.format("=====EOF-%s=====", UUID.randomUUID());
 
@@ -134,8 +135,8 @@ public class ShellExecutor {
             executor.execute(createCmdListExec(process.getOutputStream(), cmd.getScripts()));
 
             // thread to read stdout and stderr stream and put log to logging queue
-            executor.execute(createStdStreamReader(Log.Type.STDOUT, process.getInputStream()));
-            executor.execute(createStdStreamReader(Log.Type.STDERR, process.getErrorStream()));
+            executor.execute(createStdStreamReader(LogItem.Type.STDOUT, process.getInputStream()));
+            executor.execute(createStdStreamReader(LogItem.Type.STDERR, process.getErrorStream()));
 
             // thread to make consume logging queue
             executor.execute(createCmdLoggingReader());
@@ -240,7 +241,7 @@ public class ShellExecutor {
                         break;
                     }
 
-                    Log log = loggingQueue.poll();
+                    LogItem log = loggingQueue.poll();
 
                     if (Objects.isNull(log)) {
                         try {
@@ -271,7 +272,7 @@ public class ShellExecutor {
         };
     }
 
-    private Runnable createStdStreamReader(final Log.Type type, final InputStream is) {
+    private Runnable createStdStreamReader(final LogItem.Type type, final InputStream is) {
         return () -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is), BufferSize)) {
                 String line;
@@ -280,7 +281,7 @@ public class ShellExecutor {
                         readEnv(reader);
                         break;
                     }
-                    loggingQueue.add(Log.of(type, line));
+                    loggingQueue.add(LogItem.of(type, line));
                 }
             } catch (IOException ignore) {
 

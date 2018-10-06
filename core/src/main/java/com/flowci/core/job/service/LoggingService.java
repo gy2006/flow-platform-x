@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2018 fir.im
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.executor;
+package com.flowci.core.job.service;
 
 import com.flowci.domain.LogItem;
 
 /**
  * @author yang
  */
-public interface LoggingListener {
+public interface LoggingService {
 
-    default void onLogging(LogItem item) {
-    }
-
-    default void onFinish(long size) {
-    }
+    void processLogItem(LogItem item);
 
 }
