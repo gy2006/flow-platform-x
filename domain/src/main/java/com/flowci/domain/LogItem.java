@@ -18,22 +18,32 @@ package com.flowci.domain;
 
 import java.io.Serializable;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author yang
  */
-@Data(staticConstructor = "of")
+@Data
+@NoArgsConstructor
 public final class LogItem implements Serializable {
+
+    public static LogItem of(Type type, String content) {
+        return new LogItem(type, content);
+    }
 
     public enum Type {
         STDOUT,
         STDERR,
     }
 
-    private final Type type;
+    private Type type;
 
-    private final String content;
+    private String content;
 
     private long number;
 
+    private LogItem(Type type, String content) {
+        this.type = type;
+        this.content = content;
+    }
 }

@@ -14,18 +14,28 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.service;
+package com.flowci.core.job.service;
 
 import com.flowci.domain.LogItem;
-import com.flowci.agent.executor.LoggingListener;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  * @author yang
  */
-public class CmdLoggingSender implements LoggingListener {
+@Log4j2
+@Service
+public class LoggingServiceImpl implements LoggingService {
+
+    @Autowired
+    private Queue logsQueue;
 
     @Override
-    public void onLogging(LogItem item) {
-
+    @RabbitListener(queues = "#{logsQueue.getName()}", containerFactory = "logsContainerFactory")
+    public void processLogItem(LogItem item) {
+        log.debug(item);
     }
 }
