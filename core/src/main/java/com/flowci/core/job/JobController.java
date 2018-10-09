@@ -32,6 +32,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -88,7 +89,7 @@ public class JobController {
         }
     }
 
-    @GetMapping("/{flow}/{buildNumber}/yml")
+    @GetMapping(value = "/{flow}/{buildNumber}/yml", produces = MediaType.TEXT_PLAIN_VALUE)
     public String getYml(@PathVariable String flow, @PathVariable String buildNumber) {
         Job job = get(flow, buildNumber);
         JobYml yml = jobService.getYml(job);
