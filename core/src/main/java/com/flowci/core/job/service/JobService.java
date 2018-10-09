@@ -20,6 +20,7 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobYml;
 import com.flowci.domain.Agent;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
@@ -34,6 +35,11 @@ public interface JobService {
      * Get job by flow and build number
      */
     Job get(Flow flow, Long buildNumber);
+
+    /**
+     * Get job yml by job
+     */
+    JobYml getYml(Job job);
 
     /**
      * Get latest job

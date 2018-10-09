@@ -27,6 +27,8 @@ import com.flowci.tree.NodeTree;
  */
 public interface YmlManager {
 
+    JobYml get(Job job);
+
     JobYml create(Flow flow, Job job, Yml yml);
 
     /**

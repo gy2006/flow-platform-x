@@ -21,9 +21,11 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.dao.JobYmlDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobYml;
+import com.flowci.exception.NotFoundException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
+import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -41,6 +43,17 @@ public class YmlManagerImpl implements YmlManager {
 
     @Autowired
     private JobYmlDao jobYmlDao;
+
+    @Override
+    public JobYml get(Job job) {
+        Optional<JobYml> optional = jobYmlDao.findById(job.getId());
+
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+
+        throw new NotFoundException("The yml for job {0} is not existed", job.getId());
+    }
 
     @Override
     public JobYml create(Flow flow, Job job, Yml yml) {

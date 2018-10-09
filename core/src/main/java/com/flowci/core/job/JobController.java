@@ -22,6 +22,7 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.service.JobService;
 import com.flowci.core.job.service.StepService;
 import com.flowci.domain.ExecutedCmd;
@@ -87,10 +88,17 @@ public class JobController {
         }
     }
 
+    @GetMapping("/{flow}/{buildNumber}/yml")
+    public String getYml(@PathVariable String flow, @PathVariable String buildNumber) {
+        Job job = get(flow, buildNumber);
+        JobYml yml = jobService.getYml(job);
+        return yml.getRaw();
+    }
+
     @GetMapping("/{flow}/{buildNumberOrLatest}/steps")
-    public List<ExecutedCmd> getSteps(@PathVariable("flow") String name,
+    public List<ExecutedCmd> getSteps(@PathVariable String flow,
                                       @PathVariable String buildNumberOrLatest) {
-        Job job = get(name, buildNumberOrLatest);
+        Job job = get(flow, buildNumberOrLatest);
         return stepService.list(job);
     }
 

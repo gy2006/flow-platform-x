@@ -30,6 +30,7 @@ import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobNumber;
+import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.StatusChangeEvent;
@@ -128,6 +129,11 @@ public class JobServiceImpl implements JobService {
         }
 
         return job;
+    }
+
+    @Override
+    public JobYml getYml(Job job) {
+        return ymlManager.get(job);
     }
 
     @Override
