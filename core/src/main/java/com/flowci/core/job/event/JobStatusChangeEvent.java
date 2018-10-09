@@ -21,9 +21,9 @@ import com.flowci.core.job.domain.Job;
 /**
  * @author yang
  */
-public class StatusChangeEvent extends JobEvent {
+public class JobStatusChangeEvent extends JobEvent {
 
-    public StatusChangeEvent(Object source, Job job) {
+    public JobStatusChangeEvent(Object source, Job job) {
         super(source, job);
     }
 }

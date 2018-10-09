@@ -18,7 +18,7 @@ package com.flowci.core.job.consumer;
 
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobPush.Type;
-import com.flowci.core.job.event.StatusChangeEvent;
+import com.flowci.core.job.event.JobStatusChangeEvent;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
@@ -30,10 +30,10 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class StatusChangeConsumer extends PushConsumer implements ApplicationListener<StatusChangeEvent> {
+public class StatusChangeConsumer extends PushConsumer implements ApplicationListener<JobStatusChangeEvent> {
 
     @Override
-    public void onApplicationEvent(StatusChangeEvent event) {
+    public void onApplicationEvent(JobStatusChangeEvent event) {
         Job job = event.getJob();
         push(Type.STATUS_CHANGE, job);
         log.debug("Job {} with status {} been pushed", job.getId(), job.getStatus());

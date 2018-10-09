@@ -33,7 +33,7 @@ import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
-import com.flowci.core.job.event.StatusChangeEvent;
+import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
@@ -433,7 +433,7 @@ public class JobServiceImpl implements JobService {
         job.setStatus(newStatus);
         job.setMessage(message);
         jobDao.save(job);
-        applicationEventPublisher.publishEvent(new StatusChangeEvent(this, job));
+        applicationEventPublisher.publishEvent(new JobStatusChangeEvent(this, job));
         return job;
     }
 
