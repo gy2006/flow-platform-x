@@ -32,6 +32,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final String jobsTopic = "/topic/jobs";
 
+    /**
+     * Ex: /topic/steps/{job id}
+     */
+    private final String stepsTopic = "/topic/steps";
+
+    /**
+     * Ex: /topic/logs/{cmd id}
+     */
     private final String logsTopic = "/topic/logs";
 
     private final String agentsTopic = "/topic/agents";
@@ -43,21 +51,26 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker(jobsTopic, logsTopic, agentsTopic);
+        registry.enableSimpleBroker(jobsTopic, stepsTopic, logsTopic, agentsTopic);
         registry.setApplicationDestinationPrefixes("/app");
     }
 
-    @Bean
+    @Bean("topicForJobs")
     public String topicForJobs() {
         return jobsTopic;
     }
 
-    @Bean
+    @Bean("topicForSteps")
+    public String topicForSteps() {
+        return stepsTopic;
+    }
+
+    @Bean("topicForLogs")
     public String topicForLogs() {
         return logsTopic;
     }
 
-    @Bean
+    @Bean("topicForAgents")
     public String topicForAgents() {
         return agentsTopic;
     }
