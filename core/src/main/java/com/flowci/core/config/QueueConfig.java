@@ -92,7 +92,7 @@ public class QueueConfig {
 
     @Bean("logsContainerFactory")
     public SimpleRabbitListenerContainerFactory logsContainerFactory(ConnectionFactory connectionFactory) {
-        return createContainerFactory(connectionFactory, 5, null);
+        return createContainerFactory(connectionFactory, 1, null);
     }
 
     @Bean("queueTemplate")
