@@ -57,14 +57,14 @@ Cmd logging: `/topic/logs/{cmd id}`
 Job Event: `/topic/jobs`
 
 - Example:
-  ```javascript
+  ```
   const path = '/topic/jobs
   stompClient.subscribe(path, function (data) {
     
   });
   ```
 - Data:
-  ```json
+  ```
     {
       "event": "NEW_CREATED" | "STATUS_CHANGE",
       "job": {
