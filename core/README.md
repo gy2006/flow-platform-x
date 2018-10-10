@@ -50,5 +50,26 @@ Cmd logging: `/topic/logs/{cmd id}`
   const path = '/topic/logs/' + step.id;
   stompClient.subscribe(path, function (data) {
     console.log(data.body + " =======");
+    // STDOUT#10#hello world
   });
   ```
+  
+Job Event: `/topic/jobs`
+
+- Example:
+  ```javascript
+  const path = '/topic/jobs
+  stompClient.subscribe(path, function (data) {
+    
+  });
+  ```
+- Data:
+  ```json
+    {
+      "event": "NEW_CREATED" | "STATUS_CHANGE",
+      "job": {
+        ...
+      }
+    }
+  ```
+

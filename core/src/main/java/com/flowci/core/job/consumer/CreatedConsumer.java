@@ -17,7 +17,7 @@
 package com.flowci.core.job.consumer;
 
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.domain.JobPush.Type;
+import com.flowci.core.job.domain.JobPush.Event;
 import com.flowci.core.job.event.JobCreatedEvent;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.ApplicationListener;
@@ -33,7 +33,7 @@ public class CreatedConsumer extends PushConsumer implements ApplicationListener
     @Override
     public void onApplicationEvent(JobCreatedEvent event) {
         Job job = event.getJob();
-        push(Type.NEW_CREATED, job);
+        push(Event.NEW_CREATED, job);
         log.debug("Job {} been pushed", job.getId());
     }
 }

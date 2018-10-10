@@ -19,6 +19,7 @@ package com.flowci.core.job.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobPush;
+import com.flowci.core.job.domain.JobPush.Event;
 import java.io.IOException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ public abstract class PushConsumer {
     @Autowired
     private String topicForJobs;
 
-    protected void push(JobPush.Type pushType, Job job) {
+    protected void push(Event pushType, Job job) {
         try {
             JobPush push = JobPush.of(pushType, job);
             String json = objectMapper.writeValueAsString(push);

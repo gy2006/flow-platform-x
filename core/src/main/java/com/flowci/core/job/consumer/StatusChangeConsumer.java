@@ -17,7 +17,7 @@
 package com.flowci.core.job.consumer;
 
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.domain.JobPush.Type;
+import com.flowci.core.job.domain.JobPush.Event;
 import com.flowci.core.job.event.JobStatusChangeEvent;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.ApplicationListener;
@@ -35,7 +35,7 @@ public class StatusChangeConsumer extends PushConsumer implements ApplicationLis
     @Override
     public void onApplicationEvent(JobStatusChangeEvent event) {
         Job job = event.getJob();
-        push(Type.STATUS_CHANGE, job);
+        push(Event.STATUS_CHANGE, job);
         log.debug("Job {} with status {} been pushed", job.getId(), job.getStatus());
     }
 }
