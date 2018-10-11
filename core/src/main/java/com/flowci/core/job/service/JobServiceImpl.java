@@ -354,13 +354,15 @@ public class JobServiceImpl implements JobService {
         NodePath path = currentNodePath(job);
 
         Node current = tree.get(path);
+        boolean allowFailure = current.isAllowFailure();
+
         Node next = tree.next(path);
 
         // set job status and release agent
         // - no more node to be executed
         // - current node not allow failure
-        if (Objects.isNull(next) || !current.isAllowFailure()) {
-            Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus(), current);
+        if (Objects.isNull(next) || !allowFailure) {
+            Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus(), allowFailure);
             setJobStatus(job, jobStatus, execCmd.getError());
 
             Agent agent = agentService.get(job.getAgentId());
