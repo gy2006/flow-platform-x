@@ -187,6 +187,8 @@ public class JobServiceImpl implements JobService {
 
         // init job steps as executed cmd
         stepService.init(job);
+
+        applicationEventPublisher.publishEvent(new JobCreatedEvent(this, job));
         return job;
     }
 
@@ -421,7 +423,6 @@ public class JobServiceImpl implements JobService {
 
         try {
             queueTemplate.convertAndSend(jobQueue.getName(), job);
-            applicationEventPublisher.publishEvent(new JobCreatedEvent(this, job));
             setJobStatus(job, Job.Status.ENQUEUE, null);
             return job;
         } catch (Throwable e) {
