@@ -19,6 +19,7 @@ package com.flowci.core.job.util;
 import com.flowci.core.job.domain.Job;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.ExecutedCmd.Status;
+import com.flowci.tree.Node;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
@@ -34,7 +35,12 @@ public class StatusHelper {
         .put(Status.TIMEOUT, Job.Status.TIMEOUT)
         .build();
 
-    public static Job.Status convert(ExecutedCmd.Status status) {
+    public static Job.Status convert(ExecutedCmd.Status status, Node node) {
+        // handle cmd failure but allow failure in the node
+        if (status != Status.SUCCESS && node.isAllowFailure()) {
+            return Job.Status.SUCCESS;
+        }
+
         return StatusMapping.get(status);
     }
 

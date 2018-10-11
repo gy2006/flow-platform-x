@@ -350,8 +350,6 @@ public class JobServiceImpl implements JobService {
     }
 
     private void handleFailureCmd(Job job, ExecutedCmd execCmd) {
-        Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus());
-
         NodeTree tree = ymlManager.getTree(job);
         NodePath path = currentNodePath(job);
 
@@ -362,6 +360,7 @@ public class JobServiceImpl implements JobService {
         // - no more node to be executed
         // - current node not allow failure
         if (Objects.isNull(next) || !current.isAllowFailure()) {
+            Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus(), current);
             setJobStatus(job, jobStatus, execCmd.getError());
 
             Agent agent = agentService.get(job.getAgentId());

@@ -221,8 +221,9 @@ public class JobServiceTest extends ZookeeperScenario {
     }
 
     @Test
-    public void should_handle_cmd_callback_for_failure_status_but_allow_failure() {
+    public void should_handle_cmd_callback_for_failure_status_but_allow_failure() throws IOException {
         // init: agent and job
+        yml = flowService.saveYml(flow, StringHelper.toString(load("flow-all-failure.yml")));
         Agent agent = agentService.create("hello.agent", null);
         Job job = prepareJobForRunningStatus(agent);
 
@@ -257,7 +258,6 @@ public class JobServiceTest extends ZookeeperScenario {
         executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString());
         executedCmd.setStatus(ExecutedCmd.Status.TIMEOUT);
         executedCmd.setOutput(output);
-        executedCmd.setError("timeout");
 
         jobService.processCallback(executedCmd);
 
@@ -266,9 +266,8 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // then: job should be timeout with error message
         job = jobDao.findById(job.getId()).get();
-        Assert.assertEquals(Status.TIMEOUT, job.getStatus());
+        Assert.assertEquals(Status.SUCCESS, job.getStatus());
         Assert.assertEquals("hello.timeout", job.getContext().getString("HELLO_TIMEOUT"));
-        Assert.assertEquals("timeout", job.getMessage());
     }
 
     private Job prepareJobForRunningStatus(Agent agent) {
