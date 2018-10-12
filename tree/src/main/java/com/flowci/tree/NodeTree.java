@@ -108,7 +108,7 @@ public class NodeTree {
             return null;
         }
 
-        for (int i = nextIndex; nextIndex < ordered.size(); i++) {
+        for (int i = nextIndex; i < ordered.size(); i++) {
             Node node = ordered.get(i);
             if (node.isFinal()) {
                 return node;
