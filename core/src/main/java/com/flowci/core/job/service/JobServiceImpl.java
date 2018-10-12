@@ -350,22 +350,13 @@ public class JobServiceImpl implements JobService {
     }
 
     private void handleFailureCmd(Job job, ExecutedCmd execCmd) {
-        NodeTree tree = ymlManager.getTree(job);
-        NodePath path = currentNodePath(job);
-        Node next = tree.next(path);
+        Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus());
+        setJobStatus(job, jobStatus, execCmd.getError());
 
-        if (Objects.isNull(next)) {
-            Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus());
-            setJobStatus(job, jobStatus, execCmd.getError());
+        Agent agent = agentService.get(job.getAgentId());
+        agentService.tryRelease(agent);
 
-            Agent agent = agentService.get(job.getAgentId());
-            agentService.tryRelease(agent);
-
-            log.info("Job {} been executed with status {}", job.getId(), jobStatus);
-            return;
-        }
-
-        setupNodePathAndDispatch(job, next);
+        log.info("Job {} been executed with status {}", job.getId(), jobStatus);
     }
 
     private void handleSuccessCmd(Job job) {
