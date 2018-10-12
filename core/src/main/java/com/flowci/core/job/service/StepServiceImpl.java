@@ -30,7 +30,6 @@ import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodeTree;
-import com.google.common.collect.Lists;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -89,7 +88,7 @@ public class StepServiceImpl implements StepService {
 
         for (Node node : tree.getOrdered()) {
             CmdId id = cmdManager.createId(job, node);
-            steps.add(new ExecutedCmd(id.toString()));
+            steps.add(new ExecutedCmd(id.toString(), node.isAllowFailure()));
         }
 
         return executedCmdDao.insert(steps);

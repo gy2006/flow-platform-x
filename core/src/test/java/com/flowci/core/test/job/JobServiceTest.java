@@ -167,7 +167,7 @@ public class JobServiceTest extends ZookeeperScenario {
     }
 
     @Test
-    public void should_handle_cmd_callback_for_success_status() throws InterruptedException {
+    public void should_handle_cmd_callback_for_success_status() {
         // init: agent and job
         Agent agent = agentService.create("hello.agent", null);
         Job job = prepareJobForRunningStatus(agent);
@@ -179,7 +179,8 @@ public class JobServiceTest extends ZookeeperScenario {
         VariableMap output = new VariableMap();
         output.putString("HELLO_WORLD", "hello.world");
 
-        ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString());
+        ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString(),
+            firstNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
 
@@ -202,7 +203,7 @@ public class JobServiceTest extends ZookeeperScenario {
         output = new VariableMap();
         output.putString("HELLO_JAVA", "hello.java");
 
-        executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString());
+        executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString(), secondNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
 
@@ -234,7 +235,8 @@ public class JobServiceTest extends ZookeeperScenario {
         VariableMap output = new VariableMap();
         output.putString("HELLO_WORLD", "hello.world");
 
-        ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString());
+        ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString(),
+            firstNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
         executedCmd.setOutput(output);
 
@@ -255,7 +257,7 @@ public class JobServiceTest extends ZookeeperScenario {
         output = new VariableMap();
         output.putString("HELLO_TIMEOUT", "hello.timeout");
 
-        executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString());
+        executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString(), secondNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.TIMEOUT);
         executedCmd.setOutput(output);
 

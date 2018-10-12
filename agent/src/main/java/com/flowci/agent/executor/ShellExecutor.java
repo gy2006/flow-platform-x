@@ -107,7 +107,7 @@ public class ShellExecutor {
 
     public ShellExecutor(Cmd cmd) {
         this.cmd = cmd;
-        this.result = new ExecutedCmd(cmd.getId());
+        this.result = new ExecutedCmd(cmd);
 
         // init process builder
         this.pBuilder = new ProcessBuilder(LinuxBash).directory(getWorkDir(cmd).toFile());

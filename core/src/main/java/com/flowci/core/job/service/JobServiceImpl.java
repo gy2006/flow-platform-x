@@ -321,6 +321,9 @@ public class JobServiceImpl implements JobService {
 
         // merge job context
         job.getContext().merge(execCmd.getOutput());
+
+        // TODO: Set JOB_STATUS variable
+
         jobDao.save(job);
 
         // continue to run next node
@@ -337,6 +340,7 @@ public class JobServiceImpl implements JobService {
         context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
         context.putString(Variables.FLOW_NAME, flow.getName());
         context.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
+        context.putString(Variables.JOB_STATUS, Job.Status.PENDING.name());
 
         if (Objects.isNull(inputs)) {
             return context;
@@ -352,17 +356,13 @@ public class JobServiceImpl implements JobService {
     private void handleFailureCmd(Job job, ExecutedCmd execCmd) {
         NodeTree tree = ymlManager.getTree(job);
         NodePath path = currentNodePath(job);
-
-        Node current = tree.get(path);
-        boolean allowFailure = current.isAllowFailure();
-
         Node next = tree.next(path);
 
         // set job status and release agent
         // - no more node to be executed
         // - current node not allow failure
-        if (Objects.isNull(next) || !allowFailure) {
-            Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus(), allowFailure);
+        if (Objects.isNull(next)) {
+            Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus());
             setJobStatus(job, jobStatus, execCmd.getError());
 
             Agent agent = agentService.get(job.getAgentId());

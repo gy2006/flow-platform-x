@@ -14,26 +14,24 @@
  * limitations under the License.
  */
 
-package com.flowci.core.domain;
+package com.flowci.domain;
+
+import java.io.Serializable;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 
 /**
  * @author yang
  */
-public class Variables {
+@Getter
+@Setter
+@EqualsAndHashCode(of = {"id"})
+public abstract class CmdBase implements Serializable {
 
-    public static final String SERVER_URL = "FLOWCI_SERVER_URL";
+    @NonNull
+    private String id;
 
-    public static final String FLOW_NAME = "FLOWCI_FLOW_NAME";
-
-    public static final String JOB_BUILD_NUMBER = "FLOWCI_JOB_BUILD_NUM";
-
-    /**
-     * Job status updated by each step
-     */
-    public static final String JOB_STATUS = "FLOWCI_JOB_STATUS";
-
-    public static final String AGENT_WORKSPACE = "FLOWCI_AGENT_WORKSPACE";
-
-    private Variables() {
-    }
+    private Boolean allowFailure = Boolean.FALSE;
 }

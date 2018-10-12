@@ -34,12 +34,7 @@ public class StatusHelper {
         .put(Status.TIMEOUT, Job.Status.TIMEOUT)
         .build();
 
-    public static Job.Status convert(ExecutedCmd.Status status, boolean allowFailure) {
-        // handle cmd failure but allow failure in the node
-        if (status != Status.SUCCESS && allowFailure) {
-            return Job.Status.SUCCESS;
-        }
-
+    public static Job.Status convert(ExecutedCmd.Status status) {
         return StatusMapping.get(status);
     }
 

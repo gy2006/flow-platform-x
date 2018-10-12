@@ -33,8 +33,8 @@ import lombok.NonNull;
  */
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(of = {"id"})
-public class Cmd implements Serializable {
+@EqualsAndHashCode(callSuper = true)
+public class Cmd extends CmdBase {
 
     @NonNull
     private String id;
