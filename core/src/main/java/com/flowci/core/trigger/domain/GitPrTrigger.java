@@ -24,7 +24,6 @@ import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_HEAD_REPO
 import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_HEAD_REPO_NAME;
 import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_MESSAGE;
 import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_NUMBER;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_SENDER;
 import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_TIME;
 import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_TITLE;
 import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_URL;
@@ -65,13 +64,13 @@ public class GitPrTrigger extends GitTrigger {
     @Override
     public VariableMap toVariableMap() {
         VariableMap map = super.toVariableMap();
+        map.putString(GitTrigger.Variables.GIT_AUTHOR, sender.username);
 
         map.putString(PR_TITLE, title);
         map.putString(PR_MESSAGE, body);
         map.putString(PR_URL, url);
         map.putString(PR_TIME, time);
         map.putString(PR_NUMBER, number);
-        map.putString(PR_SENDER, sender.username);
 
         map.putString(PR_HEAD_REPO_NAME, head.repoName);
         map.putString(PR_HEAD_REPO_BRANCH, head.ref);
@@ -94,8 +93,6 @@ public class GitPrTrigger extends GitTrigger {
         public static final String PR_TIME = "FLOWCI_GIT_PR_TIME";
 
         public static final String PR_NUMBER = "FLOWCI_GIT_PR_NUMBER";
-
-        public static final String PR_SENDER = "FLOWCI_GIT_PR_SENDER";
 
         public static final String PR_HEAD_REPO_NAME = "FLOWCI_GIT_PR_HEAD_REPO_NAME";
 

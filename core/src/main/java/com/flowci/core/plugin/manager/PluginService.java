@@ -45,4 +45,9 @@ public interface PluginService {
      * Git clone plugin repos in Async
      */
     void clone(List<PluginRepo> repos);
+
+    /**
+     * Reload default plugin repo
+     */
+    void reload();
 }

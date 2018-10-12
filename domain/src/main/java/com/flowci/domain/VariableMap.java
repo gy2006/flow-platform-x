@@ -19,6 +19,7 @@ package com.flowci.domain;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author yang
@@ -53,6 +54,11 @@ public class VariableMap extends LinkedHashMap<String, String> implements Serial
 
     public String getString(String key) {
         return get(key);
+    }
+
+    public String get(String key, String defaultValue) {
+        String value = get(key);
+        return Objects.isNull(value) ? defaultValue : value;
     }
 
     public void reset(Map<String, String> vars) {

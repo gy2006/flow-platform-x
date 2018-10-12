@@ -14,16 +14,26 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.event;
+package com.flowci.core.job.consumer;
 
 import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.domain.JobPush.Event;
+import com.flowci.core.job.event.JobCreatedEvent;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.context.ApplicationListener;
+import org.springframework.stereotype.Component;
 
 /**
  * @author yang
  */
-public class StatusChangeEvent extends JobEvent {
+@Log4j2
+@Component
+public class CreatedConsumer extends PushConsumer implements ApplicationListener<JobCreatedEvent> {
 
-    public StatusChangeEvent(Object source, Job job) {
-        super(source, job);
+    @Override
+    public void onApplicationEvent(JobCreatedEvent event) {
+        Job job = event.getJob();
+        push(Event.NEW_CREATED, job);
+        log.debug("Job {} been pushed", job.getId());
     }
 }

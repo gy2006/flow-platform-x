@@ -24,6 +24,8 @@ import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author yang
@@ -74,5 +76,11 @@ public class AgentExecutedCmd extends ExecutedCmd {
     @Override
     public String getError() {
         return super.getError();
+    }
+
+    @Override
+    @Column(name = "log_size")
+    public Long getLogSize() {
+        return super.getLogSize();
     }
 }

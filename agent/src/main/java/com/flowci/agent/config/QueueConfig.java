@@ -58,6 +58,11 @@ public class QueueConfig {
         return new Queue(queueName, true);
     }
 
+    @Bean("logsExchange")
+    public String logsExchange() {
+        return agentSettings.getLogsExchangeName();
+    }
+
     @Bean
     public ConnectionFactory factory() {
         RabbitMQ mq = agentSettings.getQueue();

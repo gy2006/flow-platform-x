@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.core.open;
+package com.flowci.core.open.flow;
 
-import com.flowci.core.credential.dao.CredentialDao;
-import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.flow.dao.FlowDao;
+import com.flowci.core.flow.dao.YmlDao;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Yml;
 import com.flowci.exception.NotFoundException;
 import java.util.Objects;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,23 +30,28 @@ import org.springframework.stereotype.Service;
  * @author yang
  */
 @Service
-public class OpenCredentialService {
+public class OpenFlowService {
 
     @Autowired
-    private CredentialDao credentialDao;
+    private FlowDao flowDao;
 
-    public Credential get(String name, Class<? extends Credential> target) {
-        Credential credential = credentialDao.findByName(name);
+    @Autowired
+    private YmlDao ymlDao;
 
-        if (Objects.isNull(credential)) {
-            throw new NotFoundException("Credential {0} is not found", name);
+    public Flow get(String name) {
+        Flow flow = flowDao.findByName(name);
+        if (Objects.isNull(flow)) {
+            throw new NotFoundException("The flow with name {0} cannot found", name);
         }
+        return flow;
+    }
 
-        if (credential.getClass().equals(target)) {
-            return credential;
+    public Yml getYml(Flow flow) {
+        Optional<Yml> optional = ymlDao.findById(flow.getId());
+        if (optional.isPresent()) {
+            return optional.get();
         }
-
-        throw new NotFoundException("Credential {0} is not found", name);
+        throw new NotFoundException("No yml defined for flow {0}", flow.getName());
     }
 
 }

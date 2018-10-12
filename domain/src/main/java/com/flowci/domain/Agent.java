@@ -17,6 +17,7 @@
 package com.flowci.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
@@ -57,6 +58,8 @@ public class Agent implements Serializable {
 
     private String token;
 
+    private String host;
+
     private Set<String> tags = Collections.emptySet();
 
     private Status status = Status.OFFLINE;
@@ -68,6 +71,11 @@ public class Agent implements Serializable {
     public Agent(String name, Set<String> tags) {
         this.name = name;
         this.tags = tags;
+    }
+
+    @JsonIgnore
+    public boolean hasHost() {
+        return !Strings.isNullOrEmpty(host);
     }
 
     @JsonIgnore

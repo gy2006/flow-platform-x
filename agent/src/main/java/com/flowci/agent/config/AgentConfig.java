@@ -22,6 +22,7 @@ import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpMethod.PUT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.domain.AgentConnect;
 import com.flowci.domain.Jsonable;
 import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
@@ -34,9 +35,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.ParameterizedTypeReference;
@@ -82,16 +83,19 @@ public class AgentConfig implements WebMvcConfigurer {
     @Autowired
     private AgentProperties agentProperties;
 
-    @PostConstruct
-    public void initWorkspace() {
-        try {
-            Path path = Paths.get(agentProperties.getWorkspace());
-            Files.createDirectory(path);
-        } catch (FileAlreadyExistsException ignore) {
+    @Autowired
+    private ServerProperties serverProperties;
 
-        } catch (IOException e) {
-            log.error("Unable to init workspace directory: {}", agentProperties.getWorkspace());
-        }
+    @Bean("workspace")
+    public Path workspace() {
+        Path path = Paths.get(agentProperties.getWorkspace());
+        return initDir(path, "Unable to init workspace");
+    }
+
+    @Bean("loggingDir")
+    public Path loggingDir() {
+        Path path = Paths.get(agentProperties.getLoggingDir());
+        return initDir(path, "Unable to init logging dir");
     }
 
     @Bean("objectMapper")
@@ -108,7 +112,6 @@ public class AgentConfig implements WebMvcConfigurer {
     public Settings getConfigFromServer() {
         URI uri = UriComponentsBuilder.fromHttpUrl(agentProperties.getServerUrl())
             .pathSegment("agents", "connect")
-            .queryParam("token", agentProperties.getToken())
             .build()
             .toUri();
 
@@ -116,8 +119,12 @@ public class AgentConfig implements WebMvcConfigurer {
             new ParameterizedTypeReference<ResponseMessage<Settings>>() {
             };
 
+        AgentConnect body = new AgentConnect();
+        body.setPort(serverProperties.getPort());
+        body.setToken(agentProperties.getToken());
+
         try {
-            RequestEntity<Object> requestEntity = new RequestEntity<>(HttpMethod.GET, uri);
+            RequestEntity<Object> requestEntity = new RequestEntity<>(body, HttpMethod.POST, uri);
             ResponseMessage<Settings> message = RestTemplate.exchange(requestEntity, type).getBody();
 
             if (message.getCode() != 200) {
@@ -143,5 +150,16 @@ public class AgentConfig implements WebMvcConfigurer {
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         converters.clear();
         converters.addAll(DefaultConverters);
+    }
+
+    private Path initDir(Path path, String errMsg) {
+        try {
+            return Files.createDirectories(path);
+        } catch (FileAlreadyExistsException ignore) {
+            return path;
+        } catch (IOException e) {
+            log.error("{}: {}", errMsg, path);
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }

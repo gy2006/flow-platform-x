@@ -52,20 +52,12 @@ public class AgentManagerImpl implements AgentManager {
         }
 
         String path = getPath();
-        zk.create(CreateMode.EPHEMERAL, path, Status.IDLE.getBytes());
-        log.info("Agent {} been registered on zk", path);
-    }
 
-    @Override
-    public boolean changeStatus(Status status) {
-        String path = getPath();
-        try {
-            zk.set(path, status.getBytes());
-            return true;
-        } catch (Throwable e) {
-            log.error("Cannot change agent status to {}", status);
-            return false;
+        if (!zk.exist(path)) {
+            zk.create(CreateMode.EPHEMERAL, path, Status.IDLE.getBytes());
         }
+
+        log.info("Agent {} been registered on zk", path);
     }
 
     private boolean hasRootNode() {

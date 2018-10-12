@@ -22,13 +22,17 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.service.JobService;
+import com.flowci.core.job.service.StepService;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -57,6 +61,9 @@ public class JobController {
     @Autowired
     private JobService jobService;
 
+    @Autowired
+    private StepService stepService;
+
     @GetMapping("/{flow}")
     public Page<Job> list(@PathVariable("flow") String name,
                           @RequestParam(required = false, defaultValue = DefaultPage) int page,
@@ -82,10 +89,28 @@ public class JobController {
         }
     }
 
+    @GetMapping(value = "/{flow}/{buildNumber}/yml", produces = MediaType.TEXT_PLAIN_VALUE)
+    public String getYml(@PathVariable String flow, @PathVariable String buildNumber) {
+        Job job = get(flow, buildNumber);
+        JobYml yml = jobService.getYml(job);
+        return yml.getRaw();
+    }
+
     @GetMapping("/{flow}/{buildNumberOrLatest}/steps")
-    public List<ExecutedCmd> getSteps(@PathVariable("flow") String name, @PathVariable String buildNumberOrLatest) {
-        Job job = get(name, buildNumberOrLatest);
-        return jobService.listSteps(job);
+    public List<ExecutedCmd> getSteps(@PathVariable String flow,
+                                      @PathVariable String buildNumberOrLatest) {
+        Job job = get(flow, buildNumberOrLatest);
+        return stepService.list(job);
+    }
+
+    @GetMapping("/{flow}/{buildNumber}/{executedCmdId}")
+    public Page<String> getStepLog(@PathVariable String flow,
+                                   @PathVariable String buildNumber,
+                                   @PathVariable String executedCmdId,
+                                   @RequestParam(required = false, defaultValue = "0") int page,
+                                   @RequestParam(required = false, defaultValue = "50") int size) {
+        Job job = get(flow, buildNumber);
+        return stepService.logs(job, executedCmdId, PageRequest.of(page, size));
     }
 
     @PostMapping

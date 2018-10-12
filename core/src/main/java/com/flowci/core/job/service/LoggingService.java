@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.executor;
+package com.flowci.core.job.service;
 
-import java.io.Serializable;
-import lombok.Data;
+import org.springframework.amqp.core.Message;
 
 /**
  * @author yang
  */
-@Data(staticConstructor = "of")
-public final class Log implements Serializable {
+public interface LoggingService {
 
-    public enum Type {
-        STDOUT,
-        STDERR,
-    }
-
-    private final Type type;
-
-    private final String content;
-
-    private final Integer number;
+    void processLogItem(Message message);
 
 }

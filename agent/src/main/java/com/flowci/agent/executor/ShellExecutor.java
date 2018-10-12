@@ -19,6 +19,7 @@ package com.flowci.agent.executor;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.ExecutedCmd.Status;
+import com.flowci.domain.LogItem;
 import com.flowci.util.UnixHelper;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -32,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
@@ -44,7 +46,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -79,17 +80,13 @@ public class ShellExecutor {
     private final ProcessBuilder pBuilder;
 
     @Getter
+    private final List<LoggingListener> loggingListeners = new LinkedList<>();
+
+    @Getter
+    private final List<ProcessListener> processListeners = new LinkedList<>();
+
+    @Getter
     private Process process;
-
-    @Getter
-    @Setter
-    private LoggingListener loggingListener = new LoggingListener() {
-    };
-
-    @Getter
-    @Setter
-    private ProcessListener processListener = new ProcessListener() {
-    };
 
     private final ThreadPoolExecutor executor = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.SECONDS,
         new LinkedBlockingQueue<>(),
@@ -104,13 +101,13 @@ public class ShellExecutor {
 
     private final CountDownLatch logThreadCountDown = new CountDownLatch(1);
 
-    private final Queue<Log> loggingQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<LogItem> loggingQueue = new ConcurrentLinkedQueue<>();
 
     private final String endTerm = String.format("=====EOF-%s=====", UUID.randomUUID());
 
     public ShellExecutor(Cmd cmd) {
         this.cmd = cmd;
-        this.result = new ExecutedCmd(cmd.getId());
+        this.result = new ExecutedCmd(cmd);
 
         // init process builder
         this.pBuilder = new ProcessBuilder(LinuxBash).directory(getWorkDir(cmd).toFile());
@@ -129,14 +126,17 @@ public class ShellExecutor {
 
             process = pBuilder.start();
             result.setProcessId(getPid(process));
-            processListener.onStarted(result);
+
+            for (ProcessListener processListener : processListeners) {
+                processListener.onStarted(result);
+            }
 
             // thread to send cmd list to bash
             executor.execute(createCmdListExec(process.getOutputStream(), cmd.getScripts()));
 
             // thread to read stdout and stderr stream and put log to logging queue
-            executor.execute(createStdStreamReader(Log.Type.STDOUT, process.getInputStream()));
-            executor.execute(createStdStreamReader(Log.Type.STDERR, process.getErrorStream()));
+            executor.execute(createStdStreamReader(LogItem.Type.STDOUT, process.getInputStream()));
+            executor.execute(createStdStreamReader(LogItem.Type.STDERR, process.getErrorStream()));
 
             // thread to make consume logging queue
             executor.execute(createCmdLoggingReader());
@@ -150,7 +150,11 @@ public class ShellExecutor {
 
             result.setStatusByCode();
             result.setFinishAt(new Date());
-            processListener.onExecuted(result);
+
+            for (ProcessListener processListener : processListeners) {
+                processListener.onExecuted(result);
+            }
+
             log.debug("====== Process executed : {} ======", result.getCode());
 
             logThreadCountDown.await(LoggingWaitSeconds, TimeUnit.SECONDS);
@@ -165,12 +169,20 @@ public class ShellExecutor {
         } catch (InterruptedException e) {
             result.setStatus(Status.KILLED);
             result.setError(e.getMessage());
-            processListener.onException(e);
+
+            for (ProcessListener processListener : processListeners) {
+                processListener.onException(e);
+            }
+
             log.debug("====== Interrupted ======");
         } catch (Throwable e) {
             result.setStatus(Status.EXCEPTION);
             result.setError(e.getMessage());
-            processListener.onException(e);
+
+            for (ProcessListener processListener : processListeners) {
+                processListener.onException(e);
+            }
+
             log.warn(e.getMessage());
         } finally {
             result.setFinishAt(new Date());
@@ -221,42 +233,56 @@ public class ShellExecutor {
 
     private Runnable createCmdLoggingReader() {
         return () -> {
+            long lineNum = 0;
+
             try {
                 while (true) {
                     if (stdThreadCountDown.getCount() == 0 && loggingQueue.size() == 0) {
                         break;
                     }
 
-                    Log log = loggingQueue.poll();
-                    if (log == null) {
+                    LogItem log = loggingQueue.poll();
+
+                    if (Objects.isNull(log)) {
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException ignored) {
+
                         }
-                    } else {
+
+                        continue;
+                    }
+
+                    log.setCmdId(cmd.getId());
+                    log.setNumber(++lineNum);
+                    result.setLogSize(lineNum);
+
+                    for (LoggingListener loggingListener : loggingListeners) {
                         loggingListener.onLogging(log);
                     }
+
                 }
             } finally {
-                loggingListener.onFinish();
+                for (LoggingListener loggingListener : loggingListeners) {
+                    loggingListener.onFinish(lineNum);
+                }
+
                 logThreadCountDown.countDown();
                 log.trace(" ===== Logging Reader Thread Finish =====");
             }
         };
     }
 
-    private Runnable createStdStreamReader(final Log.Type type, final InputStream is) {
+    private Runnable createStdStreamReader(final LogItem.Type type, final InputStream is) {
         return () -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is), BufferSize)) {
                 String line;
-                int count = 0;
                 while ((line = reader.readLine()) != null) {
                     if (Objects.equals(line, endTerm)) {
                         readEnv(reader);
                         break;
                     }
-                    count += 1;
-                    loggingQueue.add(Log.of(type, line, count));
+                    loggingQueue.add(LogItem.of(type, line));
                 }
             } catch (IOException ignore) {
 

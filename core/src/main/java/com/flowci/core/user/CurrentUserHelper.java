@@ -17,7 +17,6 @@
 package com.flowci.core.user;
 
 import com.flowci.exception.CIException;
-import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,10 +35,14 @@ public class CurrentUserHelper {
 
     public User get() {
         User user = currentUser.get();
-        if (Objects.isNull(user)) {
+        if (!hasLogin()) {
             throw new CIException("User logged in is required");
         }
         return user;
+    }
+
+    public boolean hasLogin() {
+        return currentUser.get() != null;
     }
 
     public String getUserId() {

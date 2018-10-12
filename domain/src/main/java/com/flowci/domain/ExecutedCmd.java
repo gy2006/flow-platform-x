@@ -24,7 +24,6 @@ import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
-import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
@@ -38,8 +37,8 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(of = {"id"})
-public class ExecutedCmd implements Serializable {
+@EqualsAndHashCode(callSuper = true)
+public class ExecutedCmd extends CmdBase {
 
     public final static Integer CODE_TIMEOUT = -100;
 
@@ -72,8 +71,6 @@ public class ExecutedCmd implements Serializable {
             this.level = level;
         }
     }
-
-    private String id;
 
     /**
      * Process id
@@ -110,8 +107,18 @@ public class ExecutedCmd implements Serializable {
      */
     private String error;
 
-    public ExecutedCmd(String id) {
-        this.id = id;
+    /**
+     * Num of line of the log
+     */
+    private Long logSize = -1L;
+
+    public ExecutedCmd(String id, boolean allowFailure) {
+        setId(id);
+        setAllowFailure(allowFailure);
+    }
+
+    public ExecutedCmd(Cmd cmd) {
+        this(cmd.getId(), cmd.getAllowFailure());
     }
 
     @JsonProperty
@@ -131,12 +138,7 @@ public class ExecutedCmd implements Serializable {
 
     @JsonIgnore
     public boolean isSuccess() {
-        return status == SUCCESS;
-    }
-
-    @JsonIgnore
-    public boolean isFailure() {
-        return FailureStatus.contains(status);
+        return status == SUCCESS || getAllowFailure();
     }
 
     @JsonIgnore

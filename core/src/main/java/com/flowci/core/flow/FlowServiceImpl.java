@@ -30,6 +30,7 @@ import com.flowci.tree.YmlParser;
 import com.google.common.base.Strings;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -81,6 +82,21 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
+    public Flow delete(String name) {
+        Flow flow = get(name);
+        flowDao.delete(flow);
+
+        try {
+            Yml yml = getYml(flow);
+            ymlDao.delete(yml);
+        } catch (NotFoundException ignore) {
+
+        }
+
+        return flow;
+    }
+
+    @Override
     public void update(Flow flow) {
         verifyFlowIdAndUser(flow);
         flowDao.save(flow);
@@ -89,7 +105,11 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public Yml getYml(Flow flow) {
         verifyFlowIdAndUser(flow);
-        return ymlDao.findById(flow.getId()).get();
+        Optional<Yml> optional = ymlDao.findById(flow.getId());
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+        throw new NotFoundException("No yml defined for flow {0}", flow.getName());
     }
 
     @Override

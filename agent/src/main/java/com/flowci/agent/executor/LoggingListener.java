@@ -16,15 +16,17 @@
 
 package com.flowci.agent.executor;
 
+import com.flowci.domain.LogItem;
+
 /**
  * @author yang
  */
 public interface LoggingListener {
 
-    default void onLogging(Log item) {
+    default void onLogging(LogItem item) {
     }
 
-    default void onFinish() {
+    default void onFinish(long size) {
     }
 
 }

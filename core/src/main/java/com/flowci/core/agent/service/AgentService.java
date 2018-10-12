@@ -27,7 +27,7 @@ import java.util.Set;
  */
 public interface AgentService {
 
-    Settings connect(String token);
+    Settings connect(String token, String ip, Integer port);
 
     /**
      * Get agent by id

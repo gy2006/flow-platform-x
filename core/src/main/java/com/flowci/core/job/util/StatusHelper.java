@@ -30,12 +30,17 @@ public class StatusHelper {
     private final static Map<Status, Job.Status> StatusMapping = ImmutableMap.<Status, Job.Status>builder()
         .put(Status.SUCCESS, Job.Status.SUCCESS)
         .put(Status.EXCEPTION, Job.Status.FAILURE)
-        .put(Status.KILLED, Job.Status.STOPPED)
+        .put(Status.KILLED, Job.Status.CANCELLED)
         .put(Status.TIMEOUT, Job.Status.TIMEOUT)
         .build();
 
-    public static Job.Status convert(ExecutedCmd.Status status) {
-        return StatusMapping.get(status);
+    public static Job.Status convert(ExecutedCmd executedCmd) {
+        // to handle allow failure
+        if (executedCmd.isSuccess()) {
+            return Job.Status.SUCCESS;
+        }
+
+        return StatusMapping.get(executedCmd.getStatus());
     }
 
     private StatusHelper() {

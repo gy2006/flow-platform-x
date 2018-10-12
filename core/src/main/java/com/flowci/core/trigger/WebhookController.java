@@ -16,12 +16,12 @@
 
 package com.flowci.core.trigger;
 
-import com.flowci.core.flow.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.service.JobService;
+import com.flowci.core.open.flow.OpenFlowService;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
@@ -60,7 +60,7 @@ public class WebhookController {
     private HttpServletRequest request;
 
     @Autowired
-    private FlowService flowService;
+    private OpenFlowService openFlowService;
 
     @Autowired
     private JobService jobService;
@@ -87,8 +87,8 @@ public class WebhookController {
         }
 
         // get related flow and yml
-        Flow flow = flowService.get(name);
-        Yml yml = flowService.getYml(flow);
+        Flow flow = openFlowService.get(name);
+        Yml yml = openFlowService.getYml(flow);
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
         if (canStartJob(root, trigger)) {

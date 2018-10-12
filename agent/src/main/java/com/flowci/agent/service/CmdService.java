@@ -20,6 +20,7 @@ import com.flowci.agent.domain.AgentExecutedCmd;
 import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.domain.Cmd;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * @author yang
@@ -27,6 +28,8 @@ import org.springframework.data.domain.Page;
 public interface CmdService {
 
     Cmd get(String id);
+
+    Page<String> getLogs(String id, Pageable pageable);
 
     Page<AgentReceivedCmd> listReceivedCmd(int page, int size);
 

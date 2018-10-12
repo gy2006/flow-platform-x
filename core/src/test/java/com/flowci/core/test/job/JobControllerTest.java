@@ -21,10 +21,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.domain.JsonablePage;
 import com.flowci.core.domain.StatusCode;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.test.JsonablePage;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.ExecutedCmd;
@@ -38,6 +38,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 
 /**
@@ -70,6 +71,15 @@ public class JobControllerTest extends SpringScenario {
     public void init() throws Exception {
         mockLogin();
         createFlow(flow);
+    }
+
+    @Test
+    public void should_get_job_yml() throws Exception {
+        createJobForFlow(flow);
+
+        String yml = mvcMockHelper.expectSuccessAndReturnString(get("/jobs/hello-flow/1/yml"));
+        Assert.assertNotNull(yml);
+        Assert.assertEquals(StringHelper.toString(load("flow.yml")), yml);
     }
 
     @Test
@@ -120,7 +130,7 @@ public class JobControllerTest extends SpringScenario {
         Assert.assertEquals(StatusCode.OK, message.getCode());
 
         // then:
-        JsonablePage<Job> page = message.getData();
+        Page<Job> page = message.getData().toPage();
         Assert.assertEquals(2, page.getTotalElements());
 
         Assert.assertEquals(second, page.getContent().get(0));

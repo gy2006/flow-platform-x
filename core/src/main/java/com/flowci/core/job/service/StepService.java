@@ -14,34 +14,32 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test;
+package com.flowci.core.job.service;
 
+import com.flowci.core.job.domain.Job;
+import com.flowci.domain.ExecutedCmd;
 import java.util.List;
-import lombok.Data;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * @author yang
  */
-@Data
-public class JsonablePage<T> {
+public interface StepService {
 
-    private int number;
+    List<ExecutedCmd> init(Job job);
 
-    private int size;
+    /**
+     * List step of executed cmd for job
+     */
+    List<ExecutedCmd> list(Job job);
 
-    private int totalPages;
+    /**
+     * Get logs from agent
+     */
+    Page<String> logs(Job job, String executedCmdId, Pageable pageable);
 
-    private int numberOfElements;
 
-    private long totalElements;
+    void update(ExecutedCmd cmd);
 
-    private boolean previousPage;
-
-    private boolean first;
-
-    private boolean nextPage;
-
-    private boolean last;
-
-    private List<T> content;
 }

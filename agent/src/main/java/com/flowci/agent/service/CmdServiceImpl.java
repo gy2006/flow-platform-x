@@ -22,19 +22,22 @@ import com.flowci.agent.domain.AgentExecutedCmd;
 import com.flowci.agent.domain.AgentReceivedCmd;
 import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
-import com.flowci.agent.executor.Log;
-import com.flowci.agent.executor.LoggingListener;
 import com.flowci.agent.executor.ProcessListener;
 import com.flowci.agent.executor.ShellExecutor;
-import com.flowci.agent.manager.AgentManager;
-import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
+import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
-import lombok.Getter;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -43,7 +46,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -60,8 +65,23 @@ public class CmdServiceImpl implements CmdService {
 
     private static final Sort SortByStartAt = Sort.by(Direction.DESC, "startAt");
 
+    private static final Page<String> LogNotFound = new PageImpl<>(
+        ImmutableList.of("Log does not existed on agent"),
+        PageRequest.of(0, 1),
+        1L
+    );
+
+    @Autowired
+    private Path workspace;
+
+    @Autowired
+    private Path loggingDir;
+
     @Autowired
     private Queue callbackQueue;
+
+    @Autowired
+    private String logsExchange;
 
     @Autowired
     private RabbitTemplate queueTemplate;
@@ -71,9 +91,6 @@ public class CmdServiceImpl implements CmdService {
 
     @Autowired
     private ExecutedCmdDao executedCmdDao;
-
-    @Autowired
-    private AgentManager agentManager;
 
     @Autowired
     private ApplicationContext context;
@@ -91,6 +108,29 @@ public class CmdServiceImpl implements CmdService {
             return optional.get();
         }
         throw new NotFoundException("Cmd {0} is not found", id);
+    }
+
+    @Override
+    public Page<String> getLogs(String id, Pageable pageable) {
+        Path logPath = getCmdLogPath(id);
+
+        if (Files.notExists(logPath)) {
+            log.debug("Log not found for cmd {} at {}", id, logPath);
+            return LogNotFound;
+        }
+
+        ExecutedCmd executedCmd = getExecutedCmd(id);
+        int i = pageable.getPageNumber() * pageable.getPageSize();
+
+        try (Stream<String> lines = Files.lines(logPath)) {
+            List<String> logs = lines.skip(i)
+                .limit(pageable.getPageSize())
+                .collect(Collectors.toList());
+
+            return new PageImpl<>(logs, pageable, executedCmd.getLogSize());
+        } catch (IOException e) {
+            return LogNotFound;
+        }
     }
 
     @Override
@@ -112,13 +152,17 @@ public class CmdServiceImpl implements CmdService {
             }
 
             setCurrent(save(cmd));
-            agentManager.changeStatus(Status.BUSY);
             context.publishEvent(new CmdReceivedEvent(this, current));
+
+            if (!current.hasWorkDir()) {
+                current.setWorkDir(workspace.toString());
+            }
 
             cmdThreadPool.execute(() -> {
                 ShellExecutor cmdExecutor = new ShellExecutor(current);
-                cmdExecutor.setProcessListener(new CmdProcessListener());
-                cmdExecutor.setLoggingListener(new CmdLoggingListener());
+                cmdExecutor.getProcessListeners().add(new CmdProcessListener(cmd));
+                cmdExecutor.getLoggingListeners().add(new CmdLoggingWriter(cmd, getCmdLogPath(cmd.getId())));
+                cmdExecutor.getLoggingListeners().add(new CmdLoggingSender(cmd, queueTemplate, logsExchange));
                 cmdExecutor.run();
                 onAfterExecute(cmdExecutor.getResult());
             });
@@ -151,10 +195,19 @@ public class CmdServiceImpl implements CmdService {
         BeanUtils.copyProperties(executed, agentExecutedCmd);
         executedCmdDao.save(agentExecutedCmd);
 
-        agentManager.changeStatus(Status.IDLE);
         queueTemplate.convertAndSend(callbackQueue.getName(), executed);
         setCurrent(null);
         context.publishEvent(new CmdCompleteEvent(this, current, executed));
+    }
+
+    private ExecutedCmd getExecutedCmd(String id) {
+        Optional<AgentExecutedCmd> optional = executedCmdDao.findById(id);
+
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+
+        throw new NotFoundException("Executed Cmd {0} is not found", id);
     }
 
     private Cmd getCurrent() {
@@ -192,18 +245,19 @@ public class CmdServiceImpl implements CmdService {
         return executor;
     }
 
-    private class CmdLoggingListener implements LoggingListener {
-
-        @Override
-        public void onLogging(Log item) {
-            log.debug("Log Received : {}", item);
-        }
+    private Path getCmdLogPath(String id) {
+        return Paths.get(loggingDir.toString(), id + ".log");
     }
 
     private class CmdProcessListener implements ProcessListener {
 
-        @Getter
         private ExecutedCmd executed;
+
+        private final Cmd cmd;
+
+        public CmdProcessListener(Cmd cmd) {
+            this.cmd = cmd;
+        }
 
         @Override
         public void onStarted(ExecutedCmd executed) {
@@ -219,9 +273,6 @@ public class CmdServiceImpl implements CmdService {
 
         @Override
         public void onException(Throwable e) {
-            if (executed != null) {
-                executed.setError(e.getMessage());
-            }
             log.debug("Cmd Exception : {}", e);
         }
     }

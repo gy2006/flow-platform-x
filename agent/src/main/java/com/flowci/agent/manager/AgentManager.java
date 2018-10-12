@@ -16,8 +16,6 @@
 
 package com.flowci.agent.manager;
 
-import com.flowci.domain.Agent;
-
 /**
  * @author yang
  */
@@ -27,10 +25,5 @@ public interface AgentManager {
      * Register agent on zk
      */
     void register();
-
-    /**
-     * Change agent status
-     */
-    boolean changeStatus(Agent.Status status);
 
 }

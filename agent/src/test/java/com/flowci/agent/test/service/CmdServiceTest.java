@@ -33,6 +33,11 @@ import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.Settings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -46,11 +51,15 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 /**
  * @author yang
  */
 public class CmdServiceTest extends SpringScenario {
+
+    @Autowired
+    private Path loggingDir;
 
     @Autowired
     private RabbitTemplate queueTemplate;
@@ -248,5 +257,34 @@ public class CmdServiceTest extends SpringScenario {
         Assert.assertNotNull(executed);
         Assert.assertEquals(Status.TIMEOUT, executed.getStatus());
         Assert.assertNotNull(executed.getFinishAt());
+    }
+
+    @Test
+    public void should_get_logs_with_page() throws IOException {
+        // init: folder and log file
+        Path file = Paths.get(loggingDir.toString(), "mock-cmd-id.log");
+        Files.deleteIfExists(file);
+        Files.createFile(file);
+
+        // init: mock logs
+        long size = 1000;
+
+        try (BufferedWriter writer = Files.newBufferedWriter(file)) {
+            for (int i = 0; i < size; i++) {
+                writer.write("hello:" + i);
+                writer.newLine();
+            }
+        }
+
+        AgentExecutedCmd entity = new AgentExecutedCmd();
+        entity.setId("mock-cmd-id");
+        entity.setLogSize(size);
+        executedCmdDao.save(entity);
+
+        Page<String> logs = cmdService.getLogs("mock-cmd-id", PageRequest.of(1, 10));
+        Assert.assertNotNull(logs);
+        Assert.assertEquals(size, logs.getTotalElements());
+        Assert.assertEquals("hello:10", logs.getContent().get(0));
+        Assert.assertEquals("hello:19", logs.getContent().get(9));
     }
 }

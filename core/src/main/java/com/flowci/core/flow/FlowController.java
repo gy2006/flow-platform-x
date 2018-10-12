@@ -79,6 +79,11 @@ public class FlowController {
         flowService.update(flow);
     }
 
+    @DeleteMapping("/{name}")
+    public Flow delete(@PathVariable String name) {
+        return flowService.delete(name);
+    }
+
     @DeleteMapping("/{name}/variables")
     public void cleanVariables(@PathVariable String name) {
         Flow flow = flowService.get(name);

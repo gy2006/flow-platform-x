@@ -17,11 +17,11 @@
 package com.flowci.agent.test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 
+import com.flowci.agent.test.SpringScenario.Config;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Jsonable;
 import com.flowci.domain.Settings;
@@ -37,10 +37,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.event.ApplicationEventMulticaster;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 /**
@@ -49,11 +52,17 @@ import org.springframework.test.context.junit4.SpringRunner;
 @Log4j2
 @RunWith(SpringRunner.class)
 @SpringBootTest
+@ContextConfiguration(classes = Config.class)
 public abstract class SpringScenario {
 
-    protected static final String RootNode = "/flow-agent-test";
+    static final String RootNode = "/flow-agent-test";
 
-    protected static final String AgentID = "agent-id-123";
+    static final String AgentID = "agent-id-123";
+
+    static final String Token = "123-123-123";
+
+    @ClassRule
+    public static TemporaryFolder folder = new TemporaryFolder();
 
     @ClassRule
     public static WireMockRule wireMockRule = new WireMockRule(8088);
@@ -73,18 +82,15 @@ public abstract class SpringScenario {
         zk.setHost("127.0.0.1:2181");
         zk.setRoot(RootNode);
 
-        String token = "123-123-123";
-
         Agent local = new Agent("hello.agent");
         local.setId(AgentID);
-        local.setToken(token);
+        local.setToken(Token);
         local.setTags(Sets.newHashSet("local", "test"));
 
-        Settings settings = new Settings(local, mq, zk, "queue.jobs.callback.test");
+        Settings settings = new Settings(local, mq, zk, "queue.jobs.callback.test", "cmd.logs.exchange");
         ResponseMessage<Settings> responseBody = new ResponseMessage<>(200, settings);
 
-        stubFor(get(urlPathEqualTo("/agents/connect"))
-            .withQueryParam("token", equalTo(token))
+        stubFor(post(urlPathEqualTo("/agents/connect"))
             .willReturn(aResponse()
                 .withBody(Jsonable.getMapper().writeValueAsBytes(responseBody))
                 .withHeader("Content-Type", "application/json")));
@@ -97,6 +103,11 @@ public abstract class SpringScenario {
         } catch (Throwable ignore) {
 
         }
+    }
+
+    @TestConfiguration
+    static class Config {
+
     }
 
     @Autowired

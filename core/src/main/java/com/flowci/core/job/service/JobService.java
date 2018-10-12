@@ -20,11 +20,10 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobYml;
 import com.flowci.domain.Agent;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
-import com.flowci.tree.NodeTree;
-import java.util.List;
 import org.springframework.data.domain.Page;
 
 /**
@@ -36,6 +35,11 @@ public interface JobService {
      * Get job by flow and build number
      */
     Job get(Flow flow, Long buildNumber);
+
+    /**
+     * Get job yml by job
+     */
+    JobYml getYml(Job job);
 
     /**
      * Get latest job
@@ -56,16 +60,6 @@ public interface JobService {
      * Send to job queue
      */
     Job start(Job job);
-
-    /**
-     * Get node tree from job
-     */
-    NodeTree getTree(Job job);
-
-    /**
-     * List step of executed cmd for job
-     */
-    List<ExecutedCmd> listSteps(Job job);
 
     /**
      * Job is expired compare to now

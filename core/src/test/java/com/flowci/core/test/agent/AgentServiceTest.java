@@ -123,7 +123,7 @@ public class AgentServiceTest extends ZookeeperScenario {
 
         // when: release agent and mock event from agent
         agentService.tryRelease(available);
-        mockReleaseAgent(agentService.getPath(available));
+//        mockReleaseAgent(agentService.getPath(available));
 
         // then: the status should be idle
         Status statusFromZk = getAgentStatus(agentService.getPath(available));

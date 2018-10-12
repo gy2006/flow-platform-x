@@ -27,6 +27,7 @@ import com.flowci.core.domain.StatusCode;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.Agent;
+import com.flowci.domain.AgentConnect;
 import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ErrorCode;
@@ -117,8 +118,15 @@ public class AgentControllerTest extends SpringScenario {
 
         // when: request to connect agent
         currentUserHelper.reset();
+
+        AgentConnect connect = new AgentConnect();
+        connect.setPort(8080);
+        connect.setToken(agent.getToken());
+
         ResponseMessage<Settings> settingsR = mvcMockHelper.expectSuccessAndReturnClass(
-            get("/agents/connect").param("token", agent.getToken()), SettingsResponseType);
+            post("/agents/connect")
+                .content(objectMapper.writeValueAsBytes(connect))
+                .contentType(MediaType.APPLICATION_JSON), SettingsResponseType);
         Assert.assertEquals(StatusCode.OK, settingsR.getCode());
 
         // then:
