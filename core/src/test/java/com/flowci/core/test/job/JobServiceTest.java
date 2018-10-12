@@ -272,6 +272,33 @@ public class JobServiceTest extends ZookeeperScenario {
         Assert.assertEquals("hello.timeout", job.getContext().getString("HELLO_TIMEOUT"));
     }
 
+    @Test
+    public void should_job_failure_with_final_node() throws Exception {
+        yml = flowService.saveYml(flow, StringHelper.toString(load("flow-failure-with-final.yml")));
+        Agent agent = agentService.create("hello.agent", null);
+        Job job = prepareJobForRunningStatus(agent);
+
+        NodeTree tree = ymlManager.getTree(job);
+        Node firstNode = tree.next(tree.getRoot().getPath());
+
+        // when: set first step as failure status
+        String cmdId = cmdManager.createId(job, firstNode).toString();
+        ExecutedCmd executedCmd = new ExecutedCmd(cmdId, firstNode.isAllowFailure());
+        executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
+        jobService.processCallback(executedCmd);
+
+        // when: set final node as success status
+        Node secondNode = tree.next(firstNode.getPath());
+        cmdId = cmdManager.createId(job, secondNode).toString();
+        executedCmd = new ExecutedCmd(cmdId, secondNode.isAllowFailure());
+        executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
+        jobService.processCallback(executedCmd);
+
+        // then: job status should be failure since final node does not count to step
+        job = jobDao.findById(job.getId()).get();
+        Assert.assertEquals(Status.FAILURE, job.getStatus());
+    }
+
     private Job prepareJobForRunningStatus(Agent agent) {
         // init: job to mock the first node been send to agent
         Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);

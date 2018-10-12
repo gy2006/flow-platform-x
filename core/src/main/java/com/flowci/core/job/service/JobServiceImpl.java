@@ -303,6 +303,9 @@ public class JobServiceImpl implements JobService {
         Job job = jobDao.findById(cmdId.getJobId()).get();
         NodePath currentFromCmd = NodePath.create(cmdId.getNodePath());
 
+        NodeTree tree = ymlManager.getTree(job);
+        Node node = tree.get(currentFromCmd);
+
         // verify job node path is match cmd node path
         if (!currentFromCmd.equals(currentNodePath(job))) {
             log.error("Invalid executed cmd callback: does not match job current node path");
@@ -323,8 +326,11 @@ public class JobServiceImpl implements JobService {
         VariableMap context = job.getContext();
         context.merge(execCmd.getOutput());
 
-        // setup current job status
-        context.putString(Variables.JOB_STATUS, StatusHelper.convert(execCmd).name());
+        // setup current job status if not final node
+        if (!node.isFinal()) {
+            context.putString(Variables.JOB_STATUS, StatusHelper.convert(execCmd).name());
+        }
+
         jobDao.save(job);
 
         // continue to run next node
@@ -358,13 +364,13 @@ public class JobServiceImpl implements JobService {
         Node nextFinal = tree.nextFinal(currentNodePath(job));
 
         if (Objects.isNull(nextFinal)) {
-            Job.Status jobStatus = StatusHelper.convert(execCmd);
-            setJobStatus(job, jobStatus, execCmd.getError());
+            Job.Status statusFromContext = Job.Status.valueOf(job.getContext().get(Variables.JOB_STATUS));
+            setJobStatus(job, statusFromContext, execCmd.getError());
 
             Agent agent = agentService.get(job.getAgentId());
             agentService.tryRelease(agent);
 
-            log.info("Job {} been executed with status {}", job.getId(), jobStatus);
+            log.info("Job {} been executed with status {}", job.getId(), statusFromContext);
             return;
         }
 
@@ -377,7 +383,8 @@ public class JobServiceImpl implements JobService {
 
         // set job status to success and release agent
         if (Objects.isNull(next)) {
-            setJobStatus(job, Job.Status.SUCCESS, null);
+            Job.Status statusFromContext = Job.Status.valueOf(job.getContext().get(Variables.JOB_STATUS));
+            setJobStatus(job, statusFromContext, null);
 
             Agent agent = agentService.get(job.getAgentId());
             agentService.tryRelease(agent);
