@@ -4,7 +4,7 @@
 
 * PENDING: Initial status
 
-* ENQUEUE: Been put to job queue
+* QUEUED: Been put to job queue
 
 * RUNNING: Agent received the job and start to execute
 
@@ -12,7 +12,7 @@
 
 * FAILURE: Job been executed but failure
 
-* STOPPED: Job been stopped by user
+* CANCELLED: Job been stopped by user
 
 * TIMEOUT: Job execution time been over the expiredAt
 

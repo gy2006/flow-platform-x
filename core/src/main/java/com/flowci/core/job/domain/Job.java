@@ -81,7 +81,7 @@ public class Job extends Mongoable {
         /**
          * Been put to job queue
          */
-        ENQUEUE,
+        QUEUED,
 
         /**
          * Agent take over the job, and been start to execute
@@ -99,9 +99,9 @@ public class Job extends Mongoable {
         FAILURE,
 
         /**
-         * Job been stopped by user
+         * Job been cancelled by user
          */
-        STOPPED,
+        CANCELLED,
 
         /**
          * Job execution time been over the expiredAt

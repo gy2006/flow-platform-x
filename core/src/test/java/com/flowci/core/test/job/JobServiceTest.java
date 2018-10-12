@@ -113,7 +113,7 @@ public class JobServiceTest extends ZookeeperScenario {
         Assert.assertEquals(tree.getRoot().getPath(), NodePath.create(job.getCurrentPath()));
 
         job = jobService.start(job);
-        Assert.assertEquals(Status.ENQUEUE, job.getStatus());
+        Assert.assertEquals(Status.QUEUED, job.getStatus());
 
         Assert.assertNotNull(job);
         Assert.assertNotNull(ymlManager.getTree(job));

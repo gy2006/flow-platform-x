@@ -401,7 +401,7 @@ public class JobServiceImpl implements JobService {
 
         try {
             queueTemplate.convertAndSend(jobQueue.getName(), job);
-            setJobStatus(job, Job.Status.ENQUEUE, null);
+            setJobStatus(job, Job.Status.QUEUED, null);
             return job;
         } catch (Throwable e) {
             throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());
