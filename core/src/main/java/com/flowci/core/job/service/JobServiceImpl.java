@@ -321,9 +321,6 @@ public class JobServiceImpl implements JobService {
 
         // merge job context
         job.getContext().merge(execCmd.getOutput());
-
-        // TODO: Set JOB_STATUS variable
-
         jobDao.save(job);
 
         // continue to run next node
@@ -340,7 +337,6 @@ public class JobServiceImpl implements JobService {
         context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
         context.putString(Variables.FLOW_NAME, flow.getName());
         context.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
-        context.putString(Variables.JOB_STATUS, Job.Status.PENDING.name());
 
         if (Objects.isNull(inputs)) {
             return context;
@@ -358,9 +354,6 @@ public class JobServiceImpl implements JobService {
         NodePath path = currentNodePath(job);
         Node next = tree.next(path);
 
-        // set job status and release agent
-        // - no more node to be executed
-        // - current node not allow failure
         if (Objects.isNull(next)) {
             Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus());
             setJobStatus(job, jobStatus, execCmd.getError());
