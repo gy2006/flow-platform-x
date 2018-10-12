@@ -128,5 +128,4 @@ public class YmlParserTest {
         String parsed = YmlParser.parse(root);
         Assert.assertNotNull(parsed);
     }
-
 }

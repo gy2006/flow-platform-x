@@ -19,6 +19,8 @@ package com.flowci.tree;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,8 +35,6 @@ public class NodeTree {
 
     /**
      * Create node tree from Node object
-     * @param root
-     * @return
      */
     public static NodeTree create(Node root) {
         return new NodeTree(root);
@@ -49,9 +49,13 @@ public class NodeTree {
     private Node root;
 
     public NodeTree(Node root) {
+        this.root = root;
+
         buildTree(root);
         ordered.remove(root);
-        this.root = root;
+
+        moveFinalNodes();
+        buildCacheWithIndex();
     }
 
     /**
@@ -79,10 +83,6 @@ public class NodeTree {
     public Node next(NodePath path) {
         NodeWithIndex nodeWithIndex = getWithIndex(path);
 
-        if (nodeWithIndex.node.equals(root)) {
-            return ordered.get(0);
-        }
-
         int nextIndex = nodeWithIndex.index + 1;
 
         // next is out of range
@@ -91,6 +91,31 @@ public class NodeTree {
         }
 
         return ordered.get(nextIndex);
+    }
+
+    /**
+     * Get next final node instance from path
+     */
+    public Node nextFinal(NodePath path) {
+        NodeWithIndex nodeWithIndex = getWithIndex(path);
+
+        if (nodeWithIndex.node.isFinal()) {
+            return next(path);
+        }
+
+        int nextIndex = nodeWithIndex.index + 1;
+        if (nextIndex > (ordered.size() - 1)) {
+            return null;
+        }
+
+        for (int i = nextIndex; nextIndex < ordered.size(); i++) {
+            Node node = ordered.get(i);
+            if (node.isFinal()) {
+                return node;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -119,6 +144,37 @@ public class NodeTree {
     }
 
     /**
+     * Move all final nodes to the tail
+     */
+    private void moveFinalNodes() {
+        Iterator<Node> iterator = ordered.iterator();
+
+        List<Node> finals = new LinkedList<>();
+
+        while (iterator.hasNext()) {
+            Node node = iterator.next();
+            if (node.isFinal()) {
+                finals.add(node);
+                iterator.remove();
+            }
+        }
+
+        if (!finals.isEmpty()) {
+            ordered.addAll(finals);
+        }
+    }
+
+    private void buildCacheWithIndex() {
+        for (int i = 0; i < ordered.size(); i++) {
+            Node node = ordered.get(i);
+            cached.put(node.getPath(), new NodeWithIndex(node, i));
+        }
+
+        // set root index to -1
+        cached.put(root.getPath(), new NodeWithIndex(root, -1));
+    }
+
+    /**
      * Reset node path and parent reference and put to cache
      */
     private void buildTree(Node root) {
@@ -129,7 +185,6 @@ public class NodeTree {
         }
 
         ordered.add(root);
-        cached.put(root.getPath(), new NodeWithIndex(root, ordered.size() - 1));
     }
 
     private class NodeWithIndex implements Serializable {
