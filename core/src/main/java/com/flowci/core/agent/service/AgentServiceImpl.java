@@ -300,7 +300,7 @@ public class AgentServiceImpl implements AgentService {
     private void syncLockNode(Agent agent, Type type) {
         String lockPath = getLockPath(agent);
 
-        if (type == Type.CHILD_ADDED || type == Type.CHILD_UPDATED) {
+        if (type == Type.CHILD_ADDED || type == Type.CHILD_UPDATED || type == Type.CONNECTION_RECONNECTED) {
             try {
                 zk.create(CreateMode.PERSISTENT, lockPath, null);
             } catch (Throwable ignore) {
@@ -359,22 +359,22 @@ public class AgentServiceImpl implements AgentService {
             if (event.getType() == Type.CHILD_ADDED) {
                 syncLockNode(agent, Type.CHILD_ADDED);
                 updateAgentStatus(agent, Status.IDLE);
-                log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_ADDED, agent.getName(), Status.IDLE);
+                log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(), Status.IDLE);
                 return;
             }
-
+            
             if (event.getType() == Type.CHILD_REMOVED) {
                 syncLockNode(agent, Type.CHILD_REMOVED);
                 updateAgentStatus(agent, Status.OFFLINE);
-                log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_REMOVED, agent.getName(),
+                log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(),
                     Status.OFFLINE);
                 return;
             }
 
-            if (event.getType() == Type.CHILD_UPDATED) {
+            if (event.getType() == Type.CHILD_UPDATED || event.getType() == Type.CONNECTION_RECONNECTED) {
                 Status status = getStatusFromZk(agent);
                 updateAgentStatus(agent, status);
-                log.debug("Event '{}' of agent '{}' with status '{}'", Type.CHILD_UPDATED, agent.getName(), status);
+                log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(), status);
             }
         }
     }

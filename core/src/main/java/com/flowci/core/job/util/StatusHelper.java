@@ -34,8 +34,13 @@ public class StatusHelper {
         .put(Status.TIMEOUT, Job.Status.TIMEOUT)
         .build();
 
-    public static Job.Status convert(ExecutedCmd.Status status) {
-        return StatusMapping.get(status);
+    public static Job.Status convert(ExecutedCmd executedCmd) {
+        // to handle allow failure
+        if (executedCmd.isSuccess()) {
+            return Job.Status.SUCCESS;
+        }
+
+        return StatusMapping.get(executedCmd.getStatus());
     }
 
     private StatusHelper() {

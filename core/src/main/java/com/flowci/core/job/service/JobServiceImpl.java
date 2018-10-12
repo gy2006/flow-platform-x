@@ -319,8 +319,12 @@ public class JobServiceImpl implements JobService {
         stepService.update(execCmd);
         log.debug("Executed cmd {} been recorded", execCmd);
 
-        // merge job context
-        job.getContext().merge(execCmd.getOutput());
+        // merge output to job context
+        VariableMap context = job.getContext();
+        context.merge(execCmd.getOutput());
+
+        // setup current job status
+        context.putString(Variables.JOB_STATUS, StatusHelper.convert(execCmd).name());
         jobDao.save(job);
 
         // continue to run next node
@@ -354,7 +358,7 @@ public class JobServiceImpl implements JobService {
         Node nextFinal = tree.nextFinal(currentNodePath(job));
 
         if (Objects.isNull(nextFinal)) {
-            Job.Status jobStatus = StatusHelper.convert(execCmd.getStatus());
+            Job.Status jobStatus = StatusHelper.convert(execCmd);
             setJobStatus(job, jobStatus, execCmd.getError());
 
             Agent agent = agentService.get(job.getAgentId());

@@ -27,6 +27,11 @@ public class Variables {
 
     public static final String JOB_BUILD_NUMBER = "FLOWCI_JOB_BUILD_NUM";
 
+    /**
+     * For Current job status when running
+     */
+    public static final String JOB_STATUS = "FLOWCI_JOB_STATUS";
+
     public static final String AGENT_WORKSPACE = "FLOWCI_AGENT_WORKSPACE";
 
     private Variables() {
