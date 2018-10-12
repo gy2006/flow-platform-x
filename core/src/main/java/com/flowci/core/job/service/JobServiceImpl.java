@@ -333,37 +333,11 @@ public class JobServiceImpl implements JobService {
 
         jobDao.save(job);
 
-        // continue to run next node
-        if (execCmd.isSuccess()) {
-            handleSuccessCmd(job);
-            return;
-        }
+        // find next node
+        Node next = execCmd.isSuccess() ? tree.next(node.getPath()) : tree.nextFinal(node.getPath());
 
-        handleFailureCmd(job, execCmd);
-    }
-
-    private VariableMap initJobContext(Flow flow, Long buildNumber, VariableMap... inputs) {
-        VariableMap context = new VariableMap(20);
-        context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
-        context.putString(Variables.FLOW_NAME, flow.getName());
-        context.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
-
-        if (Objects.isNull(inputs)) {
-            return context;
-        }
-
-        for (VariableMap input : inputs) {
-            context.merge(input);
-        }
-
-        return context;
-    }
-
-    private void handleFailureCmd(Job job, ExecutedCmd execCmd) {
-        NodeTree tree = ymlManager.getTree(job);
-        Node nextFinal = tree.nextFinal(currentNodePath(job));
-
-        if (Objects.isNull(nextFinal)) {
+        // job finished
+        if (Objects.isNull(next)) {
             Job.Status statusFromContext = Job.Status.valueOf(job.getContext().get(Variables.JOB_STATUS));
             setJobStatus(job, statusFromContext, execCmd.getError());
 
@@ -374,26 +348,26 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
-        setupNodePathAndDispatch(job, nextFinal);
+        // continue to run next node
+        setupNodePathAndDispatch(job, next);
     }
 
-    private void handleSuccessCmd(Job job) {
-        NodeTree tree = ymlManager.getTree(job);
-        Node next = tree.next(currentNodePath(job));
+    private VariableMap initJobContext(Flow flow, Long buildNumber, VariableMap... inputs) {
+        VariableMap context = new VariableMap(20);
+        context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
+        context.putString(Variables.FLOW_NAME, flow.getName());
+        context.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
+        context.putString(Variables.JOB_STATUS, Job.Status.PENDING.name());
 
-        // set job status to success and release agent
-        if (Objects.isNull(next)) {
-            Job.Status statusFromContext = Job.Status.valueOf(job.getContext().get(Variables.JOB_STATUS));
-            setJobStatus(job, statusFromContext, null);
-
-            Agent agent = agentService.get(job.getAgentId());
-            agentService.tryRelease(agent);
-
-            log.info("Job {} been executed", job.getId());
-            return;
+        if (Objects.isNull(inputs)) {
+            return context;
         }
 
-        setupNodePathAndDispatch(job, next);
+        for (VariableMap input : inputs) {
+            context.merge(input);
+        }
+
+        return context;
     }
 
     private void setupNodePathAndDispatch(Job job, Node next) {
