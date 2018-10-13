@@ -37,6 +37,7 @@ public class PluginParserTest {
         Assert.assertEquals("gitclone", plugin.getName());
         Assert.assertEquals(Version.of(0, 0, 1, null), plugin.getVersion());
         Assert.assertEquals(3, plugin.getInputs().size());
+        Assert.assertEquals(Boolean.TRUE, plugin.getAllowFailure());
     }
 
 }

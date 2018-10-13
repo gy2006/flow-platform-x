@@ -50,12 +50,19 @@ public class PluginParser {
 
         public List<VariableWrapper> inputs;
 
+        public Boolean allowFailure;
+
         @NonNull
         public String script;
 
         public Plugin toPlugin() {
             Plugin plugin = new Plugin(name, Version.parse(version));
             plugin.setScript(script);
+            plugin.setAllowFailure(allowFailure);
+
+            if (!Objects.isNull(allowFailure)) {
+                plugin.setAllowFailure(allowFailure);
+            }
 
             if (Objects.isNull(inputs)) {
                 return plugin;
