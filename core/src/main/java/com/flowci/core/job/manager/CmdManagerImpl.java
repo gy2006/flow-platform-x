@@ -69,11 +69,14 @@ public class CmdManagerImpl implements CmdManager {
         inputs.merge(node.getEnvironments());
 
         String script = node.getScript();
+        boolean allowFailure = node.isAllowFailure();
 
         if (node.hasPlugin()) {
             Plugin plugin = pluginService.get(node.getPlugin());
             verifyPluginInput(inputs, plugin);
+
             script = plugin.getScript();
+            allowFailure = plugin.getAllowFailure();
         }
 
         // create cmd based on plugin
@@ -81,7 +84,7 @@ public class CmdManagerImpl implements CmdManager {
         cmd.setInputs(inputs);
         cmd.setScripts(Lists.newArrayList(script));
         cmd.setWorkDir(inputs.get(Variables.AGENT_WORKSPACE));
-        cmd.setAllowFailure(node.isAllowFailure());
+        cmd.setAllowFailure(allowFailure);
         return cmd;
     }
 
