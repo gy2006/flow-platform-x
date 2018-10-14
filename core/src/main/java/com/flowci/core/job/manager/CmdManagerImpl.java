@@ -20,7 +20,7 @@ import com.flowci.core.domain.Variables;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.manager.PluginService;
+import com.flowci.core.plugin.service.PluginService;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.Variable;

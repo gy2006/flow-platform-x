@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.plugin.manager;
+package com.flowci.core.plugin.service;
 
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginRepo;

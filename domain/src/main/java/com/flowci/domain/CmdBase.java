@@ -34,4 +34,9 @@ public abstract class CmdBase implements Serializable {
     private String id;
 
     private Boolean allowFailure = Boolean.FALSE;
+
+    /**
+     * Cmd related plugin name
+     */
+    private String plugin;
 }

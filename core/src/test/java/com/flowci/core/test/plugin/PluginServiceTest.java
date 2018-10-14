@@ -24,7 +24,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginRepo;
 import com.flowci.core.plugin.event.RepoCloneEvent;
-import com.flowci.core.plugin.manager.PluginService;
+import com.flowci.core.plugin.service.PluginService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.Version;

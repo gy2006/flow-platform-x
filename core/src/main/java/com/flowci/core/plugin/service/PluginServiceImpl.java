@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.plugin.manager;
+package com.flowci.core.plugin.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
