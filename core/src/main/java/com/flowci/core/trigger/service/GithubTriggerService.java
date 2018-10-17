@@ -63,19 +63,6 @@ public class GithubTriggerService implements GitTriggerService {
         }
     }
 
-    private static String getBranchName(String ref) {
-        if (Strings.isNullOrEmpty(ref)) {
-            return StringHelper.EMPTY;
-        }
-
-        int index = ref.lastIndexOf('/');
-        if (index == -1) {
-            return StringHelper.EMPTY;
-        }
-
-        return ref.substring(index + 1);
-    }
-
     private static class PushObject {
 
         private static final String TagRefPrefix = "refs/tags";
@@ -115,6 +102,27 @@ public class GithubTriggerService implements GitTriggerService {
             trigger.setAuthor(pusher.toAuthor());
 
             return trigger;
+        }
+
+        private static String getBranchName(String ref) {
+            if (Strings.isNullOrEmpty(ref)) {
+                return StringHelper.EMPTY;
+            }
+
+            // find first '/'
+            int index = ref.indexOf('/');
+            if (index == -1) {
+                return StringHelper.EMPTY;
+            }
+
+            // find second '/'
+            ref = ref.substring(index + 1);
+            index = ref.indexOf('/');
+            if (index == -1) {
+                return StringHelper.EMPTY;
+            }
+
+            return ref.substring(index + 1);
         }
     }
 
