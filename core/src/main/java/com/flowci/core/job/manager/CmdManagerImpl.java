@@ -76,15 +76,19 @@ public class CmdManagerImpl implements CmdManager {
             verifyPluginInput(inputs, plugin);
 
             script = plugin.getScript();
-            allowFailure = plugin.getAllowFailure();
+            allowFailure = plugin.isAllowFailure();
         }
 
         // create cmd based on plugin
         Cmd cmd = new Cmd(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
-        cmd.setScripts(Lists.newArrayList(script));
         cmd.setWorkDir(inputs.get(Variables.AGENT_WORKSPACE));
         cmd.setAllowFailure(allowFailure);
+
+        if (script != null) {
+            cmd.setScripts(Lists.newArrayList(script));
+        }
+
         return cmd;
     }
 

@@ -40,7 +40,7 @@ public class Plugin implements Serializable {
 
     private List<Variable> inputs;
 
-    private Boolean allowFailure = Boolean.FALSE;
+    private boolean allowFailure = false;
 
     private String script;
 

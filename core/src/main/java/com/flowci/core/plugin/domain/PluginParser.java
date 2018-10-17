@@ -58,7 +58,6 @@ public class PluginParser {
         public Plugin toPlugin() {
             Plugin plugin = new Plugin(name, Version.parse(version));
             plugin.setScript(script);
-            plugin.setAllowFailure(allowFailure);
 
             if (!Objects.isNull(allowFailure)) {
                 plugin.setAllowFailure(allowFailure);
