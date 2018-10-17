@@ -43,7 +43,7 @@ public class YmlParser {
     private final static Map<String, Integer> FieldsOrder = ImmutableMap.<String, Integer>builder()
         .put("name", 1)
         .put("envs", 2)
-        .put("condition", 3)
+        .put("filter", 3)
         .put("selector", 4)
         .put("allowFailure", 5)
         .put("isFinal", 6)
@@ -186,6 +186,7 @@ public class YmlParser {
             node.setPlugin(plugin);
             node.setAllowFailure(allowFailure);
             node.setFinal(isFinal);
+            node.setFilter(filter);
             setEnvs(node);
             setChildren(node);
             return node;

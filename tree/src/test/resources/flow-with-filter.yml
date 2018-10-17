@@ -17,26 +17,14 @@ selector:
   - local
 
 steps:
-- before: |
-    println(FLOW_WORKSPACE)
-    true
-  filter:
+- filter:
     exports:
-      - "PLUGIN_"
-      - "HELLO_"
-
+    - "PLUGIN_"
+    - "HELLO_"
   envs:
     FLOW_WORKSPACE: "echo step"
     FLOW_VERSION: "echo step version"
-
   allowFailure: true
-
-  steps:
-  - name: step11
-    script: "echo 1"
-
-  - name: step12
-    script: "echo 2"
 
 - name: step3
   allowFailure: false

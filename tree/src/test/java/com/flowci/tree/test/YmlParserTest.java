@@ -16,6 +16,7 @@
 
 package com.flowci.tree.test;
 
+import com.flowci.tree.Filter;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
@@ -39,9 +40,7 @@ public class YmlParserTest {
 
     @Before
     public void init() throws IOException {
-        ClassLoader classLoader = YmlParserTest.class.getClassLoader();
-        URL resource = classLoader.getResource("flow.yml");
-        content = Files.toString(new File(resource.getFile()), Charset.forName("UTF-8"));
+        content = loadContent("flow.yml");
     }
 
     @Test
@@ -127,5 +126,25 @@ public class YmlParserTest {
         Node root = YmlParser.load("default", content);
         String parsed = YmlParser.parse(root);
         Assert.assertNotNull(parsed);
+    }
+
+    @Test
+    public void should_parse_yml_with_exports_filter() throws IOException {
+        content = loadContent("flow-with-filter.yml");
+        Node root = YmlParser.load("default", content);
+        NodeTree tree = NodeTree.create(root);
+
+        Node first = tree.next(tree.getRoot().getPath());
+        Assert.assertEquals("step-1", first.getPath().name());
+
+        Filter filter = first.getFilter();
+        Assert.assertTrue(filter.available());
+        Assert.assertEquals(2, filter.getExports().size());
+    }
+
+    private String loadContent(String resource) throws IOException {
+        ClassLoader classLoader = YmlParserTest.class.getClassLoader();
+        URL url = classLoader.getResource(resource);
+        return Files.toString(new File(url.getFile()), Charset.forName("UTF-8"));
     }
 }
