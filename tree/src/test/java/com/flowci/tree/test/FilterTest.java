@@ -32,4 +32,17 @@ public class FilterTest {
 
         Assert.assertTrue(condition.isMatchBranch("feature/fb_123"));
     }
+
+    @Test
+    public void should_available_if_condition_defined() {
+        Filter condition = new Filter();
+        condition.getBranches().add("feature/.+");
+        Assert.assertTrue(condition.available());
+    }
+
+    @Test
+    public void should_not_available_if_no_condition_defined() {
+        Filter condition = new Filter();
+        Assert.assertFalse(condition.available());
+    }
 }

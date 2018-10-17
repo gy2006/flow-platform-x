@@ -21,7 +21,6 @@ import com.flowci.core.domain.Mongoable;
 import com.flowci.domain.VariableMap;
 import com.flowci.tree.Selector;
 import java.util.Date;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -33,7 +32,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Setter
 @Document(collection = "job")
-@EqualsAndHashCode(callSuper = true)
 public class Job extends Mongoable {
 
     public enum Trigger {
@@ -146,5 +144,15 @@ public class Job extends Mongoable {
     @JsonIgnore
     public boolean isPending() {
         return status == Status.PENDING;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 }

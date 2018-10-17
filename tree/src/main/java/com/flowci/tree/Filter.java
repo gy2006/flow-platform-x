@@ -37,6 +37,10 @@ public class Filter implements Serializable {
 
     private List<String> tags = new LinkedList<>();
 
+    public boolean available() {
+        return !branches.isEmpty() || !tags.isEmpty();
+    }
+
     public boolean isMatchBranch(String branch) {
         if (branches.isEmpty()) {
             return true;

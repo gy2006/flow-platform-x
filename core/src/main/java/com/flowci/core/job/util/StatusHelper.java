@@ -29,6 +29,7 @@ public class StatusHelper {
 
     private final static Map<Status, Job.Status> StatusMapping = ImmutableMap.<Status, Job.Status>builder()
         .put(Status.SUCCESS, Job.Status.SUCCESS)
+        .put(Status.SKIPPED, Job.Status.SUCCESS)
         .put(Status.EXCEPTION, Job.Status.FAILURE)
         .put(Status.KILLED, Job.Status.CANCELLED)
         .put(Status.TIMEOUT, Job.Status.TIMEOUT)
