@@ -29,6 +29,7 @@ import com.flowci.exception.ArgumentException;
 import com.flowci.tree.Node;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.net.URI;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,10 +85,8 @@ public class CmdManagerImpl implements CmdManager {
         cmd.setInputs(inputs);
         cmd.setWorkDir(inputs.get(Variables.AGENT_WORKSPACE));
         cmd.setAllowFailure(allowFailure);
-
-        if (script != null) {
-            cmd.setScripts(Lists.newArrayList(script));
-        }
+        cmd.setEnvFilters(Sets.newHashSet(node.getFilter().getExports()));
+        cmd.setScripts(Lists.newArrayList(script));
 
         return cmd;
     }

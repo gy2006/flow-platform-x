@@ -48,6 +48,17 @@ public class AgentReceivedCmd extends Cmd {
     }
 
     @Override
+    @Column(name = "allow_failure")
+    public Boolean getAllowFailure() {
+        return super.getAllowFailure();
+    }
+
+    @Override
+    public String getPlugin() {
+        return super.getPlugin();
+    }
+
+    @Override
     @Column(name = "cmd_type")
     public CmdType getType() {
         return super.getType();

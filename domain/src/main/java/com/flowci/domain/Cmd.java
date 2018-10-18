@@ -37,9 +37,6 @@ import lombok.NonNull;
 public class Cmd extends CmdBase {
 
     @NonNull
-    private String id;
-
-    @NonNull
     private CmdType type;
 
     @NonNull
@@ -63,7 +60,7 @@ public class Cmd extends CmdBase {
     private Set<String> envFilters = Collections.emptySet();
 
     public Cmd(String id, CmdType type) {
-        this.id = id;
+        setId(id);
         this.type = type;
     }
 
