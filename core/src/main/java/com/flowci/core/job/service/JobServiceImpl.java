@@ -206,21 +206,36 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    public Job cancel(Job job) {
+        // send stop cmd when is running
+        if (job.isRunning()) {
+            Agent agent = agentService.get(job.getAgentId());
+            Cmd killCmd = cmdManager.createKillCmd();
+
+            agentService.dispatch(killCmd, agent);
+            log.info("Stop cmd been send to {} for job {}", agent.getName(), job.getId());
+        }
+
+        return job;
+    }
+
+    @Override
     public boolean isExpired(Job job) {
         Instant expireAt = job.getExpireAt().toInstant();
         return Instant.now().compareTo(expireAt) == 1;
     }
 
     @Override
-    public boolean dispatch(Job job, Agent agent) {
+    public boolean dispatch(Job job) {
         NodeTree tree = ymlManager.getTree(job);
         Node node = tree.get(currentNodePath(job));
+        Agent agent = agentService.get(job.getAgentId());
 
         try {
             Cmd cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
 
-            if (job.getStatus() != Job.Status.RUNNING) {
+            if (!job.isRunning()) {
                 setJobStatus(job, Job.Status.RUNNING, null);
             }
 
@@ -238,8 +253,8 @@ public class JobServiceImpl implements JobService {
         log.debug("Job {} received from queue", job.getId());
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
 
-        if (!job.isPending()) {
-            log.info("Job {} cannot be process since status not pending", job.getId());
+        if (!job.isQueuing()) {
+            log.info("Job {} cannot be process since status not queuing", job.getId());
             return;
         }
 
@@ -280,7 +295,7 @@ public class JobServiceImpl implements JobService {
             jobDao.save(job);
 
             // dispatch job to agent queue
-            dispatch(job, available);
+            dispatch(job);
             log.debug("Job {} been dispatched to agent {}", job.getId(), available.getName());
 
         } catch (NotFoundException e) {
@@ -374,8 +389,7 @@ public class JobServiceImpl implements JobService {
         job.setCurrentPath(next.getPathAsString());
         jobDao.save(job);
 
-        Agent agent = agentService.get(job.getAgentId());
-        dispatch(job, agent);
+        dispatch(job);
     }
 
     private NodePath currentNodePath(Job job) {
@@ -400,8 +414,8 @@ public class JobServiceImpl implements JobService {
         }
 
         try {
-            queueTemplate.convertAndSend(jobQueue.getName(), job);
             setJobStatus(job, Job.Status.QUEUED, null);
+            queueTemplate.convertAndSend(jobQueue.getName(), job);
             return job;
         } catch (Throwable e) {
             throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());

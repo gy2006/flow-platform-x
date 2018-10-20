@@ -137,6 +137,9 @@ public class JobServiceTest extends ZookeeperScenario {
         Agent agent = agentService.create("hello.agent", null);
         mockAgentOnline(agentService.getPath(agent));
 
+        job.setStatus(Status.QUEUED);
+        jobDao.save(job);
+
         // when:
         ObjectWrapper<Agent> targetAgent = new ObjectWrapper<>();
         ObjectWrapper<Cmd> targetCmd = new ObjectWrapper<>();
@@ -153,6 +156,9 @@ public class JobServiceTest extends ZookeeperScenario {
         // then: verify cmd been sent
         counter.await(10, TimeUnit.SECONDS);
         Assert.assertEquals(agent, targetAgent.getValue());
+
+        // then: verify job status should be running
+        Assert.assertEquals(Status.RUNNING, jobDao.findById(job.getId()).get().getStatus());
 
         // then: verify cmd content
         Node root = YmlParser.load(flow.getName(), yml.getRaw());

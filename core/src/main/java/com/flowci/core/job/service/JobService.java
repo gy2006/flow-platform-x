@@ -21,7 +21,6 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobYml;
-import com.flowci.domain.Agent;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import org.springframework.data.domain.Page;
@@ -62,6 +61,11 @@ public interface JobService {
     Job start(Job job);
 
     /**
+     * Force to stop the job if it's running
+     */
+    Job cancel(Job job);
+
+    /**
      * Job is expired compare to now
      */
     boolean isExpired(Job job);
@@ -69,7 +73,7 @@ public interface JobService {
     /**
      * Convert node to cmd and dispatch to agent
      */
-    boolean dispatch(Job job, Agent agent);
+    boolean dispatch(Job job);
 
     /**
      * Process job from queue

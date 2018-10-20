@@ -142,6 +142,11 @@ public class Job extends Mongoable {
     }
 
     @JsonIgnore
+    public boolean isQueuing() {
+        return status == Status.QUEUED;
+    }
+
+    @JsonIgnore
     public boolean isPending() {
         return status == Status.PENDING;
     }
