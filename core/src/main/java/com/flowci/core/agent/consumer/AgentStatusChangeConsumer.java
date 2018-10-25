@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.consumer;
+package com.flowci.core.agent.consumer;
 
+import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.domain.PushEvent;
-import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.event.StepStatusChangeEvent;
 import com.flowci.core.message.PushService;
-import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.Agent;
+import com.flowci.domain.Agent.Status;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -31,22 +31,22 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class StepStatusChangeConsumer implements ApplicationListener<StepStatusChangeEvent> {
-
-    @Autowired
-    private String topicForSteps;
+public class AgentStatusChangeConsumer implements ApplicationListener<StatusChangeEvent> {
 
     @Autowired
     private PushService pushService;
 
+    @Autowired
+    private String topicForAgents;
+
     @Override
-    public void onApplicationEvent(StepStatusChangeEvent event) {
-        Job job = event.getJob();
-        ExecutedCmd cmd = event.getExecutedCmd();
+    public void onApplicationEvent(StatusChangeEvent event) {
+        Agent agent = event.getAgent();
+        pushService.push(topicForAgents, PushEvent.STATUS_CHANGE, agent);
 
-        String topic = topicForSteps + "/" + job.getId();
-        pushService.push(topic, PushEvent.STATUS_CHANGE, cmd);
-
-        log.debug("Executed cmd {} with status {} been pushed to topic {}", cmd.getId(), cmd.getStatus(), topic);
+        String name = agent.getName();
+        Status status = agent.getStatus();
+        String jobId = agent.getJobId();
+        log.debug("Agent {} with status {} for job {} been pushed", name, status, jobId);
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.consumer;
+package com.flowci.core.message;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.domain.PushBody;
@@ -23,12 +23,14 @@ import java.io.IOException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Component;
 
 /**
  * @author yang
  */
 @Log4j2
-public abstract class PushConsumer<T> {
+@Component
+public class PushServiceImpl implements PushService {
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -36,9 +38,10 @@ public abstract class PushConsumer<T> {
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
-    protected void push(String topic, PushEvent event, T obj) {
+    @Override
+    public void push(String topic, PushEvent event, Object obj) {
         try {
-            PushBody<T> push = new PushBody<>(event, obj);
+            PushBody push = new PushBody(event, obj);
             String json = objectMapper.writeValueAsString(push);
             simpMessagingTemplate.convertAndSend(topic, json);
         } catch (IOException e) {

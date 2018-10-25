@@ -14,27 +14,14 @@
  * limitations under the License.
  */
 
-package com.flowci.core.domain;
+package com.flowci.core.message;
 
-import java.io.Serializable;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.flowci.core.domain.PushEvent;
 
 /**
  * @author yang
  */
-@Getter
-@Setter
-@NoArgsConstructor
-public class PushBody implements Serializable {
+public interface PushService {
 
-    private PushEvent event;
-
-    private Object body;
-
-    public PushBody(PushEvent event, Object body) {
-        this.event = event;
-        this.body = body;
-    }
+    void push(String topic, PushEvent event, Object obj);
 }

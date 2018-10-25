@@ -64,6 +64,8 @@ public class Agent implements Serializable {
 
     private Status status = Status.OFFLINE;
 
+    private String jobId;
+
     public Agent(String name) {
         this.name = name;
     }

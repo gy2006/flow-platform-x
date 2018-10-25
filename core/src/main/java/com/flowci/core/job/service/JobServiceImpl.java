@@ -53,7 +53,7 @@ import com.flowci.tree.YmlParser;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -269,18 +269,23 @@ public class JobServiceImpl implements JobService {
         try {
             // find available agents
             Set<String> agentTags = job.getAgentSelector().getTags();
-            List<Agent> availableList = agentService.find(Status.IDLE, agentTags);
+            Iterator<Agent> availableList = agentService.find(Status.IDLE, agentTags).iterator();
 
             // try to lock it
             Boolean isLocked = Boolean.FALSE;
             Agent available = null;
 
-            for (Agent agent : availableList) {
+            while (availableList.hasNext()) {
+                Agent agent = availableList.next();
+                agent.setJobId(job.getId());
+
                 isLocked = agentService.tryLock(agent);
                 if (isLocked) {
                     available = agent;
                     break;
                 }
+
+                availableList.remove();
             }
 
             // re-enqueue to job while agent been locked by other

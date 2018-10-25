@@ -19,6 +19,7 @@ package com.flowci.core.job.consumer;
 import com.flowci.core.domain.PushEvent;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobCreatedEvent;
+import com.flowci.core.message.PushService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -29,15 +30,18 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class JobCreatedConsumer extends PushConsumer<Job> implements ApplicationListener<JobCreatedEvent> {
+public class JobCreatedConsumer implements ApplicationListener<JobCreatedEvent> {
 
     @Autowired
     private String topicForJobs;
 
+    @Autowired
+    private PushService pushService;
+
     @Override
     public void onApplicationEvent(JobCreatedEvent event) {
         Job job = event.getJob();
-        push(topicForJobs, PushEvent.NEW_CREATED, job);
+        pushService.push(topicForJobs, PushEvent.NEW_CREATED, job);
         log.debug("Job {} been pushed", job.getId());
     }
 }
