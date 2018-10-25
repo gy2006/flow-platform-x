@@ -16,33 +16,30 @@
 
 package com.flowci.core.job.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.domain.PushBody;
 import com.flowci.core.domain.PushEvent;
-import java.io.IOException;
+import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.event.JobStatusChangeEvent;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.context.ApplicationListener;
+import org.springframework.stereotype.Component;
 
 /**
+ * Push job status change event via WebSocket
+ *
  * @author yang
  */
 @Log4j2
-public abstract class PushConsumer<T> {
+@Component
+public class JobStatusChangeConsumer extends PushConsumer<Job> implements ApplicationListener<JobStatusChangeEvent> {
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private String topicForJobs;
 
-    @Autowired
-    private SimpMessagingTemplate simpMessagingTemplate;
-
-    protected void push(String topic, PushEvent event, T obj) {
-        try {
-            PushBody<T> push = new PushBody<>(event, obj);
-            String json = objectMapper.writeValueAsString(push);
-            simpMessagingTemplate.convertAndSend(topic, json);
-        } catch (IOException e) {
-            log.warn(e.getMessage());
-        }
+    @Override
+    public void onApplicationEvent(JobStatusChangeEvent event) {
+        Job job = event.getJob();
+        push(topicForJobs, PushEvent.STATUS_CHANGE, job);
+        log.debug("Job {} with status {} been pushed", job.getId(), job.getStatus());
     }
 }

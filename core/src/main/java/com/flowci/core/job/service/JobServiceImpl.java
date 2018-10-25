@@ -235,8 +235,16 @@ public class JobServiceImpl implements JobService {
             Cmd cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
 
+            // set job status to running
             if (!job.isRunning()) {
                 setJobStatus(job, Job.Status.RUNNING, null);
+            }
+
+            // set executed cmd step to running
+            ExecutedCmd executedCmd = stepService.get(job, node);
+            if (!executedCmd.isRunning()) {
+                executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
+                stepService.update(job, executedCmd);
             }
 
             return true;
@@ -334,7 +342,7 @@ public class JobServiceImpl implements JobService {
         }
 
         // save executed cmd
-        stepService.update(execCmd);
+        stepService.update(job, execCmd);
         log.debug("Executed cmd {} been recorded", execCmd);
 
         // merge output to job context

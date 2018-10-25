@@ -16,26 +16,28 @@
 
 package com.flowci.core.job.consumer;
 
+import com.flowci.core.domain.PushEvent;
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.domain.JobPush.Event;
-import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.job.event.JobCreatedEvent;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Push job status change event via WebSocket
- *
  * @author yang
  */
 @Log4j2
 @Component
-public class StatusChangeConsumer extends PushConsumer implements ApplicationListener<JobStatusChangeEvent> {
+public class JobCreatedConsumer extends PushConsumer<Job> implements ApplicationListener<JobCreatedEvent> {
+
+    @Autowired
+    private String topicForJobs;
 
     @Override
-    public void onApplicationEvent(JobStatusChangeEvent event) {
+    public void onApplicationEvent(JobCreatedEvent event) {
         Job job = event.getJob();
-        push(Event.STATUS_CHANGE, job);
-        log.debug("Job {} with status {} been pushed", job.getId(), job.getStatus());
+        push(topicForJobs, PushEvent.NEW_CREATED, job);
+        log.debug("Job {} been pushed", job.getId());
     }
 }

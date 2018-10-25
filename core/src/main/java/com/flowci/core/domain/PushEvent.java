@@ -14,27 +14,14 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.event;
-
-import com.flowci.core.job.domain.Job;
-import com.flowci.domain.ExecutedCmd;
-import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
+package com.flowci.core.domain;
 
 /**
  * @author yang
  */
-public class StepStatusChangeEvent extends ApplicationEvent {
+public enum PushEvent {
 
-    @Getter
-    private final Job job;
+    NEW_CREATED,
 
-    @Getter
-    private final ExecutedCmd executedCmd;
-
-    public StepStatusChangeEvent(Object source, Job job, ExecutedCmd executedCmd) {
-        super(source);
-        this.job = job;
-        this.executedCmd = executedCmd;
-    }
+    STATUS_CHANGE
 }

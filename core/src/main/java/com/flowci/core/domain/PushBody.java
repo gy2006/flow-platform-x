@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.domain;
+package com.flowci.core.domain;
 
+import java.io.Serializable;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -25,17 +26,15 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@RequiredArgsConstructor(staticName = "of")
-public class JobPush {
+@NoArgsConstructor
+public class PushBody<T> implements Serializable {
 
-    public enum Event {
+    private PushEvent event;
 
-        NEW_CREATED,
+    private T body;
 
-        STATUS_CHANGE
+    public PushBody(PushEvent event, T body) {
+        this.event = event;
+        this.body = body;
     }
-
-    private final Event event;
-
-    private final Job job;
 }

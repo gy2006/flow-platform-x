@@ -18,6 +18,7 @@ package com.flowci.domain;
 
 import static com.flowci.domain.ExecutedCmd.Status.EXCEPTION;
 import static com.flowci.domain.ExecutedCmd.Status.KILLED;
+import static com.flowci.domain.ExecutedCmd.Status.RUNNING;
 import static com.flowci.domain.ExecutedCmd.Status.SKIPPED;
 import static com.flowci.domain.ExecutedCmd.Status.SUCCESS;
 import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT;
@@ -147,6 +148,11 @@ public class ExecutedCmd extends CmdBase {
     @JsonIgnore
     public boolean isSuccess() {
         return SuccessStatus.contains(status) || getAllowFailure();
+    }
+
+    @JsonIgnore
+    public boolean isRunning() {
+        return status == RUNNING;
     }
 
     @JsonIgnore
