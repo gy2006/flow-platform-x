@@ -70,7 +70,7 @@ public class PluginServiceImpl implements PluginService {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private ConfigProperties appProperties;
+    private Path pluginDir;
 
     @Autowired
     private ConfigProperties.Plugin pluginProperties;
@@ -149,29 +149,31 @@ public class PluginServiceImpl implements PluginService {
     private Plugin clone(PluginRepo repo) throws GitAPIException, IOException {
         log.info("Start to load plugin: {}", repo);
 
-        File dir = getPluginRepoDir(repo.getName());
-        GitProgressMonitor monitor = new GitProgressMonitor(repo.getSource(), dir);
+        Path dir = getPluginRepoDir(repo);
+        File dirFile = dir.toFile();
+
+        GitProgressMonitor monitor = new GitProgressMonitor(repo.getSource(), dirFile);
 
         // pull from git when local repo exist
-        if (Files.exists(dir.toPath())) {
+        if (Files.exists(dir)) {
             log.debug("The plugin repo existed: {}", repo);
 
-            try (Git git = Git.open(dir)) {
+            try (Git git = Git.open(dirFile)) {
                 git.pull().setProgressMonitor(monitor).call();
             }
 
-            return load(dir, repo);
+            return load(dirFile, repo);
         }
 
         // clone from git
         try (Git ignored = Git.cloneRepository()
-            .setDirectory(dir)
+            .setDirectory(dirFile)
             .setURI(repo.getSource())
             .setProgressMonitor(monitor)
             .call()) {
         }
 
-        return load(dir, repo);
+        return load(dirFile, repo);
     }
 
     /**
@@ -203,9 +205,13 @@ public class PluginServiceImpl implements PluginService {
         }
     }
 
-    private File getPluginRepoDir(String name) {
-        String workspace = appProperties.getWorkspace();
-        return Paths.get(workspace, "plugins", name).toFile();
+    /**
+     * Get plugin repo path: {plugin dir}/{repo}/{version}
+     */
+    private Path getPluginRepoDir(PluginRepo repo) {
+        String version = repo.getVersion().toString();
+        String name = repo.getName();
+        return Paths.get(pluginDir.toString(), name, version);
     }
 
     private class GitProgressMonitor implements ProgressMonitor {
