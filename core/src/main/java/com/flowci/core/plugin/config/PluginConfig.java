@@ -18,6 +18,7 @@ package com.flowci.core.plugin.config;
 
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.plugin.PluginRepoResolver;
 import com.flowci.util.FileHelper;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,7 +38,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Configuration
 public class PluginConfig {
 
-    private static final String GIT_URL = "/git/plugin";
+    private static final String GIT_URL = "/git/plugins";
 
     @Autowired
     private ConfigProperties appProperties;
@@ -55,8 +56,10 @@ public class PluginConfig {
     }
 
     @Bean("gitServletBean")
-    public ServletRegistrationBean<GitServlet> gitServletBean(Path pluginDir) {
+    public ServletRegistrationBean<GitServlet> gitServletBean(Path pluginDir, PluginRepoResolver pluginRepoResolver) {
         GitServlet servlet = new GitServlet();
+        servlet.setRepositoryResolver(pluginRepoResolver);
+
         ServletRegistrationBean<GitServlet> bean = new ServletRegistrationBean<>(servlet, GIT_URL + "/*");
         bean.setLoadOnStartup(1);
         bean.addInitParameter("base-path", pluginDir.toString());

@@ -100,6 +100,11 @@ public class PluginServiceImpl implements PluginService {
     }
 
     @Override
+    public Path getDir(Plugin plugin) {
+        return getPluginRepoDir(plugin.getName(), plugin.getVersion().toString());
+    }
+
+    @Override
     public List<PluginRepo> load(String repoUrl) {
         try {
             String json = restTemplate.getForObject(repoUrl, String.class);
@@ -149,7 +154,7 @@ public class PluginServiceImpl implements PluginService {
     private Plugin clone(PluginRepo repo) throws GitAPIException, IOException {
         log.info("Start to load plugin: {}", repo);
 
-        Path dir = getPluginRepoDir(repo);
+        Path dir = getPluginRepoDir(repo.getName(), repo.getVersion().toString());
         File dirFile = dir.toFile();
 
         GitProgressMonitor monitor = new GitProgressMonitor(repo.getSource(), dirFile);
@@ -208,9 +213,7 @@ public class PluginServiceImpl implements PluginService {
     /**
      * Get plugin repo path: {plugin dir}/{repo}/{version}
      */
-    private Path getPluginRepoDir(PluginRepo repo) {
-        String version = repo.getVersion().toString();
-        String name = repo.getName();
+    private Path getPluginRepoDir(String name, String version) {
         return Paths.get(pluginDir.toString(), name, version);
     }
 

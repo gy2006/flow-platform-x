@@ -18,6 +18,7 @@ package com.flowci.core.plugin.service;
 
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginRepo;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
@@ -35,6 +36,11 @@ public interface PluginService {
      * Get plugin by name
      */
     Plugin get(String name);
+
+    /**
+     * Get repo file path
+     */
+    Path getDir(Plugin plugin);
 
     /**
      * Load plugin repo info
