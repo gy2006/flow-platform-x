@@ -64,6 +64,15 @@ public class AppConfig {
 
     private static final ObjectMapper Mapper = Jsonable.getMapper();
 
+    private static final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
+        new StringHttpMessageConverter(),
+        new ByteArrayHttpMessageConverter(),
+        new MappingJackson2HttpMessageConverter(Mapper),
+        new ResourceHttpMessageConverter(),
+        new AllEncompassingFormHttpMessageConverter()
+    );
+
+
     static {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Pageable.class, new JsonablePage.PageableDeserializer());
@@ -85,30 +94,19 @@ public class AppConfig {
         }
     }
 
-    @Bean
-    public List<HttpMessageConverter<?>> defaultConverters() {
-        return ImmutableList.of(
-            new StringHttpMessageConverter(),
-            new ByteArrayHttpMessageConverter(),
-            new MappingJackson2HttpMessageConverter(Mapper),
-            new ResourceHttpMessageConverter(),
-            new AllEncompassingFormHttpMessageConverter()
-        );
-    }
-
     @Bean("objectMapper")
     public ObjectMapper objectMapper() {
         return Mapper;
     }
 
     @Bean("restTemplate")
-    public RestTemplate restTemplate(List<HttpMessageConverter<?>> defaultConverters) {
+    public RestTemplate restTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setReadTimeout(1000 * 15);
         factory.setConnectTimeout(1000 * 15);
 
         RestTemplate restTemplate = new RestTemplate(factory);
-        restTemplate.setMessageConverters(defaultConverters);
+        restTemplate.setMessageConverters(DefaultConverters);
         return restTemplate;
     }
 
@@ -123,7 +121,7 @@ public class AppConfig {
     }
 
     @Bean
-    public WebMvcConfigurer webMvcConfigurer(List<HttpMessageConverter<?>> defaultConverters) {
+    public WebMvcConfigurer webMvcConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
@@ -139,7 +137,7 @@ public class AppConfig {
             @Override
             public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
                 converters.clear();
-                converters.addAll(defaultConverters);
+                converters.addAll(DefaultConverters);
             }
         };
     }
