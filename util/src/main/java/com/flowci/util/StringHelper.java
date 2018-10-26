@@ -25,7 +25,7 @@ import java.util.Base64;
 /**
  * @author yang
  */
-public class StringHelper {
+public abstract class StringHelper {
 
     public final static String EMPTY = "";
 
@@ -70,9 +70,5 @@ public class StringHelper {
     public static String fromBase64(String base64) {
         byte[] decode = Base64.getDecoder().decode(base64.getBytes());
         return new String(decode);
-    }
-
-    private StringHelper() {
-
     }
 }

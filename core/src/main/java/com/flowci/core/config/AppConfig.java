@@ -24,10 +24,9 @@ import com.flowci.core.domain.JsonablePage;
 import com.flowci.core.helper.ThreadHelper;
 import com.flowci.core.user.User;
 import com.flowci.domain.Jsonable;
+import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -72,7 +71,6 @@ public class AppConfig {
         new AllEncompassingFormHttpMessageConverter()
     );
 
-
     static {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Pageable.class, new JsonablePage.PageableDeserializer());
@@ -83,15 +81,9 @@ public class AppConfig {
     private ConfigProperties appProperties;
 
     @PostConstruct
-    public void initWorkspace() {
-        try {
-            Path path = Paths.get(appProperties.getWorkspace());
-            Files.createDirectory(path);
-        } catch (FileAlreadyExistsException ignore) {
-
-        } catch (IOException e) {
-            log.error("Unable to init workspace directory: {}", appProperties.getWorkspace());
-        }
+    private void initWorkspace() throws IOException {
+        Path path = Paths.get(appProperties.getWorkspace());
+        FileHelper.createDirectory(path);
     }
 
     @Bean("objectMapper")

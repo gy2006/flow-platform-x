@@ -30,6 +30,7 @@
     <h2.version>1.4.197</h2.version>
     <wiremock.version>2.18.0</wiremock.version>
     <swagger2.version>2.7.0</swagger2.version>
+    <jgit.version>5.0.3.201809091024-r</jgit.version>
   </properties>
 
   <build>
@@ -185,7 +186,13 @@
       <dependency>
         <groupId>org.eclipse.jgit</groupId>
         <artifactId>org.eclipse.jgit</artifactId>
-        <version>5.0.3.201809091024-r</version>
+        <version>${jgit.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.jgit</groupId>
+        <artifactId>org.eclipse.jgit.http.server</artifactId>
+        <version>${jgit.version}</version>
       </dependency>
 
       <dependency>

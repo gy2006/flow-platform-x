@@ -26,17 +26,13 @@ import java.util.regex.Pattern;
 /**
  * @author yang
  */
-public class UnixHelper {
+public abstract class UnixHelper {
 
     private final static char EnvStart = '$';
 
     private final static char EnvLeftBracket = '{';
 
     private final static char EnvRightBracket = '}';
-
-    private UnixHelper() {
-
-    }
 
     /**
      * Parse path with ${xxx} variable to absolute path

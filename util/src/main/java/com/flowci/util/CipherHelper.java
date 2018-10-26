@@ -35,7 +35,7 @@ import lombok.Data;
 /**
  * @author yang
  */
-public class CipherHelper {
+public abstract class CipherHelper {
 
     @Data
     public static class StringKeyPair {
@@ -65,7 +65,7 @@ public class CipherHelper {
         return dir;
     }
 
-    public static class RSA {
+    public abstract static class RSA {
 
         public static final int SIZE_1024 = 1024;
 
@@ -124,11 +124,5 @@ public class CipherHelper {
             tmp[3] = (byte) (value & 0xff);
             out.write(tmp);
         }
-
-        private RSA() {
-        }
-    }
-
-    private CipherHelper() {
     }
 }

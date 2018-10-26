@@ -18,6 +18,7 @@ package com.flowci.core.job.domain;
 
 import com.flowci.core.domain.Mongoable;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,7 +29,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Document(collection = "job_yml")
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
 public class JobYml extends Mongoable {
 
     /**

@@ -16,14 +16,22 @@
 
 package com.flowci.util;
 
-import com.google.common.hash.Hashing;
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author yang
  */
-public abstract class HashingHelper {
+public abstract class FileHelper {
 
-    public static String md5(String value) {
-        return Hashing.md5().hashBytes(value.getBytes()).toString();
+    public static Path createDirectory(Path dir) throws IOException {
+        try {
+            return Files.createDirectory(dir);
+        } catch (FileAlreadyExistsException ignore) {
+            return dir;
+        }
     }
+
 }

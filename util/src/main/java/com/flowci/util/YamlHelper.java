@@ -28,7 +28,7 @@ import org.yaml.snakeyaml.representer.Representer;
 /**
  * @author yang
  */
-public class YamlHelper {
+public abstract class YamlHelper {
 
     private final static DumperOptions DUMPER_OPTIONS = new DumperOptions();
 
@@ -52,8 +52,5 @@ public class YamlHelper {
     public static Yaml create(Class<? extends Object> theRoot) {
         Constructor rootConstructor = new Constructor(theRoot);
         return new Yaml(rootConstructor);
-    }
-
-    private YamlHelper() {
     }
 }
