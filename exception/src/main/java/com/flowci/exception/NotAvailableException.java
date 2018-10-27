@@ -19,27 +19,18 @@ package com.flowci.exception;
 /**
  * @author yang
  */
-public final class ErrorCode {
+public class NotAvailableException extends CIException {
 
-    public static final Integer ERROR = 400;
+    public NotAvailableException(String message, String... params) {
+        super(message, params);
+    }
 
-    public static final Integer AUTH_FAILURE = 401;
+    public NotAvailableException(String message, Throwable cause, String... params) {
+        super(message, cause, params);
+    }
 
-    public static final Integer INVALID_ARGUMENT = 402;
-
-    public static final Integer PARSE_YML_OR_JSON = 403;
-
-    public static final Integer NOT_FOUND = 404;
-
-    public static final Integer NOT_AVAILABLE = 405;
-
-    public static final Integer DUPLICATE = 406;
-
-    public static final Integer ILLEGAL_ACCESS = 420;
-
-    public static final Integer ILLEGAL_STATUS = 421;
-
-    private ErrorCode() {
-
+    @Override
+    public Integer getCode() {
+        return ErrorCode.NOT_AVAILABLE;
     }
 }

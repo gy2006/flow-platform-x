@@ -14,32 +14,17 @@
  * limitations under the License.
  */
 
-package com.flowci.exception;
+package com.flowci.agent.manager;
+
+import java.nio.file.Path;
 
 /**
  * @author yang
  */
-public final class ErrorCode {
+public interface PluginManager {
 
-    public static final Integer ERROR = 400;
+    Path getPath();
 
-    public static final Integer AUTH_FAILURE = 401;
+    void load(String name);
 
-    public static final Integer INVALID_ARGUMENT = 402;
-
-    public static final Integer PARSE_YML_OR_JSON = 403;
-
-    public static final Integer NOT_FOUND = 404;
-
-    public static final Integer NOT_AVAILABLE = 405;
-
-    public static final Integer DUPLICATE = 406;
-
-    public static final Integer ILLEGAL_ACCESS = 420;
-
-    public static final Integer ILLEGAL_STATUS = 421;
-
-    private ErrorCode() {
-
-    }
 }
