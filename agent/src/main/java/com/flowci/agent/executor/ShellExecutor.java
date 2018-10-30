@@ -114,9 +114,6 @@ public class ShellExecutor {
 
         // init inputs env
         this.pBuilder.environment().putAll(cmd.getInputs());
-
-        // support exit value
-        this.cmd.getScripts().add(0, cmd.getAllowFailure() ? "set +e" : "set -e");
     }
 
     public void run() {

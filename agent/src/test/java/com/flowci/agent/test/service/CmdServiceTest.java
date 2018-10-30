@@ -16,6 +16,7 @@
 
 package com.flowci.agent.test.service;
 
+import com.flowci.agent.config.AgentProperties;
 import com.flowci.agent.dao.ExecutedCmdDao;
 import com.flowci.agent.dao.ReceivedCmdDao;
 import com.flowci.agent.domain.AgentExecutedCmd;
@@ -60,6 +61,9 @@ public class CmdServiceTest extends SpringScenario {
 
     @Autowired
     private Path loggingDir;
+
+    @Autowired
+    private AgentProperties agentProperties;
 
     @Autowired
     private RabbitTemplate queueTemplate;
@@ -140,7 +144,6 @@ public class CmdServiceTest extends SpringScenario {
         Cmd cmd = new Cmd("cmd.id.1", CmdType.SHELL);
         cmd.setTimeout(10L);
         cmd.setScripts(Lists.newArrayList("echo hello"));
-        cmd.setWorkDir("${HOME}");
         cmd.setEnvFilters(Sets.newHashSet("FLOW_"));
         cmd.getInputs().putString("HELLO_WORLD", "hello");
 
@@ -165,7 +168,7 @@ public class CmdServiceTest extends SpringScenario {
         Assert.assertEquals(cmd, received);
         Assert.assertEquals(cmd, cmdService.get(cmd.getId()));
 
-        Assert.assertEquals("${HOME}", received.getWorkDir());
+        Assert.assertEquals(agentProperties.getWorkspace(), received.getWorkDir());
         Assert.assertEquals(10L, received.getTimeout().longValue());
         Assert.assertEquals("hello", received.getInputs().getString("HELLO_WORLD"));
         Assert.assertTrue(received.getEnvFilters().contains("FLOW_"));

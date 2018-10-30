@@ -79,7 +79,7 @@ public class ShellExecutorTest {
 
 
         Cmd cmd = new Cmd("cmd.id", CmdType.SHELL);
-        cmd.setScripts(Lists.newArrayList(String.format("source %s", path)));
+        cmd.setScripts(Lists.newArrayList("set -e", String.format("source %s", path)));
         cmd.setEnvFilters(Sets.newHashSet("CMD_RUNNER_TEST"));
 
         ShellExecutor executor = new ShellExecutor(cmd);

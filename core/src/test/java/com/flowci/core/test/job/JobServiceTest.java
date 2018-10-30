@@ -169,7 +169,8 @@ public class JobServiceTest extends ZookeeperScenario {
         Assert.assertEquals(cmdManager.createId(job, first).toString(), cmd.getId());
         Assert.assertEquals("echo step version", cmd.getInputs().getString("FLOW_VERSION"));
         Assert.assertEquals("echo step", cmd.getInputs().getString("FLOW_WORKSPACE"));
-        Assert.assertEquals("echo hello\n", cmd.getScripts().get(0));
+        Assert.assertEquals("set +e", cmd.getScripts().get(0)); // set +e since allow failure is true
+        Assert.assertEquals("echo hello\n", cmd.getScripts().get(1));
     }
 
     @Test
