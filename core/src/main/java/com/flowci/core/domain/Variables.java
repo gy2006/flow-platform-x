@@ -32,6 +32,8 @@ public class Variables {
      */
     public static final String JOB_STATUS = "FLOWCI_JOB_STATUS";
 
+    public static final String JOB_TRIGGER = "FLOWCI_JOB_TRIGGER";
+
     private Variables() {
     }
 }

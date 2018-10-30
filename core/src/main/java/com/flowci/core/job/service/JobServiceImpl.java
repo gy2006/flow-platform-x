@@ -166,7 +166,7 @@ public class JobServiceImpl implements JobService {
         job.setAgentSelector(root.getSelector());
 
         // init job context
-        VariableMap defaultContext = initJobContext(flow, buildNumber, root.getEnvironments(), input);
+        VariableMap defaultContext = initJobContext(flow, job, root.getEnvironments(), input);
         job.getContext().merge(defaultContext);
 
         // setup created by form login user or git event author
@@ -380,11 +380,12 @@ public class JobServiceImpl implements JobService {
         setupNodePathAndDispatch(job, next);
     }
 
-    private VariableMap initJobContext(Flow flow, Long buildNumber, VariableMap... inputs) {
+    private VariableMap initJobContext(Flow flow, Job job, VariableMap... inputs) {
         VariableMap context = new VariableMap(20);
         context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
         context.putString(Variables.FLOW_NAME, flow.getName());
-        context.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
+        context.putString(Variables.JOB_TRIGGER, job.getTrigger().toString());
+        context.putString(Variables.JOB_BUILD_NUMBER, job.getBuildNumber().toString());
         context.putString(Variables.JOB_STATUS, Job.Status.PENDING.name());
 
         if (Objects.isNull(inputs)) {
