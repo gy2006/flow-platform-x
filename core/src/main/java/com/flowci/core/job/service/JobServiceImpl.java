@@ -439,6 +439,7 @@ public class JobServiceImpl implements JobService {
     private Job setJobStatus(Job job, Job.Status newStatus, String message) {
         job.setStatus(newStatus);
         job.setMessage(message);
+        job.getContext().putString(Variables.JOB_STATUS, newStatus.name());
         jobDao.save(job);
         applicationEventPublisher.publishEvent(new JobStatusChangeEvent(this, job));
         return job;
