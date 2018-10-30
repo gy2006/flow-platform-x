@@ -164,7 +164,7 @@ public class PluginServiceImpl implements PluginService {
             log.debug("The plugin repo existed: {}", repo);
 
             try (Git git = Git.open(dirFile)) {
-                git.pull().setProgressMonitor(monitor).call();
+                git.pull().setRemoteBranchName(repo.getBranch()).setProgressMonitor(monitor).call();
             }
 
             return load(dirFile, repo);
@@ -175,6 +175,7 @@ public class PluginServiceImpl implements PluginService {
             .setDirectory(dirFile)
             .setURI(repo.getSource())
             .setProgressMonitor(monitor)
+            .setBranch(repo.getBranch())
             .call()) {
         }
 
