@@ -18,10 +18,12 @@ package com.flowci.core.job.dao;
 
 import com.flowci.core.job.domain.JobYml;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author yang
  */
+@Repository
 public interface JobYmlDao extends MongoRepository<JobYml, String> {
 
 }
