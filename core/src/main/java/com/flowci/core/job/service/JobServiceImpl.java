@@ -308,7 +308,7 @@ public class JobServiceImpl implements JobService {
 
             // execute before condition
             if (!executeBeforeCondition(job, next)) {
-                log.debug("Before condition cannot match {}", job);
+                log.debug("Before condition cannot be match {}", job);
                 return;
             }
 
@@ -408,7 +408,7 @@ public class JobServiceImpl implements JobService {
             Boolean result = runner.run();
 
             if (Objects.isNull(result) || result == Boolean.FALSE) {
-                String errorMsg = "Not match before condition";
+                String errorMsg = "The 'before' condition cannot be matched";
 
                 ExecutedCmd executedCmd = stepService.get(job, node);
                 executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
