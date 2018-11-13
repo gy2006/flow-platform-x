@@ -31,6 +31,7 @@
     <wiremock.version>2.18.0</wiremock.version>
     <swagger2.version>2.7.0</swagger2.version>
     <jgit.version>5.0.3.201809091024-r</jgit.version>
+    <groovy-all.version>2.4.12</groovy-all.version>
   </properties>
 
   <build>
@@ -125,6 +126,12 @@
         <groupId>com.flowci</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.codehaus.groovy</groupId>
+        <artifactId>groovy-all</artifactId>
+        <version>${groovy-all.version}</version>
       </dependency>
 
       <dependency>

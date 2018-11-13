@@ -46,10 +46,12 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
+import com.flowci.tree.GroovyRunner;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
+import groovy.util.ScriptException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -78,6 +80,8 @@ import org.springframework.stereotype.Service;
 public class JobServiceImpl implements JobService {
 
     private static final Sort SortByBuildNumber = Sort.by(Direction.DESC, "buildNumber");
+
+    private static final Integer DefaultBeforeTimeout = 5;
 
     @Autowired
     private ConfigProperties appProperties;
@@ -302,6 +306,12 @@ public class JobServiceImpl implements JobService {
                 return;
             }
 
+            // execute before condition
+            if (!executeBeforeCondition(job, next)) {
+                log.debug("Before condition cannot match {}", job);
+                return;
+            }
+
             // set path and agent id to job
             job.setCurrentPath(next.getPathAsString());
             job.setAgentId(available.getId());
@@ -376,8 +386,47 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
+        // execute before condition
+        if (!executeBeforeCondition(job, next)) {
+            log.debug("Before condition cannot match {}", job);
+            return;
+        }
+
         // continue to run next node
         setupNodePathAndDispatch(job, next);
+    }
+
+    private Boolean executeBeforeCondition(Job job, Node node) {
+        if (!node.hasBefore()) {
+            return true;
+        }
+
+        VariableMap map = VariableMap.merge(job.getContext(), node.getEnvironments());
+
+        try {
+            GroovyRunner<Boolean> runner = GroovyRunner.create(DefaultBeforeTimeout, node.getBefore(), map);
+            Boolean result = runner.run();
+
+            if (Objects.isNull(result) || result == Boolean.FALSE) {
+                String errorMsg = "Not match before condition";
+
+                ExecutedCmd executedCmd = stepService.get(job, node);
+                executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
+                executedCmd.setError(errorMsg);
+
+                setJobStatus(job, StatusHelper.convert(executedCmd), errorMsg);
+                return false;
+            }
+
+            return true;
+        } catch (ScriptException e) {
+            ExecutedCmd executedCmd = stepService.get(job, node);
+            executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
+            executedCmd.setError(e.getMessage());
+
+            setJobStatus(job, StatusHelper.convert(executedCmd), e.getMessage());
+            return false;
+        }
     }
 
     private VariableMap initJobContext(Flow flow, Job job, VariableMap... inputs) {

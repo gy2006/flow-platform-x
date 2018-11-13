@@ -27,6 +27,7 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Status;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
+import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.service.JobService;
@@ -302,6 +303,28 @@ public class JobServiceTest extends ZookeeperScenario {
         jobService.processCallback(executedCmd);
 
         // then: job status should be failure since final node does not count to step
+        job = jobDao.findById(job.getId()).get();
+        Assert.assertEquals(Status.FAILURE, job.getStatus());
+    }
+
+    @Test
+    public void should_job_failure_with_before_script_timeout() throws IOException, InterruptedException {
+        yml = flowService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
+        Agent agent = agentService.create("hello.agent", null);
+        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
+
+        mockAgentOnline(agentService.getPath(agent));
+
+        CountDownLatch waitForJobFromQueue = new CountDownLatch(2);
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobStatusChangeEvent>) event -> {
+            waitForJobFromQueue.countDown();
+        });
+
+        // when:
+        jobService.start(job);
+        waitForJobFromQueue.await(20, TimeUnit.SECONDS);
+
+        // then: job should failure since script return false
         job = jobDao.findById(job.getId()).get();
         Assert.assertEquals(Status.FAILURE, job.getStatus());
     }

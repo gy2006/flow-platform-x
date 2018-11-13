@@ -65,9 +65,7 @@ public class CmdManagerImpl implements CmdManager {
     @Override
     public Cmd createShellCmd(Job job, Node node) {
         // node envs has top priority;
-        VariableMap inputs = new VariableMap(job.getContext());
-        inputs.merge(node.getEnvironments());
-
+        VariableMap inputs = VariableMap.merge(job.getContext(), node.getEnvironments());
         String script = node.getScript();
         boolean allowFailure = node.isAllowFailure();
 

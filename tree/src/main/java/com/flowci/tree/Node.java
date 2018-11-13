@@ -111,4 +111,9 @@ public class Node implements Serializable {
     public boolean hasPlugin() {
         return !Strings.isNullOrEmpty(plugin);
     }
+
+    @JsonIgnore
+    public boolean hasBefore() {
+        return !Strings.isNullOrEmpty(before);
+    }
 }
