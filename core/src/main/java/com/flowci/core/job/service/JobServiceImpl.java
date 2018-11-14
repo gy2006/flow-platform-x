@@ -299,16 +299,11 @@ public class JobServiceImpl implements JobService {
             }
 
             NodeTree tree = ymlManager.getTree(job);
-            Node next = tree.next(currentNodePath(job));
+            Node node = tree.get(currentNodePath(job));
+            Node next = findNext(job, tree, node, true);
 
             if (Objects.isNull(next)) {
                 log.debug("Next node cannot be found when process job {}", job);
-                return;
-            }
-
-            // execute before condition
-            if (!executeBeforeCondition(job, next)) {
-                log.debug("Before condition cannot be match {}", job);
                 return;
             }
 
@@ -372,7 +367,7 @@ public class JobServiceImpl implements JobService {
         jobDao.save(job);
 
         // find next node
-        Node next = execCmd.isSuccess() ? tree.next(node.getPath()) : tree.nextFinal(node.getPath());
+        Node next = findNext(job, tree, node, execCmd.isSuccess());
 
         // job finished
         if (Objects.isNull(next)) {
@@ -386,14 +381,23 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
-        // execute before condition
-        if (!executeBeforeCondition(job, next)) {
-            log.debug("Before condition cannot match {}", job);
-            return;
-        }
-
         // continue to run next node
         setupNodePathAndDispatch(job, next);
+    }
+
+    private Node findNext(Job job, NodeTree tree, Node current, boolean isSuccess) {
+        Node next = isSuccess ? tree.next(current.getPath()) : tree.nextFinal(current.getPath());
+
+        if (Objects.isNull(next)) {
+            return null;
+        }
+
+        // Execute before condition to check the next node should be skipped or not
+        if (executeBeforeCondition(job, next)) {
+            return next;
+        }
+
+        return findNext(job, tree, next, true);
     }
 
     private Boolean executeBeforeCondition(Job job, Node node) {
@@ -408,23 +412,20 @@ public class JobServiceImpl implements JobService {
             Boolean result = runner.run();
 
             if (Objects.isNull(result) || result == Boolean.FALSE) {
-                String errorMsg = "The 'before' condition cannot be matched";
 
                 ExecutedCmd executedCmd = stepService.get(job, node);
-                executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
-                executedCmd.setError(errorMsg);
-
-                setJobStatus(job, StatusHelper.convert(executedCmd), errorMsg);
+                executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
+                executedCmd.setError("The 'before' condition cannot be matched");
+                stepService.update(job, executedCmd);
                 return false;
             }
 
             return true;
         } catch (ScriptException e) {
             ExecutedCmd executedCmd = stepService.get(job, node);
-            executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
+            executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
             executedCmd.setError(e.getMessage());
-
-            setJobStatus(job, StatusHelper.convert(executedCmd), e.getMessage());
+            stepService.update(job, executedCmd);
             return false;
         }
     }

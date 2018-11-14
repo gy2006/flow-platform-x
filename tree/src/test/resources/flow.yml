@@ -25,7 +25,7 @@ steps:
      FLOW_WORKSPACE: "echo step"
      FLOW_VERSION: "echo step version"
 
-   allowFailure: true
+   allow_failure: true
 
    steps:
     - name: step11
@@ -35,7 +35,7 @@ steps:
       script: "echo 2"
 
  - name: step2
-   allowFailure: false
+   allow_failure: false
    script: "echo 2"
    after: |
      true

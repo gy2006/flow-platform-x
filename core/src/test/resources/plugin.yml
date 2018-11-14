@@ -12,7 +12,7 @@ inputs:
   type: string
   required: true
 
-allowFailure: true
+allow_failure: true
 
 script: |
   PK_FILE=${FLOWCI_PLUGIN_WORKSPACE}/FLOWCI_RSA_PRIVATE_KEY

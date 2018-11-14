@@ -11,5 +11,5 @@ steps:
 
 - name: step2
   isFinal: true
-  allowFailure: true
+  allow_failure: true
   script: "echo 2"
