@@ -239,11 +239,6 @@ public class JobServiceImpl implements JobService {
             Cmd cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
 
-            // set job status to running
-            if (!job.isRunning()) {
-                setJobStatus(job, Job.Status.RUNNING, null);
-            }
-
             // set executed cmd step to running
             ExecutedCmd executedCmd = stepService.get(job, node);
             if (!executedCmd.isRunning()) {
@@ -307,10 +302,10 @@ public class JobServiceImpl implements JobService {
                 return;
             }
 
-            // set path and agent id to job
+            // set path, agent id, and status to job
             job.setCurrentPath(next.getPathAsString());
             job.setAgentId(available.getId());
-            jobDao.save(job);
+            setJobStatus(job, Job.Status.RUNNING, null);
 
             // dispatch job to agent queue
             dispatch(job);

@@ -332,10 +332,11 @@ public class JobServiceTest extends ZookeeperScenario {
         waitForJobFromQueue.await(20, TimeUnit.SECONDS);
 
         // then: job should failure since script return false
-        List<ExecutedCmd> steps = stepService.list(job);
+        Job executed = jobWrapper.getValue();
+        List<ExecutedCmd> steps = stepService.list(executed);
 
-        job = jobWrapper.getValue();
-        Assert.assertEquals(job.getCurrentPath(), "hello/step2");
+        Assert.assertEquals(Status.RUNNING, executed.getStatus());
+        Assert.assertEquals(executed.getCurrentPath(), "hello/step2");
 
         ExecutedCmd executedCmd = steps.get(0);
         Assert.assertEquals(ExecutedCmd.Status.SKIPPED, executedCmd.getStatus());
