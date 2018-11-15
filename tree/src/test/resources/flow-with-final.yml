@@ -22,8 +22,8 @@ steps:
     true
   filter:
     exports:
-      - "PLUGIN_"
-      - "HELLO_"
+    - "PLUGIN_"
+    - "HELLO_"
 
   envs:
     FLOW_WORKSPACE: "echo step"
@@ -40,7 +40,7 @@ steps:
 
 - name: step3
   allow_failure: false
-  isFinal: true
+  tail: true
   script: "echo 3"
   after: |
     true

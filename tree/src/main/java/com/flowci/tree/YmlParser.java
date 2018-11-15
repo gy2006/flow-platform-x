@@ -45,8 +45,8 @@ public class YmlParser {
         .put("envs", 2)
         .put("filter", 3)
         .put("selector", 4)
-        .put("allowFailure", 5)
-        .put("isFinal", 6)
+        .put("allow_failure", 5)
+        .put("tail", 6)
         .put("plugin", 7)
         .put("before", 8)
         .put("script", 9)
@@ -156,7 +156,7 @@ public class YmlParser {
             wrapper.script = node.getScript();
             wrapper.plugin = node.getPlugin();
             wrapper.allow_failure = node.isAllowFailure() == Node.ALLOW_FAILURE_DEFAULT ? null : node.isAllowFailure();
-            wrapper.isFinal = node.isFinal() == Node.IS_FINAL_DEFAULT ? null : node.isFinal();
+            wrapper.tail = node.isFinal() == Node.IS_FINAL_DEFAULT ? null : node.isFinal();
 
             for (Node child : node.getChildren()) {
                 wrapper.steps.add(ChildWrapper.fromNode(child));
@@ -175,7 +175,7 @@ public class YmlParser {
 
         public Boolean allow_failure = false;
 
-        public Boolean isFinal = false;
+        public Boolean tail = false;
 
         @Override
         public Node toNode(int index) {
@@ -185,7 +185,7 @@ public class YmlParser {
             node.setAfter(after);
             node.setPlugin(plugin);
             node.setAllowFailure(allow_failure);
-            node.setFinal(isFinal);
+            node.setFinal(tail);
             node.setFilter(filter);
             setEnvs(node);
             setChildren(node);

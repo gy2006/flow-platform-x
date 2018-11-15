@@ -21,7 +21,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 /**
  * @author yang
  */
-public class ThreadHelper {
+public abstract class ThreadHelper {
 
     public static ThreadPoolTaskExecutor createTaskExecutor(int maxPoolSize,
                                                             int corePoolSize,
@@ -42,8 +42,5 @@ public class ThreadHelper {
         } catch (InterruptedException ignore) {
 
         }
-    }
-
-    private ThreadHelper() {
     }
 }
