@@ -354,8 +354,8 @@ public class JobServiceImpl implements JobService {
         VariableMap context = job.getContext();
         context.merge(execCmd.getOutput());
 
-        // setup current job status if not final node
-        if (!node.isFinal()) {
+        // setup current job status if not tail node
+        if (!node.isTail()) {
             context.putString(Variables.JOB_STATUS, StatusHelper.convert(execCmd).name());
         }
 

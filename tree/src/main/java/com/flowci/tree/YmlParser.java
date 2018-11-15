@@ -156,7 +156,7 @@ public class YmlParser {
             wrapper.script = node.getScript();
             wrapper.plugin = node.getPlugin();
             wrapper.allow_failure = node.isAllowFailure() == Node.ALLOW_FAILURE_DEFAULT ? null : node.isAllowFailure();
-            wrapper.tail = node.isFinal() == Node.IS_FINAL_DEFAULT ? null : node.isFinal();
+            wrapper.tail = node.isTail() == Node.IS_TAIL_DEFAULT ? null : node.isTail();
 
             for (Node child : node.getChildren()) {
                 wrapper.steps.add(ChildWrapper.fromNode(child));
@@ -185,7 +185,7 @@ public class YmlParser {
             node.setAfter(after);
             node.setPlugin(plugin);
             node.setAllowFailure(allow_failure);
-            node.setFinal(tail);
+            node.setTail(tail);
             node.setFilter(filter);
             setEnvs(node);
             setChildren(node);

@@ -37,7 +37,7 @@ public class Node implements Serializable {
 
     public final static boolean ALLOW_FAILURE_DEFAULT = false;
 
-    public final static boolean IS_FINAL_DEFAULT = false;
+    public final static boolean IS_TAIL_DEFAULT = false;
 
     @NonNull
     private String name;
@@ -84,7 +84,7 @@ public class Node implements Serializable {
     @NonNull
     private boolean allowFailure = ALLOW_FAILURE_DEFAULT;
 
-    private boolean isFinal = IS_FINAL_DEFAULT;
+    private boolean tail = IS_TAIL_DEFAULT;
 
     @NonNull
     private Integer order = 0;

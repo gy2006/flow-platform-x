@@ -10,6 +10,6 @@ steps:
     echo hello
 
 - name: step2
-  isFinal: true
+  tail: true
   allow_failure: true
   script: "echo 2"
