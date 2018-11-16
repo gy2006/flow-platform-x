@@ -20,17 +20,21 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.domain.VariableMap;
 import com.google.common.base.Strings;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import lombok.Data;
+import java.util.Set;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.ToString;
 
 /**
  * @author yang
  */
-@Data
+@Getter
+@Setter
 @EqualsAndHashCode(of = {"path"})
 @ToString(of = {"path"})
 public class Node implements Serializable {
@@ -69,19 +73,19 @@ public class Node implements Serializable {
     private String script;
 
     /**
-     * Node after groovy script
-     */
-    private String after;
-
-    /**
      * Plugin name
      */
     private String plugin;
 
     /**
-     * Is allow failure
+     * Variables name to export to context
      */
     @NonNull
+    private Set<String> exports = new HashSet<>(0);
+
+    /**
+     * Is allow failure
+     */
     private boolean allowFailure = ALLOW_FAILURE_DEFAULT;
 
     private boolean tail = IS_TAIL_DEFAULT;
@@ -115,5 +119,10 @@ public class Node implements Serializable {
     @JsonIgnore
     public boolean hasBefore() {
         return !Strings.isNullOrEmpty(before);
+    }
+
+    @JsonIgnore
+    public boolean hasExports() {
+        return exports != null && !exports.isEmpty();
     }
 }

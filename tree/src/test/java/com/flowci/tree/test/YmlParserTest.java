@@ -16,7 +16,6 @@
 
 package com.flowci.tree.test;
 
-import com.flowci.tree.Filter;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
@@ -71,19 +70,8 @@ public class YmlParserTest {
         Assert.assertFalse(step1.isTail());
         Assert.assertEquals("println(FLOW_WORKSPACE)\ntrue\n", step1.getBefore());
 
-        Node step11 = step1.getChildren().get(0);
-        Assert.assertNotNull(step11);
-        Assert.assertEquals("step11", step11.getName());
-        Assert.assertEquals("echo 1", step11.getScript());
-
-        Node step12 = step1.getChildren().get(1);
-        Assert.assertNotNull(step12);
-        Assert.assertEquals("step12", step12.getName());
-        Assert.assertEquals("echo 2", step12.getScript());
-
         Node step2 = steps.get(1);
         Assert.assertEquals("step2", step2.getName());
-        Assert.assertEquals("true\n", step2.getAfter());
     }
 
     @Test
@@ -95,18 +83,7 @@ public class YmlParserTest {
         // verify parent / child relationship
         Node step1 = tree.get(NodePath.create("root/step-1")); // step-1 is default name
         Assert.assertNotNull(step1);
-        Assert.assertEquals(2, step1.getChildren().size());
         Assert.assertEquals(root, step1.getParent());
-
-        Node step11 = tree.get(NodePath.create("root/step-1/step11"));
-        Assert.assertNotNull(step11);
-        Assert.assertTrue(step11.getChildren().isEmpty());
-        Assert.assertEquals(step1, step11.getParent());
-
-        Node step12 = tree.get(NodePath.create("root/step-1/step12"));
-        Assert.assertNotNull(step12);
-        Assert.assertTrue(step12.getChildren().isEmpty());
-        Assert.assertEquals(step1, step12.getParent());
 
         Node step2 = tree.get(NodePath.create("root/step2"));
         Assert.assertNotNull(step2);
@@ -114,9 +91,6 @@ public class YmlParserTest {
         Assert.assertEquals(root, step2.getParent());
 
         // verify next / previous relationship
-        Assert.assertEquals(step11, tree.next(root.getPath()));
-        Assert.assertEquals(step12, tree.next(step11.getPath()));
-        Assert.assertEquals(step1, tree.next(step12.getPath()));
         Assert.assertEquals(step2, tree.next(step1.getPath()));
         Assert.assertNull(tree.next(step2.getPath()));
     }
@@ -130,16 +104,14 @@ public class YmlParserTest {
 
     @Test
     public void should_parse_yml_with_exports_filter() throws IOException {
-        content = loadContent("flow-with-filter.yml");
+        content = loadContent("flow-with-exports.yml");
         Node root = YmlParser.load("default", content);
         NodeTree tree = NodeTree.create(root);
 
         Node first = tree.next(tree.getRoot().getPath());
         Assert.assertEquals("step-1", first.getPath().name());
 
-        Filter filter = first.getFilter();
-        Assert.assertTrue(filter.available());
-        Assert.assertEquals(2, filter.getExports().size());
+        Assert.assertEquals(2, first.getExports().size());
     }
 
     private String loadContent(String resource) throws IOException {

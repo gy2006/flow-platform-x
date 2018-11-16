@@ -83,7 +83,7 @@ public class CmdManagerImpl implements CmdManager {
         Cmd cmd = new Cmd(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
         cmd.setAllowFailure(allowFailure);
-        cmd.setEnvFilters(Sets.newHashSet(node.getFilter().getExports()));
+        cmd.setEnvFilters(Sets.newHashSet(node.getExports()));
         cmd.setScripts(Lists.newArrayList(failureScript, script));
         cmd.setPlugin(node.getPlugin());
 

@@ -41,13 +41,8 @@ public class Filter implements Serializable {
      */
     private List<String> tags = new LinkedList<>();
 
-    /**
-     * Env export filter
-     */
-    private List<String> exports = new LinkedList<>();
-
     public boolean available() {
-        return !branches.isEmpty() || !tags.isEmpty() || !exports.isEmpty();
+        return !branches.isEmpty() || !tags.isEmpty();
     }
 
     public boolean isMatchBranch(String branch) {
