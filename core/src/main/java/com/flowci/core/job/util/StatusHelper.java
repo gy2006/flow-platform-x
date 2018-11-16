@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * @author yang
  */
-public class StatusHelper {
+public abstract class StatusHelper {
 
     private final static Map<Status, Job.Status> StatusMapping = ImmutableMap.<Status, Job.Status>builder()
         .put(Status.SUCCESS, Job.Status.SUCCESS)
@@ -42,8 +42,5 @@ public class StatusHelper {
         }
 
         return StatusMapping.get(executedCmd.getStatus());
-    }
-
-    private StatusHelper() {
     }
 }

@@ -27,6 +27,8 @@ import com.flowci.util.CipherHelper.StringKeyPair;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,8 +76,11 @@ public class CredentialServiceImpl implements CredentialService {
     @Override
     public Credential createRSA(String name, StringKeyPair rasKeyPair) {
         try {
+            Date now = Date.from(Instant.now());
             RSAKeyPair rsaKeyPair = new RSAKeyPair(rasKeyPair);
             rsaKeyPair.setName(name);
+            rsaKeyPair.setUpdatedAt(now);
+            rsaKeyPair.setCreatedAt(now);
             rsaKeyPair.setCreatedBy(currentUserHelper.getUserId());
             return credentialDao.insert(rsaKeyPair);
         } catch (DuplicateKeyException e) {

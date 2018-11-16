@@ -236,18 +236,21 @@ public class JobServiceImpl implements JobService {
         Agent agent = agentService.get(job.getAgentId());
 
         try {
-            Cmd cmd = cmdManager.createShellCmd(job, node);
-            agentService.dispatch(cmd, agent);
-
             // set executed cmd step to running
             ExecutedCmd executedCmd = stepService.get(job, node);
+
             if (!executedCmd.isRunning()) {
                 executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
                 stepService.update(job, executedCmd);
             }
 
+            Cmd cmd = cmdManager.createShellCmd(job, node);
+            agentService.dispatch(cmd, agent);
+            log.debug("Job {} with cmd {} been dispatched to agent {}", job.getId(), cmd.getId());
+
             return true;
         } catch (Throwable e) {
+            log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
             setJobStatus(job, Job.Status.FAILURE, e.getMessage());
             agentService.tryRelease(agent);
             return false;
@@ -289,28 +292,37 @@ public class JobServiceImpl implements JobService {
 
             // re-enqueue to job while agent been locked by other
             if (!isLocked) {
+                log.debug("Agent not found for job {}, put into the retrying queue", job.getId());
                 retry(job);
                 return;
             }
 
             NodeTree tree = ymlManager.getTree(job);
-            Node node = tree.get(currentNodePath(job));
-            Node next = findNext(job, tree, node, true);
+            Node next =  tree.next(currentNodePath(job));
 
+            // do not accept job without regular steps
             if (Objects.isNull(next)) {
                 log.debug("Next node cannot be found when process job {}", job);
                 return;
             }
+
+            log.debug("Next step of job {} is {}", job.getId(), next.getName());
 
             // set path, agent id, and status to job
             job.setCurrentPath(next.getPathAsString());
             job.setAgentId(available.getId());
             setJobStatus(job, Job.Status.RUNNING, null);
 
+            // execute condition script
+            Boolean executed = executeBeforeCondition(job, next);
+            if (!executed) {
+                ExecutedCmd executedCmd = stepService.get(job, next);
+                processCallback(executedCmd);
+                return;
+            }
+
             // dispatch job to agent queue
             dispatch(job);
-            log.debug("Job {} been dispatched to agent {}", job.getId(), available.getName());
-
         } catch (NotFoundException e) {
             // re-enqueue to job while agent not found
             log.debug("Agent not available, job {} retry", job.getId());
@@ -377,7 +389,11 @@ public class JobServiceImpl implements JobService {
         }
 
         // continue to run next node
-        setupNodePathAndDispatch(job, next);
+        job.setCurrentPath(next.getPathAsString());
+        jobDao.save(job);
+
+        log.debug("Dispatch job : {}", job);
+        dispatch(job);
     }
 
     private Node findNext(Job job, NodeTree tree, Node current, boolean isSuccess) {
@@ -407,7 +423,6 @@ public class JobServiceImpl implements JobService {
             Boolean result = runner.run();
 
             if (Objects.isNull(result) || result == Boolean.FALSE) {
-
                 ExecutedCmd executedCmd = stepService.get(job, node);
                 executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
                 executedCmd.setError("The 'before' condition cannot be matched");

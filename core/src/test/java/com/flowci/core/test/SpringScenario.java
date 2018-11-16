@@ -79,23 +79,33 @@ public abstract class SpringScenario {
     private Queue jobQueue;
 
     @Autowired
+    private Queue callbackQueue;
+
+    @Autowired
+    private Queue logsQueue;
+
+    @Autowired
     private AgentDao agentDao;
 
     @Autowired
     protected ApplicationEventMulticaster applicationEventMulticaster;
 
     @After
-    public void dbClean() {
+    public void cleanListeners() {
+        applicationEventMulticaster.removeAllListeners();
+    }
+
+    @After
+    public void dbCleanUp() {
         mongoTemplate.getDb().drop();
     }
 
     @After
-    public void jobQueueClean() {
-        queueAdmin.deleteQueue(jobQueue.getName());
-    }
+    public void queueCleanUp() {
+        queueAdmin.purgeQueue(jobQueue.getName(), true);
+        queueAdmin.purgeQueue(callbackQueue.getName(), true);
+        queueAdmin.purgeQueue(logsQueue.getName(), true);
 
-    @After
-    public void agentQueueClean() {
         List<Agent> all = agentDao.findAll();
         for (Agent agent : all) {
             queueAdmin.deleteQueue(agent.getQueueName());
