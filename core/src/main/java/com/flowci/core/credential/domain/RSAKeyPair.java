@@ -20,6 +20,7 @@ import com.flowci.util.CipherHelper.StringKeyPair;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
@@ -27,6 +28,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@Document(collection = "rsa_keypair")
 public final class RSAKeyPair extends Credential {
 
     private String publicKey;
