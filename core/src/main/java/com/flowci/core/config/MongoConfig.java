@@ -19,6 +19,8 @@ package com.flowci.core.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.coverter.VariableMapReader;
 import com.flowci.core.coverter.VariableMapWriter;
+import com.flowci.core.mongo.FlowMappingContext;
+import com.flowci.domain.ExecutedCmd;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import java.util.ArrayList;
@@ -32,6 +34,8 @@ import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.mongodb.config.AbstractMongoConfiguration;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+import org.springframework.data.util.ClassTypeInformation;
 
 /**
  * @author yang
@@ -65,5 +69,17 @@ public class MongoConfig extends AbstractMongoConfiguration {
         converters.add(new VariableMapReader(objectMapper));
         converters.add(new VariableMapWriter(objectMapper));
         return new MongoCustomConversions(converters);
+    }
+
+    @Override
+    public MongoMappingContext mongoMappingContext() throws ClassNotFoundException {
+        FlowMappingContext mappingContext = new FlowMappingContext();
+        mappingContext.setInitialEntitySet(getInitialEntitySet());
+        mappingContext.setSimpleTypeHolder(customConversions().getSimpleTypeHolder());
+        mappingContext.setFieldNamingStrategy(fieldNamingStrategy());
+
+        mappingContext.addCustomizedPersistentEntity(ClassTypeInformation.from(ExecutedCmd.class), "executed_cmd");
+
+        return mappingContext;
     }
 }
