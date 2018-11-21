@@ -50,7 +50,7 @@ public class PluginConfig {
 
     @Bean("pluginDir")
     public Path pluginDir() throws IOException {
-        String workspace = appProperties.getWorkspace();
+        String workspace = appProperties.getWorkspace().toString();
         Path pluginDir = Paths.get(workspace, "plugins");
         return FileHelper.createDirectory(pluginDir);
     }

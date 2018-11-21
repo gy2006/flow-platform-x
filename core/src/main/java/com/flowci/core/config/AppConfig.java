@@ -28,7 +28,6 @@ import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
@@ -82,7 +81,13 @@ public class AppConfig {
 
     @PostConstruct
     private void initWorkspace() throws IOException {
-        Path path = Paths.get(appProperties.getWorkspace());
+        Path path = appProperties.getWorkspace();
+        FileHelper.createDirectory(path);
+    }
+
+    @PostConstruct
+    private void initLogDir() throws IOException {
+        Path path = appProperties.getLogDir();
         FileHelper.createDirectory(path);
     }
 
