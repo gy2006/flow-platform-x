@@ -16,6 +16,7 @@
     <module>exception</module>
     <module>tree</module>
     <module>zookeeper</module>
+    <module>pool</module>
   </modules>
 
   <properties>
@@ -32,6 +33,7 @@
     <swagger2.version>2.7.0</swagger2.version>
     <jgit.version>5.0.3.201809091024-r</jgit.version>
     <groovy-all.version>2.4.12</groovy-all.version>
+    <docker-java.version>3.0.14</docker-java.version>
   </properties>
 
   <build>
