@@ -14,30 +14,35 @@
  * limitations under the License.
  */
 
-package com.flowci.pool.docker;
+package com.flowci.pool.docker.manager;
+
+import com.flowci.pool.docker.CreateContainer;
+import com.flowci.pool.docker.DockerConfig;
 
 /**
  * @author yang
  */
-public interface DockerManager {
+public interface ContainerManager {
 
     /**
-     * Pull image
+     * Create a container
+     *
+     * @return container id
      */
-    void pull(DockerConfig config);
+    String create(DockerConfig config, CreateContainer data);
 
     /**
-     * Start or rerun the container
+     * Run the container
      */
-    void run(DockerConfig config);
+    void start(DockerConfig config, String containerId);
 
     /**
-     * Stop container
+     * Stop the container
      */
-    void stop(DockerConfig config);
+    void stop(DockerConfig config, String containerId);
 
     /**
      * Delete container
      */
-    void delete(DockerConfig config);
+    void remove(DockerConfig config, String containerId);
 }

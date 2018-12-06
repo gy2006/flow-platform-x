@@ -16,8 +16,10 @@
 
 package com.flowci.pool.docker;
 
+import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
+import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +50,11 @@ public final class DockerConfig {
 
     private RegistryConfig registry;
 
-    public DockerClientConfig create() {
+    public DockerClient getClient() {
+        return DockerClientBuilder.getInstance(create()).build();
+    }
+
+    private DockerClientConfig create() {
         Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(host);
 
         if (registry != null) {

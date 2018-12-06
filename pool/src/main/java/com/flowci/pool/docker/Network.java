@@ -14,30 +14,17 @@
  * limitations under the License.
  */
 
-package com.flowci.pool.test;
-
-import com.flowci.pool.docker.DockerConfig;
-import com.flowci.pool.docker.DockerManager;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+package com.flowci.pool.docker;
 
 /**
  * @author yang
  */
-public class DockerManagerTest extends PoolTestScenario {
+public abstract class Network {
 
-    @Autowired
-    private DockerManager dockerManager;
+    public static final String Host = "host";
 
-    @Before
-    public void servicesCheck() {
-        Assert.assertNotNull(dockerManager);
-    }
+    public static final String Bridge = "bridge";
 
-    @Test
-    public void should_list_images() {
-        dockerManager.pull(DockerConfig.of("tcp://ak-jump:2376"));
-    }
+    public static final String None = "none";
+
 }
