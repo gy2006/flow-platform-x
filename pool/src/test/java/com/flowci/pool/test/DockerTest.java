@@ -56,12 +56,11 @@ public class DockerTest extends PoolTestScenario {
     @Test
     public void should_pull_image() {
         DockerConfig config = DockerConfig.of("unix:///var/run/docker.sock");
-        boolean result = imageManager.pull(config, Image);
-        Assert.assertTrue(result);
+        Assert.assertTrue(imageManager.pull(config, Image));
     }
 
     @Test
-    public void should_create_and_delete_container() throws IOException {
+    public void should_create_and_remove_container() throws IOException {
         URL html = getClass().getClassLoader().getResource("html");
 
         // prepare container params
