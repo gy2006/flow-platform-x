@@ -24,12 +24,10 @@ import com.flowci.core.domain.JsonablePage;
 import com.flowci.core.helper.ThreadHelper;
 import com.flowci.core.user.User;
 import com.flowci.domain.Jsonable;
+import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
@@ -64,6 +62,14 @@ public class AppConfig {
 
     private static final ObjectMapper Mapper = Jsonable.getMapper();
 
+    private static final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
+        new StringHttpMessageConverter(),
+        new ByteArrayHttpMessageConverter(),
+        new MappingJackson2HttpMessageConverter(Mapper),
+        new ResourceHttpMessageConverter(),
+        new AllEncompassingFormHttpMessageConverter()
+    );
+
     static {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Pageable.class, new JsonablePage.PageableDeserializer());
@@ -74,26 +80,15 @@ public class AppConfig {
     private ConfigProperties appProperties;
 
     @PostConstruct
-    public void initWorkspace() {
-        try {
-            Path path = Paths.get(appProperties.getWorkspace());
-            Files.createDirectory(path);
-        } catch (FileAlreadyExistsException ignore) {
-
-        } catch (IOException e) {
-            log.error("Unable to init workspace directory: {}", appProperties.getWorkspace());
-        }
+    private void initWorkspace() throws IOException {
+        Path path = appProperties.getWorkspace();
+        FileHelper.createDirectory(path);
     }
 
-    @Bean
-    public List<HttpMessageConverter<?>> defaultConverters() {
-        return ImmutableList.of(
-            new StringHttpMessageConverter(),
-            new ByteArrayHttpMessageConverter(),
-            new MappingJackson2HttpMessageConverter(Mapper),
-            new ResourceHttpMessageConverter(),
-            new AllEncompassingFormHttpMessageConverter()
-        );
+    @PostConstruct
+    private void initLogDir() throws IOException {
+        Path path = appProperties.getLogDir();
+        FileHelper.createDirectory(path);
     }
 
     @Bean("objectMapper")
@@ -102,13 +97,13 @@ public class AppConfig {
     }
 
     @Bean("restTemplate")
-    public RestTemplate restTemplate(List<HttpMessageConverter<?>> defaultConverters) {
+    public RestTemplate restTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setReadTimeout(1000 * 15);
         factory.setConnectTimeout(1000 * 15);
 
         RestTemplate restTemplate = new RestTemplate(factory);
-        restTemplate.setMessageConverters(defaultConverters);
+        restTemplate.setMessageConverters(DefaultConverters);
         return restTemplate;
     }
 
@@ -123,7 +118,7 @@ public class AppConfig {
     }
 
     @Bean
-    public WebMvcConfigurer webMvcConfigurer(List<HttpMessageConverter<?>> defaultConverters) {
+    public WebMvcConfigurer webMvcConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
@@ -139,7 +134,7 @@ public class AppConfig {
             @Override
             public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
                 converters.clear();
-                converters.addAll(defaultConverters);
+                converters.addAll(DefaultConverters);
             }
         };
     }

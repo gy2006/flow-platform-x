@@ -21,7 +21,6 @@ import java.util.LinkedList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 /**
  * Git Trigger Condition
@@ -30,12 +29,21 @@ import lombok.ToString;
  */
 @Getter
 @Setter
-@ToString
 public class Filter implements Serializable {
 
+    /**
+     * Condition on branches
+     */
     private List<String> branches = new LinkedList<>();
 
+    /**
+     * Condition on tags
+     */
     private List<String> tags = new LinkedList<>();
+
+    public boolean available() {
+        return !branches.isEmpty() || !tags.isEmpty();
+    }
 
     public boolean isMatchBranch(String branch) {
         if (branches.isEmpty()) {

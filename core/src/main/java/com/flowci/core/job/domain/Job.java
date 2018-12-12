@@ -21,16 +21,17 @@ import com.flowci.core.domain.Mongoable;
 import com.flowci.domain.VariableMap;
 import com.flowci.tree.Selector;
 import java.util.Date;
-import java.util.Objects;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
  */
-@Data
-@Document
+@Getter
+@Setter
+@Document(collection = "job")
 public class Job extends Mongoable {
 
     public enum Trigger {
@@ -138,6 +139,11 @@ public class Job extends Mongoable {
     @JsonIgnore
     public boolean isRunning() {
         return status == Status.RUNNING;
+    }
+
+    @JsonIgnore
+    public boolean isQueuing() {
+        return status == Status.QUEUED;
     }
 
     @JsonIgnore

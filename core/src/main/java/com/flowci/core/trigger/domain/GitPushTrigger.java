@@ -21,12 +21,14 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * @author yang
  */
 @Getter
 @Setter
+@ToString(callSuper = true, of = {"ref", "message"})
 public class GitPushTrigger extends GitTrigger {
 
     private Author author;

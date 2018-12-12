@@ -6,10 +6,10 @@ steps:
 - envs:
     FLOW_WORKSPACE: "echo step"
     FLOW_VERSION: "echo step version"
-  allowFailure: true
+  allow_failure: true
   script: |
     echo hello
 
 - name: step2
-  allowFailure: true
+  allow_failure: true
   script: "echo 2"

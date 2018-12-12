@@ -27,11 +27,10 @@ import com.flowci.domain.Jsonable;
 import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.StatusException;
+import com.flowci.util.FileHelper;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -87,15 +86,21 @@ public class AgentConfig implements WebMvcConfigurer {
     private ServerProperties serverProperties;
 
     @Bean("workspace")
-    public Path workspace() {
+    public Path workspace() throws IOException {
         Path path = Paths.get(agentProperties.getWorkspace());
-        return initDir(path, "Unable to init workspace");
+        return FileHelper.createDirectory(path);
     }
 
     @Bean("loggingDir")
-    public Path loggingDir() {
+    public Path loggingDir() throws IOException {
         Path path = Paths.get(agentProperties.getLoggingDir());
-        return initDir(path, "Unable to init logging dir");
+        return FileHelper.createDirectory(path);
+    }
+
+    @Bean("pluginDir")
+    public Path pluginDir() throws IOException {
+        Path path = Paths.get(agentProperties.getWorkspace(), "plugins");
+        return FileHelper.createDirectory(path);
     }
 
     @Bean("objectMapper")
@@ -150,16 +155,5 @@ public class AgentConfig implements WebMvcConfigurer {
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         converters.clear();
         converters.addAll(DefaultConverters);
-    }
-
-    private Path initDir(Path path, String errMsg) {
-        try {
-            return Files.createDirectories(path);
-        } catch (FileAlreadyExistsException ignore) {
-            return path;
-        } catch (IOException e) {
-            log.error("{}: {}", errMsg, path);
-            throw new RuntimeException(e.getMessage());
-        }
     }
 }

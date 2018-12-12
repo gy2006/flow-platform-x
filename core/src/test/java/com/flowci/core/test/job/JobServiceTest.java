@@ -27,9 +27,11 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Status;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
+import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.service.JobService;
+import com.flowci.core.job.service.StepService;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
@@ -42,8 +44,10 @@ import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.log4j.Log4j2;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -55,6 +59,7 @@ import org.springframework.context.ApplicationListener;
 /**
  * @author yang
  */
+@Log4j2
 @FixMethodOrder(MethodSorters.JVM)
 public class JobServiceTest extends ZookeeperScenario {
 
@@ -69,6 +74,9 @@ public class JobServiceTest extends ZookeeperScenario {
 
     @Autowired
     private JobService jobService;
+
+    @Autowired
+    private StepService stepService;
 
     @Autowired
     private AgentService agentService;
@@ -137,6 +145,9 @@ public class JobServiceTest extends ZookeeperScenario {
         Agent agent = agentService.create("hello.agent", null);
         mockAgentOnline(agentService.getPath(agent));
 
+        job.setStatus(Status.QUEUED);
+        jobDao.save(job);
+
         // when:
         ObjectWrapper<Agent> targetAgent = new ObjectWrapper<>();
         ObjectWrapper<Cmd> targetCmd = new ObjectWrapper<>();
@@ -154,6 +165,9 @@ public class JobServiceTest extends ZookeeperScenario {
         counter.await(10, TimeUnit.SECONDS);
         Assert.assertEquals(agent, targetAgent.getValue());
 
+        // then: verify job status should be running
+        Assert.assertEquals(Status.RUNNING, jobDao.findById(job.getId()).get().getStatus());
+
         // then: verify cmd content
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
         NodeTree tree = NodeTree.create(root);
@@ -163,7 +177,8 @@ public class JobServiceTest extends ZookeeperScenario {
         Assert.assertEquals(cmdManager.createId(job, first).toString(), cmd.getId());
         Assert.assertEquals("echo step version", cmd.getInputs().getString("FLOW_VERSION"));
         Assert.assertEquals("echo step", cmd.getInputs().getString("FLOW_WORKSPACE"));
-        Assert.assertEquals("echo hello\n", cmd.getScripts().get(0));
+        Assert.assertEquals("set +e", cmd.getScripts().get(0)); // set +e since allow failure is true
+        Assert.assertEquals("echo hello\n", cmd.getScripts().get(1));
     }
 
     @Test
@@ -275,7 +290,7 @@ public class JobServiceTest extends ZookeeperScenario {
     @Test
     public void should_job_failure_with_final_node() throws Exception {
         yml = flowService.saveYml(flow, StringHelper.toString(load("flow-failure-with-final.yml")));
-        Agent agent = agentService.create("hello.agent", null);
+        Agent agent = agentService.create("hello.agent.0", null);
         Job job = prepareJobForRunningStatus(agent);
 
         NodeTree tree = ymlManager.getTree(job);
@@ -297,6 +312,46 @@ public class JobServiceTest extends ZookeeperScenario {
         // then: job status should be failure since final node does not count to step
         job = jobDao.findById(job.getId()).get();
         Assert.assertEquals(Status.FAILURE, job.getStatus());
+    }
+
+    @Test
+    public void should_job_with_before_condition() throws IOException, InterruptedException {
+        yml = flowService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
+        Agent agent = agentService.create("hello.agent.1", null);
+        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
+
+        mockAgentOnline(agentService.getPath(agent));
+
+        CountDownLatch waitForJobQueued = new CountDownLatch(2);
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobStatusChangeEvent>) event -> {
+            if (event.getJob().getStatus() == Status.QUEUED) {
+                waitForJobQueued.countDown();
+            }
+
+            if (event.getJob().getStatus() == Status.RUNNING) {
+                waitForJobQueued.countDown();
+            }
+        });
+
+        CountDownLatch waitForStep2Sent = new CountDownLatch(1);
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdSentEvent>) event -> {
+            waitForStep2Sent.countDown();
+        });
+
+        // when:
+        jobService.start(job);
+        Assert.assertTrue(waitForJobQueued.await(10, TimeUnit.SECONDS));
+        Assert.assertTrue(waitForStep2Sent.await(10, TimeUnit.SECONDS));
+
+        // then: job should failure since script return false
+        Job executed = jobDao.findById(job.getId()).get();
+        List<ExecutedCmd> steps = stepService.list(executed);
+
+        Assert.assertEquals(Status.RUNNING, executed.getStatus());
+        Assert.assertEquals("hello/step2", executed.getCurrentPath());
+
+        ExecutedCmd executedCmd = steps.get(0);
+        Assert.assertEquals(ExecutedCmd.Status.SKIPPED, executedCmd.getStatus());
     }
 
     private Job prepareJobForRunningStatus(Agent agent) {

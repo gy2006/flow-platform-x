@@ -32,6 +32,15 @@
 
 ## Websocket API
 
+Data:
+
+```
+{
+  "event": "NEW_CREATED" | "STATUS_CHANGE"
+  "body": {} | []
+}
+```
+
 Init connection: `{host}/ws`
 
 - Example:
@@ -63,13 +72,14 @@ Job Event: `/topic/jobs`
     
   });
   ```
-- Data:
+  
+Step Event: `/topic/steps/{job id}`
+
+- Example:
   ```
-    {
-      "event": "NEW_CREATED" | "STATUS_CHANGE",
-      "job": {
-        ...
-      }
-    }
+  const path = '/topic/steps/xxxxxxxx
+  stompClient.subscribe(path, function (data) {
+    
+  });
   ```
 

@@ -20,22 +20,11 @@ steps:
  - before: |
      println(FLOW_WORKSPACE)
      true
-
    envs:
      FLOW_WORKSPACE: "echo step"
      FLOW_VERSION: "echo step version"
-
-   allowFailure: true
-
-   steps:
-    - name: step11
-      script: "echo 1"
-
-    - name: step12
-      script: "echo 2"
+   allow_failure: true
 
  - name: step2
-   allowFailure: false
+   allow_failure: false
    script: "echo 2"
-   after: |
-     true

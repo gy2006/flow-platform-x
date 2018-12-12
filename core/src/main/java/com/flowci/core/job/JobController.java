@@ -125,4 +125,10 @@ public class JobController {
         Job job = create(data);
         return jobService.start(job);
     }
+
+    @PostMapping("/{flow}/{buildNumber}/cancel")
+    public Job cancel(@PathVariable String flow, @PathVariable String buildNumber) {
+        Job job = get(flow, buildNumber);
+        return jobService.cancel(job);
+    }
 }

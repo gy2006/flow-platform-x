@@ -26,7 +26,7 @@ import java.io.Serializable;
 /**
  * @author yang
  */
-public class ObjectsHelper {
+public abstract class ObjectsHelper {
 
     public static <T extends Serializable> T copy(T source) {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
@@ -42,8 +42,5 @@ public class ObjectsHelper {
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e.getMessage());
         }
-    }
-
-    private ObjectsHelper() {
     }
 }

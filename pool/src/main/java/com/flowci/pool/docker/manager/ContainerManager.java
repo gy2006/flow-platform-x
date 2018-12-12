@@ -14,40 +14,35 @@
  * limitations under the License.
  */
 
-package com.flowci.core.plugin.manager;
+package com.flowci.pool.docker.manager;
 
-import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.domain.PluginRepo;
-import java.util.Collection;
-import java.util.List;
+import com.flowci.pool.docker.CreateContainer;
+import com.flowci.pool.docker.DockerConfig;
 
 /**
  * @author yang
  */
-public interface PluginService {
+public interface ContainerManager {
 
     /**
-     * List all installed plugin
+     * Create a container
+     *
+     * @return container id
      */
-    Collection<Plugin> list();
+    String create(DockerConfig config, CreateContainer data);
 
     /**
-     * Get plugin by name
+     * Run the container
      */
-    Plugin get(String name);
+    void start(DockerConfig config, String containerId);
 
     /**
-     * Load plugin repo info
+     * Stop the container
      */
-    List<PluginRepo> load(String repoUrl);
+    void stop(DockerConfig config, String containerId);
 
     /**
-     * Git clone plugin repos in Async
+     * Delete container
      */
-    void clone(List<PluginRepo> repos);
-
-    /**
-     * Reload default plugin repo
-     */
-    void reload();
+    void remove(DockerConfig config, String containerId);
 }

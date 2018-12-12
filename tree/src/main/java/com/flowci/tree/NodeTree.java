@@ -99,7 +99,7 @@ public class NodeTree {
     public Node nextFinal(NodePath path) {
         NodeWithIndex nodeWithIndex = getWithIndex(path);
 
-        if (nodeWithIndex.node.isFinal()) {
+        if (nodeWithIndex.node.isTail()) {
             return next(path);
         }
 
@@ -110,7 +110,7 @@ public class NodeTree {
 
         for (int i = nextIndex; i < ordered.size(); i++) {
             Node node = ordered.get(i);
-            if (node.isFinal()) {
+            if (node.isTail()) {
                 return node;
             }
         }
@@ -153,7 +153,7 @@ public class NodeTree {
 
         while (iterator.hasNext()) {
             Node node = iterator.next();
-            if (node.isFinal()) {
+            if (node.isTail()) {
                 finals.add(node);
                 iterator.remove();
             }

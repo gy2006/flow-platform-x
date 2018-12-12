@@ -28,6 +28,16 @@ public class VariableMap extends LinkedHashMap<String, String> implements Serial
 
     public static final VariableMap EMPTY = new VariableMap(0);
 
+    public static VariableMap merge(VariableMap... variables) {
+        VariableMap merged = new VariableMap();
+
+        for (VariableMap item : variables) {
+            merged.putAll(item);
+        }
+
+        return merged;
+    }
+
     public VariableMap() {
         super();
     }

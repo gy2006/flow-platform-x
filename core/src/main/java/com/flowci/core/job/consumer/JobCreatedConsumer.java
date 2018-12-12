@@ -16,37 +16,32 @@
 
 package com.flowci.core.job.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.domain.PushEvent;
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.domain.JobPush;
-import com.flowci.core.job.domain.JobPush.Event;
-import java.io.IOException;
+import com.flowci.core.job.event.JobCreatedEvent;
+import com.flowci.core.message.PushService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.context.ApplicationListener;
+import org.springframework.stereotype.Component;
 
 /**
  * @author yang
  */
 @Log4j2
-public abstract class PushConsumer {
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private SimpMessagingTemplate simpMessagingTemplate;
+@Component
+public class JobCreatedConsumer implements ApplicationListener<JobCreatedEvent> {
 
     @Autowired
     private String topicForJobs;
 
-    protected void push(Event pushType, Job job) {
-        try {
-            JobPush push = JobPush.of(pushType, job);
-            String json = objectMapper.writeValueAsString(push);
-            simpMessagingTemplate.convertAndSend(topicForJobs, json);
-        } catch (IOException e) {
-            log.warn(e.getMessage());
-        }
+    @Autowired
+    private PushService pushService;
+
+    @Override
+    public void onApplicationEvent(JobCreatedEvent event) {
+        Job job = event.getJob();
+        pushService.push(topicForJobs, PushEvent.NEW_CREATED, job);
+        log.debug("Job {} been pushed", job.getId());
     }
 }

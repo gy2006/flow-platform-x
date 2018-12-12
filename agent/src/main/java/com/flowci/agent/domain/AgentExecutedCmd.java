@@ -40,6 +40,17 @@ public class AgentExecutedCmd extends ExecutedCmd {
     }
 
     @Override
+    @Column(name = "allow_failure")
+    public Boolean getAllowFailure() {
+        return super.getAllowFailure();
+    }
+
+    @Override
+    public String getPlugin() {
+        return super.getPlugin();
+    }
+
+    @Override
     @Column(name = "process_id")
     public Integer getProcessId() {
         return super.getProcessId();

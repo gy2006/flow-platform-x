@@ -21,15 +21,11 @@ import com.flowci.core.flow.domain.Flow;
 /**
  * @author yang
  */
-public class JobKeyBuilder {
+public abstract class JobKeyBuilder {
 
     private final static char Splitter = '-';
 
     public static String build(Flow flow, Long buildNumber) {
         return flow.getId() + Splitter + buildNumber;
-    }
-
-    private JobKeyBuilder() {
-
     }
 }

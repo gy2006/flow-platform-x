@@ -16,6 +16,7 @@
     <module>exception</module>
     <module>tree</module>
     <module>zookeeper</module>
+    <module>pool</module>
   </modules>
 
   <properties>
@@ -30,6 +31,9 @@
     <h2.version>1.4.197</h2.version>
     <wiremock.version>2.18.0</wiremock.version>
     <swagger2.version>2.7.0</swagger2.version>
+    <jgit.version>5.0.3.201809091024-r</jgit.version>
+    <groovy-all.version>2.4.12</groovy-all.version>
+    <docker-java.version>3.0.14</docker-java.version>
   </properties>
 
   <build>
@@ -127,6 +131,12 @@
       </dependency>
 
       <dependency>
+        <groupId>org.codehaus.groovy</groupId>
+        <artifactId>groovy-all</artifactId>
+        <version>${groovy-all.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.github.ben-manes.caffeine</groupId>
         <artifactId>caffeine</artifactId>
         <version>${caffeine.version}</version>
@@ -185,7 +195,13 @@
       <dependency>
         <groupId>org.eclipse.jgit</groupId>
         <artifactId>org.eclipse.jgit</artifactId>
-        <version>5.0.3.201809091024-r</version>
+        <version>${jgit.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.jgit</groupId>
+        <artifactId>org.eclipse.jgit.http.server</artifactId>
+        <version>${jgit.version}</version>
       </dependency>
 
       <dependency>

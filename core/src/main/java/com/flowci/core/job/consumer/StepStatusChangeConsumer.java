@@ -16,10 +16,13 @@
 
 package com.flowci.core.job.consumer;
 
+import com.flowci.core.domain.PushEvent;
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.domain.JobPush.Event;
-import com.flowci.core.job.event.JobCreatedEvent;
+import com.flowci.core.job.event.StepStatusChangeEvent;
+import com.flowci.core.message.PushService;
+import com.flowci.domain.ExecutedCmd;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
@@ -28,12 +31,22 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class CreatedConsumer extends PushConsumer implements ApplicationListener<JobCreatedEvent> {
+public class StepStatusChangeConsumer implements ApplicationListener<StepStatusChangeEvent> {
+
+    @Autowired
+    private String topicForSteps;
+
+    @Autowired
+    private PushService pushService;
 
     @Override
-    public void onApplicationEvent(JobCreatedEvent event) {
+    public void onApplicationEvent(StepStatusChangeEvent event) {
         Job job = event.getJob();
-        push(Event.NEW_CREATED, job);
-        log.debug("Job {} been pushed", job.getId());
+        ExecutedCmd cmd = event.getExecutedCmd();
+
+        String topic = topicForSteps + "/" + job.getId();
+        pushService.push(topic, PushEvent.STATUS_CHANGE, cmd);
+
+        log.debug("Executed cmd {} with status {} been pushed to topic {}", cmd.getId(), cmd.getStatus(), topic);
     }
 }

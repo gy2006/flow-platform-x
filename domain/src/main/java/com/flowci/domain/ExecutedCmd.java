@@ -18,6 +18,8 @@ package com.flowci.domain;
 
 import static com.flowci.domain.ExecutedCmd.Status.EXCEPTION;
 import static com.flowci.domain.ExecutedCmd.Status.KILLED;
+import static com.flowci.domain.ExecutedCmd.Status.RUNNING;
+import static com.flowci.domain.ExecutedCmd.Status.SKIPPED;
 import static com.flowci.domain.ExecutedCmd.Status.SUCCESS;
 import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT;
 
@@ -50,13 +52,20 @@ public class ExecutedCmd extends CmdBase {
         TIMEOUT
     );
 
+    private final static Set<Status> SuccessStatus = ImmutableSet.of(
+        SUCCESS,
+        SKIPPED
+    );
+
     public enum Status {
 
         PENDING(-1),
 
         RUNNING(1),
 
-        SUCCESS(2), // current cmd
+        SUCCESS(2),
+
+        SKIPPED(2),
 
         EXCEPTION(3),
 
@@ -138,7 +147,12 @@ public class ExecutedCmd extends CmdBase {
 
     @JsonIgnore
     public boolean isSuccess() {
-        return status == SUCCESS || getAllowFailure();
+        return SuccessStatus.contains(status) || getAllowFailure();
+    }
+
+    @JsonIgnore
+    public boolean isRunning() {
+        return status == RUNNING;
     }
 
     @JsonIgnore

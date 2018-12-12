@@ -22,6 +22,7 @@ import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.event.StepStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.domain.Agent;
@@ -38,6 +39,7 @@ import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -81,6 +83,9 @@ public class StepServiceImpl implements StepService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @Override
     public List<ExecutedCmd> init(Job job) {
         NodeTree tree = ymlManager.getTree(job);
@@ -92,6 +97,18 @@ public class StepServiceImpl implements StepService {
         }
 
         return executedCmdDao.insert(steps);
+    }
+
+    @Override
+    public ExecutedCmd get(Job job, Node node) {
+        CmdId id = cmdManager.createId(job, node);
+        Optional<ExecutedCmd> optional = executedCmdDao.findById(id.toString());
+
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+
+        throw new NotFoundException("Executed cmd for job {0} and node {1} not found", job.getId(), node.getName());
     }
 
     @Override
@@ -143,8 +160,9 @@ public class StepServiceImpl implements StepService {
     }
 
     @Override
-    public void update(ExecutedCmd cmd) {
+    public void update(Job job, ExecutedCmd cmd) {
         executedCmdDao.save(cmd);
+        applicationEventPublisher.publishEvent(new StepStatusChangeEvent(this, job, cmd));
     }
 
     private Job getJob(String id) {

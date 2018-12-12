@@ -16,6 +16,7 @@
 
 package com.flowci.core.config;
 
+import java.nio.file.Path;
 import lombok.Data;
 
 /**
@@ -24,7 +25,9 @@ import lombok.Data;
 @Data
 public class ConfigProperties {
 
-    private String workspace;
+    private Path workspace;
+
+    private Path logDir;
 
     private Boolean authEnabled;
 

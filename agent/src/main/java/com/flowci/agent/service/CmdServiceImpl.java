@@ -16,6 +16,9 @@
 
 package com.flowci.agent.service;
 
+import static com.flowci.agent.service.CmdServiceImpl.Variables.AGENT_PLUGIN_PATH;
+import static com.flowci.agent.service.CmdServiceImpl.Variables.AGENT_WORKSPACE;
+
 import com.flowci.agent.dao.ExecutedCmdDao;
 import com.flowci.agent.dao.ReceivedCmdDao;
 import com.flowci.agent.domain.AgentExecutedCmd;
@@ -24,9 +27,12 @@ import com.flowci.agent.event.CmdCompleteEvent;
 import com.flowci.agent.event.CmdReceivedEvent;
 import com.flowci.agent.executor.ProcessListener;
 import com.flowci.agent.executor.ShellExecutor;
+import com.flowci.agent.manager.PluginManager;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.ExecutedCmd.Status;
+import com.flowci.exception.NotAvailableException;
 import com.flowci.exception.NotFoundException;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -71,6 +77,13 @@ public class CmdServiceImpl implements CmdService {
         1L
     );
 
+    public static class Variables {
+
+        public static final String AGENT_WORKSPACE = "FLOWCI_AGENT_WORKSPACE";
+
+        public static final String AGENT_PLUGIN_PATH = "FLOWCI_AGENT_PLUGIN_PATH";
+    }
+
     @Autowired
     private Path workspace;
 
@@ -85,6 +98,9 @@ public class CmdServiceImpl implements CmdService {
 
     @Autowired
     private RabbitTemplate queueTemplate;
+
+    @Autowired
+    private PluginManager pluginManager;
 
     @Autowired
     private ReceivedCmdDao receivedCmdDao;
@@ -154,11 +170,24 @@ public class CmdServiceImpl implements CmdService {
             setCurrent(save(cmd));
             context.publishEvent(new CmdReceivedEvent(this, current));
 
-            if (!current.hasWorkDir()) {
-                current.setWorkDir(workspace.toString());
+            // install or update required plugin
+            if (cmd.hasPlugin()) {
+                try {
+                    pluginManager.load(cmd.getPlugin());
+                } catch (NotAvailableException e) {
+                    ExecutedCmd result = new ExecutedCmd(cmd);
+                    result.setStatus(Status.EXCEPTION);
+                    result.setError(e.getMessage());
+                    onAfterExecute(result);
+                    return;
+                }
             }
 
             cmdThreadPool.execute(() -> {
+                current.setWorkDir(workspace.toString());
+                current.getInputs().put(AGENT_WORKSPACE, current.getWorkDir());
+                current.getInputs().put(AGENT_PLUGIN_PATH, pluginManager.getPath().toString());
+
                 ShellExecutor cmdExecutor = new ShellExecutor(current);
                 cmdExecutor.getProcessListeners().add(new CmdProcessListener(cmd));
                 cmdExecutor.getLoggingListeners().add(new CmdLoggingWriter(cmd, getCmdLogPath(cmd.getId())));

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.plugin.manager;
+package com.flowci.core.plugin.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -70,7 +70,7 @@ public class PluginServiceImpl implements PluginService {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private ConfigProperties appProperties;
+    private Path pluginDir;
 
     @Autowired
     private ConfigProperties.Plugin pluginProperties;
@@ -97,6 +97,11 @@ public class PluginServiceImpl implements PluginService {
             throw new NotFoundException("The plugin {0} is not found", name);
         }
         return plugin;
+    }
+
+    @Override
+    public Path getDir(Plugin plugin) {
+        return getPluginRepoDir(plugin.getName(), plugin.getVersion().toString());
     }
 
     @Override
@@ -149,29 +154,32 @@ public class PluginServiceImpl implements PluginService {
     private Plugin clone(PluginRepo repo) throws GitAPIException, IOException {
         log.info("Start to load plugin: {}", repo);
 
-        File dir = getPluginRepoDir(repo.getName());
-        GitProgressMonitor monitor = new GitProgressMonitor(repo.getSource(), dir);
+        Path dir = getPluginRepoDir(repo.getName(), repo.getVersion().toString());
+        File dirFile = dir.toFile();
+
+        GitProgressMonitor monitor = new GitProgressMonitor(repo.getSource(), dirFile);
 
         // pull from git when local repo exist
-        if (Files.exists(dir.toPath())) {
+        if (Files.exists(dir)) {
             log.debug("The plugin repo existed: {}", repo);
 
-            try (Git git = Git.open(dir)) {
-                git.pull().setProgressMonitor(monitor).call();
+            try (Git git = Git.open(dirFile)) {
+                git.pull().setRemoteBranchName(repo.getBranch()).setProgressMonitor(monitor).call();
             }
 
-            return load(dir, repo);
+            return load(dirFile, repo);
         }
 
         // clone from git
         try (Git ignored = Git.cloneRepository()
-            .setDirectory(dir)
+            .setDirectory(dirFile)
             .setURI(repo.getSource())
             .setProgressMonitor(monitor)
+            .setBranch(repo.getBranch())
             .call()) {
         }
 
-        return load(dir, repo);
+        return load(dirFile, repo);
     }
 
     /**
@@ -203,9 +211,11 @@ public class PluginServiceImpl implements PluginService {
         }
     }
 
-    private File getPluginRepoDir(String name) {
-        String workspace = appProperties.getWorkspace();
-        return Paths.get(workspace, "plugins", name).toFile();
+    /**
+     * Get plugin repo path: {plugin dir}/{repo}/{version}
+     */
+    private Path getPluginRepoDir(String name, String version) {
+        return Paths.get(pluginDir.toString(), name, version);
     }
 
     private class GitProgressMonitor implements ProgressMonitor {

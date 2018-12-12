@@ -17,7 +17,7 @@
     "url": "https://github.com/yang-guo-2016/Test/commit/26d1d0fa6ee44a8f4e02250d13e84bf02722f5e7",
     "author": {
       "name": "yang.guo",
-      "email": "gy@fir.im",
+      "email": "gy@${jgit.version}",
       "username": "yang-guo-2016"
     },
     "committer": {

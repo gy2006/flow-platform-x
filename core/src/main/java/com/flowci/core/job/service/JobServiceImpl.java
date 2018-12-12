@@ -46,14 +46,16 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
+import com.flowci.tree.GroovyRunner;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
+import groovy.util.ScriptException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -78,6 +80,8 @@ import org.springframework.stereotype.Service;
 public class JobServiceImpl implements JobService {
 
     private static final Sort SortByBuildNumber = Sort.by(Direction.DESC, "buildNumber");
+
+    private static final Integer DefaultBeforeTimeout = 5;
 
     @Autowired
     private ConfigProperties appProperties;
@@ -166,7 +170,7 @@ public class JobServiceImpl implements JobService {
         job.setAgentSelector(root.getSelector());
 
         // init job context
-        VariableMap defaultContext = initJobContext(flow, buildNumber, root.getEnvironments(), input);
+        VariableMap defaultContext = initJobContext(flow, job, root.getEnvironments(), input);
         job.getContext().merge(defaultContext);
 
         // setup created by form login user or git event author
@@ -206,26 +210,47 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    public Job cancel(Job job) {
+        // send stop cmd when is running
+        if (job.isRunning()) {
+            Agent agent = agentService.get(job.getAgentId());
+            Cmd killCmd = cmdManager.createKillCmd();
+
+            agentService.dispatch(killCmd, agent);
+            log.info("Stop cmd been send to {} for job {}", agent.getName(), job.getId());
+        }
+
+        return job;
+    }
+
+    @Override
     public boolean isExpired(Job job) {
         Instant expireAt = job.getExpireAt().toInstant();
         return Instant.now().compareTo(expireAt) == 1;
     }
 
     @Override
-    public boolean dispatch(Job job, Agent agent) {
+    public boolean dispatch(Job job) {
         NodeTree tree = ymlManager.getTree(job);
         Node node = tree.get(currentNodePath(job));
+        Agent agent = agentService.get(job.getAgentId());
 
         try {
+            // set executed cmd step to running
+            ExecutedCmd executedCmd = stepService.get(job, node);
+
+            if (!executedCmd.isRunning()) {
+                executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
+                stepService.update(job, executedCmd);
+            }
+
             Cmd cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
-
-            if (job.getStatus() != Job.Status.RUNNING) {
-                setJobStatus(job, Job.Status.RUNNING, null);
-            }
+            log.debug("Job {} with cmd {} been dispatched to agent {}", job.getId(), cmd.getId());
 
             return true;
         } catch (Throwable e) {
+            log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
             setJobStatus(job, Job.Status.FAILURE, e.getMessage());
             agentService.tryRelease(agent);
             return false;
@@ -238,51 +263,66 @@ public class JobServiceImpl implements JobService {
         log.debug("Job {} received from queue", job.getId());
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
 
-        if (!job.isPending()) {
-            log.info("Job {} cannot be process since status not pending", job.getId());
+        if (!job.isQueuing()) {
+            log.info("Job {} cannot be process since status not queuing", job.getId());
             return;
         }
 
         try {
             // find available agents
             Set<String> agentTags = job.getAgentSelector().getTags();
-            List<Agent> availableList = agentService.find(Status.IDLE, agentTags);
+            Iterator<Agent> availableList = agentService.find(Status.IDLE, agentTags).iterator();
 
             // try to lock it
             Boolean isLocked = Boolean.FALSE;
             Agent available = null;
 
-            for (Agent agent : availableList) {
+            while (availableList.hasNext()) {
+                Agent agent = availableList.next();
+                agent.setJobId(job.getId());
+
                 isLocked = agentService.tryLock(agent);
                 if (isLocked) {
                     available = agent;
                     break;
                 }
+
+                availableList.remove();
             }
 
             // re-enqueue to job while agent been locked by other
             if (!isLocked) {
+                log.debug("Agent not found for job {}, put into the retrying queue", job.getId());
                 retry(job);
                 return;
             }
 
             NodeTree tree = ymlManager.getTree(job);
-            Node next = tree.next(currentNodePath(job));
+            Node next =  tree.next(currentNodePath(job));
 
+            // do not accept job without regular steps
             if (Objects.isNull(next)) {
                 log.debug("Next node cannot be found when process job {}", job);
                 return;
             }
 
-            // set path and agent id to job
+            log.debug("Next step of job {} is {}", job.getId(), next.getName());
+
+            // set path, agent id, and status to job
             job.setCurrentPath(next.getPathAsString());
             job.setAgentId(available.getId());
-            jobDao.save(job);
+            setJobStatus(job, Job.Status.RUNNING, null);
+
+            // execute condition script
+            Boolean executed = executeBeforeCondition(job, next);
+            if (!executed) {
+                ExecutedCmd executedCmd = stepService.get(job, next);
+                processCallback(executedCmd);
+                return;
+            }
 
             // dispatch job to agent queue
-            dispatch(job, available);
-            log.debug("Job {} been dispatched to agent {}", job.getId(), available.getName());
-
+            dispatch(job);
         } catch (NotFoundException e) {
             // re-enqueue to job while agent not found
             log.debug("Agent not available, job {} retry", job.getId());
@@ -319,22 +359,22 @@ public class JobServiceImpl implements JobService {
         }
 
         // save executed cmd
-        stepService.update(execCmd);
+        stepService.update(job, execCmd);
         log.debug("Executed cmd {} been recorded", execCmd);
 
         // merge output to job context
         VariableMap context = job.getContext();
         context.merge(execCmd.getOutput());
 
-        // setup current job status if not final node
-        if (!node.isFinal()) {
+        // setup current job status if not tail node
+        if (!node.isTail()) {
             context.putString(Variables.JOB_STATUS, StatusHelper.convert(execCmd).name());
         }
 
         jobDao.save(job);
 
         // find next node
-        Node next = execCmd.isSuccess() ? tree.next(node.getPath()) : tree.nextFinal(node.getPath());
+        Node next = findNext(job, tree, node, execCmd.isSuccess());
 
         // job finished
         if (Objects.isNull(next)) {
@@ -349,14 +389,63 @@ public class JobServiceImpl implements JobService {
         }
 
         // continue to run next node
-        setupNodePathAndDispatch(job, next);
+        job.setCurrentPath(next.getPathAsString());
+        jobDao.save(job);
+
+        log.debug("Dispatch job : {}", job);
+        dispatch(job);
     }
 
-    private VariableMap initJobContext(Flow flow, Long buildNumber, VariableMap... inputs) {
+    private Node findNext(Job job, NodeTree tree, Node current, boolean isSuccess) {
+        Node next = isSuccess ? tree.next(current.getPath()) : tree.nextFinal(current.getPath());
+
+        if (Objects.isNull(next)) {
+            return null;
+        }
+
+        // Execute before condition to check the next node should be skipped or not
+        if (executeBeforeCondition(job, next)) {
+            return next;
+        }
+
+        return findNext(job, tree, next, true);
+    }
+
+    private Boolean executeBeforeCondition(Job job, Node node) {
+        if (!node.hasBefore()) {
+            return true;
+        }
+
+        VariableMap map = VariableMap.merge(job.getContext(), node.getEnvironments());
+
+        try {
+            GroovyRunner<Boolean> runner = GroovyRunner.create(DefaultBeforeTimeout, node.getBefore(), map);
+            Boolean result = runner.run();
+
+            if (Objects.isNull(result) || result == Boolean.FALSE) {
+                ExecutedCmd executedCmd = stepService.get(job, node);
+                executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
+                executedCmd.setError("The 'before' condition cannot be matched");
+                stepService.update(job, executedCmd);
+                return false;
+            }
+
+            return true;
+        } catch (ScriptException e) {
+            ExecutedCmd executedCmd = stepService.get(job, node);
+            executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
+            executedCmd.setError(e.getMessage());
+            stepService.update(job, executedCmd);
+            return false;
+        }
+    }
+
+    private VariableMap initJobContext(Flow flow, Job job, VariableMap... inputs) {
         VariableMap context = new VariableMap(20);
         context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
         context.putString(Variables.FLOW_NAME, flow.getName());
-        context.putString(Variables.JOB_BUILD_NUMBER, buildNumber.toString());
+        context.putString(Variables.JOB_TRIGGER, job.getTrigger().toString());
+        context.putString(Variables.JOB_BUILD_NUMBER, job.getBuildNumber().toString());
         context.putString(Variables.JOB_STATUS, Job.Status.PENDING.name());
 
         if (Objects.isNull(inputs)) {
@@ -374,8 +463,7 @@ public class JobServiceImpl implements JobService {
         job.setCurrentPath(next.getPathAsString());
         jobDao.save(job);
 
-        Agent agent = agentService.get(job.getAgentId());
-        dispatch(job, agent);
+        dispatch(job);
     }
 
     private NodePath currentNodePath(Job job) {
@@ -400,8 +488,8 @@ public class JobServiceImpl implements JobService {
         }
 
         try {
-            queueTemplate.convertAndSend(jobQueue.getName(), job);
             setJobStatus(job, Job.Status.QUEUED, null);
+            queueTemplate.convertAndSend(jobQueue.getName(), job);
             return job;
         } catch (Throwable e) {
             throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());
@@ -411,6 +499,7 @@ public class JobServiceImpl implements JobService {
     private Job setJobStatus(Job job, Job.Status newStatus, String message) {
         job.setStatus(newStatus);
         job.setMessage(message);
+        job.getContext().putString(Variables.JOB_STATUS, newStatus.name());
         jobDao.save(job);
         applicationEventPublisher.publishEvent(new JobStatusChangeEvent(this, job));
         return job;

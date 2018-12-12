@@ -18,19 +18,25 @@ package com.flowci.core.plugin.domain;
 
 import com.flowci.domain.Version;
 import java.util.Set;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 /**
  * @author yang
  */
-@Data
-@ToString(of = {"name", "version", "source"})
+@Getter
+@Setter
+@EqualsAndHashCode(of = {"name"})
+@ToString(of = {"name", "version", "source", "branch"})
 public class PluginRepo {
 
     private String name;
 
     private String source;
+
+    private String branch = "master";
 
     private String description;
 

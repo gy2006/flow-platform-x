@@ -114,9 +114,6 @@ public class ShellExecutor {
 
         // init inputs env
         this.pBuilder.environment().putAll(cmd.getInputs());
-
-        // support exit value
-        this.cmd.getScripts().add(0, "set -e");
     }
 
     public void run() {
@@ -160,13 +157,10 @@ public class ShellExecutor {
             logThreadCountDown.await(LoggingWaitSeconds, TimeUnit.SECONDS);
             log.debug("====== Logging executed ======");
 
-            executor.shutdown();
-            if (!executor.awaitTermination(ShutdownWaitSeconds, TimeUnit.SECONDS)) {
-                executor.shutdownNow();
-            }
             log.debug("====== Executor Shutdown ======");
 
         } catch (InterruptedException e) {
+            process.destroy();
             result.setStatus(Status.KILLED);
             result.setError(e.getMessage());
 
@@ -176,6 +170,7 @@ public class ShellExecutor {
 
             log.debug("====== Interrupted ======");
         } catch (Throwable e) {
+            process.destroy();
             result.setStatus(Status.EXCEPTION);
             result.setError(e.getMessage());
 
@@ -185,8 +180,20 @@ public class ShellExecutor {
 
             log.warn(e.getMessage());
         } finally {
+            shutdown();
             result.setFinishAt(new Date());
             log.debug("====== Process Done ======");
+        }
+    }
+
+    private void shutdown() {
+        try {
+            executor.shutdown();
+            if (!executor.awaitTermination(ShutdownWaitSeconds, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            log.warn(e.getMessage());
         }
     }
 

@@ -21,13 +21,9 @@ import com.google.common.hash.Hashing;
 /**
  * @author yang
  */
-public final class HashingHelper {
+public abstract class HashingHelper {
 
     public static String md5(String value) {
         return Hashing.md5().hashBytes(value.getBytes()).toString();
-    }
-
-    private HashingHelper(){
-
     }
 }

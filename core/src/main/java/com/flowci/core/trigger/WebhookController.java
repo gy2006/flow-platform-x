@@ -80,6 +80,7 @@ public class WebhookController {
         if (isGitHub()) {
             Callable<GitTrigger> consumer = consumerMap.get(GithubEventConsumer.Header);
             trigger = consumer.call();
+            log.info("Github trigger received: {}", trigger);
         }
 
         if (Objects.isNull(trigger)) {

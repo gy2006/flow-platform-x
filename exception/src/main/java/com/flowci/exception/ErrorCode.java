@@ -31,11 +31,13 @@ public final class ErrorCode {
 
     public static final Integer NOT_FOUND = 404;
 
-    public static final Integer DUPLICATE = 405;
+    public static final Integer NOT_AVAILABLE = 405;
 
-    public static final Integer ILLEGAL_ACCESS = 406;
+    public static final Integer DUPLICATE = 406;
 
-    public static final Integer ILLEGAL_STATUS = 407;
+    public static final Integer ILLEGAL_ACCESS = 420;
+
+    public static final Integer ILLEGAL_STATUS = 421;
 
     private ErrorCode() {
 

@@ -16,6 +16,7 @@
 
 package com.flowci.core.job.event;
 
+import com.flowci.core.job.domain.Job;
 import com.flowci.domain.ExecutedCmd;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
@@ -26,10 +27,14 @@ import org.springframework.context.ApplicationEvent;
 public class StepStatusChangeEvent extends ApplicationEvent {
 
     @Getter
+    private final Job job;
+
+    @Getter
     private final ExecutedCmd executedCmd;
 
-    public StepStatusChangeEvent(Object source, ExecutedCmd executedCmd) {
+    public StepStatusChangeEvent(Object source, Job job, ExecutedCmd executedCmd) {
         super(source);
+        this.job = job;
         this.executedCmd = executedCmd;
     }
 }

@@ -17,7 +17,7 @@
 package com.flowci.core.plugin;
 
 import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.manager.PluginService;
+import com.flowci.core.plugin.service.PluginService;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
