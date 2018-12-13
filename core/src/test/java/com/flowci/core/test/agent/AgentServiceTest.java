@@ -16,8 +16,8 @@
 
 package com.flowci.core.test.agent;
 
-import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.agent.event.CmdSentEvent;
+import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.helper.ThreadHelper;
 import com.flowci.core.test.ZookeeperScenario;
@@ -53,7 +53,7 @@ public class AgentServiceTest extends ZookeeperScenario {
 
     @Test
     public void should_init_root_node() {
-        Assert.assertTrue(zk.exist(zkProperties.getRoot()));
+        Assert.assertTrue(zk.exist(zkProperties.getAgentRoot()));
     }
 
     @Test

@@ -87,7 +87,7 @@ public class AgentServiceImpl implements AgentService {
 
     @PostConstruct
     public void initRootNode() {
-        String root = zkProperties.getRoot();
+        String root = zkProperties.getAgentRoot();
 
         try {
             zk.create(CreateMode.PERSISTENT, root, null);
@@ -160,7 +160,7 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     public String getPath(Agent agent) {
-        String root = zkProperties.getRoot();
+        String root = zkProperties.getAgentRoot();
         return root + Agent.PATH_SLASH + agent.getId();
     }
 

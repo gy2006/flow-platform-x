@@ -45,7 +45,7 @@ public class AgentConfig {
     @Bean("baseSettings")
     public Settings baseSettings() {
         Settings.Zookeeper zk = new Settings.Zookeeper();
-        zk.setRoot(zkProperties.getRoot());
+        zk.setRoot(zkProperties.getAgentRoot());
         zk.setHost(zkProperties.getHost());
 
         Settings.RabbitMQ mq = new Settings.RabbitMQ();

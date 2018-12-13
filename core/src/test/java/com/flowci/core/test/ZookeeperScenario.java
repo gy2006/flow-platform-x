@@ -67,7 +67,7 @@ public abstract class ZookeeperScenario extends SpringScenario {
 
     @Before
     public void cleanZkNodes() {
-        String root = zkProperties.getRoot();
+        String root = zkProperties.getAgentRoot();
         for (String child : zk.children(root)) {
             zk.delete(root + "/" + child, true);
         }
