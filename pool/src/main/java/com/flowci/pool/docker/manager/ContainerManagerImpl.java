@@ -21,6 +21,8 @@ import com.flowci.pool.docker.DockerConfig;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import org.springframework.stereotype.Component;
 
 /**
@@ -43,6 +45,15 @@ public class ContainerManagerImpl implements ContainerManager {
     @Override
     public void start(DockerConfig config, String containerId) {
         config.getClient().startContainerCmd(containerId).exec();
+    }
+
+    @Override
+    public InspectContainerResponse inspect(DockerConfig config, String containerId) {
+        try {
+            return config.getClient().inspectContainerCmd(containerId).exec();
+        } catch (NotFoundException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
     }
 
     @Override

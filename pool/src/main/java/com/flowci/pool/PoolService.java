@@ -19,9 +19,13 @@ package com.flowci.pool;
 /**
  * @author yang
  */
-public interface PoolService {
+public interface PoolService<Context extends PoolContext> {
 
-    void create(PoolContext context);
+    void start(Context context);
 
-    void delete(PoolContext context);
+    void status(Context context);
+
+    void stop(Context context);
+
+    void remove(Context context);
 }
