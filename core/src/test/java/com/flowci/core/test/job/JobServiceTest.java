@@ -18,7 +18,7 @@ package com.flowci.core.test.job;
 
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.flow.FlowService;
+import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.dao.ExecutedCmdDao;

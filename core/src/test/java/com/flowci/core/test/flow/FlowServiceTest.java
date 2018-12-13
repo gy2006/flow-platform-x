@@ -16,7 +16,7 @@
 
 package com.flowci.core.test.flow;
 
-import com.flowci.core.flow.FlowService;
+import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.test.SpringScenario;

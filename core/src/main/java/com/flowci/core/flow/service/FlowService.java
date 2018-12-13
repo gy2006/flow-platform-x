@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.flow;
+package com.flowci.core.flow.service;
 
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
