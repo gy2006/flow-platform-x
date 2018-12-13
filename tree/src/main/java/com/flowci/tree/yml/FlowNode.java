@@ -34,6 +34,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class FlowNode extends YmlNode {
 
+    private String cron;
+
     @NonNull
     private Selector selector = new Selector();
 
@@ -55,6 +57,7 @@ public class FlowNode extends YmlNode {
     @Override
     public Node toNode(int index) {
         Node node = new Node(getName());
+        node.setCron(cron);
         node.setSelector(selector);
         node.setFilter(filter);
         node.setEnvironments(getVariableMap());
