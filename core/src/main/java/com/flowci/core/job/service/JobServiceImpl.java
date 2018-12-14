@@ -461,6 +461,9 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         }
 
         for (VariableMap input : inputs) {
+            if (Objects.isNull(input)) {
+                continue;
+            }
             context.merge(input);
         }
 

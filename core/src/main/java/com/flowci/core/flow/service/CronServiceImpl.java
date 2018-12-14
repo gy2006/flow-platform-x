@@ -23,6 +23,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job.Trigger;
@@ -33,8 +34,7 @@ import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import java.time.ZonedDateTime;
 import java.util.Base64;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +57,8 @@ public class CronServiceImpl implements CronService {
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(MaxCronPoolSize);
 
-    private final Set<Flow> cronFlows = new HashSet<>(MaxCronPoolSize);
+    @Autowired
+    private YmlDao ymlDao;
 
     @Autowired
     private ApplicationContext context;
@@ -83,12 +84,6 @@ public class CronServiceImpl implements CronService {
         Node node = YmlParser.load(flow.getName(), yml.getRaw());
 
         if (!node.hasCron()) {
-            cronFlows.remove(flow);
-            return;
-        }
-
-        // flow already exist
-        if (!cronFlows.add(flow)) {
             return;
         }
 
@@ -128,11 +123,12 @@ public class CronServiceImpl implements CronService {
         }
 
         private void scheduleNext() {
-            if (cronFlows.contains(flow)) {
-                long delay = nextSeconds(expression);
-                executor.schedule(this, delay, TimeUnit.SECONDS);
-                log.info("Next will be start after '{}' second for flow '{}'", delay, flow.getName());
+            Optional<Yml> optional = ymlDao.findById(flow.getId());
+            if (!optional.isPresent()) {
+                return;
             }
+
+            update(flow, optional.get());
         }
 
         /**
