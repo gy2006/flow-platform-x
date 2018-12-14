@@ -69,7 +69,9 @@ public class ConfigProperties {
 
         private String host;
 
-        private String root;
+        private String agentRoot;
+
+        private String cronRoot;
 
         private Integer timeout;
 

@@ -63,6 +63,11 @@ public class Node implements Serializable {
     private Filter filter = new Filter();
 
     /**
+     * Unix cron expression
+     */
+    private String cron;
+
+    /**
      * Node before groovy script;
      */
     private String before;
@@ -124,5 +129,10 @@ public class Node implements Serializable {
     @JsonIgnore
     public boolean hasExports() {
         return exports != null && !exports.isEmpty();
+    }
+
+    @JsonIgnore
+    public boolean hasCron() {
+        return !Strings.isNullOrEmpty(cron);
     }
 }

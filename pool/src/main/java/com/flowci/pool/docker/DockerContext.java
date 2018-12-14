@@ -17,6 +17,7 @@
 package com.flowci.pool.docker;
 
 import com.flowci.pool.PoolContext;
+import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,6 +28,25 @@ import lombok.Setter;
 @Setter
 public class DockerContext extends PoolContext {
 
+    public static final String STATUS_RUNNING = "running";
+
+    public static final String STATUS_EXITED = "exited";
+
+    private static final String DefaultImage = "flowci/agent:latest";
+
     private String apiVersion;
 
+    private String host;
+
+    private String image = DefaultImage;
+
+    private String containerId;
+
+    public boolean hasContainer() {
+        return !Strings.isNullOrEmpty(containerId);
+    }
+
+    public DockerConfig getConfig() {
+        return DockerConfig.of(host);
+    }
 }

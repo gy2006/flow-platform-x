@@ -18,6 +18,7 @@ package com.flowci.pool.docker.manager;
 
 import com.flowci.pool.docker.CreateContainer;
 import com.flowci.pool.docker.DockerConfig;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 
 /**
  * @author yang
@@ -35,6 +36,11 @@ public interface ContainerManager {
      * Run the container
      */
     void start(DockerConfig config, String containerId);
+
+    /**
+     * Get container information
+     */
+    InspectContainerResponse inspect(DockerConfig config, String containerId);
 
     /**
      * Stop the container

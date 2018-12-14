@@ -31,6 +31,7 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
+import com.flowci.core.job.event.CreateNewJobEvent;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.JobStatusChangeEvent;
@@ -65,6 +66,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -77,7 +79,7 @@ import org.springframework.stereotype.Service;
  */
 @Log4j2
 @Service
-public class JobServiceImpl implements JobService {
+public class JobServiceImpl implements JobService, ApplicationListener<CreateNewJobEvent> {
 
     private static final Sort SortByBuildNumber = Sort.by(Direction.DESC, "buildNumber");
 
@@ -255,6 +257,12 @@ public class JobServiceImpl implements JobService {
             agentService.tryRelease(agent);
             return false;
         }
+    }
+
+    @Override
+    public void onApplicationEvent(CreateNewJobEvent event) {
+        Job job = create(event.getFlow(), event.getYml(), event.getTrigger(), event.getInput());
+        start(job);
     }
 
     @Override
@@ -453,6 +461,9 @@ public class JobServiceImpl implements JobService {
         }
 
         for (VariableMap input : inputs) {
+            if (Objects.isNull(input)) {
+                continue;
+            }
             context.merge(input);
         }
 

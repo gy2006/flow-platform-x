@@ -17,10 +17,39 @@
 package com.flowci.pool;
 
 import java.io.Serializable;
+import java.net.URI;
+import java.util.Date;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author yang
  */
+@Getter
+@Setter
 public abstract class PoolContext implements Serializable {
 
+    public static class AgentEnvs {
+
+        public static final String SERVER_URL = "FLOWCI_SERVER_URL";
+
+        public static final String AGENT_TOKEN = "FLOWCI_AGENT_TOKEN";
+
+        public static final String AGENT_PORT = "FLOWCI_AGENT_PORT";
+
+        public static final String AGENT_LOG_LEVEL = "FLOWCI_AGENT_LOG_LEVEL";
+
+    }
+
+    private URI serverUri;
+
+    private String token;
+
+    private Integer port = 8088;
+
+    private String logLevel = "DEBUG";
+
+    private String status;
+
+    private Date startAt;
 }

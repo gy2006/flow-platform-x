@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.pool;
+package com.flowci.core.flow.service;
+
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Yml;
 
 /**
  * @author yang
  */
-public interface PoolService<Context extends PoolContext> {
+public interface CronService {
 
-    void start(Context context);
-
-    void status(Context context);
-
-    void stop(Context context);
-
-    void remove(Context context);
+    void update(Flow flow, Yml yml);
 }

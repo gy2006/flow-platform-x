@@ -38,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author yang
  */
 @FixMethodOrder(MethodSorters.JVM)
-public class DockerTest extends PoolTestScenario {
+public class DockerContainerTest extends PoolScenario {
 
     private static final String Image = "nginx:1.14";
 

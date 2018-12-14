@@ -16,7 +16,7 @@
 
 package com.flowci.pool.test;
 
-import com.flowci.pool.test.PoolTestScenario.Config;
+import com.flowci.pool.test.PoolScenario.Config;
 import org.junit.runner.RunWith;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,7 +29,7 @@ import org.springframework.test.context.junit4.SpringRunner;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Config.class)
-public abstract class PoolTestScenario {
+public abstract class PoolScenario {
 
     @TestConfiguration
     @SpringBootConfiguration
