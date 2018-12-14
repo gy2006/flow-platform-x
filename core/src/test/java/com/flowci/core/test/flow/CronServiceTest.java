@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 fir.im
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,14 @@ import com.cronutils.model.definition.CronDefinition;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.job.event.CreateNewJobEvent;
+import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.ObjectWrapper;
+import com.flowci.util.StringHelper;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -30,15 +37,26 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.log4j.Log4j2;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 
 /**
  * @author yang
  */
 @Log4j2
-public class CrontabTest {
+public class CronServiceTest extends ZookeeperScenario {
 
     private final ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+
+    @Autowired
+    private FlowService flowService;
+
+    @Before
+    public void login() {
+        mockLogin();
+    }
 
     @Test
     public void should_get_exec_time_from_crontab() throws InterruptedException {
@@ -63,6 +81,24 @@ public class CrontabTest {
 
         counter.await();
         Assert.assertTrue(result.getValue());
+    }
+
+    @Test
+    public void should_add_cron_task() throws IOException, InterruptedException {
+        InputStream stream = load("flow-with-cron.yml");
+        Flow flow = flowService.create("cron-test");
+        flowService.saveYml(flow, StringHelper.toString(stream));
+
+        final CountDownLatch counter = new CountDownLatch(2);
+        final ObjectWrapper<Flow> result = new ObjectWrapper<>();
+        this.applicationEventMulticaster.addApplicationListener((ApplicationListener<CreateNewJobEvent>) event -> {
+            result.setValue(event.getFlow());
+            counter.countDown();
+        });
+
+        counter.await();
+        Assert.assertNotNull(result.getValue());
+        Assert.assertEquals(flow, result.getValue());
     }
 
 }

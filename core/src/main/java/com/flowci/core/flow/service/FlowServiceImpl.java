@@ -49,6 +49,9 @@ public class FlowServiceImpl implements FlowService {
     @Autowired
     private YmlDao ymlDao;
 
+    @Autowired
+    private CronService cronService;
+
     @Override
     public List<Flow> list() {
         return flowDao.findAllByCreatedBy(currentUserHelper.get().getId());
@@ -121,10 +124,13 @@ public class FlowServiceImpl implements FlowService {
         }
 
         YmlParser.load(flow.getName(), yml);
-
         Yml ymlObj = new Yml(flow.getId(), yml);
         ymlObj.setCreatedBy(currentUserHelper.get().getId());
-        return ymlDao.save(ymlObj);
+        ymlDao.save(ymlObj);
+
+        // update cron task
+        cronService.update(flow, ymlObj);
+        return ymlObj;
     }
 
     private void verifyFlowIdAndUser(Flow flow) {
