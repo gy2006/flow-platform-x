@@ -19,22 +19,10 @@ package com.flowci.core.helper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalListener;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
 
 import java.util.concurrent.TimeUnit;
 
 public class CacheHelper {
-
-    public static CacheManager createLocalCacheManager(int size, int expireInSeconds) {
-        Caffeine<Object, Object> cache = Caffeine.newBuilder()
-                .maximumSize(size)
-                .expireAfterWrite(expireInSeconds, TimeUnit.SECONDS);
-
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        cacheManager.setCaffeine(cache);
-        return cacheManager;
-    }
 
     public static <K, V> Cache<K, V> createLocalCache(int maxSize, int expireInSeconds) {
         return Caffeine.newBuilder()

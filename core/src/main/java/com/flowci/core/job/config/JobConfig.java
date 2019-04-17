@@ -19,18 +19,19 @@ package com.flowci.core.job.config;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.helper.CacheHelper;
 import com.flowci.core.helper.ThreadHelper;
+import com.flowci.domain.ExecutedCmd;
+import com.flowci.tree.NodeTree;
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -61,14 +62,8 @@ public class JobConfig {
         return ThreadHelper.createTaskExecutor(10, 10, 1000, "log-writer-");
     }
 
-    @Primary
-    @Bean("jobCacheManager")
-    public CacheManager cacheManager() {
-        return CacheHelper.createLocalCacheManager(100, 120);
-    }
-
     @Bean("logCache")
-    public com.github.benmanes.caffeine.cache.Cache<String, BufferedWriter> logCacheManager() {
+    public Cache<String, BufferedWriter> logCacheManager() {
         return CacheHelper.createLocalCache(10, 600, (key, value, cause) -> {
             if (Objects.isNull(value)) {
                 return;
@@ -83,12 +78,12 @@ public class JobConfig {
     }
 
     @Bean("jobTreeCache")
-    public Cache jobTreeCache(CacheManager jobCacheManager) {
-        return jobCacheManager.getCache("JOB_TREE");
+    public Cache<String, NodeTree> jobTreeCache() {
+        return CacheHelper.createLocalCache(50, 60);
     }
 
     @Bean("jobStepCache")
-    public Cache jobStepCache(CacheManager jobCacheManager) {
-        return jobCacheManager.getCache("JOB_STEPS");
+    public Cache<String, List<ExecutedCmd>> jobStepCache() {
+        return CacheHelper.createLocalCache(100, 60);
     }
 }

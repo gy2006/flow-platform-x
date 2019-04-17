@@ -36,9 +36,11 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
@@ -63,7 +65,7 @@ public class StepServiceImpl implements StepService {
         };
 
     @Autowired
-    private Cache jobStepCache;
+    private Cache<String, List<ExecutedCmd>> jobStepCache;
 
     @Autowired
     private ExecutedCmdDao executedCmdDao;
@@ -113,7 +115,7 @@ public class StepServiceImpl implements StepService {
 
     @Override
     public List<ExecutedCmd> list(Job job) {
-        return jobStepCache.get(job.getId(), () -> {
+        return jobStepCache.get(job.getId(), s -> {
             NodeTree tree = ymlManager.getTree(job);
             List<Node> nodes = tree.getOrdered();
 
