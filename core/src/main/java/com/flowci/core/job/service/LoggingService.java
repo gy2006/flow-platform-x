@@ -23,6 +23,9 @@ import org.springframework.amqp.core.Message;
  */
 public interface LoggingService {
 
+    /**
+     * To receive the message from amqp
+     * @param message AMQP message
+     */
     void processLogItem(Message message);
-
 }

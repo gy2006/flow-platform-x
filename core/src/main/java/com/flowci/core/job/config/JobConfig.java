@@ -16,36 +16,70 @@
 
 package com.flowci.core.job.config;
 
+import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.helper.CacheHelper;
 import com.flowci.core.helper.ThreadHelper;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import java.util.concurrent.TimeUnit;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * @author yang
  */
+@Log4j2
 @Configuration
 public class JobConfig {
+
+    @Autowired
+    private ConfigProperties appProperties;
+
+    @Bean("logDir")
+    public Path logDir() {
+        return appProperties.getLogDir();
+    }
 
     @Bean("retryExecutor")
     public ThreadPoolTaskExecutor retryExecutor() {
         return ThreadHelper.createTaskExecutor(1, 1, 100, "job-retry-");
     }
 
+    /**
+     * Thread to record incoming logs
+     */
+    @Bean("logsExecutor")
+    public ThreadPoolTaskExecutor logsExecutor(){
+        return ThreadHelper.createTaskExecutor(10, 10, 1000, "log-writer-");
+    }
+
+    @Primary
     @Bean("jobCacheManager")
     public CacheManager cacheManager() {
-        Caffeine<Object, Object> cache = Caffeine.newBuilder()
-            .maximumSize(100)
-            .expireAfterWrite(120, TimeUnit.SECONDS);
+        return CacheHelper.createLocalCacheManager(100, 120);
+    }
 
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        cacheManager.setCaffeine(cache);
-        return cacheManager;
+    @Bean("logCache")
+    public com.github.benmanes.caffeine.cache.Cache<String, BufferedWriter> logCacheManager() {
+        return CacheHelper.createLocalCache(10, 600, (key, value, cause) -> {
+            if (Objects.isNull(value)) {
+                return;
+            }
+
+            try {
+                value.close();
+            } catch (IOException e) {
+                log.debug(e);
+            }
+        });
     }
 
     @Bean("jobTreeCache")
