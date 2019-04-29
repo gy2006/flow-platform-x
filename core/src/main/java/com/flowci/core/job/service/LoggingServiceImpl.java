@@ -53,7 +53,7 @@ public class LoggingServiceImpl implements LoggingService {
     private Path logDir;
 
     @Autowired
-    private Cache<String, BufferedWriter> logCache;
+    private Cache<String, BufferedWriter> logWriterCache;
 
     @Override
     @RabbitListener(queues = "#{logsQueue.getName()}", containerFactory = "logsContainerFactory")
@@ -89,7 +89,7 @@ public class LoggingServiceImpl implements LoggingService {
     }
 
     private BufferedWriter getWriter(String cmdId) {
-        return logCache.get(cmdId, s -> {
+        return logWriterCache.get(cmdId, s -> {
             log.debug("New buffer writer for cmd id: {}", cmdId);
 
             try {

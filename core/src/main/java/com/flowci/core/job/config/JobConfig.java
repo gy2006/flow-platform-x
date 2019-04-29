@@ -62,8 +62,8 @@ public class JobConfig {
         return ThreadHelper.createTaskExecutor(10, 10, 1000, "log-writer-");
     }
 
-    @Bean("logCache")
-    public Cache<String, BufferedWriter> logCacheManager() {
+    @Bean("logWriterCache")
+    public Cache<String, BufferedWriter> logWriterCacheManager() {
         return CacheHelper.createLocalCache(10, 600, (key, value, cause) -> {
             if (Objects.isNull(value)) {
                 return;
