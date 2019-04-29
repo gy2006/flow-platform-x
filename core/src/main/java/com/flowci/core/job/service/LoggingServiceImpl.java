@@ -16,22 +16,32 @@
 
 package com.flowci.core.job.service;
 
+import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.google.common.collect.ImmutableList;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yang
@@ -39,6 +49,12 @@ import java.util.Objects;
 @Log4j2
 @Service
 public class LoggingServiceImpl implements LoggingService {
+
+    private static final Page<String> LogNotFound = new PageImpl<>(
+            ImmutableList.of("Log not available"),
+            PageRequest.of(0, 1),
+            1L
+    );
 
     @Autowired
     private String topicForLogs;
@@ -54,6 +70,9 @@ public class LoggingServiceImpl implements LoggingService {
 
     @Autowired
     private Cache<String, BufferedWriter> logWriterCache;
+
+    @Autowired
+    private Cache<String, BufferedReader> logReaderCache;
 
     @Override
     @RabbitListener(queues = "#{logsQueue.getName()}", containerFactory = "logsContainerFactory")
@@ -73,6 +92,25 @@ public class LoggingServiceImpl implements LoggingService {
         logsExecutor.execute(() -> writeLog(cmdId, body));
     }
 
+    @Override
+    public Page<String> readLogs(ExecutedCmd cmd, Pageable pageable) {
+        BufferedReader reader = getReader(cmd.getId());
+
+        if (Objects.isNull(reader)) {
+            return LogNotFound;
+        }
+
+        try (Stream<String> lines = reader.lines()) {
+            int i = pageable.getPageNumber() * pageable.getPageSize();
+
+            List<String> logs = lines.skip(i)
+                    .limit(pageable.getPageSize())
+                    .collect(Collectors.toList());
+
+            return new PageImpl<>(logs, pageable, cmd.getLogSize());
+        }
+    }
+
     private void writeLog(String cmdId, String body) {
         try {
             BufferedWriter writer = getWriter(cmdId);
@@ -89,12 +127,23 @@ public class LoggingServiceImpl implements LoggingService {
     }
 
     private BufferedWriter getWriter(String cmdId) {
-        return logWriterCache.get(cmdId, s -> {
-            log.debug("New buffer writer for cmd id: {}", cmdId);
+        return logWriterCache.get(cmdId, key -> {
+            log.debug("New buffer writer for cmd id: {}", key);
 
             try {
-                Path target = Paths.get(logDir.toString(), cmdId + ".log");
+                Path target = Paths.get(logDir.toString(), key + ".log");
                 return Files.newBufferedWriter(target);
+            } catch (IOException e) {
+                return null;
+            }
+        });
+    }
+
+    private BufferedReader getReader(String cmdId) {
+        return logReaderCache.get(cmdId, key -> {
+            try {
+                Path target = Paths.get(logDir.toString(), key + ".log");
+                return Files.newBufferedReader(target);
             } catch (IOException e) {
                 return null;
             }

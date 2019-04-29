@@ -22,13 +22,17 @@ import com.flowci.core.helper.ThreadHelper;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.tree.NodeTree;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.RemovalListener;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -63,18 +67,13 @@ public class JobConfig {
     }
 
     @Bean("logWriterCache")
-    public Cache<String, BufferedWriter> logWriterCacheManager() {
-        return CacheHelper.createLocalCache(10, 600, (key, value, cause) -> {
-            if (Objects.isNull(value)) {
-                return;
-            }
+    public Cache<String, BufferedWriter> logWriterCache() {
+        return CacheHelper.createLocalCache(10, 600, new CloseWriterAndReader<>());
+    }
 
-            try {
-                value.close();
-            } catch (IOException e) {
-                log.debug(e);
-            }
-        });
+    @Bean("logReaderCache")
+    public Cache<String, BufferedReader> logReaderCache() {
+        return CacheHelper.createLocalCache(10, 60, new CloseWriterAndReader<>());
     }
 
     @Bean("jobTreeCache")
@@ -85,5 +84,21 @@ public class JobConfig {
     @Bean("jobStepCache")
     public Cache<String, List<ExecutedCmd>> jobStepCache() {
         return CacheHelper.createLocalCache(100, 60);
+    }
+
+    private class CloseWriterAndReader<K, V extends Closeable> implements RemovalListener<K, V> {
+
+        @Override
+        public void onRemoval(K key, V value, RemovalCause cause) {
+            if (Objects.isNull(value)) {
+                return;
+            }
+
+            try {
+                value.close();
+            } catch (IOException e) {
+                log.debug(e);
+            }
+        }
     }
 }

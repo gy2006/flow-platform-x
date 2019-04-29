@@ -25,33 +25,22 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.StepStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
-import com.flowci.domain.Agent;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
-import com.flowci.exception.StatusException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodeTree;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
-
 import com.github.benmanes.caffeine.cache.Cache;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * @author yang
@@ -104,13 +93,18 @@ public class StepServiceImpl implements StepService {
     @Override
     public ExecutedCmd get(Job job, Node node) {
         CmdId id = cmdManager.createId(job, node);
-        Optional<ExecutedCmd> optional = executedCmdDao.findById(id.toString());
+        return get(id.toString());
+    }
+
+    @Override
+    public ExecutedCmd get(String cmdId) {
+        Optional<ExecutedCmd> optional = executedCmdDao.findById(cmdId);
 
         if (optional.isPresent()) {
             return optional.get();
         }
 
-        throw new NotFoundException("Executed cmd for job {0} and node {1} not found", job.getId(), node.getName());
+        throw new NotFoundException("Executed cmd {0} not found", cmdId);
     }
 
     @Override
@@ -132,46 +126,8 @@ public class StepServiceImpl implements StepService {
     }
 
     @Override
-    public Page<String> logs(Job job, String executedCmdId, Pageable pageable) {
-        CmdId cmdId = CmdId.parse(executedCmdId);
-
-        if (!getJob(cmdId.getJobId()).equals(job)) {
-            throw new StatusException("Job does not matched");
-        }
-
-        Agent agent = agentService.get(job.getAgentId());
-
-        if (!agent.hasHost()) {
-            throw new StatusException("Agent host not available");
-        }
-
-        URI agentUri = UriComponentsBuilder.fromHttpUrl(agent.getHost())
-            .pathSegment("cmd", executedCmdId, "logs")
-            .queryParam("page", pageable.getPageNumber())
-            .queryParam("size", pageable.getPageSize())
-            .build()
-            .toUri();
-
-        try {
-            RequestEntity<Object> request = new RequestEntity<>(HttpMethod.GET, agentUri);
-            ResponseEntity<JsonablePage<String>> entity = restTemplate.exchange(request, AgentLogsType);
-            return entity.getBody().toPage();
-        } catch (RestClientException e) {
-            throw new StatusException("Agent not available: {0}", e.getMessage());
-        }
-    }
-
-    @Override
     public void update(Job job, ExecutedCmd cmd) {
         executedCmdDao.save(cmd);
         applicationEventPublisher.publishEvent(new StepStatusChangeEvent(this, job, cmd));
-    }
-
-    private Job getJob(String id) {
-        Optional<Job> optional = jobDao.findById(id);
-        if (optional.isPresent()) {
-            return optional.get();
-        }
-        throw new NotFoundException("Job {0} is not existed");
     }
 }

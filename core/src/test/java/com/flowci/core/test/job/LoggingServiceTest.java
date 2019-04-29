@@ -3,13 +3,18 @@ package com.flowci.core.test.job;
 import com.flowci.core.helper.ThreadHelper;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,5 +52,35 @@ public class LoggingServiceTest extends SpringScenario {
         for (int i = 0; i < numOfCmd; i++) {
             Assert.assertTrue(Files.exists(Paths.get(logDir.toString(), i + ".log")));
         }
+    }
+
+    @Test
+    public void should_read_logs_from_file() throws IOException {
+        // init:
+        long numOfLogs = 10000;
+
+        ExecutedCmd cmd = new ExecutedCmd("dummy", false);
+        cmd.setLogSize(numOfLogs);
+
+        Path logPath = Paths.get(logDir.toString(), cmd.getId() + ".log");
+        Files.deleteIfExists(logPath);
+
+        // given: create dummy log file with 10000 line of logs
+        try (BufferedWriter writer = Files.newBufferedWriter(logPath)) {
+            for (int i = 0; i < numOfLogs; i++) {
+                writer.write("i = " + i);
+                writer.newLine();
+            }
+            writer.flush();
+        }
+
+        // when:
+        Page<String> logs = loggingService.readLogs(cmd, PageRequest.of(100, 50));
+        Assert.assertNotNull(logs);
+
+        // then:
+        Assert.assertEquals(50, logs.getSize());
+        Assert.assertEquals("i = 5000", logs.getContent().get(0));
+        Assert.assertEquals("i = 5049", logs.getContent().get(logs.getSize() - 1));
     }
 }

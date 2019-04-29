@@ -16,7 +16,10 @@
 
 package com.flowci.core.job.service;
 
+import com.flowci.domain.ExecutedCmd;
 import org.springframework.amqp.core.Message;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * @author yang
@@ -25,7 +28,13 @@ public interface LoggingService {
 
     /**
      * To receive the message from amqp
+     *
      * @param message AMQP message
      */
     void processLogItem(Message message);
+
+    /**
+     * To read logs from file store
+     */
+    Page<String> readLogs(ExecutedCmd cmd, Pageable pageable);
 }

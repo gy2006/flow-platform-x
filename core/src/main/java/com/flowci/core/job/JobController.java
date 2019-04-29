@@ -24,6 +24,7 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.service.JobService;
+import com.flowci.core.job.service.LoggingService;
 import com.flowci.core.job.service.StepService;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
@@ -63,6 +64,9 @@ public class JobController {
 
     @Autowired
     private StepService stepService;
+
+    @Autowired
+    private LoggingService loggingService;
 
     @GetMapping("/{flow}")
     public Page<Job> list(@PathVariable("flow") String name,
@@ -109,8 +113,8 @@ public class JobController {
                                    @PathVariable String executedCmdId,
                                    @RequestParam(required = false, defaultValue = "0") int page,
                                    @RequestParam(required = false, defaultValue = "50") int size) {
-        Job job = get(flow, buildNumber);
-        return stepService.logs(job, executedCmdId, PageRequest.of(page, size));
+
+        return loggingService.readLogs(stepService.get(executedCmdId), PageRequest.of(page, size));
     }
 
     @PostMapping

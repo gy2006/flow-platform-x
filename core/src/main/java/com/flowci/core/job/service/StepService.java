@@ -19,9 +19,8 @@ package com.flowci.core.job.service;
 import com.flowci.core.job.domain.Job;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.tree.Node;
+
 import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 /**
  * @author yang
@@ -36,14 +35,14 @@ public interface StepService {
     ExecutedCmd get(Job job, Node node);
 
     /**
+     * Get executed cmd from cmd id
+     */
+    ExecutedCmd get(String cmdId);
+
+    /**
      * List step of executed cmd for job
      */
     List<ExecutedCmd> list(Job job);
-
-    /**
-     * Get logs from agent
-     */
-    Page<String> logs(Job job, String executedCmdId, Pageable pageable);
 
 
     void update(Job job, ExecutedCmd cmd);
