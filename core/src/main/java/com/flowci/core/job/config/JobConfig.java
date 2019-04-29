@@ -68,12 +68,12 @@ public class JobConfig {
 
     @Bean("logWriterCache")
     public Cache<String, BufferedWriter> logWriterCache() {
-        return CacheHelper.createLocalCache(10, 600, new CloseWriterAndReader<>());
+        return CacheHelper.createLocalCache(10, 600, new WriterAndReaderCleanUp<>());
     }
 
     @Bean("logReaderCache")
     public Cache<String, BufferedReader> logReaderCache() {
-        return CacheHelper.createLocalCache(10, 60, new CloseWriterAndReader<>());
+        return CacheHelper.createLocalCache(10, 60, new WriterAndReaderCleanUp<>());
     }
 
     @Bean("jobTreeCache")
@@ -86,7 +86,7 @@ public class JobConfig {
         return CacheHelper.createLocalCache(100, 60);
     }
 
-    private class CloseWriterAndReader<K, V extends Closeable> implements RemovalListener<K, V> {
+    private class WriterAndReaderCleanUp<K, V extends Closeable> implements RemovalListener<K, V> {
 
         @Override
         public void onRemoval(K key, V value, RemovalCause cause) {
