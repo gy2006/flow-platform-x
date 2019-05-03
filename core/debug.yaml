@@ -3,16 +3,22 @@
 version: '3'
 services:
   db:
-    image: mongo:3.6.2-jessie
+    image: mongo:3.6
+    restart: always
     container_name: flowci-debug-db
-    network_mode: "host"
+    ports:
+      - "27017:27017"
 
   zk:
     image: zookeeper:3.4
     container_name: flowci-debug-zk
-    network_mode: "host"
+    restart: always
+    ports:
+      - "2181:2181"
 
   rabbitmq:
     image: rabbitmq:3-management
     container_name: flowci-debug-rabbitmq
-    network_mode: "host"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
