@@ -16,7 +16,7 @@
 
 package com.flowci.core.job.service;
 
-import static com.flowci.core.trigger.domain.GitTrigger.Variables.GIT_AUTHOR;
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
