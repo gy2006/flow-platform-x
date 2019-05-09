@@ -46,6 +46,31 @@ public class Variables {
 
     public static final String GIT_COMMIT_URL = "FLOWCI_GIT_COMMIT_URL";
 
+    /**
+     * Variables for git pull request
+     */
+    public static final String PR_TITLE = "FLOWCI_GIT_PR_TITLE";
+
+    public static final String PR_MESSAGE = "FLOWCI_GIT_PR_MESSAGE";
+
+    public static final String PR_URL = "FLOWCI_GIT_PR_URL";
+
+    public static final String PR_TIME = "FLOWCI_GIT_PR_TIME";
+
+    public static final String PR_NUMBER = "FLOWCI_GIT_PR_NUMBER";
+
+    public static final String PR_HEAD_REPO_NAME = "FLOWCI_GIT_PR_HEAD_REPO_NAME";
+
+    public static final String PR_HEAD_REPO_BRANCH = "FLOWCI_GIT_PR_HEAD_REPO_BRANCH";
+
+    public static final String PR_HEAD_REPO_COMMIT = "FLOWCI_GIT_PR_HEAD_REPO_COMMIT";
+
+    public static final String PR_BASE_REPO_NAME = "FLOWCI_GIT_PR_BASE_REPO_NAME";
+
+    public static final String PR_BASE_REPO_BRANCH = "FLOWCI_GIT_PR_BASE_REPO_BRANCH";
+
+    public static final String PR_BASE_REPO_COMMIT = "FLOWCI_GIT_PR_BASE_REPO_COMMIT";
+
     private Variables() {
 
     }
