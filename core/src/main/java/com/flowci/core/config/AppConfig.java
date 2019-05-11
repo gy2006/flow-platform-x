@@ -62,7 +62,6 @@ public class AppConfig {
     private static final ObjectMapper Mapper = Jsonable.getMapper();
 
     private static final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
-        new StringHttpMessageConverter(),
         new ByteArrayHttpMessageConverter(),
         new MappingJackson2HttpMessageConverter(Mapper),
         new ResourceHttpMessageConverter(),

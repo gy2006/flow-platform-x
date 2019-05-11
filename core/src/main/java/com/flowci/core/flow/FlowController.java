@@ -18,6 +18,8 @@ package com.flowci.core.flow;
 
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.domain.http.RequestMessage;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,19 +63,21 @@ public class FlowController {
         return flow;
     }
 
-    @GetMapping(value = "/{name}/yml", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = "/{name}/yml", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getYml(@PathVariable String name) {
         Flow flow = flowService.get(name);
-        return flowService.getYml(flow).getRaw();
+        String yml = flowService.getYml(flow).getRaw();
+        return Base64.getEncoder().encodeToString(yml.getBytes());
     }
 
-    @PatchMapping("/{name}/yml")
-    public void updateYml(@PathVariable String name, @RequestBody String yml) {
+    @PostMapping("/{name}/yml")
+    public void updateYml(@PathVariable String name, @RequestBody RequestMessage<String> body) {
         Flow flow = flowService.get(name);
-        flowService.saveYml(flow, yml);
+        byte[] yml = Base64.getDecoder().decode(body.getData());
+        flowService.saveYml(flow, new String(yml));
     }
 
-    @PatchMapping("/{name}/variables")
+    @PostMapping("/{name}/variables")
     public void updateVariables(@PathVariable String name, @RequestBody Map<String, String> variables) {
         Flow flow = flowService.get(name);
         flow.getVariables().reset(variables);
