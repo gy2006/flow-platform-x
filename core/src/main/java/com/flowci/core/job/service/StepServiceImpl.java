@@ -60,19 +60,10 @@ public class StepServiceImpl implements StepService {
     private ExecutedCmdDao executedCmdDao;
 
     @Autowired
-    private JobDao jobDao;
-
-    @Autowired
     private YmlManager ymlManager;
 
     @Autowired
     private CmdManager cmdManager;
-
-    @Autowired
-    private AgentService agentService;
-
-    @Autowired
-    private RestTemplate restTemplate;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;

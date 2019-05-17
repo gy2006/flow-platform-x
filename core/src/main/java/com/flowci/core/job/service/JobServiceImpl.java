@@ -237,10 +237,10 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         Node node = tree.get(currentNodePath(job));
         Agent agent = agentService.get(job.getAgentId());
 
-        try {
-            // set executed cmd step to running
-            ExecutedCmd executedCmd = stepService.get(job, node);
+        // set executed cmd step to running
+        ExecutedCmd executedCmd = stepService.get(job, node);
 
+        try {
             if (!executedCmd.isRunning()) {
                 executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
                 stepService.update(job, executedCmd);
@@ -253,7 +253,14 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
             return true;
         } catch (Throwable e) {
             log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
+
+            // set current step to exception
+            executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
+            stepService.update(job, executedCmd);
+
+            // set current job failure
             setJobStatus(job, Job.Status.FAILURE, e.getMessage());
+
             agentService.tryRelease(agent);
             return false;
         }
