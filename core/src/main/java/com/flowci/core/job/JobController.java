@@ -107,10 +107,8 @@ public class JobController {
         return stepService.list(job);
     }
 
-    @GetMapping("/{flow}/{buildNumber}/{executedCmdId}")
-    public Page<String> getStepLog(@PathVariable String flow,
-                                   @PathVariable String buildNumber,
-                                   @PathVariable String executedCmdId,
+    @GetMapping("/logs/{executedCmdId}")
+    public Page<String> getStepLog(@PathVariable String executedCmdId,
                                    @RequestParam(required = false, defaultValue = "0") int page,
                                    @RequestParam(required = false, defaultValue = "50") int size) {
 

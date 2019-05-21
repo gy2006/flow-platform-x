@@ -140,7 +140,6 @@ public class AppConfig {
     @Bean(name = "applicationEventMulticaster")
     public ApplicationEventMulticaster simpleApplicationEventMulticaster() {
         ThreadPoolTaskExecutor executor = ThreadHelper.createTaskExecutor(2, 2, 100, "spring-event-");
-        executor.initialize();
 
         SimpleApplicationEventMulticaster eventMulticaster = new SimpleApplicationEventMulticaster();
         eventMulticaster.setTaskExecutor(executor);

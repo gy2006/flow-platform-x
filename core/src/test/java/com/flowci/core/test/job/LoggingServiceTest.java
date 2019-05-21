@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class LoggingServiceTest extends SpringScenario {
 
@@ -30,7 +31,7 @@ public class LoggingServiceTest extends SpringScenario {
     private LoggingService loggingService;
 
     @Test
-    public void should_write_logs_into_file() {
+    public void should_write_logs_into_file() throws IOException {
         // init:
         int numOfCmd = 10;
 
@@ -46,11 +47,16 @@ public class LoggingServiceTest extends SpringScenario {
             loggingService.processLogItem(message);
         }
 
-        ThreadHelper.sleep(10);
+        // write for periodically flash
+        ThreadHelper.sleep(15000);
 
         // then: verify the log file existed
         for (int i = 0; i < numOfCmd; i++) {
-            Assert.assertTrue(Files.exists(Paths.get(logDir.toString(), i + ".log")));
+            Path logPath = Paths.get(logDir.toString(), i + ".log");
+            Assert.assertTrue(Files.exists(logPath));
+
+            List<String> logs = Files.readAllLines(logPath);
+            Assert.assertFalse(logs.isEmpty());
         }
     }
 

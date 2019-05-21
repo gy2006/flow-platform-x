@@ -83,7 +83,6 @@ public class AgentServiceTest extends ZookeeperScenario {
         agentService.create("hello.test.2", null);
         Agent idle = agentService.create("hello.test.3", ImmutableSet.of("alicloud", "android"));
         ThreadPoolTaskExecutor executor = ThreadHelper.createTaskExecutor(5, 5, 0, "mock-tryLock-");
-        executor.initialize();
 
         // when:
         Agent agent = agentService.find(Status.OFFLINE, ImmutableSet.of("android")).get(0);

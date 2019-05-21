@@ -16,9 +16,14 @@
 
 package com.flowci.core.job.service;
 
+import com.flowci.core.helper.CacheHelper;
+import com.flowci.core.helper.PeriodicRunner;
+import com.flowci.core.helper.ThreadHelper;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Message;
@@ -32,10 +37,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.nio.file.Files;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -56,6 +60,21 @@ public class LoggingServiceImpl implements LoggingService {
             1L
     );
 
+    private static final int FileBufferSize = 8000; // ~8k
+
+    private static final int WriterCacheExpireInSecond = 10;
+
+    private ThreadPoolTaskExecutor logsExecutor =
+            ThreadHelper.createTaskExecutor(1, 1, 1000, "log-writer-");
+
+    private PeriodicRunner logWriterChecker = new PeriodicRunner(WriterCacheExpireInSecond / 2, "log-cache-checker-");
+
+    private Cache<String, BufferedWriter> logWriterCache =
+            CacheHelper.createLocalCache(10, WriterCacheExpireInSecond, new WriterCleanUp());
+
+    private Cache<String, BufferedReader> logReaderCache =
+            CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
+
     @Autowired
     private String topicForLogs;
 
@@ -63,16 +82,23 @@ public class LoggingServiceImpl implements LoggingService {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
-    private ThreadPoolTaskExecutor logsExecutor;
-
-    @Autowired
     private Path logDir;
 
-    @Autowired
-    private Cache<String, BufferedWriter> logWriterCache;
+    @PostConstruct
+    public void before() {
+        logWriterChecker.start(() -> logWriterCache.asMap().forEach((cmdId, buffer) -> {
+            try {
+                buffer.flush();
+            } catch (IOException e) {
+                log.debug("Cannot flash logs for cmd : {}", cmdId);
+            }
+        }));
+    }
 
-    @Autowired
-    private Cache<String, BufferedReader> logReaderCache;
+    @PreDestroy
+    public void after() {
+        logWriterChecker.stop();
+    }
 
     @Override
     @RabbitListener(queues = "#{logsQueue.getName()}", containerFactory = "logsContainerFactory")
@@ -108,6 +134,13 @@ public class LoggingServiceImpl implements LoggingService {
                     .collect(Collectors.toList());
 
             return new PageImpl<>(logs, pageable, cmd.getLogSize());
+        } finally {
+            try {
+                reader.reset();
+            } catch (IOException e) {
+                // reset will be failed if all lines been read
+                logReaderCache.invalidate(cmd.getId());
+            }
         }
     }
 
@@ -120,7 +153,6 @@ public class LoggingServiceImpl implements LoggingService {
 
             writer.write(body);
             writer.write(System.lineSeparator());
-            writer.flush();
         } catch (IOException e) {
             log.debug(e);
         }
@@ -128,11 +160,9 @@ public class LoggingServiceImpl implements LoggingService {
 
     private BufferedWriter getWriter(String cmdId) {
         return logWriterCache.get(cmdId, key -> {
-            log.debug("New buffer writer for cmd id: {}", key);
-
             try {
                 Path target = Paths.get(logDir.toString(), key + ".log");
-                return Files.newBufferedWriter(target);
+                return new BufferedWriter(new FileWriter(target.toFile()), FileBufferSize);
             } catch (IOException e) {
                 return null;
             }
@@ -143,10 +173,46 @@ public class LoggingServiceImpl implements LoggingService {
         return logReaderCache.get(cmdId, key -> {
             try {
                 Path target = Paths.get(logDir.toString(), key + ".log");
-                return Files.newBufferedReader(target);
+                BufferedReader reader = new BufferedReader(new FileReader(target.toFile()), FileBufferSize);
+                reader.mark(1);
+                return reader;
             } catch (IOException e) {
                 return null;
             }
         });
+    }
+
+    private class WriterCleanUp implements RemovalListener<String, BufferedWriter> {
+
+        @Override
+        public void onRemoval(String cmdId, BufferedWriter writer, RemovalCause cause) {
+            if (Objects.isNull(writer)) {
+                return;
+            }
+
+            try {
+                writer.flush();
+                writer.close();
+                log.debug("The buffered writer been closed for cmd: {}", cmdId);
+            } catch (IOException e) {
+                log.debug(e);
+            }
+        }
+    }
+
+    private class ReaderCleanUp implements RemovalListener<String, BufferedReader> {
+
+        @Override
+        public void onRemoval(String key, BufferedReader reader, RemovalCause cause) {
+            if (Objects.isNull(reader)) {
+                return;
+            }
+
+            try {
+                reader.close();
+            } catch (IOException e) {
+                log.debug(e);
+            }
+        }
     }
 }

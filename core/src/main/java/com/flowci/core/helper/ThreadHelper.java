@@ -33,6 +33,8 @@ public abstract class ThreadHelper {
         taskExecutor.setQueueCapacity(queueSize);
         taskExecutor.setThreadNamePrefix(threadNamePrefix);
         taskExecutor.setDaemon(true);
+
+        taskExecutor.initialize();
         return taskExecutor;
     }
 
