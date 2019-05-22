@@ -119,7 +119,7 @@ public class LoggingServiceImpl implements LoggingService {
     }
 
     @Override
-    public Page<String> readLogs(ExecutedCmd cmd, Pageable pageable) {
+    public Page<String> read(ExecutedCmd cmd, Pageable pageable) {
         BufferedReader reader = getReader(cmd.getId());
 
         if (Objects.isNull(reader)) {
@@ -142,6 +142,11 @@ public class LoggingServiceImpl implements LoggingService {
                 logReaderCache.invalidate(cmd.getId());
             }
         }
+    }
+
+    @Override
+    public Path save(String cmdId, InputStream stream) {
+        return null;
     }
 
     private void writeLog(String cmdId, String body) {

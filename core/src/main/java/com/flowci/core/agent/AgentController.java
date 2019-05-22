@@ -26,6 +26,7 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @author yang
@@ -33,6 +34,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/agents")
 public class AgentController {
+
+    private static final String HeaderAgentToken = "AGENT-TOKEN";
 
     @Autowired
     private AgentService agentService;
@@ -64,7 +67,7 @@ public class AgentController {
 
     // handle request from agent
     @PostMapping("/connect")
-    public Settings connect(@RequestHeader("AGENT-TOKEN") String token,
+    public Settings connect(@RequestHeader(HeaderAgentToken) String token,
                             @RequestBody AgentConnect connect,
                             HttpServletRequest request) {
         String agentIp = request.getRemoteHost();
@@ -72,4 +75,11 @@ public class AgentController {
         return agentService.connect(token, agentIp, port);
     }
 
+    @PostMapping("/logs/upload")
+    public void upload(@RequestHeader(HeaderAgentToken) String token,
+                       @RequestPart("file") MultipartFile file) {
+
+        System.out.println(file.getName());
+        System.out.println(file.getOriginalFilename());
+    }
 }

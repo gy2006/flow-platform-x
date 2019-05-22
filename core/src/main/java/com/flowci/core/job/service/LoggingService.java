@@ -17,6 +17,8 @@
 package com.flowci.core.job.service;
 
 import com.flowci.domain.ExecutedCmd;
+import java.io.InputStream;
+import java.nio.file.Path;
 import org.springframework.amqp.core.Message;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,5 +38,10 @@ public interface LoggingService {
     /**
      * To read logs from file store
      */
-    Page<String> readLogs(ExecutedCmd cmd, Pageable pageable);
+    Page<String> read(ExecutedCmd cmd, Pageable pageable);
+
+    /**
+     * Save log into file system
+     */
+    Path save(String cmdId, InputStream stream);
 }

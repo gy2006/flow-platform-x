@@ -126,7 +126,8 @@ public class AppConfig {
                     .addPathPatterns("/jobs/**")
                     .addPathPatterns("/agents/**")
                     .addPathPatterns("/credentials/**")
-                    .excludePathPatterns("/agents/connect");
+                    .excludePathPatterns("/agents/connect")
+                    .excludePathPatterns("/agents/logs/upload");
             }
 
             @Override

@@ -81,7 +81,7 @@ public class LoggingServiceTest extends SpringScenario {
         }
 
         // when:
-        Page<String> logs = loggingService.readLogs(cmd, PageRequest.of(100, 50));
+        Page<String> logs = loggingService.read(cmd, PageRequest.of(100, 50));
         Assert.assertNotNull(logs);
 
         // then:

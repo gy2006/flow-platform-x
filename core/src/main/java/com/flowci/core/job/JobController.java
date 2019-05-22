@@ -112,7 +112,7 @@ public class JobController {
                                    @RequestParam(required = false, defaultValue = "0") int page,
                                    @RequestParam(required = false, defaultValue = "50") int size) {
 
-        return loggingService.readLogs(stepService.get(executedCmdId), PageRequest.of(page, size));
+        return loggingService.read(stepService.get(executedCmdId), PageRequest.of(page, size));
     }
 
     @PostMapping

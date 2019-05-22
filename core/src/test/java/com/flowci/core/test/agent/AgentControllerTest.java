@@ -19,6 +19,7 @@ package com.flowci.core.test.agent;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,15 +33,16 @@ import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ErrorCode;
 import com.google.common.collect.Sets;
-
 import java.util.List;
 import java.util.Set;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 /**
  * @author yang
@@ -48,16 +50,19 @@ import org.springframework.http.MediaType;
 public class AgentControllerTest extends SpringScenario {
 
     private static final TypeReference<ResponseMessage<Agent>> AgentResponseType =
-            new TypeReference<ResponseMessage<Agent>>() {
-            };
+        new TypeReference<ResponseMessage<Agent>>() {
+        };
 
     private static final TypeReference<ResponseMessage<List<Agent>>> AgentListResponseType =
-            new TypeReference<ResponseMessage<List<Agent>>>() {
-            };
+        new TypeReference<ResponseMessage<List<Agent>>>() {
+        };
 
     private static final TypeReference<ResponseMessage<Settings>> SettingsResponseType =
-            new TypeReference<ResponseMessage<Settings>>() {
-            };
+        new TypeReference<ResponseMessage<Settings>>() {
+        };
+
+    @Autowired
+    protected MockMvc mockMvc;
 
     @Autowired
     private MvcMockHelper mvcMockHelper;
@@ -82,7 +87,7 @@ public class AgentControllerTest extends SpringScenario {
         Agent second = createAgent("second.agent", null, StatusCode.OK);
 
         ResponseMessage<List<Agent>> response =
-                mvcMockHelper.expectSuccessAndReturnClass(get("/agents"), AgentListResponseType);
+            mvcMockHelper.expectSuccessAndReturnClass(get("/agents"), AgentListResponseType);
         Assert.assertEquals(StatusCode.OK, response.getCode());
 
         List<Agent> list = response.getData();
@@ -96,12 +101,12 @@ public class AgentControllerTest extends SpringScenario {
         Agent created = createAgent("should.delete", null, StatusCode.OK);
 
         ResponseMessage<Agent> responseOfDeleteAgent =
-                mvcMockHelper.expectSuccessAndReturnClass(delete("/agents/" + created.getToken()), AgentResponseType);
+            mvcMockHelper.expectSuccessAndReturnClass(delete("/agents/" + created.getToken()), AgentResponseType);
         Assert.assertEquals(StatusCode.OK, responseOfDeleteAgent.getCode());
         Assert.assertEquals(created, responseOfDeleteAgent.getData());
 
         ResponseMessage<Agent> responseOfGetAgent =
-                mvcMockHelper.expectSuccessAndReturnClass(get("/agents/" + created.getToken()), AgentResponseType);
+            mvcMockHelper.expectSuccessAndReturnClass(get("/agents/" + created.getToken()), AgentResponseType);
         Assert.assertEquals(ErrorCode.NOT_FOUND, responseOfGetAgent.getCode());
     }
 
@@ -125,10 +130,10 @@ public class AgentControllerTest extends SpringScenario {
         connect.setPort(8080);
 
         ResponseMessage<Settings> settingsR = mvcMockHelper.expectSuccessAndReturnClass(
-                post("/agents/connect")
-                        .header("AGENT-TOKEN", agent.getToken())
-                        .content(objectMapper.writeValueAsBytes(connect))
-                        .contentType(MediaType.APPLICATION_JSON), SettingsResponseType);
+            post("/agents/connect")
+                .header("AGENT-TOKEN", agent.getToken())
+                .content(objectMapper.writeValueAsBytes(connect))
+                .contentType(MediaType.APPLICATION_JSON), SettingsResponseType);
         Assert.assertEquals(StatusCode.OK, settingsR.getCode());
 
         // then:
@@ -144,14 +149,24 @@ public class AgentControllerTest extends SpringScenario {
         Assert.assertEquals("guest", settings.getQueue().getPassword());
     }
 
+    @Test
+    public void should_save_log_from_agent() throws Throwable {
+        MockMultipartFile log = new MockMultipartFile("file", "filename.txt", "application/octet-stream",
+            "some xml".getBytes());
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/agents/logs/upload")
+            .file(log)
+            .header("AGENT-TOKEN", "12345")).andExpect(status().is(200));
+    }
+
     private Agent createAgent(String name, Set<String> tags, Integer code) throws Exception {
         CreateAgent create = new CreateAgent();
         create.setName(name);
         create.setTags(tags);
 
         ResponseMessage<Agent> agentR = mvcMockHelper.expectSuccessAndReturnClass(post("/agents")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsBytes(create)), AgentResponseType);
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(create)), AgentResponseType);
 
         Assert.assertEquals(code, agentR.getCode());
         return agentR.getData();
