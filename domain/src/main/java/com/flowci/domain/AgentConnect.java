@@ -27,8 +27,6 @@ import lombok.Setter;
 @Setter
 public class AgentConnect implements Serializable {
 
-    private String token;
-
     private Integer port;
 
 }

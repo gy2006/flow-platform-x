@@ -32,8 +32,10 @@ import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ErrorCode;
 import com.google.common.collect.Sets;
+
 import java.util.List;
 import java.util.Set;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,16 +48,16 @@ import org.springframework.http.MediaType;
 public class AgentControllerTest extends SpringScenario {
 
     private static final TypeReference<ResponseMessage<Agent>> AgentResponseType =
-        new TypeReference<ResponseMessage<Agent>>() {
-        };
+            new TypeReference<ResponseMessage<Agent>>() {
+            };
 
     private static final TypeReference<ResponseMessage<List<Agent>>> AgentListResponseType =
-        new TypeReference<ResponseMessage<List<Agent>>>() {
-        };
+            new TypeReference<ResponseMessage<List<Agent>>>() {
+            };
 
     private static final TypeReference<ResponseMessage<Settings>> SettingsResponseType =
-        new TypeReference<ResponseMessage<Settings>>() {
-        };
+            new TypeReference<ResponseMessage<Settings>>() {
+            };
 
     @Autowired
     private MvcMockHelper mvcMockHelper;
@@ -80,7 +82,7 @@ public class AgentControllerTest extends SpringScenario {
         Agent second = createAgent("second.agent", null, StatusCode.OK);
 
         ResponseMessage<List<Agent>> response =
-            mvcMockHelper.expectSuccessAndReturnClass(get("/agents"), AgentListResponseType);
+                mvcMockHelper.expectSuccessAndReturnClass(get("/agents"), AgentListResponseType);
         Assert.assertEquals(StatusCode.OK, response.getCode());
 
         List<Agent> list = response.getData();
@@ -94,12 +96,12 @@ public class AgentControllerTest extends SpringScenario {
         Agent created = createAgent("should.delete", null, StatusCode.OK);
 
         ResponseMessage<Agent> responseOfDeleteAgent =
-            mvcMockHelper.expectSuccessAndReturnClass(delete("/agents/" + created.getToken()), AgentResponseType);
+                mvcMockHelper.expectSuccessAndReturnClass(delete("/agents/" + created.getToken()), AgentResponseType);
         Assert.assertEquals(StatusCode.OK, responseOfDeleteAgent.getCode());
         Assert.assertEquals(created, responseOfDeleteAgent.getData());
 
         ResponseMessage<Agent> responseOfGetAgent =
-            mvcMockHelper.expectSuccessAndReturnClass(get("/agents/" + created.getToken()), AgentResponseType);
+                mvcMockHelper.expectSuccessAndReturnClass(get("/agents/" + created.getToken()), AgentResponseType);
         Assert.assertEquals(ErrorCode.NOT_FOUND, responseOfGetAgent.getCode());
     }
 
@@ -121,12 +123,12 @@ public class AgentControllerTest extends SpringScenario {
 
         AgentConnect connect = new AgentConnect();
         connect.setPort(8080);
-        connect.setToken(agent.getToken());
 
         ResponseMessage<Settings> settingsR = mvcMockHelper.expectSuccessAndReturnClass(
-            post("/agents/connect")
-                .content(objectMapper.writeValueAsBytes(connect))
-                .contentType(MediaType.APPLICATION_JSON), SettingsResponseType);
+                post("/agents/connect")
+                        .header("AGENT-TOKEN", agent.getToken())
+                        .content(objectMapper.writeValueAsBytes(connect))
+                        .contentType(MediaType.APPLICATION_JSON), SettingsResponseType);
         Assert.assertEquals(StatusCode.OK, settingsR.getCode());
 
         // then:
@@ -148,8 +150,8 @@ public class AgentControllerTest extends SpringScenario {
         create.setTags(tags);
 
         ResponseMessage<Agent> agentR = mvcMockHelper.expectSuccessAndReturnClass(post("/agents")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsBytes(create)), AgentResponseType);
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(create)), AgentResponseType);
 
         Assert.assertEquals(code, agentR.getCode());
         return agentR.getData();

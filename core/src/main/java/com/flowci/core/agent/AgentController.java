@@ -25,14 +25,7 @@ import java.util.List;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author yang
@@ -54,13 +47,6 @@ public class AgentController {
         return agentService.list();
     }
 
-    @PostMapping("/connect")
-    public Settings connect(@RequestBody AgentConnect connect, HttpServletRequest request) {
-        String agentIp = request.getRemoteHost();
-        Integer port = connect.getPort();
-        return agentService.connect(connect.getToken(), agentIp, port);
-    }
-
     @PostMapping()
     public Agent create(@RequestBody CreateAgent body) {
         return agentService.create(body.getName(), body.getTags());
@@ -75,4 +61,15 @@ public class AgentController {
     public Agent setTags(@PathVariable String token, @RequestBody Set<String> tags) {
         return agentService.setTags(token, tags);
     }
+
+    // handle request from agent
+    @PostMapping("/connect")
+    public Settings connect(@RequestHeader("AGENT-TOKEN") String token,
+                            @RequestBody AgentConnect connect,
+                            HttpServletRequest request) {
+        String agentIp = request.getRemoteHost();
+        Integer port = connect.getPort();
+        return agentService.connect(token, agentIp, port);
+    }
+
 }
