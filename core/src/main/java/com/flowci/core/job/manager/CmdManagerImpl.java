@@ -77,14 +77,12 @@ public class CmdManagerImpl implements CmdManager {
             allowFailure = plugin.isAllowFailure();
         }
 
-        String failureScript = allowFailure ? "set +e" : "set -e";
-
         // create cmd based on plugin
         Cmd cmd = new Cmd(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
         cmd.setAllowFailure(allowFailure);
         cmd.setEnvFilters(Sets.newHashSet(node.getExports()));
-        cmd.setScripts(Lists.newArrayList(failureScript, script));
+        cmd.setScripts(Lists.newArrayList(script));
         cmd.setPlugin(node.getPlugin());
 
         return cmd;

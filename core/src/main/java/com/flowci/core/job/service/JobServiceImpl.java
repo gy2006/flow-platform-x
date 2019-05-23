@@ -248,7 +248,7 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
 
             Cmd cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
-            log.debug("Job {} with cmd {} been dispatched to agent {}", job.getId(), cmd.getId());
+            log.debug("Job {} with cmd {} been dispatched to agent {}", job.getId(), cmd.getId(), agent.getId());
 
             return true;
         } catch (Throwable e) {
