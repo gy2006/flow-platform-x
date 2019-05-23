@@ -17,8 +17,6 @@
 package com.flowci.core.job.service;
 
 import com.flowci.core.helper.CacheHelper;
-import com.flowci.core.helper.PeriodicRunner;
-import com.flowci.core.helper.ThreadHelper;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -34,11 +32,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
