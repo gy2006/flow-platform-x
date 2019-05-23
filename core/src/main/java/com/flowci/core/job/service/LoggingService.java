@@ -42,6 +42,9 @@ public interface LoggingService {
 
     /**
      * Save log into file system
+     *
+     * @param fileName {cmd id}.log
+     * @param stream file stream
      */
-    Path save(String cmdId, InputStream stream);
+    Path save(String fileName, InputStream stream);
 }

@@ -18,12 +18,19 @@ package com.flowci.core.agent;
 
 import com.flowci.core.agent.domain.CreateAgent;
 import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.job.service.LoggingService;
 import com.flowci.domain.Agent;
 import com.flowci.domain.AgentConnect;
 import com.flowci.domain.Settings;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
+
+import com.flowci.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,6 +46,9 @@ public class AgentController {
 
     @Autowired
     private AgentService agentService;
+
+    @Autowired
+    private LoggingService loggingService;
 
     @GetMapping("/{token}")
     public Agent getByToken(@PathVariable String token) {
@@ -79,7 +89,15 @@ public class AgentController {
     public void upload(@RequestHeader(HeaderAgentToken) String token,
                        @RequestPart("file") MultipartFile file) {
 
-        System.out.println(file.getName());
-        System.out.println(file.getOriginalFilename());
+        Agent agent = agentService.getByToken(token);
+        if (Objects.isNull(agent)) {
+            throw new NotFoundException("Agent not existed");
+        }
+
+        try(InputStream stream = file.getInputStream()) {
+            loggingService.save(file.getOriginalFilename(), stream);
+        } catch (IOException ignored) {
+
+        }
     }
 }

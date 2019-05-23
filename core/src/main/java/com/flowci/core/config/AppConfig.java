@@ -28,6 +28,7 @@ import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
@@ -49,6 +50,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -77,6 +79,9 @@ public class AppConfig {
     @Autowired
     private ConfigProperties appProperties;
 
+    @Autowired
+    private MultipartProperties multipartProperties;
+
     @PostConstruct
     private void initWorkspace() throws IOException {
         Path path = appProperties.getWorkspace();
@@ -86,6 +91,12 @@ public class AppConfig {
     @PostConstruct
     private void initLogDir() throws IOException {
         Path path = appProperties.getLogDir();
+        FileHelper.createDirectory(path);
+    }
+
+    @PostConstruct
+    public void initUploadDir() throws IOException {
+        Path path = Paths.get(multipartProperties.getLocation());
         FileHelper.createDirectory(path);
     }
 

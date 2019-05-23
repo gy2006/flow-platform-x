@@ -40,8 +40,10 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -62,16 +64,6 @@ public class LoggingServiceImpl implements LoggingService {
 
     private static final int FileBufferSize = 8000; // ~8k
 
-    private static final int WriterCacheExpireInSecond = 10;
-
-    private ThreadPoolTaskExecutor logsExecutor =
-            ThreadHelper.createTaskExecutor(1, 1, 1000, "log-writer-");
-
-    private PeriodicRunner logWriterChecker = new PeriodicRunner(WriterCacheExpireInSecond / 2, "log-cache-checker-");
-
-    private Cache<String, BufferedWriter> logWriterCache =
-            CacheHelper.createLocalCache(10, WriterCacheExpireInSecond, new WriterCleanUp());
-
     private Cache<String, BufferedReader> logReaderCache =
             CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
 
@@ -83,22 +75,6 @@ public class LoggingServiceImpl implements LoggingService {
 
     @Autowired
     private Path logDir;
-
-    @PostConstruct
-    public void before() {
-        logWriterChecker.start(() -> logWriterCache.asMap().forEach((cmdId, buffer) -> {
-            try {
-                buffer.flush();
-            } catch (IOException e) {
-                log.debug("Cannot flash logs for cmd : {}", cmdId);
-            }
-        }));
-    }
-
-    @PreDestroy
-    public void after() {
-        logWriterChecker.stop();
-    }
 
     @Override
     @RabbitListener(queues = "#{logsQueue.getName()}", containerFactory = "logsContainerFactory")
@@ -114,8 +90,6 @@ public class LoggingServiceImpl implements LoggingService {
         // send string message without cmd id
         String body = logItemAsString.substring(firstIndex + 1);
         simpMessagingTemplate.convertAndSend(destination, body);
-
-        logsExecutor.execute(() -> writeLog(cmdId, body));
     }
 
     @Override
@@ -145,33 +119,15 @@ public class LoggingServiceImpl implements LoggingService {
     }
 
     @Override
-    public Path save(String cmdId, InputStream stream) {
-        return null;
-    }
-
-    private void writeLog(String cmdId, String body) {
+    public Path save(String fileName, InputStream stream) {
         try {
-            BufferedWriter writer = getWriter(cmdId);
-            if (Objects.isNull(writer)) {
-                return;
-            }
-
-            writer.write(body);
-            writer.write(System.lineSeparator());
+            Path target = Paths.get(logDir.toString(), fileName);
+            Files.copy(stream, target, StandardCopyOption.REPLACE_EXISTING);
+            return target;
         } catch (IOException e) {
             log.debug(e);
+            return null;
         }
-    }
-
-    private BufferedWriter getWriter(String cmdId) {
-        return logWriterCache.get(cmdId, key -> {
-            try {
-                Path target = Paths.get(logDir.toString(), key + ".log");
-                return new BufferedWriter(new FileWriter(target.toFile()), FileBufferSize);
-            } catch (IOException e) {
-                return null;
-            }
-        });
     }
 
     private BufferedReader getReader(String cmdId) {
