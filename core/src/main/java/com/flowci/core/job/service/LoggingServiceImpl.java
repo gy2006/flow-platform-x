@@ -75,7 +75,7 @@ public class LoggingServiceImpl implements LoggingService {
     @RabbitListener(queues = "#{logsQueue.getName()}", containerFactory = "logsContainerFactory")
     public void processLogItem(Message message) {
         String logItemAsString = new String(message.getBody());
-        log.debug(logItemAsString);
+        log.debug("[LOG]: {}", logItemAsString);
 
         // find cmd id from log item string
         int firstIndex = logItemAsString.indexOf(LogItem.SPLITTER);
@@ -128,7 +128,7 @@ public class LoggingServiceImpl implements LoggingService {
     private BufferedReader getReader(String cmdId) {
         return logReaderCache.get(cmdId, key -> {
             try {
-                Path target = Paths.get(logDir.toString(), key + ".log");
+                Path target = Paths.get(logDir.toString(), key + ".raw.log");
                 BufferedReader reader = new BufferedReader(new FileReader(target.toFile()), FileBufferSize);
                 reader.mark(1);
                 return reader;
@@ -136,24 +136,6 @@ public class LoggingServiceImpl implements LoggingService {
                 return null;
             }
         });
-    }
-
-    private class WriterCleanUp implements RemovalListener<String, BufferedWriter> {
-
-        @Override
-        public void onRemoval(String cmdId, BufferedWriter writer, RemovalCause cause) {
-            if (Objects.isNull(writer)) {
-                return;
-            }
-
-            try {
-                writer.flush();
-                writer.close();
-                log.debug("The buffered writer been closed for cmd: {}", cmdId);
-            } catch (IOException e) {
-                log.debug(e);
-            }
-        }
     }
 
     private class ReaderCleanUp implements RemovalListener<String, BufferedReader> {
