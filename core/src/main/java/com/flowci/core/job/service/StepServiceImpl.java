@@ -110,6 +110,7 @@ public class StepServiceImpl implements StepService {
     @Override
     public void update(Job job, ExecutedCmd cmd) {
         executedCmdDao.save(cmd);
+        jobStepCache.invalidate(job.getId());
         applicationEventPublisher.publishEvent(new StepStatusChangeEvent(this, job, cmd));
     }
 }
