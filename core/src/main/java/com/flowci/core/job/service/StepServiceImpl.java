@@ -16,10 +16,7 @@
 
 package com.flowci.core.job.service;
 
-import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.domain.JsonablePage;
 import com.flowci.core.job.dao.ExecutedCmdDao;
-import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.StepStatusChangeEvent;
@@ -33,9 +30,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -48,10 +43,6 @@ import java.util.Optional;
 @Log4j2
 @Service
 public class StepServiceImpl implements StepService {
-
-    private static final ParameterizedTypeReference<JsonablePage<String>> AgentLogsType =
-        new ParameterizedTypeReference<JsonablePage<String>>() {
-        };
 
     @Autowired
     private Cache<String, List<ExecutedCmd>> jobStepCache;

@@ -394,6 +394,11 @@ public class JobServiceTest extends ZookeeperScenario {
         waitForCancelled.await();
         job = jobDao.findByKey(job.getKey());
         Assert.assertEquals(Status.CANCELLED, job.getStatus());
+
+        // then: step should be skipped
+        for (ExecutedCmd cmd : stepService.list(job)) {
+            Assert.assertEquals(ExecutedCmd.Status.SKIPPED, cmd.getStatus());
+        }
     }
 
     private Job prepareJobForRunningStatus(Agent agent) {

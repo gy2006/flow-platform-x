@@ -290,6 +290,16 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
+        // update step status
+        List<ExecutedCmd> steps = stepService.list(job);
+        for (ExecutedCmd step : steps) {
+            if (step.isRunning() || step.isPending()) {
+                step.setStatus(ExecutedCmd.Status.SKIPPED);
+                stepService.update(job, step);
+            }
+        }
+
+        // update job status
         setJobStatus(job, Job.Status.CANCELLED, "Agent unexpected offline");
     }
 
