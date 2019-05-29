@@ -16,8 +16,7 @@
 
 package com.flowci.core.job.service;
 
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
-
+import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.domain.Variables;
@@ -47,26 +46,15 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.GroovyRunner;
-import com.flowci.tree.Node;
-import com.flowci.tree.NodePath;
-import com.flowci.tree.NodeTree;
-import com.flowci.tree.YmlParser;
+import com.flowci.tree.*;
 import groovy.util.ScriptException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -74,16 +62,26 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
+
 /**
  * @author yang
  */
 @Log4j2
 @Service
-public class JobServiceImpl implements JobService, ApplicationListener<CreateNewJobEvent> {
+public class JobServiceImpl implements JobService {
 
     private static final Sort SortByBuildNumber = Sort.by(Direction.DESC, "buildNumber");
 
     private static final Integer DefaultBeforeTimeout = 5;
+
+    //====================================================================
+    //        %% Spring injection
+    //====================================================================
 
     @Autowired
     private ConfigProperties appProperties;
@@ -123,6 +121,10 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
 
     @Autowired
     private StepService stepService;
+
+    //====================================================================
+    //        %% Public function
+    //====================================================================
 
     @Override
     public Job get(Flow flow, Long buildNumber) {
@@ -266,11 +268,34 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         }
     }
 
-    @Override
+    //====================================================================
+    //        %% Internal events
+    //====================================================================
+
+    @EventListener(value = CreateNewJobEvent.class)
     public void onApplicationEvent(CreateNewJobEvent event) {
         Job job = create(event.getFlow(), event.getYml(), event.getTrigger(), event.getInput());
         start(job);
     }
+
+    @EventListener(value = StatusChangeEvent.class)
+    public void onApplicationEvent(StatusChangeEvent event) {
+        Agent agent = event.getAgent();
+        if (agent.getStatus() != Status.OFFLINE || Objects.isNull(agent.getJobId())) {
+            return;
+        }
+
+        Job job = get(agent.getJobId());
+        if (job.isDone()) {
+            return;
+        }
+
+        setJobStatus(job, Job.Status.CANCELLED, "Agent unexpected offline");
+    }
+
+    //====================================================================
+    //        %% Rabbit events
+    //====================================================================
 
     @Override
     @RabbitListener(queues = "${app.job.queue-name}", containerFactory = "jobAndCallbackContainerFactory")
@@ -355,7 +380,7 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         }
 
         // get cmd related job
-        Job job = jobDao.findById(cmdId.getJobId()).get();
+        Job job = get(cmdId.getJobId());
         NodePath currentFromCmd = NodePath.create(cmdId.getNodePath());
 
         NodeTree tree = ymlManager.getTree(job);
@@ -409,6 +434,20 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
 
         log.debug("Dispatch job : {}", job);
         dispatch(job);
+    }
+
+    //====================================================================
+    //        %% Utils
+    //====================================================================
+
+    private Job get(String jobId) {
+        Optional<Job> job = jobDao.findById(jobId);
+
+        if (job.isPresent()) {
+            return job.get();
+        }
+
+        throw new NotFoundException("Job '{}' not found", jobId);
     }
 
     private Node findNext(Job job, NodeTree tree, Node current, boolean isSuccess) {
@@ -475,13 +514,6 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         }
 
         return context;
-    }
-
-    private void setupNodePathAndDispatch(Job job, Node next) {
-        job.setCurrentPath(next.getPathAsString());
-        jobDao.save(job);
-
-        dispatch(job);
     }
 
     private NodePath currentNodePath(Job job) {

@@ -126,7 +126,6 @@ public class AgentConfig implements WebMvcConfigurer {
 
         AgentConnect body = new AgentConnect();
         body.setPort(serverProperties.getPort());
-        body.setToken(agentProperties.getToken());
 
         try {
             RequestEntity<Object> requestEntity = new RequestEntity<>(body, HttpMethod.POST, uri);
