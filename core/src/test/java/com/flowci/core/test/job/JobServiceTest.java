@@ -17,6 +17,7 @@
 package com.flowci.core.test.job;
 
 import com.flowci.core.agent.event.CmdSentEvent;
+import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
@@ -351,6 +352,53 @@ public class JobServiceTest extends ZookeeperScenario {
 
         ExecutedCmd executedCmd = steps.get(0);
         Assert.assertEquals(ExecutedCmd.Status.SKIPPED, executedCmd.getStatus());
+    }
+
+    @Test
+    public void should_cancel_job_if_agent_offline() throws IOException, InterruptedException {
+        // init:
+        yml = flowService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
+        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
+
+        // mock agent online
+        Agent agent = agentService.create("hello.agent.2", null);
+        mockAgentOnline(agentService.getPath(agent));
+
+        // given: start job and wait for running
+        jobService.start(job);
+
+        CountDownLatch waitForRunning = new CountDownLatch(1);
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobStatusChangeEvent>) event -> {
+            if (event.getJob().getStatus() == Status.RUNNING) {
+                waitForRunning.countDown();
+            }
+        });
+
+        waitForRunning.await();
+        job = jobDao.findByKey(job.getKey());
+        Assert.assertEquals(Status.RUNNING, job.getStatus());
+
+        // when: agent status change to offline
+        CountDownLatch waitForCancelled = new CountDownLatch(1);
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobStatusChangeEvent>) event -> {
+            if (event.getJob().getStatus() == Status.CANCELLED) {
+                waitForCancelled.countDown();
+            }
+        });
+
+        agent.setJobId(job.getId());
+        agent.setStatus(Agent.Status.OFFLINE);
+        applicationEventMulticaster.multicastEvent(new StatusChangeEvent(this, agent));
+
+        // then: job should be cancelled
+        waitForCancelled.await();
+        job = jobDao.findByKey(job.getKey());
+        Assert.assertEquals(Status.CANCELLED, job.getStatus());
+
+        // then: step should be skipped
+        for (ExecutedCmd cmd : stepService.list(job)) {
+            Assert.assertEquals(ExecutedCmd.Status.SKIPPED, cmd.getStatus());
+        }
     }
 
     private Job prepareJobForRunningStatus(Agent agent) {

@@ -16,13 +16,6 @@
 
 package com.flowci.domain;
 
-import static com.flowci.domain.ExecutedCmd.Status.EXCEPTION;
-import static com.flowci.domain.ExecutedCmd.Status.KILLED;
-import static com.flowci.domain.ExecutedCmd.Status.RUNNING;
-import static com.flowci.domain.ExecutedCmd.Status.SKIPPED;
-import static com.flowci.domain.ExecutedCmd.Status.SUCCESS;
-import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
@@ -33,6 +26,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import static com.flowci.domain.ExecutedCmd.Status.*;
 
 /**
  * @author yang
@@ -153,6 +148,11 @@ public class ExecutedCmd extends CmdBase {
     @JsonIgnore
     public boolean isRunning() {
         return status == RUNNING;
+    }
+
+    @JsonIgnore
+    public boolean isPending() {
+        return status == PENDING;
     }
 
     @JsonIgnore
