@@ -155,6 +155,7 @@ public class Job extends Mongoable {
     public boolean isDone() {
         return status == Status.TIMEOUT
                 || status == Status.CANCELLED
+                || status == Status.FAILURE
                 || status == Status.SUCCESS;
     }
 
