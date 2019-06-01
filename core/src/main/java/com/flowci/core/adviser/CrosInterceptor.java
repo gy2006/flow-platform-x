@@ -26,11 +26,15 @@ import org.springframework.web.servlet.HandlerInterceptor;
  */
 public class CrosInterceptor implements HandlerInterceptor {
 
+    private static final String AllowedHeaders =
+        "Origin, X-Requested-With, Content-Disposition, Content-Type, Accept, Token";
+
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         response.setHeader("Access-Control-Allow-Origin", "*");
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS, DELETE");
         response.setHeader("Access-Control-Max-Age", "1800");
-        response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Token");
+        response.setHeader("Access-Control-Allow-Headers", AllowedHeaders);
+        response.setHeader("Access-Control-Expose-Headers", AllowedHeaders);
 
         if (request.getMethod().equals(RequestMethod.OPTIONS.name())) {
             return false;
