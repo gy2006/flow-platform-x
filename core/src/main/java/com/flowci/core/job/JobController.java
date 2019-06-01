@@ -135,7 +135,7 @@ public class JobController {
         Flow flow = flowService.getById(job.getFlowId());
         NodePath path = NodePath.create(cmdId.getNodePath());
 
-        String fileName = String.format("%s-#%s-%s", flow.getName(), job.getBuildNumber(), path.name());
+        String fileName = String.format("%s-#%s-%s.log", flow.getName(), job.getBuildNumber(), path.name());
 
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
