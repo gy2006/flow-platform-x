@@ -16,10 +16,10 @@
 
 package com.flowci.core.adviser;
 
-import com.flowci.domain.http.ResponseMessage;
 import com.flowci.core.domain.StatusCode;
+import com.flowci.domain.http.ResponseMessage;
 import org.springframework.core.MethodParameter;
-import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -52,7 +52,7 @@ public class ResponseMessageAdviser implements ResponseBodyAdvice {
                                   ServerHttpRequest request,
                                   ServerHttpResponse response) {
 
-        if (body instanceof InputStreamResource) {
+        if (body instanceof Resource) {
             return body;
         }
 

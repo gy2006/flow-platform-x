@@ -19,6 +19,7 @@ package com.flowci.core.job;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
@@ -29,11 +30,16 @@ import com.flowci.core.job.service.StepService;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
+import com.flowci.tree.NodePath;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -113,6 +119,28 @@ public class JobController {
                                    @RequestParam(required = false, defaultValue = "50") int size) {
 
         return loggingService.read(stepService.get(executedCmdId), PageRequest.of(page, size));
+    }
+
+    @GetMapping("/logs/{executedCmdId}/download")
+    public ResponseEntity<Resource> downloadStepLog(@PathVariable String executedCmdId) {
+        CmdId cmdId = CmdId.parse(executedCmdId);
+
+        if (Objects.isNull(cmdId)) {
+            throw new ArgumentException("Illegal cmd id");
+        }
+
+        Resource resource = loggingService.get(executedCmdId);
+
+        Job job = jobService.get(cmdId.getJobId());
+        Flow flow = flowService.getById(job.getFlowId());
+        NodePath path = NodePath.create(cmdId.getNodePath());
+
+        String fileName = String.format("%s-#%s-%s", flow.getName(), job.getBuildNumber(), path.name());
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+            .body(resource);
     }
 
     @PostMapping

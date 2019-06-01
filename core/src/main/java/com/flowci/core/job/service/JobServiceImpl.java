@@ -127,6 +127,17 @@ public class JobServiceImpl implements JobService {
     //====================================================================
 
     @Override
+    public Job get(String jobId) {
+        Optional<Job> job = jobDao.findById(jobId);
+
+        if (job.isPresent()) {
+            return job.get();
+        }
+
+        throw new NotFoundException("Job '{}' not found", jobId);
+    }
+
+    @Override
     public Job get(Flow flow, Long buildNumber) {
         String key = JobKeyBuilder.build(flow, buildNumber);
         Job job = jobDao.findByKey(key);
@@ -449,16 +460,6 @@ public class JobServiceImpl implements JobService {
     //====================================================================
     //        %% Utils
     //====================================================================
-
-    private Job get(String jobId) {
-        Optional<Job> job = jobDao.findById(jobId);
-
-        if (job.isPresent()) {
-            return job.get();
-        }
-
-        throw new NotFoundException("Job '{}' not found", jobId);
-    }
 
     private Node findNext(Job job, NodeTree tree, Node current, boolean isSuccess) {
         Node next = isSuccess ? tree.next(current.getPath()) : tree.nextFinal(current.getPath());

@@ -31,6 +31,11 @@ import org.springframework.data.domain.Page;
 public interface JobService {
 
     /**
+     * Get job by id
+     */
+    Job get(String id);
+
+    /**
      * Get job by flow and build number
      */
     Job get(Flow flow, Long buildNumber);

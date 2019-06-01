@@ -20,6 +20,7 @@ import com.flowci.domain.ExecutedCmd;
 import java.io.InputStream;
 import java.nio.file.Path;
 import org.springframework.amqp.core.Message;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -47,4 +48,13 @@ public interface LoggingService {
      * @param stream file stream
      */
     Path save(String fileName, InputStream stream);
+
+    /**
+     * Get log resource
+     *
+     * @param executedCmdId cmd id
+     * @return file resource
+     */
+    Resource get(String executedCmdId);
+
 }

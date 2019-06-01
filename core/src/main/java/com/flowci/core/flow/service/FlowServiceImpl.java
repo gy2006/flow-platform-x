@@ -85,6 +85,17 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
+    public Flow getById(String id) {
+        Optional<Flow> optional = flowDao.findById(id);
+
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+
+        throw new NotFoundException("Invalid flow id {0}", id);
+    }
+
+    @Override
     public Flow delete(String name) {
         Flow flow = get(name);
         flowDao.delete(flow);
