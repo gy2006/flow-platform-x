@@ -17,6 +17,7 @@
 package com.flowci.core.agent.service;
 
 import com.flowci.core.agent.dao.AgentDao;
+import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.config.ConfigProperties;
@@ -125,9 +126,10 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public Settings connect(String token, String ip, Integer port) {
-        Agent target = getByToken(token);
-        target.setHost("http://" + ip + ":" + port);
+    public Settings connect(AgentInit init) {
+        Agent target = getByToken(init.getToken());
+        target.setHost("http://" + init.getIp() + ":" + init.getPort());
+        target.setOs(init.getOs());
         agentDao.save(target);
 
         Settings settings = ObjectsHelper.copy(baseSettings);

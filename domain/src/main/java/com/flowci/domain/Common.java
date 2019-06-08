@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 fir.im
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.agent.dao;
-
-import com.flowci.agent.domain.AgentReceivedCmd;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.stereotype.Repository;
+package com.flowci.domain;
 
 /**
  * @author yang
  */
-@Repository
-public interface ReceivedCmdDao extends PagingAndSortingRepository<AgentReceivedCmd, String> {
+public abstract class Common {
+
+    public enum OS {
+        LINUX,
+
+        MAC,
+
+        WIN,
+
+        UNKNOWN
+    }
 
 }

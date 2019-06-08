@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.agent.domain;
 
-import java.io.Serializable;
+import com.flowci.domain.Common;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,8 +25,13 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class AgentConnect implements Serializable {
+public class AgentInit {
+
+    private String token;
+
+    private String ip;
 
     private Integer port;
 
+    private Common.OS os;
 }

@@ -16,11 +16,11 @@
 
 package com.flowci.core.agent;
 
+import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.domain.CreateAgent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.domain.Agent;
-import com.flowci.domain.AgentConnect;
 import com.flowci.domain.Settings;
 
 import java.io.IOException;
@@ -78,11 +78,11 @@ public class AgentController {
     // handle request from agent
     @PostMapping("/connect")
     public Settings connect(@RequestHeader(HeaderAgentToken) String token,
-                            @RequestBody AgentConnect connect,
+                            @RequestBody AgentInit init,
                             HttpServletRequest request) {
-        String agentIp = request.getRemoteHost();
-        Integer port = connect.getPort();
-        return agentService.connect(token, agentIp, port);
+        init.setToken(token);
+        init.setIp(request.getRemoteHost());
+        return agentService.connect(init);
     }
 
     @PostMapping("/logs/upload")

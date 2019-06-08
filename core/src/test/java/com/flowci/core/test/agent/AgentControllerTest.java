@@ -23,12 +23,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.domain.CreateAgent;
 import com.flowci.core.domain.StatusCode;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.Agent;
-import com.flowci.domain.AgentConnect;
 import com.flowci.domain.Settings;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ErrorCode;
@@ -126,7 +126,7 @@ public class AgentControllerTest extends SpringScenario {
         // when: request to connect agent
         currentUserHelper.reset();
 
-        AgentConnect connect = new AgentConnect();
+        AgentInit connect = new AgentInit();
         connect.setPort(8080);
 
         ResponseMessage<Settings> settingsR = mvcMockHelper.expectSuccessAndReturnClass(

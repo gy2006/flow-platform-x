@@ -16,6 +16,7 @@
 
 package com.flowci.core.agent.service;
 
+import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.Settings;
@@ -27,7 +28,7 @@ import java.util.Set;
  */
 public interface AgentService {
 
-    Settings connect(String token, String ip, Integer port);
+    Settings connect(AgentInit initData);
 
     /**
      * Get agent by id
