@@ -19,6 +19,8 @@ package com.flowci.core.flow;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.domain.http.RequestMessage;
+import com.flowci.exception.NotFoundException;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -46,6 +48,16 @@ public class FlowController {
     @GetMapping(value = "/{name}")
     public Flow get(@PathVariable String name) {
         return flowService.get(name);
+    }
+
+    @GetMapping(value = "/{name}/exist")
+    public Boolean exist(@PathVariable String name) {
+        try {
+            flowService.get(name);
+            return true;
+        } catch (NotFoundException e) {
+            return false;
+        }
     }
 
     @PostMapping(value = "/{name}")
