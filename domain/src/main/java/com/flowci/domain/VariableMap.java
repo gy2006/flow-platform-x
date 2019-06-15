@@ -47,7 +47,7 @@ public class VariableMap extends LinkedHashMap<String, String> implements Serial
     }
 
     public VariableMap(Map<String, String> data) {
-        super(data.size());
+        super(data.size() + 10);
         load(data);
     }
 

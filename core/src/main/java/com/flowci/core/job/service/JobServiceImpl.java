@@ -506,7 +506,7 @@ public class JobServiceImpl implements JobService {
     }
 
     private VariableMap initJobContext(Flow flow, Job job, VariableMap... inputs) {
-        VariableMap context = new VariableMap(20);
+        VariableMap context = new VariableMap(flow.getVariables());
         context.putString(Variables.App.Url, appProperties.getServerAddress());
         context.putString(Variables.Job.Trigger, job.getTrigger().toString());
         context.putString(Variables.Job.BuildNumber, job.getBuildNumber().toString());
@@ -522,8 +522,6 @@ public class JobServiceImpl implements JobService {
             }
             context.merge(input);
         }
-
-
 
         return context;
     }
