@@ -17,6 +17,7 @@
 package com.flowci.core.flow.service;
 
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import java.util.List;
 
@@ -28,12 +29,17 @@ public interface FlowService {
     /**
      * List all flow by current user
      */
-    List<Flow> list();
+    List<Flow> list(Status status);
 
     /**
-     * Create flow by name
+     * Create flow by name with pending status
      */
     Flow create(String name);
+
+    /**
+     * Confirm flow
+     */
+    Flow confirm(String name);
 
     /**
      * Get flow by name

@@ -16,6 +16,7 @@
 
 package com.flowci.core.test.flow;
 
+import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
@@ -49,10 +50,12 @@ public class FlowServiceTest extends SpringScenario {
 
     @Test
     public void should_create_flow_by_name() {
-        flowService.create("hello");
-        Assert.assertNotNull(flowService.get("hello"));
+        String name = "hello";
+        flowService.create(name);
+        Assert.assertNotNull(flowService.get(name));
+        flowService.confirm(name);
 
-        List<Flow> flows = flowService.list();
+        List<Flow> flows = flowService.list(Status.CONFIRMED);
         Assert.assertEquals(1, flows.size());
     }
 

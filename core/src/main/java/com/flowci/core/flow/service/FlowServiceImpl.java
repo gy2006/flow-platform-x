@@ -20,11 +20,13 @@ import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
+import com.flowci.exception.NotAvailableException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
@@ -54,8 +56,9 @@ public class FlowServiceImpl implements FlowService {
     private CronService cronService;
 
     @Override
-    public List<Flow> list() {
-        return flowDao.findAllByCreatedBy(currentUserHelper.get().getId());
+    public List<Flow> list(Status status) {
+        String userId = currentUserHelper.get().getId();
+        return flowDao.findAllByStatusAndCreatedBy(status, userId);
     }
 
     @Override
@@ -65,22 +68,42 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException(message, name);
         }
 
-        Flow existed = flowDao.findByName(name);
-        if (!Objects.isNull(existed)) {
-            throw new DuplicateException("Flow {0} already exists", name);
+        Flow flow = flowDao.findByName(name);
+
+        // create a new one
+        if (Objects.isNull(flow)) {
+            Flow newFlow = new Flow(name);
+            newFlow.setCreatedBy(currentUserHelper.get().getId());
+            newFlow.getVariables().put(Variables.Flow.Name, name);
+            return flowDao.save(newFlow);
         }
 
-        Flow newFlow = new Flow(name);
-        newFlow.setCreatedBy(currentUserHelper.get().getId());
-        newFlow.getVariables().put(Variables.Flow.Name, name);
-        return flowDao.save(newFlow);
+        // return pending
+        if (flow.getStatus() == Status.PENDING) {
+            return flow;
+        }
+
+        throw new DuplicateException("Flow {0} already exists", name);
+    }
+
+    @Override
+    public Flow confirm(String name) {
+        Flow flow = get(name);
+
+        if (flow.getStatus() == Status.CONFIRMED) {
+            throw new NotAvailableException("Flow {0} is created", name);
+        }
+
+        flow.setStatus(Status.CONFIRMED);
+        flowDao.save(flow);
+        return flow;
     }
 
     @Override
     public Flow get(String name) {
         Flow flow = flowDao.findByNameAndCreatedBy(name, currentUserHelper.get().getId());
         if (Objects.isNull(flow)) {
-            throw new NotFoundException("The flow with name {0} cannot found", name);
+            throw new NotFoundException("Flow {0} is not found", name);
         }
         return flow;
     }

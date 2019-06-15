@@ -36,9 +36,18 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @ToString(of = {"name"}, callSuper = true)
 public final class Flow extends Mongoable {
 
+    public enum Status {
+        PENDING,
+
+        CONFIRMED
+    }
+
     @NonNull
     @Indexed(name = "index_flow_name")
     private String name;
+
+    @NonNull
+    private Status status = Status.PENDING;
 
     @NonNull
     private VariableMap variables = new VariableMap();

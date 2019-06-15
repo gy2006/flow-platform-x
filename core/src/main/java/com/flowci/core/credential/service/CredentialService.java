@@ -17,6 +17,7 @@
 package com.flowci.core.credential.service;
 
 import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.util.CipherHelper.StringKeyPair;
 import java.util.List;
 
@@ -38,11 +39,11 @@ public interface CredentialService {
     /**
      * Create and auto generate rsa key pair
      */
-    Credential createRSA(String name);
+    RSAKeyPair createRSA(String name);
 
     /**
      * Create and set rsa key pair
      */
-    Credential createRSA(String name, StringKeyPair rasKeyPair);
+    RSAKeyPair createRSA(String name, StringKeyPair rasKeyPair);
 
 }

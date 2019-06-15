@@ -40,6 +40,11 @@ public class Variables {
         public static final String Trigger = "FLOWCI_JOB_TRIGGER";
     }
 
+    public static class Credential {
+
+        public static final String SSH = "FLOWCI_CREDENTIAL_SSH";
+    }
+
     private Variables() {
     }
 }

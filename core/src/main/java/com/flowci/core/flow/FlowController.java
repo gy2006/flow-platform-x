@@ -16,7 +16,9 @@
 
 package com.flowci.core.flow;
 
+import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.domain.http.RequestMessage;
 import com.flowci.exception.NotFoundException;
@@ -44,9 +46,12 @@ public class FlowController {
     @Autowired
     private FlowService flowService;
 
+    @Autowired
+    private CredentialService credentialService;
+
     @GetMapping
     public List<Flow> list() {
-        return flowService.list();
+        return flowService.list(Status.CONFIRMED);
     }
 
     @GetMapping(value = "/{name}")
@@ -71,6 +76,11 @@ public class FlowController {
             flowService.saveYml(flow, yml);
         }
         return flow;
+    }
+
+    @PostMapping(value = "/{name}/confirm")
+    public Flow confirm(@PathVariable String name) {
+        return flowService.confirm(name);
     }
 
     @GetMapping(value = "/{name}/yml", produces = MediaType.APPLICATION_JSON_VALUE)

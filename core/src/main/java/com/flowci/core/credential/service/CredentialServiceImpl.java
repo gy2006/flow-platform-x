@@ -59,7 +59,7 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public Credential createRSA(String name) {
+    public RSAKeyPair createRSA(String name) {
         try {
             String email = currentUserHelper.get().getEmail();
 
@@ -74,7 +74,7 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public Credential createRSA(String name, StringKeyPair rasKeyPair) {
+    public RSAKeyPair createRSA(String name, StringKeyPair rasKeyPair) {
         try {
             Date now = Date.from(Instant.now());
             RSAKeyPair rsaKeyPair = new RSAKeyPair(rasKeyPair);
