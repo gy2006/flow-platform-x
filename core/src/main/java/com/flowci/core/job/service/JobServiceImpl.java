@@ -429,7 +429,7 @@ public class JobServiceImpl implements JobService {
 
         // setup current job status if not tail node
         if (!node.isTail()) {
-            context.putString(Variables.JOB_STATUS, StatusHelper.convert(execCmd).name());
+            context.putString(Variables.Job.Status, StatusHelper.convert(execCmd).name());
         }
 
         jobDao.save(job);
@@ -439,7 +439,7 @@ public class JobServiceImpl implements JobService {
 
         // job finished
         if (Objects.isNull(next)) {
-            Job.Status statusFromContext = Job.Status.valueOf(job.getContext().get(Variables.JOB_STATUS));
+            Job.Status statusFromContext = Job.Status.valueOf(job.getContext().get(Variables.Job.Status));
             setJobStatus(job, statusFromContext, execCmd.getError());
 
             Agent agent = agentService.get(job.getAgentId());
@@ -507,11 +507,10 @@ public class JobServiceImpl implements JobService {
 
     private VariableMap initJobContext(Flow flow, Job job, VariableMap... inputs) {
         VariableMap context = new VariableMap(20);
-        context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
-        context.putString(Variables.FLOW_NAME, flow.getName());
-        context.putString(Variables.JOB_TRIGGER, job.getTrigger().toString());
-        context.putString(Variables.JOB_BUILD_NUMBER, job.getBuildNumber().toString());
-        context.putString(Variables.JOB_STATUS, Job.Status.PENDING.name());
+        context.putString(Variables.App.Url, appProperties.getServerAddress());
+        context.putString(Variables.Job.Trigger, job.getTrigger().toString());
+        context.putString(Variables.Job.BuildNumber, job.getBuildNumber().toString());
+        context.putString(Variables.Job.Status, Job.Status.PENDING.name());
 
         if (Objects.isNull(inputs)) {
             return context;
@@ -523,6 +522,8 @@ public class JobServiceImpl implements JobService {
             }
             context.merge(input);
         }
+
+
 
         return context;
     }
@@ -560,7 +561,7 @@ public class JobServiceImpl implements JobService {
     private Job setJobStatus(Job job, Job.Status newStatus, String message) {
         job.setStatus(newStatus);
         job.setMessage(message);
-        job.getContext().putString(Variables.JOB_STATUS, newStatus.name());
+        job.getContext().putString(Variables.Job.Status, newStatus.name());
         jobDao.save(job);
         applicationEventPublisher.publishEvent(new JobStatusChangeEvent(this, job));
         return job;

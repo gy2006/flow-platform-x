@@ -16,6 +16,7 @@
 
 package com.flowci.core.flow.service;
 
+import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
@@ -59,19 +60,19 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Flow create(String name) {
-        Flow existed = flowDao.findByName(name);
-
-        if (!Objects.isNull(existed)) {
-            throw new DuplicateException("The flow {0} already existed", name);
-        }
-
         if (!NodePath.validate(name)) {
             String message = "Illegal flow name {0}, the length cannot over 100 and '*' ',' is not available";
             throw new ArgumentException(message, name);
         }
 
+        Flow existed = flowDao.findByName(name);
+        if (!Objects.isNull(existed)) {
+            throw new DuplicateException("Flow {0} already exists", name);
+        }
+
         Flow newFlow = new Flow(name);
         newFlow.setCreatedBy(currentUserHelper.get().getId());
+        newFlow.getVariables().put(Variables.Flow.Name, name);
         return flowDao.save(newFlow);
     }
 

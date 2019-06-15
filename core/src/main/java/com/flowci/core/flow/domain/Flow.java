@@ -30,18 +30,16 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * @author yang
  */
 @Document(collection = "flow")
+@Getter
+@Setter
 @NoArgsConstructor
 @ToString(of = {"name"}, callSuper = true)
 public final class Flow extends Mongoable {
 
-    @Getter
-    @Setter
     @NonNull
     @Indexed(name = "index_flow_name")
     private String name;
 
-    @Getter
-    @Setter
     @NonNull
     private VariableMap variables = new VariableMap();
 

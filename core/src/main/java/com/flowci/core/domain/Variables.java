@@ -21,18 +21,24 @@ package com.flowci.core.domain;
  */
 public class Variables {
 
-    public static final String SERVER_URL = "FLOWCI_SERVER_URL";
+    public static class App {
 
-    public static final String FLOW_NAME = "FLOWCI_FLOW_NAME";
+        public static final String Url = "FLOWCI_SERVER_URL";
+    }
 
-    public static final String JOB_BUILD_NUMBER = "FLOWCI_JOB_BUILD_NUM";
+    public static class Flow {
 
-    /**
-     * For Current job status when running
-     */
-    public static final String JOB_STATUS = "FLOWCI_JOB_STATUS";
+        public static final String Name = "FLOWCI_FLOW_NAME";
+    }
 
-    public static final String JOB_TRIGGER = "FLOWCI_JOB_TRIGGER";
+    public static class Job {
+
+        public static final String BuildNumber = "FLOWCI_JOB_BUILD_NUM";
+
+        public static final String Status = "FLOWCI_JOB_STATUS";
+
+        public static final String Trigger = "FLOWCI_JOB_TRIGGER";
+    }
 
     private Variables() {
     }
