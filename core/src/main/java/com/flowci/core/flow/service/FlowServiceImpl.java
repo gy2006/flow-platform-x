@@ -16,6 +16,7 @@
 
 package com.flowci.core.flow.service;
 
+import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
@@ -23,6 +24,7 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.user.CurrentUserHelper;
+import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
@@ -42,6 +44,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class FlowServiceImpl implements FlowService {
+
+    @Autowired
+    private ConfigProperties appProperties;
 
     @Autowired
     private CurrentUserHelper currentUserHelper;
@@ -74,7 +79,12 @@ public class FlowServiceImpl implements FlowService {
         if (Objects.isNull(flow)) {
             Flow newFlow = new Flow(name);
             newFlow.setCreatedBy(currentUserHelper.get().getId());
-            newFlow.getVariables().put(Variables.Flow.Name, name);
+
+            VariableMap vars = newFlow.getVariables();
+            vars.put(Variables.App.Url, appProperties.getServerAddress());
+            vars.put(Variables.Flow.Name, name);
+            vars.put(Variables.Flow.Webhook, getWebhook(name));
+
             return flowDao.save(newFlow);
         }
 
@@ -166,6 +176,10 @@ public class FlowServiceImpl implements FlowService {
         // update cron task
         cronService.update(flow, ymlObj);
         return ymlObj;
+    }
+
+    private String getWebhook(String name) {
+        return appProperties.getServerAddress() + "/webhooks/" + name;
     }
 
     private void verifyFlowIdAndUser(Flow flow) {

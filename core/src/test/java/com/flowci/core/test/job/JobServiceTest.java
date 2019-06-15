@@ -176,8 +176,8 @@ public class JobServiceTest extends ZookeeperScenario {
 
         Cmd cmd = targetCmd.getValue();
         Assert.assertEquals(cmdManager.createId(job, first).toString(), cmd.getId());
-        Assert.assertEquals("echo step version", cmd.getInputs().getString("FLOW_VERSION"));
-        Assert.assertEquals("echo step", cmd.getInputs().getString("FLOW_WORKSPACE"));
+        Assert.assertEquals("echo step version", cmd.getInputs().get("FLOW_VERSION"));
+        Assert.assertEquals("echo step", cmd.getInputs().get("FLOW_WORKSPACE"));
         Assert.assertEquals("echo hello\n", cmd.getScripts().get(0));
     }
 
@@ -192,7 +192,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: cmd of first node been executed
         VariableMap output = new VariableMap();
-        output.putString("HELLO_WORLD", "hello.world");
+        output.put("HELLO_WORLD", "hello.world");
 
         ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString(),
             firstNode.isAllowFailure());
@@ -208,7 +208,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // then: job context should be updated
         job = jobDao.findById(job.getId()).get();
-        Assert.assertEquals("hello.world", job.getContext().getString("HELLO_WORLD"));
+        Assert.assertEquals("hello.world", job.getContext().get("HELLO_WORLD"));
 
         // then: job current context should be updated
         Node secondNode = tree.next(firstNode.getPath());
@@ -216,7 +216,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: cmd of second node been executed
         output = new VariableMap();
-        output.putString("HELLO_JAVA", "hello.java");
+        output.put("HELLO_JAVA", "hello.java");
 
         executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString(), secondNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
@@ -231,8 +231,8 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // then: job context should be updated
         job = jobDao.findById(job.getId()).get();
-        Assert.assertEquals("hello.java", job.getContext().getString("HELLO_JAVA"));
-        Assert.assertEquals("hello.world", job.getContext().getString("HELLO_WORLD"));
+        Assert.assertEquals("hello.java", job.getContext().get("HELLO_JAVA"));
+        Assert.assertEquals("hello.world", job.getContext().get("HELLO_WORLD"));
         Assert.assertEquals(Status.SUCCESS, job.getStatus());
     }
 
@@ -248,7 +248,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: cmd of first node with failure
         VariableMap output = new VariableMap();
-        output.putString("HELLO_WORLD", "hello.world");
+        output.put("HELLO_WORLD", "hello.world");
 
         ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString(),
             firstNode.isAllowFailure());
@@ -266,11 +266,11 @@ public class JobServiceTest extends ZookeeperScenario {
 
         Assert.assertEquals(Status.RUNNING, job.getStatus());
         Assert.assertEquals(secondNode.getPathAsString(), job.getCurrentPath());
-        Assert.assertEquals("hello.world", job.getContext().getString("HELLO_WORLD"));
+        Assert.assertEquals("hello.world", job.getContext().get("HELLO_WORLD"));
 
         // when: second cmd of node been timeout
         output = new VariableMap();
-        output.putString("HELLO_TIMEOUT", "hello.timeout");
+        output.put("HELLO_TIMEOUT", "hello.timeout");
 
         executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString(), secondNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.TIMEOUT);
@@ -284,7 +284,7 @@ public class JobServiceTest extends ZookeeperScenario {
         // then: job should be timeout with error message
         job = jobDao.findById(job.getId()).get();
         Assert.assertEquals(Status.SUCCESS, job.getStatus());
-        Assert.assertEquals("hello.timeout", job.getContext().getString("HELLO_TIMEOUT"));
+        Assert.assertEquals("hello.timeout", job.getContext().get("HELLO_TIMEOUT"));
     }
 
     @Test

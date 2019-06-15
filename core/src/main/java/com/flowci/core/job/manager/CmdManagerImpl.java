@@ -107,7 +107,7 @@ public class CmdManagerImpl implements CmdManager {
 
     private void verifyPluginInput(VariableMap context, Plugin plugin) {
         for (Variable variable : plugin.getInputs()) {
-            String value = context.getString(variable.getName());
+            String value = context.get(variable.getName());
             if (Strings.isNullOrEmpty(value) && variable.isRequired()) {
                 throw new ArgumentException(
                     "The input {0} is required for plugin {1}", variable.getName(), plugin.getName());

@@ -113,7 +113,7 @@ public class Node implements Serializable {
     }
 
     public String getEnv(String name) {
-        return environments.getString(name);
+        return environments.get(name);
     }
 
     @JsonIgnore

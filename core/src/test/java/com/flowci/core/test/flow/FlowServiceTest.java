@@ -62,11 +62,11 @@ public class FlowServiceTest extends SpringScenario {
     @Test
     public void should_update_flow_variables() {
         Flow flow = flowService.create("hello");
-        flow.getVariables().putString("FLOW_NAME", "hello.world");
+        flow.getVariables().put("FLOW_NAME", "hello.world");
         flowService.update(flow);
 
         VariableMap variables = flowService.get(flow.getName()).getVariables();
-        Assert.assertEquals("hello.world", variables.getString("FLOW_NAME"));
+        Assert.assertEquals("hello.world", variables.get("FLOW_NAME"));
     }
 
     @Test

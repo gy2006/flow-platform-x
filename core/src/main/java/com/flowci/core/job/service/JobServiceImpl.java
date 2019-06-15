@@ -16,6 +16,8 @@
 
 package com.flowci.core.job.service;
 
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
+
 import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
@@ -46,8 +48,20 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.*;
+import com.flowci.tree.GroovyRunner;
+import com.flowci.tree.Node;
+import com.flowci.tree.NodePath;
+import com.flowci.tree.NodeTree;
+import com.flowci.tree.YmlParser;
 import groovy.util.ScriptException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -61,12 +75,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 /**
  * @author yang
@@ -82,9 +90,6 @@ public class JobServiceImpl implements JobService {
     //====================================================================
     //        %% Spring injection
     //====================================================================
-
-    @Autowired
-    private ConfigProperties appProperties;
 
     @Autowired
     private ConfigProperties.Job jobProperties;
@@ -359,7 +364,7 @@ public class JobServiceImpl implements JobService {
             }
 
             NodeTree tree = ymlManager.getTree(job);
-            Node next =  tree.next(currentNodePath(job));
+            Node next = tree.next(currentNodePath(job));
 
             // do not accept job without regular steps
             if (Objects.isNull(next)) {
@@ -429,7 +434,7 @@ public class JobServiceImpl implements JobService {
 
         // setup current job status if not tail node
         if (!node.isTail()) {
-            context.putString(Variables.Job.Status, StatusHelper.convert(execCmd).name());
+            context.put(Variables.Job.Status, StatusHelper.convert(execCmd).name());
         }
 
         jobDao.save(job);
@@ -507,10 +512,9 @@ public class JobServiceImpl implements JobService {
 
     private VariableMap initJobContext(Flow flow, Job job, VariableMap... inputs) {
         VariableMap context = new VariableMap(flow.getVariables());
-        context.putString(Variables.App.Url, appProperties.getServerAddress());
-        context.putString(Variables.Job.Trigger, job.getTrigger().toString());
-        context.putString(Variables.Job.BuildNumber, job.getBuildNumber().toString());
-        context.putString(Variables.Job.Status, Job.Status.PENDING.name());
+        context.put(Variables.Job.Trigger, job.getTrigger().toString());
+        context.put(Variables.Job.BuildNumber, job.getBuildNumber().toString());
+        context.put(Variables.Job.Status, Job.Status.PENDING.name());
 
         if (Objects.isNull(inputs)) {
             return context;
@@ -559,7 +563,7 @@ public class JobServiceImpl implements JobService {
     private Job setJobStatus(Job job, Job.Status newStatus, String message) {
         job.setStatus(newStatus);
         job.setMessage(message);
-        job.getContext().putString(Variables.Job.Status, newStatus.name());
+        job.getContext().put(Variables.Job.Status, newStatus.name());
         jobDao.save(job);
         applicationEventPublisher.publishEvent(new JobStatusChangeEvent(this, job));
         return job;

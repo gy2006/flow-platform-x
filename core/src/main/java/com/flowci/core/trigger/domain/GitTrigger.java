@@ -60,8 +60,8 @@ public abstract class GitTrigger implements Serializable {
 
     public VariableMap toVariableMap() {
         VariableMap map = new VariableMap(15);
-        map.putString(Variables.GIT_SOURCE, source.name());
-        map.putString(Variables.GIT_EVENT, event.name());
+        map.put(Variables.GIT_SOURCE, source.name());
+        map.put(Variables.GIT_EVENT, event.name());
         return map;
     }
 }

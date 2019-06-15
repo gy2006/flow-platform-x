@@ -58,14 +58,6 @@ public class VariableMap extends LinkedHashMap<String, String> implements Serial
         return this;
     }
 
-    public void putString(String key, String value) {
-        put(key, value);
-    }
-
-    public String getString(String key) {
-        return get(key);
-    }
-
     public String get(String key, String defaultValue) {
         String value = get(key);
         return Objects.isNull(value) ? defaultValue : value;
@@ -78,7 +70,7 @@ public class VariableMap extends LinkedHashMap<String, String> implements Serial
 
     public void load(Map<String, String> vars) {
         for (Map.Entry<String, String> entry : vars.entrySet()) {
-            putString(entry.getKey(), entry.getValue());
+            put(entry.getKey(), entry.getValue());
         }
     }
 }

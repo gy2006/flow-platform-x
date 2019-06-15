@@ -112,8 +112,8 @@ public class FlowControllerTest extends SpringScenario {
 
         // then:
         Flow flow = flowService.get(flowName);
-        Assert.assertEquals("result", flow.getVariables().getString("test"));
-        Assert.assertEquals("world", flow.getVariables().getString("hello"));
+        Assert.assertEquals("result", flow.getVariables().get("test"));
+        Assert.assertEquals("world", flow.getVariables().get("hello"));
 
         // when: clean variables
         ResponseMessage cleanVarResponse = mvcMockHelper.expectSuccessAndReturnClass(

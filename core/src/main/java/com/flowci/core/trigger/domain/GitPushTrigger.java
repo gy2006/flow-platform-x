@@ -49,14 +49,14 @@ public class GitPushTrigger extends GitTrigger {
     public VariableMap toVariableMap() {
         VariableMap map = super.toVariableMap();
 
-        map.putString(Variables.GIT_BRANCH, ref);
-        map.putString(Variables.GIT_COMPARE_URL, compareUrl);
-        map.putString(Variables.GIT_AUTHOR, author.email);
+        map.put(Variables.GIT_BRANCH, ref);
+        map.put(Variables.GIT_COMPARE_URL, compareUrl);
+        map.put(Variables.GIT_AUTHOR, author.email);
 
-        map.putString(Variables.GIT_COMMIT_ID, commitId);
-        map.putString(Variables.GIT_COMMIT_MESSAGE, message);
-        map.putString(Variables.GIT_COMMIT_TIME, time);
-        map.putString(Variables.GIT_COMMIT_URL, commitUrl);
+        map.put(Variables.GIT_COMMIT_ID, commitId);
+        map.put(Variables.GIT_COMMIT_MESSAGE, message);
+        map.put(Variables.GIT_COMMIT_TIME, time);
+        map.put(Variables.GIT_COMMIT_URL, commitUrl);
         return map;
     }
 

@@ -29,6 +29,8 @@ public class Variables {
     public static class Flow {
 
         public static final String Name = "FLOWCI_FLOW_NAME";
+
+        public static final String Webhook = "FLOWCI_FLOW_WEBHOOK";
     }
 
     public static class Job {
