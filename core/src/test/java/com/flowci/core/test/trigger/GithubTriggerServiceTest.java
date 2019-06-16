@@ -28,7 +28,6 @@ import static com.flowci.core.trigger.domain.Variables.GIT_SOURCE;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.core.trigger.domain.Variables;
@@ -83,7 +82,7 @@ public class GithubTriggerServiceTest extends SpringScenario {
 
         Assert.assertEquals("master", variables.get(GIT_BRANCH));
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/compare/5a1e8ee1007b...40d0dd6e8e94",
-            variables.getString(GIT_COMPARE_URL));
+            variables.get(GIT_COMPARE_URL));
 
         Assert.assertEquals("40d0dd6e8e942643d794d7ed8d27610fb8729914", variables.get(GIT_COMMIT_ID));
         Assert.assertEquals("fdafadsf\n\ndfsdafad", variables.get(GIT_COMMIT_MESSAGE));

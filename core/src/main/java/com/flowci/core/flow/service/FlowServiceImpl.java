@@ -67,33 +67,43 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
+    public Boolean exist(String name) {
+        try {
+            Flow flow = get(name);
+            return flow.getStatus() != Status.PENDING;
+        } catch (NotFoundException e) {
+            return false;
+        }
+    }
+
+    @Override
     public Flow create(String name) {
         if (!NodePath.validate(name)) {
             String message = "Illegal flow name {0}, the length cannot over 100 and '*' ',' is not available";
             throw new ArgumentException(message, name);
         }
 
+        String userId = currentUserHelper.get().getId();
+
         Flow flow = flowDao.findByName(name);
-
-        // create a new one
-        if (Objects.isNull(flow)) {
-            Flow newFlow = new Flow(name);
-            newFlow.setCreatedBy(currentUserHelper.get().getId());
-
-            VariableMap vars = newFlow.getVariables();
-            vars.put(Variables.App.Url, appProperties.getServerAddress());
-            vars.put(Variables.Flow.Name, name);
-            vars.put(Variables.Flow.Webhook, getWebhook(name));
-
-            return flowDao.save(newFlow);
+        if (flow != null && flow.getStatus() == Status.CONFIRMED) {
+            throw new DuplicateException("Flow {0} already exists", name);
         }
 
-        // return pending
-        if (flow.getStatus() == Status.PENDING) {
-            return flow;
-        }
+        // reuse from pending list
+        List<Flow> pending = flowDao.findAllByStatusAndCreatedBy(Status.PENDING, userId);
+        flow = pending.size() > 0 ? pending.get(0) : new Flow();
 
-        throw new DuplicateException("Flow {0} already exists", name);
+        // set properties
+        flow.setName(name);
+        flow.setCreatedBy(userId);
+
+        VariableMap vars = flow.getVariables();
+        vars.put(Variables.App.Url, appProperties.getServerAddress());
+        vars.put(Variables.Flow.Name, name);
+        vars.put(Variables.Flow.Webhook, getWebhook(name));
+
+        return flowDao.save(flow);
     }
 
     @Override

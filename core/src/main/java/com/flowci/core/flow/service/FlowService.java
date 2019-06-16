@@ -32,6 +32,11 @@ public interface FlowService {
     List<Flow> list(Status status);
 
     /**
+     * Check the flow name is existed
+     */
+    Boolean exist(String name);
+
+    /**
      * Create flow by name with pending status
      */
     Flow create(String name);

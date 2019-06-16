@@ -31,6 +31,8 @@ public class Variables {
         public static final String Name = "FLOWCI_FLOW_NAME";
 
         public static final String Webhook = "FLOWCI_FLOW_WEBHOOK";
+
+        public static final String GitUrl = "FLOWCI_GIT_URL";
     }
 
     public static class Job {
