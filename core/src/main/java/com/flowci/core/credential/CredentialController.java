@@ -54,4 +54,9 @@ public class CredentialController {
         return credentialService.createRSA(create.getName());
     }
 
+    @PostMapping("/rsa/only")
+    public Credential createByEmail(@Validated @RequestBody CreateCredential create) {
+        String email = create.getName();
+        return credentialService.createRSAByEmail(email);
+    }
 }

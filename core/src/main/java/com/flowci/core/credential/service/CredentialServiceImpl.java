@@ -59,6 +59,17 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
+    public RSAKeyPair createRSAByEmail(String email) {
+        try {
+            KeyPair keyPair = RSA.buildKeyPair(RSA.SIZE_1024);
+            StringKeyPair stringKeyPair = RSA.encodeAsOpenSSH(keyPair, email);
+            return new RSAKeyPair(stringKeyPair);
+        } catch (NoSuchAlgorithmException | IOException e) {
+            throw new StatusException("Unable to generate RSA key pair");
+        }
+    }
+
+    @Override
     public RSAKeyPair createRSA(String name) {
         try {
             String email = currentUserHelper.get().getEmail();

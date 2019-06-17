@@ -37,6 +37,11 @@ public interface CredentialService {
     Credential get(String name);
 
     /**
+     * Create rsa key pair by email only
+     */
+    RSAKeyPair createRSAByEmail(String email);
+
+    /**
      * Create and auto generate rsa key pair
      */
     RSAKeyPair createRSA(String name);
