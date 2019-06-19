@@ -16,7 +16,6 @@
 
 package com.flowci.core.credential.domain;
 
-import com.flowci.util.CipherHelper.StringKeyPair;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -34,9 +33,4 @@ public final class RSAKeyPair extends Credential {
     private String publicKey;
 
     private String privateKey;
-
-    public RSAKeyPair(StringKeyPair pair) {
-        this.publicKey = pair.getPublicKey();
-        this.privateKey = pair.getPrivateKey();
-    }
 }

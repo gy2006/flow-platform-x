@@ -16,12 +16,17 @@
 
 package com.flowci.core.test.flow;
 
-import com.flowci.core.flow.domain.Flow.Status;
-import com.flowci.core.flow.service.FlowService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.Agent;
 import com.flowci.domain.VariableMap;
+import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.YmlException;
 import com.flowci.util.StringHelper;
@@ -42,6 +47,9 @@ public class FlowServiceTest extends SpringScenario {
 
     @Autowired
     private FlowService flowService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Before
     public void login() {
@@ -91,6 +99,20 @@ public class FlowServiceTest extends SpringScenario {
     public void should_throw_exception_if_yml_illegal_yml_format() {
         Flow flow = flowService.create("test");
         flowService.saveYml(flow, "hello-...");
+    }
+
+    @Test
+    public void should_test_git_connection_by_list_remote_branches() throws IOException {
+        TypeReference<ResponseMessage<RSAKeyPair>> keyPairResponseType =
+            new TypeReference<ResponseMessage<RSAKeyPair>>() {
+            };
+
+        ResponseMessage<RSAKeyPair> r = objectMapper.readValue(load("rsa-test.json"), keyPairResponseType);
+
+        List<String> branches = flowService
+            .testGitConnection("git@github.com:FlowCI/docs.git", r.getData().getPrivateKey());
+
+        Assert.assertNotNull(branches);
     }
 
 }

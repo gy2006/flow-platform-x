@@ -22,14 +22,15 @@ import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.StatusException;
-import com.flowci.util.CipherHelper.RSA;
-import com.flowci.util.CipherHelper.StringKeyPair;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.KeyPair;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -59,43 +60,62 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public RSAKeyPair createRSAByEmail(String email) {
-        try {
-            KeyPair keyPair = RSA.buildKeyPair(RSA.SIZE_1024);
-            StringKeyPair stringKeyPair = RSA.encodeAsOpenSSH(keyPair, email);
-            return new RSAKeyPair(stringKeyPair);
-        } catch (NoSuchAlgorithmException | IOException e) {
+    public RSAKeyPair genRSA(String email) {
+        RSAKeyPair keyPair = rsaKeyGen(email);
+        if (Objects.isNull(keyPair)) {
             throw new StatusException("Unable to generate RSA key pair");
         }
+        return keyPair;
     }
 
     @Override
     public RSAKeyPair createRSA(String name) {
-        try {
-            String email = currentUserHelper.get().getEmail();
-
-            KeyPair keyPair = RSA.buildKeyPair(RSA.SIZE_1024);
-            StringKeyPair stringKeyPair = RSA.encodeAsOpenSSH(keyPair, email);
-
-            return createRSA(name, stringKeyPair);
-        } catch (NoSuchAlgorithmException | IOException e) {
-            log.error(e.getMessage());
-            throw new StatusException("Unable to generate RSA key pair");
-        }
+        String email = currentUserHelper.get().getEmail();
+        RSAKeyPair rsaKeyPair = genRSA(email);
+        rsaKeyPair.setName(name);
+        return save(rsaKeyPair);
     }
 
     @Override
-    public RSAKeyPair createRSA(String name, StringKeyPair rasKeyPair) {
+    public RSAKeyPair createRSA(String name, String publicKey, String privateKey) {
+        RSAKeyPair rsaKeyPair = new RSAKeyPair();
+        rsaKeyPair.setName(name);
+        rsaKeyPair.setPublicKey(publicKey);
+        rsaKeyPair.setPrivateKey(privateKey);
+        return save(rsaKeyPair);
+    }
+
+    private RSAKeyPair save(RSAKeyPair keyPair) {
         try {
             Date now = Date.from(Instant.now());
-            RSAKeyPair rsaKeyPair = new RSAKeyPair(rasKeyPair);
-            rsaKeyPair.setName(name);
-            rsaKeyPair.setUpdatedAt(now);
-            rsaKeyPair.setCreatedAt(now);
-            rsaKeyPair.setCreatedBy(currentUserHelper.getUserId());
-            return credentialDao.insert(rsaKeyPair);
+            keyPair.setUpdatedAt(now);
+            keyPair.setCreatedAt(now);
+            keyPair.setCreatedBy(currentUserHelper.getUserId());
+            return credentialDao.insert(keyPair);
         } catch (DuplicateKeyException e) {
-            throw new DuplicateException("Credential name {0} is already defined", name);
+            throw new DuplicateException("Credential name {0} is already defined", keyPair.getName());
+        }
+    }
+
+    private RSAKeyPair rsaKeyGen(String email) {
+        try (ByteArrayOutputStream pubKeyOS = new ByteArrayOutputStream()) {
+            try (ByteArrayOutputStream prvKeyOS = new ByteArrayOutputStream()) {
+                JSch jsch = new JSch();
+                RSAKeyPair rsa = new RSAKeyPair();
+
+                KeyPair kpair = KeyPair.genKeyPair(jsch, KeyPair.RSA, 2048);
+                kpair.writePrivateKey(prvKeyOS);
+                kpair.writePublicKey(pubKeyOS, email);
+
+                rsa.setPublicKey(pubKeyOS.toString());
+                rsa.setPrivateKey(prvKeyOS.toString());
+
+                kpair.dispose();
+                return rsa;
+            }
+        } catch (IOException | JSchException e) {
+            log.error(e);
+            return null;
         }
     }
 }

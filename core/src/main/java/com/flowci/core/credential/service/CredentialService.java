@@ -18,7 +18,6 @@ package com.flowci.core.credential.service;
 
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
-import com.flowci.util.CipherHelper.StringKeyPair;
 import java.util.List;
 
 /**
@@ -37,18 +36,18 @@ public interface CredentialService {
     Credential get(String name);
 
     /**
-     * Create rsa key pair by email only
+     * Generate RSA key pair by email only
      */
-    RSAKeyPair createRSAByEmail(String email);
+    RSAKeyPair genRSA(String email);
 
     /**
-     * Create and auto generate rsa key pair
+     * Generate RSA key pair and save
      */
     RSAKeyPair createRSA(String name);
 
     /**
-     * Create and set rsa key pair
+     * Set rsa key pair and save
      */
-    RSAKeyPair createRSA(String name, StringKeyPair rasKeyPair);
+    RSAKeyPair createRSA(String name, String publicKey, String privateKey);
 
 }

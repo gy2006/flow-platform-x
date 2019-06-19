@@ -26,6 +26,11 @@ import com.flowci.core.user.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
@@ -38,7 +43,6 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -46,12 +50,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 
 /**
  * @author yang
@@ -86,6 +84,8 @@ public class AppConfig {
     private void initWorkspace() throws IOException {
         Path path = appProperties.getWorkspace();
         FileHelper.createDirectory(path);
+
+        FileHelper.createDirectory(tmpDir());
     }
 
     @PostConstruct
@@ -98,6 +98,11 @@ public class AppConfig {
     public void initUploadDir() throws IOException {
         Path path = Paths.get(multipartProperties.getLocation());
         FileHelper.createDirectory(path);
+    }
+
+    @Bean("tmpDir")
+    public Path tmpDir() {
+        return Paths.get(appProperties.getWorkspace().toString(), "tmp");
     }
 
     @Bean("objectMapper")

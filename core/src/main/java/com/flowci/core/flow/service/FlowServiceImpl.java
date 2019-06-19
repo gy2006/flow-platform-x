@@ -33,9 +33,28 @@ import com.flowci.exception.NotFoundException;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
 import com.google.common.base.Strings;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.TransportConfigCallback;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.transport.JschConfigSessionFactory;
+import org.eclipse.jgit.transport.OpenSshConfig.Host;
+import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.Transport;
+import org.eclipse.jgit.util.FS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +66,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private ConfigProperties appProperties;
+
+    @Autowired
+    private Path tmpDir;
 
     @Autowired
     private CurrentUserHelper currentUserHelper;
@@ -188,6 +210,33 @@ public class FlowServiceImpl implements FlowService {
         return ymlObj;
     }
 
+    @Override
+    public List<String> testGitConnection(String url, String privateKey) {
+        try (PrivateKeySessionFactory sessionFactory = new PrivateKeySessionFactory(privateKey)) {
+
+            Collection<Ref> refs = Git.lsRemoteRepository()
+                .setRemote(url)
+                .setHeads(true)
+                .setTransportConfigCallback(transport -> {
+                    SshTransport sshTransport = (SshTransport) transport;
+                    sshTransport.setSshSessionFactory(sessionFactory);
+                })
+                .call();
+
+            List<String> branches = new ArrayList<>(refs.size());
+
+            for (Ref ref : refs) {
+                String refName = ref.getName();
+                branches.add(refName.substring(refName.lastIndexOf("/") + 1));
+            }
+
+            return branches;
+        } catch (IOException | GitAPIException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private String getWebhook(String name) {
         return appProperties.getServerAddress() + "/webhooks/" + name;
     }
@@ -200,6 +249,32 @@ public class FlowServiceImpl implements FlowService {
 
         if (!Objects.equals(flow.getCreatedBy(), currentUserHelper.get().getId())) {
             throw new AccessException("Illegal account for flow {0}", flow.getName());
+        }
+    }
+
+    private class PrivateKeySessionFactory extends JschConfigSessionFactory implements AutoCloseable {
+
+        private Path tmpPrivateKeyFile = Paths.get(tmpDir.toString(), UUID.randomUUID().toString());
+
+        public PrivateKeySessionFactory(String privateKey) throws IOException {
+            Files.write(tmpPrivateKeyFile, privateKey.getBytes());
+        }
+
+        @Override
+        protected void configure(Host host, Session session) {
+            // do nothing
+        }
+
+        @Override
+        protected JSch createDefaultJSch(FS fs) throws JSchException {
+            JSch defaultJSch = super.createDefaultJSch(fs);
+            defaultJSch.addIdentity(tmpPrivateKeyFile.toString());
+            return defaultJSch;
+        }
+
+        @Override
+        public void close() throws IOException {
+            Files.deleteIfExists(tmpPrivateKeyFile);
         }
     }
 }

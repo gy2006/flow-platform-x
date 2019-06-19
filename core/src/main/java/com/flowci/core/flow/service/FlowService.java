@@ -75,4 +75,9 @@ public interface FlowService {
      * Create or update yml for flow
      */
     Yml saveYml(Flow flow, String yml);
+
+    /**
+     * Test git connection
+     */
+    List<String> testGitConnection(String url, String privateKey);
 }
