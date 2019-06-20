@@ -22,22 +22,27 @@ import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.test.SpringScenario;
-import com.flowci.domain.Agent;
 import com.flowci.domain.VariableMap;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.YmlException;
 import com.flowci.util.StringHelper;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 
 /**
  * @author yang
@@ -102,17 +107,42 @@ public class FlowServiceTest extends SpringScenario {
     }
 
     @Test
-    public void should_test_git_connection_by_list_remote_branches() throws IOException {
+    public void should_test_git_connection_by_list_remote_branches() throws IOException, InterruptedException {
+        // init: load private key
         TypeReference<ResponseMessage<RSAKeyPair>> keyPairResponseType =
             new TypeReference<ResponseMessage<RSAKeyPair>>() {
             };
 
         ResponseMessage<RSAKeyPair> r = objectMapper.readValue(load("rsa-test.json"), keyPairResponseType);
 
-        List<String> branches = flowService
-            .testGitConnection("git@github.com:FlowCI/docs.git", r.getData().getPrivateKey());
+        // given:
+        Flow flow = flowService.create("git-test");
+        CountDownLatch countDown = new CountDownLatch(2);
+        List<String> branches = new LinkedList<>();
 
-        Assert.assertNotNull(branches);
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<GitTestEvent>) event -> {
+            if (!event.getFlowId().equals(flow.getId())) {
+                return;
+            }
+
+            if (event.getStatus() == GitTestEvent.Status.FETCHING) {
+                countDown.countDown();
+            }
+
+            if (event.getStatus() == GitTestEvent.Status.DONE) {
+                countDown.countDown();
+                branches.addAll(event.getBranches());
+            }
+        });
+
+        // when:
+        String gitUrl = "git@github.com:FlowCI/docs.git";
+        String privateKey = r.getData().getPrivateKey();
+        flowService.testGitConnection(flow.getName(), gitUrl, privateKey);
+
+        // then:
+        countDown.await(10, TimeUnit.SECONDS);
+        Assert.assertTrue(branches.size() >= 1);
     }
 
 }

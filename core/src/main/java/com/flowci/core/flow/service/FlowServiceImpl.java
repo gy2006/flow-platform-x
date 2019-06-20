@@ -23,6 +23,7 @@ import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;
@@ -47,15 +48,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.util.FS;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 /**
@@ -66,6 +67,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private ConfigProperties appProperties;
+
+    @Autowired
+    private ThreadPoolTaskExecutor gitTestExecutor;
 
     @Autowired
     private Path tmpDir;
@@ -81,6 +85,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private CronService cronService;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public List<Flow> list(Status status) {
@@ -211,30 +218,38 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
-    public List<String> testGitConnection(String url, String privateKey) {
-        try (PrivateKeySessionFactory sessionFactory = new PrivateKeySessionFactory(privateKey)) {
+    public void testGitConnection(String name, String url, String privateKey) {
+        final Flow flow = get(name);
 
-            Collection<Ref> refs = Git.lsRemoteRepository()
-                .setRemote(url)
-                .setHeads(true)
-                .setTransportConfigCallback(transport -> {
-                    SshTransport sshTransport = (SshTransport) transport;
-                    sshTransport.setSshSessionFactory(sessionFactory);
-                })
-                .call();
+        gitTestExecutor.execute(() -> {
+            try (PrivateKeySessionFactory sessionFactory = new PrivateKeySessionFactory(privateKey)) {
+                // publish FETCHING event
+                applicationEventPublisher.publishEvent(new GitTestEvent(this, flow.getId()));
 
-            List<String> branches = new ArrayList<>(refs.size());
+                Collection<Ref> refs = Git.lsRemoteRepository()
+                    .setRemote(url)
+                    .setHeads(true)
+                    .setTransportConfigCallback(transport -> {
+                        SshTransport sshTransport = (SshTransport) transport;
+                        sshTransport.setSshSessionFactory(sessionFactory);
+                    })
+                    .call();
 
-            for (Ref ref : refs) {
-                String refName = ref.getName();
-                branches.add(refName.substring(refName.lastIndexOf("/") + 1));
+                List<String> branches = new ArrayList<>(refs.size());
+
+                for (Ref ref : refs) {
+                    String refName = ref.getName();
+                    branches.add(refName.substring(refName.lastIndexOf("/") + 1));
+                }
+
+                // publish DONE event
+                applicationEventPublisher.publishEvent(new GitTestEvent(this, flow.getId(), branches));
+
+            } catch (IOException | GitAPIException e) {
+                // publish ERROR event
+                applicationEventPublisher.publishEvent(new GitTestEvent(this, flow.getId(), e.getMessage()));
             }
-
-            return branches;
-        } catch (IOException | GitAPIException e) {
-            e.printStackTrace();
-            return null;
-        }
+        });
     }
 
     private String getWebhook(String name) {
