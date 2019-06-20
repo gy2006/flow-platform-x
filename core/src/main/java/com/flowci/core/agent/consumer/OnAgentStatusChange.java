@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class AgentStatusChangeConsumer implements ApplicationListener<StatusChangeEvent> {
+public class OnAgentStatusChange implements ApplicationListener<StatusChangeEvent> {
 
     @Autowired
     private PushService pushService;
