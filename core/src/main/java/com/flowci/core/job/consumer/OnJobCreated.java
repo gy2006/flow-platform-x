@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class JobCreatedConsumer implements ApplicationListener<JobCreatedEvent> {
+public class OnJobCreated implements ApplicationListener<JobCreatedEvent> {
 
     @Autowired
     private String topicForJobs;

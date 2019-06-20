@@ -30,18 +30,32 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    /**
+     * To subscribe git test status update for flow
+     * Ex: /topic/flows/git/test/{flow id}
+     */
+    private final String gitTestTopic = "/topic/flows/git/test";
+
+    /**
+     * To subscribe new job
+     */
     private final String jobsTopic = "/topic/jobs";
 
     /**
+     * To subscribe step update for job
      * Ex: /topic/steps/{job id}
      */
     private final String stepsTopic = "/topic/steps";
 
     /**
+     * To subscribe real time logging for cmd
      * Ex: /topic/logs/{cmd id}
      */
     private final String logsTopic = "/topic/logs";
 
+    /**
+     * To subscribe agent update
+     */
     private final String agentsTopic = "/topic/agents";
 
     @Override
@@ -51,8 +65,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker(jobsTopic, stepsTopic, logsTopic, agentsTopic);
+        registry.enableSimpleBroker(jobsTopic, stepsTopic, logsTopic, agentsTopic, gitTestTopic);
         registry.setApplicationDestinationPrefixes("/app");
+    }
+
+    @Bean("topicForGitTest")
+    public String topicForGitTest() {
+        return gitTestTopic;
     }
 
     @Bean("topicForJobs")

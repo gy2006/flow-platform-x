@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class JobStatusChangeConsumer implements ApplicationListener<JobStatusChangeEvent> {
+public class OnJobStatusChange implements ApplicationListener<JobStatusChangeEvent> {
 
     @Autowired
     private String topicForJobs;

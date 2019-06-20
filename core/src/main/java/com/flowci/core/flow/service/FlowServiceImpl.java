@@ -271,7 +271,7 @@ public class FlowServiceImpl implements FlowService {
 
         private Path tmpPrivateKeyFile = Paths.get(tmpDir.toString(), UUID.randomUUID().toString());
 
-        public PrivateKeySessionFactory(String privateKey) throws IOException {
+        PrivateKeySessionFactory(String privateKey) throws IOException {
             Files.write(tmpPrivateKeyFile, privateKey.getBytes());
         }
 

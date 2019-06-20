@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class StepStatusChangeConsumer implements ApplicationListener<StepStatusChangeEvent> {
+public class OnStepStatusChange implements ApplicationListener<StepStatusChangeEvent> {
 
     @Autowired
     private String topicForSteps;
