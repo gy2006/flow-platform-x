@@ -18,15 +18,16 @@ package com.flowci.core.flow;
 
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
+import com.flowci.core.flow.domain.FlowGitTest;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.domain.http.RequestMessage;
-import com.flowci.exception.NotFoundException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -67,6 +68,12 @@ public class FlowController {
             flowService.saveYml(flow, yml);
         }
         return flow;
+    }
+
+    @PostMapping(value = "/{name}/git/test")
+    public void gitTest(@PathVariable String name,
+                        @Validated @RequestBody FlowGitTest body) {
+        flowService.testGitConnection(name, body.getGitUrl(), body.getPrivateKey());
     }
 
     @PostMapping(value = "/{name}/confirm")
