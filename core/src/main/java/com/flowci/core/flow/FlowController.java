@@ -16,6 +16,7 @@
 
 package com.flowci.core.flow;
 
+import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.FlowGitTest;
@@ -24,7 +25,6 @@ import com.flowci.domain.http.RequestMessage;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -62,18 +62,32 @@ public class FlowController {
     }
 
     @PostMapping(value = "/{name}")
-    public Flow create(@PathVariable String name, @RequestBody(required = false) String yml) {
-        Flow flow = flowService.create(name);
-        if (!Objects.isNull(yml)) {
-            flowService.saveYml(flow, yml);
-        }
-        return flow;
+    public Flow create(@PathVariable String name) {
+        return flowService.create(name);
     }
 
     @PostMapping(value = "/{name}/git/test")
-    public void gitTest(@PathVariable String name,
-                        @Validated @RequestBody FlowGitTest body) {
+    public void gitTest(@PathVariable String name, @Validated @RequestBody FlowGitTest body) {
         flowService.testGitConnection(name, body.getGitUrl(), body.getPrivateKey());
+    }
+
+    @PostMapping("/{name}/variables")
+    public void addVariables(@PathVariable String name, @RequestBody Map<String, String> variables) {
+        Flow flow = flowService.get(name);
+        flow.getVariables().putAll(variables);
+        flowService.update(flow);
+    }
+
+    @PostMapping("/{name}/credential/rsa")
+    public void setupRSACredential(@PathVariable String name, @RequestBody RSAKeyPair keyPair) {
+        flowService.setupRSACredential(name, keyPair.getPublicKey(), keyPair.getPrivateKey());
+    }
+
+    @PostMapping("/{name}/yml")
+    public void setupYml(@PathVariable String name, @RequestBody RequestMessage<String> body) {
+        Flow flow = flowService.get(name);
+        byte[] yml = Base64.getDecoder().decode(body.getData());
+        flowService.saveYml(flow, new String(yml));
     }
 
     @PostMapping(value = "/{name}/confirm")
@@ -86,20 +100,6 @@ public class FlowController {
         Flow flow = flowService.get(name);
         String yml = flowService.getYml(flow).getRaw();
         return Base64.getEncoder().encodeToString(yml.getBytes());
-    }
-
-    @PostMapping("/{name}/yml")
-    public void updateYml(@PathVariable String name, @RequestBody RequestMessage<String> body) {
-        Flow flow = flowService.get(name);
-        byte[] yml = Base64.getDecoder().decode(body.getData());
-        flowService.saveYml(flow, new String(yml));
-    }
-
-    @PostMapping("/{name}/variables")
-    public void updateVariables(@PathVariable String name, @RequestBody Map<String, String> variables) {
-        Flow flow = flowService.get(name);
-        flow.getVariables().reset(variables);
-        flowService.update(flow);
     }
 
     @DeleteMapping("/{name}")

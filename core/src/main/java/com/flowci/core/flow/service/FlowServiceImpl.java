@@ -17,7 +17,9 @@
 package com.flowci.core.flow.service;
 
 import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.domain.Variables;
+import com.flowci.core.domain.Variables.Credential;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
@@ -85,6 +87,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private CronService cronService;
+
+    @Autowired
+    private CredentialService credentialService;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -250,6 +255,16 @@ public class FlowServiceImpl implements FlowService {
                 applicationEventPublisher.publishEvent(new GitTestEvent(this, flow.getId(), e.getMessage()));
             }
         });
+    }
+
+    @Override
+    public void setupRSACredential(String name, String publicKey, String privateKey) {
+        Flow flow = get(name);
+        String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
+        credentialService.createRSA(credentialName, publicKey, privateKey);
+
+        flow.getVariables().put(Credential.SSH_RSA, credentialName);
+        flowDao.save(flow);
     }
 
     private String getWebhook(String name) {

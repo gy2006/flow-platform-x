@@ -46,7 +46,7 @@ public class Variables {
 
     public static class Credential {
 
-        public static final String SSH = "FLOWCI_CREDENTIAL_SSH";
+        public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA";
     }
 
     private Variables() {
