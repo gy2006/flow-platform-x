@@ -83,16 +83,16 @@ public class FlowController {
         flowService.setupRSACredential(name, keyPair.getPublicKey(), keyPair.getPrivateKey());
     }
 
+    @PostMapping(value = "/{name}/confirm")
+    public Flow confirm(@PathVariable String name) {
+        return flowService.confirm(name);
+    }
+
     @PostMapping("/{name}/yml")
     public void setupYml(@PathVariable String name, @RequestBody RequestMessage<String> body) {
         Flow flow = flowService.get(name);
         byte[] yml = Base64.getDecoder().decode(body.getData());
         flowService.saveYml(flow, new String(yml));
-    }
-
-    @PostMapping(value = "/{name}/confirm")
-    public Flow confirm(@PathVariable String name) {
-        return flowService.confirm(name);
     }
 
     @GetMapping(value = "/{name}/yml", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -105,12 +105,5 @@ public class FlowController {
     @DeleteMapping("/{name}")
     public Flow delete(@PathVariable String name) {
         return flowService.delete(name);
-    }
-
-    @DeleteMapping("/{name}/variables")
-    public void cleanVariables(@PathVariable String name) {
-        Flow flow = flowService.get(name);
-        flow.getVariables().clear();
-        flowService.update(flow);
     }
 }
