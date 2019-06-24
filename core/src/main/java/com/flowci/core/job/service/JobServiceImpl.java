@@ -162,8 +162,14 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job getLatest(Flow flow) {
-        JobNumber latest = jobNumberDao.findById(flow.getId()).get();
-        return get(flow, latest.getNumber());
+        Optional<JobNumber> optional = jobNumberDao.findById(flow.getId());
+
+        if (optional.isPresent()) {
+            JobNumber latest = optional.get();
+            return get(flow, latest.getNumber());
+        }
+
+        throw new NotFoundException("No jobs for flow {0}", flow.getName());
     }
 
     @Override
