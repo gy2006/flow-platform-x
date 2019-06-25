@@ -17,7 +17,10 @@
 package com.flowci.core.flow.config;
 
 import com.flowci.core.helper.ThreadHelper;
+import java.util.Properties;
 import lombok.extern.log4j.Log4j2;
+import org.apache.velocity.Template;
+import org.apache.velocity.app.Velocity;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -32,5 +35,17 @@ public class FlowConfig {
     @Bean("gitTestExecutor")
     public ThreadPoolTaskExecutor gitTestExecutor() {
         return ThreadHelper.createTaskExecutor(20, 20, 100, "git-test-");
+    }
+
+    @Bean
+    public Template defaultYmlTemplate() {
+        Properties p = new Properties();
+        p.setProperty("resource.loader", "class");
+        p.setProperty("class.resource.loader.class",
+            "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+
+        Velocity.init(p);
+
+        return Velocity.getTemplate("example.yml.vm");
     }
 }

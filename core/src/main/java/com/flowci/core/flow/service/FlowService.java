@@ -67,6 +67,11 @@ public interface FlowService {
     void update(Flow flow);
 
     /**
+     * Get default template yml of flow
+     */
+    String getTemplateYml(Flow flow);
+
+    /**
      * Get yml by flow
      */
     Yml getYml(Flow flow);

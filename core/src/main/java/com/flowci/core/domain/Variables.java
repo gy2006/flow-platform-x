@@ -49,6 +49,12 @@ public class Variables {
         public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA";
     }
 
+    public static class Agent {
+
+        public static final String WORKSPACE = "FLOWCI_AGENT_WORKSPACE";
+
+    }
+
     private Variables() {
     }
 }

@@ -144,4 +144,13 @@ public class FlowServiceTest extends SpringScenario {
         Assert.assertTrue(branches.size() >= 1);
     }
 
+    @Test
+    public void should_create_default_template_yml() {
+        Flow flow = new Flow("hello");
+        flow.getVariables().put("FLOWCI_FLOW_NAME", "hello");
+        flow.getVariables().put("FLOWCI_GIT_URL", "git@github.com:FlowCI/docs.git");
+
+        String templateYml = flowService.getTemplateYml(flow);
+        Assert.assertNotNull(templateYml);
+    }
 }

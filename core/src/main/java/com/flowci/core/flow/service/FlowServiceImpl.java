@@ -40,15 +40,19 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
@@ -93,6 +97,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
+
+    @Autowired
+    private Template defaultYmlTemplate;
 
     @Override
     public List<Flow> list(Status status) {
@@ -150,6 +157,11 @@ public class FlowServiceImpl implements FlowService {
 
         flow.setStatus(Status.CONFIRMED);
         flowDao.save(flow);
+
+        // create template yml
+        String templateYml = getTemplateYml(flow);
+        saveYml(flow, templateYml);
+
         return flow;
     }
 
@@ -192,6 +204,21 @@ public class FlowServiceImpl implements FlowService {
     public void update(Flow flow) {
         verifyFlowIdAndUser(flow);
         flowDao.save(flow);
+    }
+
+    @Override
+    public String getTemplateYml(Flow flow) {
+        VelocityContext context = new VelocityContext();
+        for (Map.Entry<String, String> entry : flow.getVariables().entrySet()) {
+            context.put(entry.getKey(), entry.getValue());
+        }
+
+        try(StringWriter sw = new StringWriter()) {
+            defaultYmlTemplate.merge(context, sw);
+            return sw.toString();
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     @Override

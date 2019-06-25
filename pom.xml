@@ -34,6 +34,7 @@
     <groovy-all.version>2.4.12</groovy-all.version>
     <docker-java.version>3.0.14</docker-java.version>
     <cron-utils.version>7.0.5</cron-utils.version>
+    <velocity-engine-core.version>2.1</velocity-engine-core.version>
   </properties>
 
   <build>
@@ -167,9 +168,9 @@
       </dependency>
 
       <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>${h2.version}</version>
+        <groupId>org.apache.velocity</groupId>
+        <artifactId>velocity-engine-core</artifactId>
+        <version>${velocity-engine-core.version}</version>
       </dependency>
 
       <dependency>
