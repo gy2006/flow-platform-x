@@ -1,6 +1,8 @@
-
 #
-# flow.ci environment variables
+# Example YAML for flow.ci
+#
+
+# Built-in environment variables
 #
 # FLOWCI_SERVER_URL:
 #
