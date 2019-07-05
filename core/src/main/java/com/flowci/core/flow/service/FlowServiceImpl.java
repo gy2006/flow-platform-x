@@ -33,6 +33,7 @@ import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotAvailableException;
 import com.flowci.exception.NotFoundException;
+import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
 import com.google.common.base.Strings;
@@ -244,8 +245,14 @@ public class FlowServiceImpl implements FlowService {
         ymlObj.setCreatedBy(currentUserHelper.get().getId());
         ymlDao.save(ymlObj);
 
+        Node node = YmlParser.load(flow.getName(), ymlObj.getRaw());
+
+        // sync flow envs from yml root envs
+        flow.getVariables().merge(node.getEnvironments());
+        flowDao.save(flow);
+
         // update cron task
-        cronService.update(flow, ymlObj);
+        cronService.update(flow, node, ymlObj);
         return ymlObj;
     }
 

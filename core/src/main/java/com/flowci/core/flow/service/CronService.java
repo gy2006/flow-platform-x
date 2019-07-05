@@ -18,11 +18,12 @@ package com.flowci.core.flow.service;
 
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.tree.Node;
 
 /**
  * @author yang
  */
 public interface CronService {
 
-    void update(Flow flow, Yml yml);
+    void update(Flow flow, Node root, Yml yml);
 }

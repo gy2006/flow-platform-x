@@ -80,15 +80,13 @@ public class CronServiceImpl implements CronService {
     }
 
     @Override
-    public void update(Flow flow, Yml yml) {
-        Node node = YmlParser.load(flow.getName(), yml.getRaw());
-
-        if (!node.hasCron()) {
+    public void update(Flow flow, Node root, Yml yml) {
+        if (!root.hasCron()) {
             return;
         }
 
         // schedule next cron task
-        String expression = node.getCron();
+        String expression = root.getCron();
         long delay = nextSeconds(expression);
         CronRunner runner = new CronRunner(flow, yml, expression);
         executor.schedule(runner, delay, TimeUnit.SECONDS);
@@ -128,7 +126,8 @@ public class CronServiceImpl implements CronService {
                 return;
             }
 
-            update(flow, optional.get());
+            Node node = YmlParser.load(flow.getName(), yml.getRaw());
+            update(flow, node, optional.get());
         }
 
         /**
