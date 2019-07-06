@@ -17,6 +17,8 @@
 package com.flowci.core.flow;
 
 import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.service.CredentialService;
+import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.FlowGitTest;
@@ -46,6 +48,9 @@ public class FlowController {
     @Autowired
     private FlowService flowService;
 
+    @Autowired
+    private CredentialService credentialService;
+
     @GetMapping
     public List<Flow> list() {
         return flowService.list(Status.CONFIRMED);
@@ -68,7 +73,14 @@ public class FlowController {
 
     @PostMapping(value = "/{name}/git/test")
     public void gitTest(@PathVariable String name, @Validated @RequestBody FlowGitTest body) {
-        flowService.testGitConnection(name, body.getGitUrl(), body.getPrivateKey());
+        String privateKey = body.getPrivateKey();
+
+        if (body.hasCredentialName()) {
+            RSAKeyPair credential = (RSAKeyPair) credentialService.get(body.getCredential());
+            privateKey = credential.getPrivateKey();
+        }
+
+        flowService.testGitConnection(name, body.getGitUrl(), privateKey);
     }
 
     @PostMapping("/{name}/variables")
@@ -78,9 +90,19 @@ public class FlowController {
         flowService.update(flow);
     }
 
+    /**
+     * Create credential for flow only
+     * It will create default credential name: 'flow-{flow name}-ssh-rsa'
+     */
     @PostMapping("/{name}/credential/rsa")
     public void setupRSACredential(@PathVariable String name, @RequestBody RSAKeyPair keyPair) {
-        flowService.setupRSACredential(name, keyPair.getPublicKey(), keyPair.getPrivateKey());
+        Flow flow = flowService.get(name);
+
+        String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
+        credentialService.createRSA(credentialName, keyPair.getPublicKey(), keyPair.getPrivateKey());
+
+        flow.getVariables().put(Variables.Credential.SSH_RSA, credentialName);
+        flowService.update(flow);
     }
 
     @PostMapping(value = "/{name}/confirm")

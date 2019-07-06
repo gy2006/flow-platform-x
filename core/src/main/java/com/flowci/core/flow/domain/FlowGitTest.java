@@ -16,6 +16,7 @@
 
 package com.flowci.core.flow.domain;
 
+import com.google.common.base.Strings;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -28,6 +29,15 @@ public class FlowGitTest {
     @NotNull
     private String gitUrl;
 
-    @NotNull
     private String privateKey;
+
+    private String credential;
+
+    public boolean hasPrivateKey() {
+        return !Strings.isNullOrEmpty(privateKey);
+    }
+
+    public boolean hasCredentialName() {
+        return !Strings.isNullOrEmpty(credential);
+    }
 }

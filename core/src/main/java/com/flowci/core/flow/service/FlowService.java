@@ -85,10 +85,4 @@ public interface FlowService {
      * Test git connection for flow and dispatch application event
      */
     void testGitConnection(String name, String url, String privateKey);
-
-    /**
-     * Create credential for flow only
-     * It will create default credential name: 'flow-{flow name}-ssh-rsa'
-     */
-    void setupRSACredential(String name, String publicKey, String privateKey);
 }

@@ -19,7 +19,6 @@ package com.flowci.core.flow.service;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.domain.Variables;
-import com.flowci.core.domain.Variables.Credential;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
@@ -214,7 +213,7 @@ public class FlowServiceImpl implements FlowService {
             context.put(entry.getKey(), entry.getValue());
         }
 
-        try(StringWriter sw = new StringWriter()) {
+        try (StringWriter sw = new StringWriter()) {
             defaultYmlTemplate.merge(context, sw);
             return sw.toString();
         } catch (IOException e) {
@@ -259,11 +258,43 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public void testGitConnection(String name, String url, String privateKey) {
         final Flow flow = get(name);
+        gitTestExecutor.execute(new GitTestRunner(flow.getId(), privateKey, url));
+    }
 
-        gitTestExecutor.execute(() -> {
+    private String getWebhook(String name) {
+        return appProperties.getServerAddress() + "/webhooks/" + name;
+    }
+
+    private void verifyFlowIdAndUser(Flow flow) {
+        String flowId = flow.getId();
+        if (Strings.isNullOrEmpty(flowId)) {
+            throw new ArgumentException("The flow id is missing");
+        }
+
+        if (!Objects.equals(flow.getCreatedBy(), currentUserHelper.get().getId())) {
+            throw new AccessException("Illegal account for flow {0}", flow.getName());
+        }
+    }
+
+    private class GitTestRunner implements Runnable {
+
+        private final String flowId;
+
+        private final String privateKey;
+
+        private final String url;
+
+        GitTestRunner(String flowId, String privateKey, String url) {
+            this.flowId = flowId;
+            this.privateKey = privateKey;
+            this.url = url;
+        }
+
+        @Override
+        public void run() {
             try (PrivateKeySessionFactory sessionFactory = new PrivateKeySessionFactory(privateKey)) {
                 // publish FETCHING event
-                applicationEventPublisher.publishEvent(new GitTestEvent(this, flow.getId()));
+                applicationEventPublisher.publishEvent(new GitTestEvent(this, flowId));
 
                 Collection<Ref> refs = Git.lsRemoteRepository()
                     .setRemote(url)
@@ -282,37 +313,12 @@ public class FlowServiceImpl implements FlowService {
                 }
 
                 // publish DONE event
-                applicationEventPublisher.publishEvent(new GitTestEvent(this, flow.getId(), branches));
+                applicationEventPublisher.publishEvent(new GitTestEvent(this, flowId, branches));
 
             } catch (IOException | GitAPIException e) {
                 // publish ERROR event
-                applicationEventPublisher.publishEvent(new GitTestEvent(this, flow.getId(), e.getMessage()));
+                applicationEventPublisher.publishEvent(new GitTestEvent(this, flowId, e.getMessage()));
             }
-        });
-    }
-
-    @Override
-    public void setupRSACredential(String name, String publicKey, String privateKey) {
-        Flow flow = get(name);
-        String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
-        credentialService.createRSA(credentialName, publicKey, privateKey);
-
-        flow.getVariables().put(Credential.SSH_RSA, credentialName);
-        flowDao.save(flow);
-    }
-
-    private String getWebhook(String name) {
-        return appProperties.getServerAddress() + "/webhooks/" + name;
-    }
-
-    private void verifyFlowIdAndUser(Flow flow) {
-        String flowId = flow.getId();
-        if (Strings.isNullOrEmpty(flowId)) {
-            throw new ArgumentException("The flow id is missing");
-        }
-
-        if (!Objects.equals(flow.getCreatedBy(), currentUserHelper.get().getId())) {
-            throw new AccessException("Illegal account for flow {0}", flow.getName());
         }
     }
 
