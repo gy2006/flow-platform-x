@@ -24,6 +24,8 @@ import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.FlowGitTest;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.domain.http.RequestMessage;
+import com.flowci.exception.ArgumentException;
+import com.google.common.base.Strings;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +80,10 @@ public class FlowController {
         if (body.hasCredentialName()) {
             RSAKeyPair credential = (RSAKeyPair) credentialService.get(body.getCredential());
             privateKey = credential.getPrivateKey();
+        }
+
+        if (Strings.isNullOrEmpty(privateKey)) {
+            throw new ArgumentException("Credential name or private key must be provided");
         }
 
         flowService.testGitConnection(name, body.getGitUrl(), privateKey);
