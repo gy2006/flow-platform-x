@@ -71,6 +71,11 @@ public interface JobService {
     Job cancel(Job job);
 
     /**
+     * Delete all jobs of the flow within an executor
+     */
+    void delete(Flow flow);
+
+    /**
      * Job is expired compare to now
      */
     boolean isExpired(Job job);

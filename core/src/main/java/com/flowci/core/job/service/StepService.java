@@ -47,4 +47,8 @@ public interface StepService {
 
     void update(Job job, ExecutedCmd cmd);
 
+    /**
+     * Delete steps by flow id
+     */
+    Long delete(String flowId);
 }

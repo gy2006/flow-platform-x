@@ -34,6 +34,7 @@ import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.CreateNewJobEvent;
 import com.flowci.core.job.event.JobCreatedEvent;
+import com.flowci.core.job.event.JobDeletedEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
@@ -114,6 +115,9 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private ThreadPoolTaskExecutor retryExecutor;
+
+    @Autowired
+    private ThreadPoolTaskExecutor jobDeleteExecutor;
 
     @Autowired
     private CmdManager cmdManager;
@@ -247,6 +251,22 @@ public class JobServiceImpl implements JobService {
         }
 
         return job;
+    }
+
+    @Override
+    public void delete(Flow flow) {
+        jobDeleteExecutor.execute(() -> {
+            jobNumberDao.deleteByFlowId(flow.getId());
+            log.info("Deleted: job number of flow {}", flow.getName());
+
+            Long numOfJobDeleted = jobDao.deleteByFlowId(flow.getId());
+            log.info("Deleted: {} jobs of flow {}", numOfJobDeleted, flow.getName());
+
+            Long numOfStepDeleted = stepService.delete(flow.getId());
+            log.info("Deleted: {} steps of flow {}", numOfStepDeleted, flow.getName());
+
+            applicationEventPublisher.publishEvent(new JobDeletedEvent(this, flow, numOfJobDeleted));
+        });
     }
 
     @Override

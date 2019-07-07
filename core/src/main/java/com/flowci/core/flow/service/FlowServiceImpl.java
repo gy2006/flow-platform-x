@@ -17,7 +17,6 @@
 package com.flowci.core.flow.service;
 
 import com.flowci.core.config.ConfigProperties;
-import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
@@ -25,6 +24,7 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.GitTestEvent;
+import com.flowci.core.job.service.JobService;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;
@@ -93,7 +93,7 @@ public class FlowServiceImpl implements FlowService {
     private CronService cronService;
 
     @Autowired
-    private CredentialService credentialService;
+    private JobService jobService;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -197,6 +197,7 @@ public class FlowServiceImpl implements FlowService {
 
         }
 
+        jobService.delete(flow);
         return flow;
     }
 

@@ -19,9 +19,9 @@ package com.flowci.core.test.job;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.Job;
@@ -194,8 +194,11 @@ public class JobServiceTest extends ZookeeperScenario {
         VariableMap output = new VariableMap();
         output.put("HELLO_WORLD", "hello.world");
 
-        ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString(),
-            firstNode.isAllowFailure());
+        ExecutedCmd executedCmd = new ExecutedCmd(
+            cmdManager.createId(job, firstNode).toString(),
+            job.getFlowId(),
+            firstNode.isAllowFailure()
+        );
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
 
@@ -218,7 +221,11 @@ public class JobServiceTest extends ZookeeperScenario {
         output = new VariableMap();
         output.put("HELLO_JAVA", "hello.java");
 
-        executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString(), secondNode.isAllowFailure());
+        executedCmd = new ExecutedCmd(
+            cmdManager.createId(job, secondNode).toString(),
+            job.getFlowId(),
+            secondNode.isAllowFailure()
+        );
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
 
@@ -250,8 +257,11 @@ public class JobServiceTest extends ZookeeperScenario {
         VariableMap output = new VariableMap();
         output.put("HELLO_WORLD", "hello.world");
 
-        ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString(),
-            firstNode.isAllowFailure());
+        ExecutedCmd executedCmd = new ExecutedCmd(
+            cmdManager.createId(job, firstNode).toString(),
+            job.getFlowId(),
+            firstNode.isAllowFailure()
+        );
         executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
         executedCmd.setOutput(output);
 
@@ -272,7 +282,11 @@ public class JobServiceTest extends ZookeeperScenario {
         output = new VariableMap();
         output.put("HELLO_TIMEOUT", "hello.timeout");
 
-        executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString(), secondNode.isAllowFailure());
+        executedCmd = new ExecutedCmd(
+            cmdManager.createId(job, secondNode).toString(),
+            job.getFlowId(),
+            secondNode.isAllowFailure()
+        );
         executedCmd.setStatus(ExecutedCmd.Status.TIMEOUT);
         executedCmd.setOutput(output);
 
@@ -298,14 +312,14 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: set first step as failure status
         String cmdId = cmdManager.createId(job, firstNode).toString();
-        ExecutedCmd executedCmd = new ExecutedCmd(cmdId, firstNode.isAllowFailure());
+        ExecutedCmd executedCmd = new ExecutedCmd(cmdId, job.getFlowId(), firstNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
         jobService.processCallback(executedCmd);
 
         // when: set final node as success status
         Node secondNode = tree.next(firstNode.getPath());
         cmdId = cmdManager.createId(job, secondNode).toString();
-        executedCmd = new ExecutedCmd(cmdId, secondNode.isAllowFailure());
+        executedCmd = new ExecutedCmd(cmdId, job.getFlowId(), secondNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         jobService.processCallback(executedCmd);
 

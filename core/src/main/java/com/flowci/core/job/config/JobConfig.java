@@ -51,6 +51,11 @@ public class JobConfig {
         return ThreadHelper.createTaskExecutor(1, 1, 100, "job-retry-");
     }
 
+    @Bean("jobDeleteExecutor")
+    public ThreadPoolTaskExecutor jobDeleteExecutor() {
+        return ThreadHelper.createTaskExecutor(1, 1, 10, "job-delete-");
+    }
+
     @Bean("jobTreeCache")
     public Cache<String, NodeTree> jobTreeCache() {
         return CacheHelper.createLocalCache(50, 60);

@@ -26,4 +26,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface JobNumberDao extends MongoRepository<JobNumber, String> {
 
+    void deleteByFlowId(String flowId);
 }

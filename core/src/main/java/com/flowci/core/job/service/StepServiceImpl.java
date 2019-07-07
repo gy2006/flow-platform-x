@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+ * ExecutedCmd == Step
+ *
  * @author yang
  */
 @Log4j2
@@ -66,7 +68,7 @@ public class StepServiceImpl implements StepService {
 
         for (Node node : tree.getOrdered()) {
             CmdId id = cmdManager.createId(job, node);
-            steps.add(new ExecutedCmd(id.toString(), node.isAllowFailure()));
+            steps.add(new ExecutedCmd(id.toString(), job.getFlowId(), node.isAllowFailure()));
         }
 
         return executedCmdDao.insert(steps);
@@ -112,5 +114,10 @@ public class StepServiceImpl implements StepService {
         executedCmdDao.save(cmd);
         jobStepCache.invalidate(job.getId());
         applicationEventPublisher.publishEvent(new StepStatusChangeEvent(this, job, cmd));
+    }
+
+    @Override
+    public Long delete(String flowId) {
+        return executedCmdDao.deleteByFlowId(flowId);
     }
 }

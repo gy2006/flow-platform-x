@@ -65,7 +65,7 @@ public class LoggingServiceTest extends SpringScenario {
         // init:
         long numOfLogs = 10000;
 
-        ExecutedCmd cmd = new ExecutedCmd("dummy", false);
+        ExecutedCmd cmd = new ExecutedCmd("dummy", "dummyFlowId", false);
         cmd.setLogSize(numOfLogs);
 
         Path logPath = Paths.get(logDir.toString(), cmd.getId() + ".log");

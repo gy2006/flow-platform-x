@@ -31,4 +31,6 @@ public interface JobDao extends MongoRepository<Job, String> {
     Job findByKey(String key);
 
     Page<Job> findAllByFlowId(String flowId, Pageable pageable);
+
+    Long deleteByFlowId(String flowId);
 }

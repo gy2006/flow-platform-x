@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,25 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.dao;
+package com.flowci.core.job.event;
 
-import com.flowci.domain.ExecutedCmd;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import com.flowci.core.flow.domain.Flow;
+import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
 /**
  * @author yang
  */
-@Repository
-public interface ExecutedCmdDao extends MongoRepository<ExecutedCmd, String> {
+@Getter
+public class JobDeletedEvent extends ApplicationEvent {
 
-    Long deleteByFlowId(String flowId);
+    private final Flow flow;
+
+    private final Long numOfJobs;
+
+    public JobDeletedEvent(Object source, Flow flow, Long numOfJobs) {
+        super(source);
+        this.flow = flow;
+        this.numOfJobs = numOfJobs;
+    }
 }
