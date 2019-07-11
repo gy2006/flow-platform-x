@@ -16,6 +16,7 @@
 
 package com.flowci.core.flow.service;
 
+import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
@@ -82,7 +83,19 @@ public interface FlowService {
     Yml saveYml(Flow flow, String yml);
 
     /**
+     * Create ssh-rsa credential
+     * It will create default credential name: 'flow-{flow name}-ssh-rsa'
+     */
+    void setSshRsaCredential(String name, RSAKeyPair keyPair);
+
+    /**
      * Test git connection for flow and dispatch application event
      */
-    void testGitConnection(String name, String url, String privateKey);
+    void testGitConnection(String name, String url, String privateKeyOrCredentialName);
+
+    /**
+     * List remote branches
+     * @return list of branches or empty list if git config not defined
+     */
+    List<String> listGitBranch(String name);
 }

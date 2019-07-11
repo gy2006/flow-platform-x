@@ -17,6 +17,8 @@
 package com.flowci.core.flow.service;
 
 import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
@@ -35,6 +37,7 @@ import com.flowci.exception.NotFoundException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
+import com.flowci.util.CipherHelper;
 import com.google.common.base.Strings;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -44,13 +47,15 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.Getter;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.eclipse.jgit.api.Git;
@@ -94,6 +99,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private JobService jobService;
+
+    @Autowired
+    private CredentialService credentialService;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -257,9 +265,54 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
-    public void testGitConnection(String name, String url, String privateKey) {
+    public void setSshRsaCredential(String name, RSAKeyPair keyPair) {
+        Flow flow = get(name);
+
+        String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
+        credentialService.createRSA(credentialName, keyPair.getPublicKey(), keyPair.getPrivateKey());
+
+        flow.getVariables().put(Variables.Flow.SSH_RSA, credentialName);
+        update(flow);
+    }
+
+    @Override
+    public void testGitConnection(String name, String url, String privateKeyOrCredentialName) {
         final Flow flow = get(name);
+        String privateKey = privateKeyOrCredentialName;
+
+        if (!CipherHelper.isRsaPrivateKey(privateKeyOrCredentialName)) {
+            RSAKeyPair sshRsa = (RSAKeyPair) credentialService.get(privateKeyOrCredentialName);
+
+            if (Objects.isNull(sshRsa)) {
+                throw new ArgumentException("Invalid ssh-rsa name");
+            }
+
+            privateKey = sshRsa.getPrivateKey();
+        }
+
         gitTestExecutor.execute(new GitTestRunner(flow.getId(), privateKey, url));
+    }
+
+    @Override
+    public List<String> listGitBranch(String name) {
+        final Flow flow = get(name);
+
+        String gitUrl = flow.getVariables().get(Variables.Flow.GitUrl);
+        String credentialName = flow.getVariables().get(Variables.Flow.SSH_RSA);
+
+        if (Strings.isNullOrEmpty(gitUrl) || Strings.isNullOrEmpty(credentialName)) {
+            return Collections.emptyList();
+        }
+
+        RSAKeyPair sshRsa = (RSAKeyPair) credentialService.get(credentialName);
+
+        if (Objects.isNull(sshRsa)) {
+            throw new ArgumentException("Invalid ssh-rsa name");
+        }
+
+        GitTestRunner gitTestRunner = new GitTestRunner(flow.getId(), sshRsa.getPrivateKey(), gitUrl);
+        gitTestRunner.run();
+        return gitTestRunner.getBranches();
     }
 
     private String getWebhook(String name) {
@@ -285,6 +338,9 @@ public class FlowServiceImpl implements FlowService {
 
         private final String url;
 
+        @Getter
+        private final List<String> branches = new LinkedList<>();
+
         GitTestRunner(String flowId, String privateKey, String url) {
             this.flowId = flowId;
             this.privateKey = privateKey;
@@ -305,8 +361,6 @@ public class FlowServiceImpl implements FlowService {
                         sshTransport.setSshSessionFactory(sessionFactory);
                     })
                     .call();
-
-                List<String> branches = new ArrayList<>(refs.size());
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();

@@ -33,6 +33,8 @@ public class Variables {
         public static final String Webhook = "FLOWCI_FLOW_WEBHOOK";
 
         public static final String GitUrl = "FLOWCI_GIT_URL";
+
+        public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA";
     }
 
     public static class Job {
@@ -42,11 +44,6 @@ public class Variables {
         public static final String Status = "FLOWCI_JOB_STATUS";
 
         public static final String Trigger = "FLOWCI_JOB_TRIGGER";
-    }
-
-    public static class Credential {
-
-        public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA";
     }
 
     public static class Agent {
