@@ -16,7 +16,10 @@
 
 package com.flowci.core.flow.config;
 
+import com.flowci.core.helper.CacheHelper;
 import com.flowci.core.helper.ThreadHelper;
+import com.github.benmanes.caffeine.cache.Cache;
+import java.util.List;
 import java.util.Properties;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
@@ -47,5 +50,10 @@ public class FlowConfig {
         Velocity.init(p);
 
         return Velocity.getTemplate("example.yml.vm");
+    }
+
+    @Bean("gitBranchCache")
+    public Cache<String, List<String>> gitBranchCache() {
+        return CacheHelper.createLocalCache(50, 300);
     }
 }

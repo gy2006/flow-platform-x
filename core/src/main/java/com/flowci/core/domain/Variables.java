@@ -34,6 +34,8 @@ public class Variables {
 
         public static final String GitUrl = "FLOWCI_GIT_URL";
 
+        public static final String GitBranch = "FLOWCI_GIT_BRANCH";
+
         public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA";
     }
 

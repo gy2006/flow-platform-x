@@ -140,7 +140,7 @@ public class FlowServiceTest extends SpringScenario {
         flowService.testGitConnection(flow.getName(), gitUrl, privateKey);
 
         // then:
-        countDown.await(10, TimeUnit.SECONDS);
+        countDown.await(20, TimeUnit.SECONDS);
         Assert.assertTrue(branches.size() >= 1);
     }
 

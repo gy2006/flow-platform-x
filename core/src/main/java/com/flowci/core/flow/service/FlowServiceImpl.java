@@ -38,6 +38,8 @@ import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.CipherHelper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -56,6 +58,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.eclipse.jgit.api.Git;
@@ -73,6 +76,7 @@ import org.springframework.stereotype.Service;
 /**
  * @author yang
  */
+@Log4j2
 @Service
 public class FlowServiceImpl implements FlowService {
 
@@ -108,6 +112,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private Template defaultYmlTemplate;
+
+    @Autowired
+    private Cache<String, List<String>> gitBranchCache;
 
     @Override
     public List<Flow> list(Status status) {
@@ -310,9 +317,11 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException("Invalid ssh-rsa name");
         }
 
-        GitTestRunner gitTestRunner = new GitTestRunner(flow.getId(), sshRsa.getPrivateKey(), gitUrl);
-        gitTestRunner.run();
-        return gitTestRunner.getBranches();
+        return gitBranchCache.get(flow.getId(), (Function<String, List<String>>) flowId -> {
+            GitTestRunner gitTestRunner = new GitTestRunner(flow.getId(), sshRsa.getPrivateKey(), gitUrl);
+            gitTestRunner.run();
+            return gitTestRunner.getBranches();
+        });
     }
 
     private String getWebhook(String name) {
@@ -366,6 +375,9 @@ public class FlowServiceImpl implements FlowService {
                     String refName = ref.getName();
                     branches.add(refName.substring(refName.lastIndexOf("/") + 1));
                 }
+
+                // add to cache
+                gitBranchCache.put(flowId, branches);
 
                 // publish DONE event
                 applicationEventPublisher.publishEvent(new GitTestEvent(this, flowId, branches));

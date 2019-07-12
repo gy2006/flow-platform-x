@@ -16,6 +16,7 @@
 
 package com.flowci.core.job.domain;
 
+import com.flowci.domain.VariableMap;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -27,6 +28,8 @@ public class CreateJob {
 
     @NotNull
     private String flow;
+
+    private VariableMap inputs = VariableMap.EMPTY;
 
     public CreateJob() {
     }

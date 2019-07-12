@@ -26,6 +26,7 @@ public class CipherHelper {
     private final static String RsaPrivateKeyEnd = "-----END RSA PRIVATE KEY-----";
 
     public static boolean isRsaPrivateKey(String src) {
+        src = src.trim();
         return src.startsWith(RsaPrivateKeyStart) && src.endsWith(RsaPrivateKeyEnd);
     }
 
