@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import com.flowci.exception.NotFoundException;
@@ -51,9 +50,9 @@ public class AgentController {
     @Autowired
     private LoggingService loggingService;
 
-    @GetMapping("/{token}")
-    public Agent getByToken(@PathVariable String token) {
-        return agentService.getByToken(token);
+    @GetMapping("/{name}")
+    public Agent getByName(@PathVariable String name) {
+        return agentService.getByName(name);
     }
 
     @GetMapping
@@ -75,12 +74,10 @@ public class AgentController {
         return agentService.delete(body.getToken());
     }
 
-    @PatchMapping("/{token}/tags")
-    public Agent setTags(@PathVariable String token, @RequestBody Set<String> tags) {
-        return agentService.setTags(token, tags);
-    }
+    // --------------------------------------------------------
+    //      Functions require agent token header
+    // --------------------------------------------------------
 
-    // handle request from agent
     @PostMapping("/connect")
     public Settings connect(@RequestHeader(HeaderAgentToken) String token,
                             @RequestBody AgentInit init,

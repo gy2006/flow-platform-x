@@ -147,6 +147,15 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
+    public Agent getByName(String name) {
+        Agent agent = agentDao.findByName(name);
+        if (Objects.isNull(agent)) {
+            throw new NotFoundException("Agent name {0} is not available", name);
+        }
+        return agent;
+    }
+
+    @Override
     public Agent getByToken(String token) {
         Agent agent = agentDao.findByToken(token);
         if (Objects.isNull(agent)) {

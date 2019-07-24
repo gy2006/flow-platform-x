@@ -36,6 +36,11 @@ public interface AgentService {
     Agent get(String id);
 
     /**
+     * Get agent by name
+     */
+    Agent getByName(String name);
+
+    /**
      * Get agent by token
      */
     Agent getByToken(String token);
