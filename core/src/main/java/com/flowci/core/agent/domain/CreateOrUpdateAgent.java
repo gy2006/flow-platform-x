@@ -18,17 +18,24 @@ package com.flowci.core.agent.domain;
 
 import java.util.Set;
 import javax.validation.constraints.NotNull;
+
+import com.google.common.base.Strings;
 import lombok.Data;
 
 /**
  * @author yang
  */
 @Data
-public class CreateAgent {
+public class CreateOrUpdateAgent {
 
     @NotNull
     private String name;
 
     private Set<String> tags;
 
+    private String token;
+
+    public boolean hasToken() {
+        return !Strings.isNullOrEmpty(token);
+    }
 }

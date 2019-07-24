@@ -188,6 +188,7 @@ public class AgentServiceImpl implements AgentService {
     public Agent delete(String token) {
         Agent agent = getByToken(token);
         agentDao.delete(agent);
+        log.debug("{} has been deleted", agent);
         return agent;
     }
 
@@ -248,6 +249,20 @@ public class AgentServiceImpl implements AgentService {
             agentDao.insert(agent);
             rabbitAdmin.declareQueue(new Queue(agent.getQueueName()));
             return agent;
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateException("Agent name {0} is already defined", name);
+        }
+    }
+
+    @Override
+    public Agent update(String token, String name, Set<String> tags) {
+        Agent agent = getByToken(token);
+
+        agent.setName(name);
+        agent.setTags(tags);
+
+        try {
+            return agentDao.save(agent);
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Agent name {0} is already defined", name);
         }

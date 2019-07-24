@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.domain.AgentInit;
-import com.flowci.core.agent.domain.CreateAgent;
+import com.flowci.core.agent.domain.CreateOrUpdateAgent;
 import com.flowci.core.domain.StatusCode;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
@@ -160,7 +160,7 @@ public class AgentControllerTest extends SpringScenario {
     }
 
     private Agent createAgent(String name, Set<String> tags, Integer code) throws Exception {
-        CreateAgent create = new CreateAgent();
+        CreateOrUpdateAgent create = new CreateOrUpdateAgent();
         create.setName(name);
         create.setTags(tags);
 

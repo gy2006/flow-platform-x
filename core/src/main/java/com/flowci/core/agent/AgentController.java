@@ -17,7 +17,7 @@
 package com.flowci.core.agent;
 
 import com.flowci.core.agent.domain.AgentInit;
-import com.flowci.core.agent.domain.CreateAgent;
+import com.flowci.core.agent.domain.CreateOrUpdateAgent;
 import com.flowci.core.agent.domain.DeleteAgent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.job.service.LoggingService;
@@ -62,7 +62,11 @@ public class AgentController {
     }
 
     @PostMapping()
-    public Agent create(@RequestBody CreateAgent body) {
+    public Agent createOrUpdate(@RequestBody CreateOrUpdateAgent body) {
+        if (body.hasToken()) {
+            return agentService.update(body.getToken(), body.getName(), body.getTags());
+        }
+
         return agentService.create(body.getName(), body.getTags());
     }
 

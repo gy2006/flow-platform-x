@@ -85,6 +85,11 @@ public interface AgentService {
     Agent create(String name, Set<String> tags);
 
     /**
+     * Update agent name or and tags
+     */
+    Agent update(String token, String name, Set<String> tags);
+
+    /**
      * Dispatch cmd to agent
      */
     void dispatch(Cmd cmd, Agent agent);
