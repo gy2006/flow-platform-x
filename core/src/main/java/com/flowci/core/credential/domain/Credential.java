@@ -30,7 +30,18 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Setter
 public abstract class Credential extends Mongoable {
 
+    public enum Category {
+
+        SSH_RSA,
+
+        SSH_DSS,
+
+        SSH_ED25519
+    }
+
     @Indexed(name = "index_credential_name", unique = true)
     private String name;
+
+    private Category category;
 
 }
