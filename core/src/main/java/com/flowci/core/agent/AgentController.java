@@ -18,6 +18,7 @@ package com.flowci.core.agent;
 
 import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.domain.CreateAgent;
+import com.flowci.core.agent.domain.DeleteAgent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.domain.Agent;
@@ -65,9 +66,9 @@ public class AgentController {
         return agentService.create(body.getName(), body.getTags());
     }
 
-    @DeleteMapping("/{token}")
-    public Agent delete(@PathVariable String token) {
-        return agentService.delete(token);
+    @DeleteMapping()
+    public Agent delete(@RequestBody DeleteAgent body) {
+        return agentService.delete(body.getToken());
     }
 
     @PatchMapping("/{token}/tags")
