@@ -41,12 +41,12 @@ public interface CredentialService {
     RSAKeyPair genRSA(String email);
 
     /**
-     * Generate RSA key pair and save
+     * Create rsa key pair which is generated automatically
      */
     RSAKeyPair createRSA(String name);
 
     /**
-     * Set rsa key pair and save
+     * Create rsa key pair which is given from user
      */
     RSAKeyPair createRSA(String name, String publicKey, String privateKey);
 

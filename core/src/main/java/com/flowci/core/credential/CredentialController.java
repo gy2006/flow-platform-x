@@ -16,8 +16,9 @@
 
 package com.flowci.core.credential;
 
-import com.flowci.core.credential.domain.CreateCredential;
+import com.flowci.core.credential.domain.CreateRSA;
 import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.credential.domain.GenRSA;
 import com.flowci.core.credential.service.CredentialService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,13 +51,16 @@ public class CredentialController {
     }
 
     @PostMapping("/rsa")
-    public Credential create(@Validated @RequestBody CreateCredential create) {
-        return credentialService.createRSA(create.getName());
+    public Credential create(@Validated @RequestBody CreateRSA body) {
+        if (body.hasKeyPair()) {
+            return credentialService.createRSA(body.getName(), body.getPublicKey(), body.getPrivateKey());
+        }
+
+        return credentialService.createRSA(body.getName());
     }
 
-    @PostMapping("/rsa/only")
-    public Credential genByEmail(@Validated @RequestBody CreateCredential create) {
-        String email = create.getName();
-        return credentialService.genRSA(email);
+    @PostMapping("/rsa/gen")
+    public Credential genByEmail(@Validated @RequestBody GenRSA body) {
+        return credentialService.genRSA(body.getEmail());
     }
 }

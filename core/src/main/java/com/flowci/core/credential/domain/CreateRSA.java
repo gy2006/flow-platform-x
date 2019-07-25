@@ -17,15 +17,25 @@
 package com.flowci.core.credential.domain;
 
 import javax.validation.constraints.NotNull;
+
+import com.google.common.base.Strings;
 import lombok.Data;
 
 /**
  * @author yang
  */
 @Data
-public class CreateCredential {
+public class CreateRSA {
 
     @NotNull
     private String name;
+
+    private String publicKey;
+
+    private String privateKey;
+
+    public boolean hasKeyPair() {
+        return !Strings.isNullOrEmpty(publicKey) && !Strings.isNullOrEmpty(privateKey);
+    }
 
 }
