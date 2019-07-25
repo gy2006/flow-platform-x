@@ -74,14 +74,6 @@ public class FlowController {
         flowService.update(flow);
     }
 
-    /**
-     * Create credential for flow only
-     */
-    @PostMapping("/{name}/credential/rsa")
-    public void setupRSACredential(@PathVariable String name, @RequestBody RSAKeyPair keyPair) {
-        flowService.setSshRsaCredential(name, keyPair);
-    }
-
     @PostMapping(value = "/{name}/confirm")
     public Flow confirm(@PathVariable String name) {
         return flowService.confirm(name);
@@ -124,5 +116,18 @@ public class FlowController {
     @DeleteMapping("/{name}")
     public Flow delete(@PathVariable String name) {
         return flowService.delete(name);
+    }
+
+    /**
+     * Create credential for flow only
+     */
+    @PostMapping("/{name}/credentials/rsa")
+    public void setupRSACredential(@PathVariable String name, @RequestBody RSAKeyPair keyPair) {
+        flowService.setSshRsaCredential(name, keyPair);
+    }
+
+    @GetMapping("/credentials/{name}")
+    public List<Flow> listFlowByCredentials(@PathVariable String name) {
+        return flowService.listByCredential(name);
     }
 }

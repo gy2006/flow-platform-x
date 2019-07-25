@@ -15,13 +15,13 @@
 
 envs:
   # Agent default workspace
-  FLOWCI_AGENT_WORKSPACE: "${HOME}/.flow.ci.agent"
+  # FLOWCI_AGENT_WORKSPACE: "${HOME}/.flow.ci.agent"
 
   # Git Config
-  FLOWCI_GIT_URL: $FLOWCI_GIT_URL
+  # FLOWCI_GIT_URL: $FLOWCI_GIT_URL
 
-  # Default ssh-rsa name
-  FLOWCI_CREDENTIAL_SSH_RSA: "flow-$FLOWCI_FLOW_NAME-ssh-rsa"
+  # Credential name
+  # FLOWCI_CREDENTIAL_SSH_RSA: $FLOWCI_CREDENTIAL_SSH_RSA
 
   # Define Flow level variables
   EXAMPLE_VAR: "I'am an example YAML"

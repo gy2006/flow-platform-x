@@ -19,6 +19,8 @@ package com.flowci.core.test.flow;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.service.CredentialService;
+import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
@@ -40,7 +42,9 @@ import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationListener;
 
 /**
@@ -54,6 +58,9 @@ public class FlowServiceTest extends SpringScenario {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    private CredentialService credentialService;
 
     @Before
     public void login() {
@@ -72,13 +79,30 @@ public class FlowServiceTest extends SpringScenario {
     }
 
     @Test
-    public void should_update_flow_variables() {
+    public void should_list_flow_by_credential_name() {
+        String credentialName = "flow-ssh-ras-name";
+
+        RSAKeyPair mocked = new RSAKeyPair();
+        mocked.setName(credentialName);
+
+        Mockito.when(credentialService.get(credentialName)).thenReturn(mocked);
+
         Flow flow = flowService.create("hello");
         flow.getVariables().put("FLOW_NAME", "hello.world");
+        flow.getVariables().put(Variables.Flow.SSH_RSA, credentialName);
         flowService.update(flow);
+        flowService.confirm(flow.getName());
 
         VariableMap variables = flowService.get(flow.getName()).getVariables();
-        Assert.assertEquals("hello.world", variables.get("FLOW_NAME"));
+        Assert.assertEquals(credentialName, variables.get(Variables.Flow.SSH_RSA));
+
+        // when:
+        List<Flow> flows = flowService.listByCredential(credentialName);
+        Assert.assertNotNull(flows);
+        Assert.assertEquals(1, flows.size());
+
+        // then:
+        Assert.assertEquals(flow.getName(), flows.get(0).getName());
     }
 
     @Test

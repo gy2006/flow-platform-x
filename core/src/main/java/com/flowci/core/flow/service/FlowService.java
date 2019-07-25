@@ -28,9 +28,14 @@ import java.util.List;
 public interface FlowService {
 
     /**
-     * List all flow by current user
+     * List flows by current user
      */
     List<Flow> list(Status status);
+
+    /**
+     * List flows of current user by credential name
+     */
+    List<Flow> listByCredential(String credentialName);
 
     /**
      * Check the flow name is existed

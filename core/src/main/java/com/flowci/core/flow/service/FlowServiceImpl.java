@@ -17,6 +17,7 @@
 package com.flowci.core.flow.service;
 
 import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.domain.Variables;
@@ -49,14 +50,8 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
@@ -120,6 +115,27 @@ public class FlowServiceImpl implements FlowService {
     public List<Flow> list(Status status) {
         String userId = currentUserHelper.get().getId();
         return flowDao.findAllByStatusAndCreatedBy(status, userId);
+    }
+
+    @Override
+    public List<Flow> listByCredential(String credentialName) {
+        Credential credential = credentialService.get(credentialName);
+
+        List<Flow> list = list(Status.CONFIRMED);
+        Iterator<Flow> iter = list.iterator();
+
+        for (;iter.hasNext();) {
+            Flow flow = iter.next();
+            String value = flow.getVariables().get(Variables.Flow.SSH_RSA);
+
+            if (Objects.equals(value, credential.getName())) {
+                continue;
+            }
+
+            iter.remove();
+        }
+
+        return list;
     }
 
     @Override

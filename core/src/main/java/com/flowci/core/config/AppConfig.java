@@ -84,7 +84,6 @@ public class AppConfig {
     private void initWorkspace() throws IOException {
         Path path = appProperties.getWorkspace();
         FileHelper.createDirectory(path);
-
         FileHelper.createDirectory(tmpDir());
     }
 
