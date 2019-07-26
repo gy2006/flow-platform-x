@@ -325,66 +325,7 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
-        try {
-            // find available agents
-            Set<String> agentTags = job.getAgentSelector().getTags();
-            Iterator<Agent> availableList = agentService.find(Status.IDLE, agentTags).iterator();
-
-            // try to lock it
-            Boolean isLocked = Boolean.FALSE;
-            Agent available = null;
-
-            while (availableList.hasNext()) {
-                Agent agent = availableList.next();
-                agent.setJobId(job.getId());
-
-                isLocked = agentService.tryLock(agent);
-                if (isLocked) {
-                    available = agent;
-                    break;
-                }
-
-                availableList.remove();
-            }
-
-            // re-enqueue to job while agent been locked by other
-            if (!isLocked) {
-                log.debug("Agent not found for job {}, put into the retrying queue", job.getId());
-                retry(job);
-                return;
-            }
-
-            NodeTree tree = ymlManager.getTree(job);
-            Node next = tree.next(currentNodePath(job));
-
-            // do not accept job without regular steps
-            if (Objects.isNull(next)) {
-                log.debug("Next node cannot be found when process job {}", job);
-                return;
-            }
-
-            log.debug("Next step of job {} is {}", job.getId(), next.getName());
-
-            // set path, agent id, and status to job
-            job.setCurrentPath(next.getPathAsString());
-            job.setAgentId(available.getId());
-            setJobStatus(job, Job.Status.RUNNING, null);
-
-            // execute condition script
-            Boolean executed = executeBeforeCondition(job, next);
-            if (!executed) {
-                ExecutedCmd executedCmd = stepService.get(job, next);
-                processCallback(executedCmd);
-                return;
-            }
-
-            // dispatch job to agent queue
-            sendToAgent(job, next);
-        } catch (NotFoundException e) {
-            // re-enqueue to job while agent not found
-            log.debug("Agent not available, job {} retry", job.getId());
-            retry(job);
-        }
+        dispatch(job);
     }
 
     @Override
@@ -458,9 +399,77 @@ public class JobServiceImpl implements JobService {
     //====================================================================
 
     /**
+     * Find available agent and dispatch job
+     */
+    private void dispatch(Job job) {
+        // find available agents
+        Set<String> agentTags = job.getAgentSelector().getTags();
+        List<Agent> agents = agentService.find(Status.IDLE, agentTags);
+
+        // re-enqueue to job while agent not found
+        if (agents.isEmpty()) {
+            log.debug("Agent not available, job {} retry", job.getId());
+            retry(job);
+            return;
+        }
+
+        Boolean isLocked = Boolean.FALSE;
+        Agent available = null;
+        Iterator<Agent> availableList = agents.iterator();
+
+        // try to lock it
+        while (availableList.hasNext()) {
+            Agent agent = availableList.next();
+            agent.setJobId(job.getId());
+
+            isLocked = agentService.tryLock(agent);
+            if (isLocked) {
+                available = agent;
+                break;
+            }
+
+            availableList.remove();
+        }
+
+        // re-enqueue to job while agent been locked by other
+        if (!isLocked) {
+            log.debug("Agent not found for job {}, put into the retrying queue", job.getId());
+            retry(job);
+            return;
+        }
+
+        NodeTree tree = ymlManager.getTree(job);
+        Node next = tree.next(currentNodePath(job));
+
+        // do not accept job without regular steps
+        if (Objects.isNull(next)) {
+            log.debug("Next node cannot be found when process job {}", job);
+            return;
+        }
+
+        log.debug("Next step of job {} is {}", job.getId(), next.getName());
+
+        // set path, agent id, and status to job
+        job.setCurrentPath(next.getPathAsString());
+        job.setAgentId(available.getId());
+        setJobStatus(job, Job.Status.RUNNING, null);
+
+        // execute condition script
+        Boolean executed = executeBeforeCondition(job, next);
+        if (!executed) {
+            ExecutedCmd executedCmd = stepService.get(job, next);
+            processCallback(executedCmd);
+            return;
+        }
+
+        // dispatch job to agent queue
+        sendToAgent(job, next);
+    }
+
+    /**
      * Send step to agent
      */
-    private boolean sendToAgent(Job job, Node node) {
+    private void sendToAgent(Job job, Node node) {
         Agent agent = agentService.get(job.getAgentId());
 
         // set executed cmd step to running
@@ -475,8 +484,6 @@ public class JobServiceImpl implements JobService {
             Cmd cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
             log.debug("Job {} with cmd {} been dispatched to agent {}", job.getId(), cmd.getId(), agent.getId());
-
-            return true;
         } catch (Throwable e) {
             log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
 
@@ -488,7 +495,6 @@ public class JobServiceImpl implements JobService {
             setJobStatus(job, Job.Status.FAILURE, e.getMessage());
 
             agentService.tryRelease(agent);
-            return false;
         }
     }
 

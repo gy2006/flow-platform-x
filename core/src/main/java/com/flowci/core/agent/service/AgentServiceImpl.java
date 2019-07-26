@@ -31,6 +31,7 @@ import com.flowci.util.ObjectsHelper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -183,11 +184,6 @@ public class AgentServiceImpl implements AgentService {
             agents = agentDao.findAllByStatus(status);
         } else {
             agents = agentDao.findAllByStatusAndTagsIn(status, tags);
-        }
-
-        if (agents.isEmpty()) {
-            String tagsInStr = StringUtils.collectionToCommaDelimitedString(tags);
-            throw new NotFoundException("Agent not found by status : {0} and tags: {1}", status.name(), tagsInStr);
         }
 
         return agents;
