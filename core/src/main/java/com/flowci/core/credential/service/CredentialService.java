@@ -36,6 +36,11 @@ public interface CredentialService {
     Credential get(String name);
 
     /**
+     * Delete credential by name
+     */
+    Credential delete(String name);
+
+    /**
      * Generate RSA key pair by email only
      */
     RSAKeyPair genRSA(String email);

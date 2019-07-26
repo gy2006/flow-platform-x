@@ -21,6 +21,7 @@ import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.exception.DuplicateException;
+import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -56,7 +57,20 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Credential get(String name) {
-        return credentialDao.findByNameAndCreatedBy(name, currentUserHelper.getUserId());
+        Credential c = credentialDao.findByNameAndCreatedBy(name, currentUserHelper.getUserId());
+
+        if (Objects.isNull(c)) {
+            throw new NotFoundException("Credential {0} is not found", name);
+        }
+
+        return c;
+    }
+
+    @Override
+    public Credential delete(String name) {
+        Credential c = get(name);
+        credentialDao.delete(c);
+        return c;
     }
 
     @Override
