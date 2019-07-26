@@ -81,14 +81,9 @@ public interface JobService {
     boolean isExpired(Job job);
 
     /**
-     * Convert node to cmd and dispatch to agent
+     * Handle the job from queue
      */
-    boolean dispatch(Job job);
-
-    /**
-     * Process job from queue
-     */
-    void processJob(Job job);
+    void handleJob(Job job);
 
     /**
      * Process executed cmd callback from queue

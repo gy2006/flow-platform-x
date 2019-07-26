@@ -275,41 +275,6 @@ public class JobServiceImpl implements JobService {
         return Instant.now().compareTo(expireAt) == 1;
     }
 
-    @Override
-    public boolean dispatch(Job job) {
-        NodeTree tree = ymlManager.getTree(job);
-        Node node = tree.get(currentNodePath(job));
-        Agent agent = agentService.get(job.getAgentId());
-
-        // set executed cmd step to running
-        ExecutedCmd executedCmd = stepService.get(job, node);
-
-        try {
-            if (!executedCmd.isRunning()) {
-                executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
-                stepService.update(job, executedCmd);
-            }
-
-            Cmd cmd = cmdManager.createShellCmd(job, node);
-            agentService.dispatch(cmd, agent);
-            log.debug("Job {} with cmd {} been dispatched to agent {}", job.getId(), cmd.getId(), agent.getId());
-
-            return true;
-        } catch (Throwable e) {
-            log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
-
-            // set current step to exception
-            executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
-            stepService.update(job, executedCmd);
-
-            // set current job failure
-            setJobStatus(job, Job.Status.FAILURE, e.getMessage());
-
-            agentService.tryRelease(agent);
-            return false;
-        }
-    }
-
     //====================================================================
     //        %% Internal events
     //====================================================================
@@ -351,7 +316,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @RabbitListener(queues = "${app.job.queue-name}", containerFactory = "jobAndCallbackContainerFactory")
-    public void processJob(Job job) {
+    public void handleJob(Job job) {
         log.debug("Job {} received from queue", job.getId());
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
 
@@ -414,7 +379,7 @@ public class JobServiceImpl implements JobService {
             }
 
             // dispatch job to agent queue
-            dispatch(job);
+            sendToAgent(job, next);
         } catch (NotFoundException e) {
             // re-enqueue to job while agent not found
             log.debug("Agent not available, job {} retry", job.getId());
@@ -484,13 +449,48 @@ public class JobServiceImpl implements JobService {
         job.setCurrentPath(next.getPathAsString());
         jobDao.save(job);
 
-        log.debug("Dispatch job : {}", job);
-        dispatch(job);
+        log.debug("Send job {} step {} to agent", job.getKey(), node.getName());
+        sendToAgent(job, next);
     }
 
     //====================================================================
     //        %% Utils
     //====================================================================
+
+    /**
+     * Send step to agent
+     */
+    private boolean sendToAgent(Job job, Node node) {
+        Agent agent = agentService.get(job.getAgentId());
+
+        // set executed cmd step to running
+        ExecutedCmd executedCmd = stepService.get(job, node);
+
+        try {
+            if (!executedCmd.isRunning()) {
+                executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
+                stepService.update(job, executedCmd);
+            }
+
+            Cmd cmd = cmdManager.createShellCmd(job, node);
+            agentService.dispatch(cmd, agent);
+            log.debug("Job {} with cmd {} been dispatched to agent {}", job.getId(), cmd.getId(), agent.getId());
+
+            return true;
+        } catch (Throwable e) {
+            log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
+
+            // set current step to exception
+            executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
+            stepService.update(job, executedCmd);
+
+            // set current job failure
+            setJobStatus(job, Job.Status.FAILURE, e.getMessage());
+
+            agentService.tryRelease(agent);
+            return false;
+        }
+    }
 
     private Node findNext(Job job, NodeTree tree, Node current, boolean isSuccess) {
         Node next = isSuccess ? tree.next(current.getPath()) : tree.nextFinal(current.getPath());
