@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.config;
+package com.flowci.core.common.config;
 
 import com.flowci.domain.Jsonable;
 import lombok.extern.log4j.Log4j2;

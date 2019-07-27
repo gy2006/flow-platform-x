@@ -16,7 +16,7 @@
 
 package com.flowci.core.flow.service;
 
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.credential.service.CredentialService;

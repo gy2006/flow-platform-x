@@ -22,7 +22,7 @@ import com.cronutils.model.definition.CronDefinition;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;

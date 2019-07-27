@@ -16,7 +16,7 @@
 
 package com.flowci.core.user;
 
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.exception.DuplicateException;
 import com.flowci.util.HashingHelper;
 import java.util.Objects;

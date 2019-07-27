@@ -17,7 +17,7 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.event.StatusChangeEvent;
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.ObjectWrapper;

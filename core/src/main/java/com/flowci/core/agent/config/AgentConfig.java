@@ -16,7 +16,7 @@
 
 package com.flowci.core.agent.config;
 
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.domain.Settings;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.beans.factory.annotation.Autowired;

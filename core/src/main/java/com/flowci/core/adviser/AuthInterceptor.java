@@ -16,7 +16,7 @@
 
 package com.flowci.core.adviser;
 
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.core.user.User;
 import com.flowci.core.user.UserService;
@@ -26,7 +26,6 @@ import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**

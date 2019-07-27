@@ -18,7 +18,7 @@ package com.flowci.core.plugin.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginParser;
 import com.flowci.core.plugin.domain.PluginRepo;

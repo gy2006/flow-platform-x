@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.config;
+package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;

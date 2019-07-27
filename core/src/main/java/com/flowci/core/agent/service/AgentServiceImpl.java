@@ -20,7 +20,7 @@ import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.event.StatusChangeEvent;
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
@@ -31,7 +31,6 @@ import com.flowci.util.ObjectsHelper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -52,7 +51,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 /**
  * Manage agent from zookeeper nodes
