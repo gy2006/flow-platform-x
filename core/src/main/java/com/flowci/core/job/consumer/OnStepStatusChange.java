@@ -17,6 +17,7 @@
 package com.flowci.core.job.consumer;
 
 import com.flowci.core.common.domain.PushEvent;
+import com.flowci.core.common.manager.SocketPushManager;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.StepStatusChangeEvent;
 import com.flowci.domain.ExecutedCmd;
@@ -36,7 +37,7 @@ public class OnStepStatusChange implements ApplicationListener<StepStatusChangeE
     private String topicForSteps;
 
     @Autowired
-    private PushService pushService;
+    private SocketPushManager socketPushManager;
 
     @Override
     public void onApplicationEvent(StepStatusChangeEvent event) {
@@ -44,7 +45,7 @@ public class OnStepStatusChange implements ApplicationListener<StepStatusChangeE
         ExecutedCmd cmd = event.getExecutedCmd();
 
         String topic = topicForSteps + "/" + job.getId();
-        pushService.push(topic, PushEvent.STATUS_CHANGE, cmd);
+        socketPushManager.push(topic, PushEvent.STATUS_CHANGE, cmd);
 
         log.debug("Executed cmd {} with status {} been pushed to topic {}", cmd.getId(), cmd.getStatus(), topic);
     }

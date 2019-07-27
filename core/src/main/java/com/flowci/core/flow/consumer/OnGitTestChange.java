@@ -17,6 +17,7 @@
 package com.flowci.core.flow.consumer;
 
 import com.flowci.core.common.domain.PushEvent;
+import com.flowci.core.common.manager.SocketPushManager;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.event.GitTestEvent.Status;
 import java.util.List;
@@ -53,12 +54,12 @@ public class OnGitTestChange implements ApplicationListener<GitTestEvent> {
     private String topicForGitTest;
 
     @Autowired
-    private PushService pushService;
+    private SocketPushManager socketPushManager;
 
     @Override
     public void onApplicationEvent(GitTestEvent event) {
         String topic = topicForGitTest + "/" + event.getFlowId();
-        pushService.push(topic, PushEvent.STATUS_CHANGE, new GitTestMessage(event));
+        socketPushManager.push(topic, PushEvent.STATUS_CHANGE, new GitTestMessage(event));
         log.debug("Git test {} for flow {}", event.getStatus(), event.getFlowId());
     }
 }

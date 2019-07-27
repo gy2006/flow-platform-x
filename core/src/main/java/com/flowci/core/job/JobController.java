@@ -16,9 +16,9 @@
 
 package com.flowci.core.job;
 
-import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
@@ -28,7 +28,6 @@ import com.flowci.core.job.service.JobService;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.core.job.service.StepService;
 import com.flowci.domain.ExecutedCmd;
-import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.NodePath;
 import java.util.List;

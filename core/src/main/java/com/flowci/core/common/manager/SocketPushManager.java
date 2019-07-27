@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class PushService {
+public class SocketPushManager {
 
     @Autowired
     private ObjectMapper objectMapper;

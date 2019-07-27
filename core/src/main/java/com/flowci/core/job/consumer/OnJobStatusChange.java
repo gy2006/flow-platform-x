@@ -17,6 +17,7 @@
 package com.flowci.core.job.consumer;
 
 import com.flowci.core.common.domain.PushEvent;
+import com.flowci.core.common.manager.SocketPushManager;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobStatusChangeEvent;
 import lombok.extern.log4j.Log4j2;
@@ -37,12 +38,12 @@ public class OnJobStatusChange implements ApplicationListener<JobStatusChangeEve
     private String topicForJobs;
 
     @Autowired
-    private PushService pushService;
+    private SocketPushManager socketPushManager;
 
     @Override
     public void onApplicationEvent(JobStatusChangeEvent event) {
         Job job = event.getJob();
-        pushService.push(topicForJobs, PushEvent.STATUS_CHANGE, job);
+        socketPushManager.push(topicForJobs, PushEvent.STATUS_CHANGE, job);
         log.debug("Job {} with status {} been pushed", job.getId(), job.getStatus());
     }
 }
