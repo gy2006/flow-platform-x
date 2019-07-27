@@ -110,6 +110,10 @@ public class Job extends Mongoable {
         TIMEOUT
     }
 
+    private final static Integer MinPriority = 1;
+
+    private final static Integer MaxPriority = 255;
+
     /**
      * Job key is generated from {flow id}-{build number}
      */
@@ -136,6 +140,8 @@ public class Job extends Mongoable {
 
     private String message;
 
+    private Integer priority = MinPriority;
+
     @JsonIgnore
     public boolean isRunning() {
         return status == Status.RUNNING;
@@ -157,6 +163,15 @@ public class Job extends Mongoable {
                 || status == Status.CANCELLED
                 || status == Status.FAILURE
                 || status == Status.SUCCESS;
+    }
+
+    @JsonIgnore
+    public Integer increase() {
+        if (this.priority < MaxPriority) {
+            this.priority++;
+        }
+
+        return this.priority;
     }
 
     @Override

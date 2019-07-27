@@ -20,12 +20,12 @@ import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.common.manager.QueueManager;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
+import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.core.common.manager.QueueManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobNumberDao;
 import com.flowci.core.job.domain.CmdId;
@@ -235,7 +235,7 @@ public class JobServiceImpl implements JobService {
         try {
             return enqueue(job);
         } catch (StatusException e) {
-            return setJobStatus(job, Job.Status.FAILURE, e.getMessage());
+            return setJobStatusAndSave(job, Job.Status.FAILURE, e.getMessage());
         }
     }
 
@@ -307,7 +307,7 @@ public class JobServiceImpl implements JobService {
         }
 
         // update job status
-        setJobStatus(job, Job.Status.CANCELLED, "Agent unexpected offline");
+        setJobStatusAndSave(job, Job.Status.CANCELLED, "Agent unexpected offline");
     }
 
     //====================================================================
@@ -377,7 +377,7 @@ public class JobServiceImpl implements JobService {
         // job finished
         if (Objects.isNull(next)) {
             Job.Status statusFromContext = Job.Status.valueOf(job.getContext().get(Variables.Job.Status));
-            setJobStatus(job, statusFromContext, execCmd.getError());
+            setJobStatusAndSave(job, statusFromContext, execCmd.getError());
 
             Agent agent = agentService.get(job.getAgentId());
             agentService.tryRelease(agent);
@@ -452,7 +452,7 @@ public class JobServiceImpl implements JobService {
         // set path, agent id, and status to job
         job.setCurrentPath(next.getPathAsString());
         job.setAgentId(available.getId());
-        setJobStatus(job, Job.Status.RUNNING, null);
+        setJobStatusAndSave(job, Job.Status.RUNNING, null);
 
         // execute condition script
         Boolean executed = executeBeforeCondition(job, next);
@@ -492,7 +492,7 @@ public class JobServiceImpl implements JobService {
             stepService.update(job, executedCmd);
 
             // set current job failure
-            setJobStatus(job, Job.Status.FAILURE, e.getMessage());
+            setJobStatusAndSave(job, Job.Status.FAILURE, e.getMessage());
 
             agentService.tryRelease(agent);
         }
@@ -572,27 +572,28 @@ public class JobServiceImpl implements JobService {
     private void retry(Job job) {
         retryExecutor.execute(() -> {
             ThreadHelper.sleep(jobProperties.getRetryWaitingSeconds() * 1000);
+            job.increase();
             enqueue(job);
         });
     }
 
     private Job enqueue(Job job) {
         if (isExpired(job)) {
-            setJobStatus(job, Job.Status.TIMEOUT, null);
+            setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
             log.warn("Job '{}' is expired", job);
             return job;
         }
 
         try {
-            setJobStatus(job, Job.Status.QUEUED, null);
-            queueManager.send(jobQueue.getName(), job, 255);
+            setJobStatusAndSave(job, Job.Status.QUEUED, null);
+            queueManager.send(jobQueue.getName(), job, job.getPriority());
             return job;
         } catch (Throwable e) {
             throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());
         }
     }
 
-    private Job setJobStatus(Job job, Job.Status newStatus, String message) {
+    private Job setJobStatusAndSave(Job job, Job.Status newStatus, String message) {
         job.setStatus(newStatus);
         job.setMessage(message);
         job.getContext().put(Variables.Job.Status, newStatus.name());

@@ -44,6 +44,8 @@ public class QueueConfig {
 
     private static final String LoggingExchange = "cmd.logs";
 
+    private static final Integer MaxPriority = 255;
+
     private final Jackson2JsonMessageConverter jsonMessageConverter =
         new Jackson2JsonMessageConverter(Jsonable.getMapper());
 
@@ -59,7 +61,7 @@ public class QueueConfig {
     public Queue jobQueue() {
         String jobQueue = jobProperties.getQueueName();
         return QueueBuilder.durable(jobQueue)
-            .withArgument("x-max-priority", 255)
+            .withArgument("x-max-priority", MaxPriority)
             .build();
     }
 
