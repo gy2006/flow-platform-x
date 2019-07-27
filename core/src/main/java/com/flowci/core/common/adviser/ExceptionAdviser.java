@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.adviser;
+package com.flowci.core.common.adviser;
 
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.core.common.domain.StatusCode;
@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  */
 @Log4j2
 @ControllerAdvice({
-    "com.flowci.core.adviser.AuthInterceptor",
+    "com.flowci.core.common.adviser.AuthInterceptor",
     "com.flowci.core.flow",
     "com.flowci.core.job",
     "com.flowci.core.agent",

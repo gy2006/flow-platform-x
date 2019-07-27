@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.adviser;
+package com.flowci.core.common.adviser;
 
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.domain.http.ResponseMessage;
