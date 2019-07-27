@@ -16,13 +16,11 @@
 
 package com.flowci.core.flow.domain;
 
-import com.flowci.core.domain.Mongoable;
-import lombok.AllArgsConstructor;
+import com.flowci.core.common.domain.Mongoable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**

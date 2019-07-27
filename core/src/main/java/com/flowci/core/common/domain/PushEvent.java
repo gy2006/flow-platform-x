@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.domain;
+package com.flowci.core.common.domain;
 
 /**
  * @author yang

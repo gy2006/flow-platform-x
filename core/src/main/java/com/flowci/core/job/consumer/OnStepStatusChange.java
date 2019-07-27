@@ -16,7 +16,7 @@
 
 package com.flowci.core.job.consumer;
 
-import com.flowci.core.domain.PushEvent;
+import com.flowci.core.common.domain.PushEvent;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.StepStatusChangeEvent;
 import com.flowci.core.message.PushService;

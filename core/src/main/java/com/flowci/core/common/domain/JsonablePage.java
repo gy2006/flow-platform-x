@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.domain;
+package com.flowci.core.common.domain;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;

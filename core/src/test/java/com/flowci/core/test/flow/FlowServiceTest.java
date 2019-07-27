@@ -20,7 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.credential.service.CredentialService;
-import com.flowci.core.domain.Variables;
+import com.flowci.core.common.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;

@@ -16,7 +16,7 @@
 
 package com.flowci.core.adviser;
 
-import com.flowci.core.domain.StatusCode;
+import com.flowci.core.common.domain.StatusCode;
 import com.flowci.domain.http.ResponseMessage;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.io.Resource;

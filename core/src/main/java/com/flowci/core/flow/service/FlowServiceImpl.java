@@ -20,7 +20,7 @@ import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.credential.service.CredentialService;
-import com.flowci.core.domain.Variables;
+import com.flowci.core.common.domain.Variables;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;

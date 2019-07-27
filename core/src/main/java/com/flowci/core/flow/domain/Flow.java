@@ -16,7 +16,7 @@
 
 package com.flowci.core.flow.domain;
 
-import com.flowci.core.domain.Mongoable;
+import com.flowci.core.common.domain.Mongoable;
 import com.flowci.domain.VariableMap;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -16,7 +16,7 @@
 
 package com.flowci.core.message;
 
-import com.flowci.core.domain.PushEvent;
+import com.flowci.core.common.domain.PushEvent;
 
 /**
  * @author yang

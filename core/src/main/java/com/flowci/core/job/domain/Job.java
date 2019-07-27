@@ -17,7 +17,7 @@
 package com.flowci.core.job.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.flowci.core.domain.Mongoable;
+import com.flowci.core.common.domain.Mongoable;
 import com.flowci.domain.VariableMap;
 import com.flowci.tree.Selector;
 import java.util.Date;

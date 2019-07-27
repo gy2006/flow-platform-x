@@ -16,8 +16,7 @@
 
 package com.flowci.core.job.domain;
 
-import com.flowci.core.domain.Mongoable;
-import lombok.Data;
+import com.flowci.core.common.domain.Mongoable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

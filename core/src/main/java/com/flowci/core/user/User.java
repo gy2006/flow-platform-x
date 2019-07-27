@@ -16,7 +16,7 @@
 
 package com.flowci.core.user;
 
-import com.flowci.core.domain.Mongoable;
+import com.flowci.core.common.domain.Mongoable;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

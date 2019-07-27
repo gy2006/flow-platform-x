@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.domain.StatusCode;
+import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.test.MvcMockHelper;

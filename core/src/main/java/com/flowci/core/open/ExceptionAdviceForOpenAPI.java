@@ -16,7 +16,7 @@
 
 package com.flowci.core.open;
 
-import com.flowci.core.domain.StatusCode;
+import com.flowci.core.common.domain.StatusCode;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.CIException;
 import org.springframework.http.HttpStatus;

@@ -17,8 +17,8 @@
 package com.flowci.core.message;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.domain.PushBody;
-import com.flowci.core.domain.PushEvent;
+import com.flowci.core.common.domain.PushBody;
+import com.flowci.core.common.domain.PushEvent;
 import java.io.IOException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;

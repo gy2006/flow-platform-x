@@ -19,7 +19,7 @@ package com.flowci.core.test.flow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.flowci.core.domain.StatusCode;
+import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.domain.http.ResponseMessage;

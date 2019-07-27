@@ -22,7 +22,7 @@ import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.manager.QueueManager;
 import com.flowci.core.config.ConfigProperties;
-import com.flowci.core.domain.Variables;
+import com.flowci.core.common.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.common.helper.ThreadHelper;

@@ -14,37 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.core.domain;
+package com.flowci.core.common.domain;
 
 import java.io.Serializable;
-import java.util.Date;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
 
 /**
  * @author yang
  */
-@EqualsAndHashCode(of = {"id"})
-@ToString(of = {"id"})
 @Getter
 @Setter
-public abstract class Mongoable implements Serializable {
+@NoArgsConstructor
+public class PushBody implements Serializable {
 
-    @Id
-    @NonNull
-    protected String id;
+    private PushEvent event;
 
-    @CreatedDate
-    protected Date createdAt;
+    private Object body;
 
-    @LastModifiedDate
-    protected Date updatedAt;
-
-    protected String createdBy;
+    public PushBody(PushEvent event, Object body) {
+        this.event = event;
+        this.body = body;
+    }
 }

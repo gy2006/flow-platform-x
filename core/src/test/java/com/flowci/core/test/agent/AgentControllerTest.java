@@ -25,7 +25,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.domain.CreateOrUpdateAgent;
-import com.flowci.core.domain.StatusCode;
+import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.Agent;

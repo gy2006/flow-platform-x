@@ -17,7 +17,7 @@
 package com.flowci.core.agent.consumer;
 
 import com.flowci.core.agent.event.StatusChangeEvent;
-import com.flowci.core.domain.PushEvent;
+import com.flowci.core.common.domain.PushEvent;
 import com.flowci.core.message.PushService;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;

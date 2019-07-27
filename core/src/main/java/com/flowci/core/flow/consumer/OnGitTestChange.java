@@ -16,7 +16,7 @@
 
 package com.flowci.core.flow.consumer;
 
-import com.flowci.core.domain.PushEvent;
+import com.flowci.core.common.domain.PushEvent;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.event.GitTestEvent.Status;
 import com.flowci.core.message.PushService;

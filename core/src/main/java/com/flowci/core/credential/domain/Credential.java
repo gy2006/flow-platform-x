@@ -16,7 +16,7 @@
 
 package com.flowci.core.credential.domain;
 
-import com.flowci.core.domain.Mongoable;
+import com.flowci.core.common.domain.Mongoable;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
