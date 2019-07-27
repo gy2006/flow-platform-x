@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.message;
+package com.flowci.core.common.manager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.PushBody;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class PushServiceImpl implements PushService {
+public class PushService {
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -38,7 +38,6 @@ public class PushServiceImpl implements PushService {
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
-    @Override
     public void push(String topic, PushEvent event, Object obj) {
         try {
             PushBody push = new PushBody(event, obj);

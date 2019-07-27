@@ -19,7 +19,6 @@ package com.flowci.core.flow.consumer;
 import com.flowci.core.common.domain.PushEvent;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.event.GitTestEvent.Status;
-import com.flowci.core.message.PushService;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;

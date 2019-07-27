@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.mongo;
+package com.flowci.core.common.mongo;
 
 import java.util.HashMap;
 import java.util.Map;

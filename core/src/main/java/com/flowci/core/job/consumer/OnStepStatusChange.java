@@ -19,7 +19,6 @@ package com.flowci.core.job.consumer;
 import com.flowci.core.common.domain.PushEvent;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.StepStatusChangeEvent;
-import com.flowci.core.message.PushService;
 import com.flowci.domain.ExecutedCmd;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.mongo;
+package com.flowci.core.common.mongo;
 
 import org.springframework.data.mongodb.core.mapping.BasicMongoPersistentEntity;
 import org.springframework.data.util.TypeInformation;

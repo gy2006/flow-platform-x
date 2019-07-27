@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.coverter;
+package com.flowci.core.common.coverter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.domain.VariableMap;
