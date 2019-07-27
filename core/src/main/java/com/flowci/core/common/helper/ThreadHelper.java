@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.helper;
+package com.flowci.core.common.helper;
 
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 

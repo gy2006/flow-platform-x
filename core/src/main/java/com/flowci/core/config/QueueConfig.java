@@ -22,6 +22,7 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -57,13 +58,15 @@ public class QueueConfig {
     @Bean("jobQueue")
     public Queue jobQueue() {
         String jobQueue = jobProperties.getQueueName();
-        return new Queue(jobQueue, true);
+        return QueueBuilder.durable(jobQueue)
+            .withArgument("x-max-priority", 255)
+            .build();
     }
 
     @Bean("callbackQueue")
     public Queue callbackQueue() {
         String callbackQueue = jobProperties.getCallbackQueueName();
-        return new Queue(callbackQueue, true);
+        return QueueBuilder.durable(callbackQueue).build();
     }
 
     @Bean("logsExchange")

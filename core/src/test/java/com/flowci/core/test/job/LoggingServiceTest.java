@@ -1,6 +1,6 @@
 package com.flowci.core.test.job;
 
-import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.ExecutedCmd;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.helper;
+package com.flowci.core.common.helper;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;

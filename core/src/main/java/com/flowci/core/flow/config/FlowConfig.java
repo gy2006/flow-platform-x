@@ -16,8 +16,8 @@
 
 package com.flowci.core.flow.config;
 
-import com.flowci.core.helper.CacheHelper;
-import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.common.helper.CacheHelper;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import java.util.List;
 import java.util.Properties;

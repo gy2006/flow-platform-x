@@ -19,7 +19,7 @@ package com.flowci.core.test.agent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.config.ConfigProperties;
-import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;

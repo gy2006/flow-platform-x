@@ -20,11 +20,12 @@ import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.common.manager.QueueManager;
 import com.flowci.core.config.ConfigProperties;
 import com.flowci.core.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobNumberDao;
 import com.flowci.core.job.domain.CmdId;
@@ -66,7 +67,6 @@ import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -108,9 +108,6 @@ public class JobServiceImpl implements JobService {
     private ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
-    private RabbitTemplate queueTemplate;
-
-    @Autowired
     private Queue jobQueue;
 
     @Autowired
@@ -124,6 +121,9 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private YmlManager ymlManager;
+
+    @Autowired
+    private QueueManager queueManager;
 
     @Autowired
     private AgentService agentService;
@@ -585,7 +585,7 @@ public class JobServiceImpl implements JobService {
 
         try {
             setJobStatus(job, Job.Status.QUEUED, null);
-            queueTemplate.convertAndSend(jobQueue.getName(), job);
+            queueManager.send(jobQueue.getName(), job, 255);
             return job;
         } catch (Throwable e) {
             throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());

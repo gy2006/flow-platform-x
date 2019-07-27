@@ -16,7 +16,7 @@
 
 package com.flowci.core.config;
 
-import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.exception.CIException;
 import com.flowci.zookeeper.LocalServer;
 import com.flowci.zookeeper.ZookeeperClient;

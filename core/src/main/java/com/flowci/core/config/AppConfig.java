@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flowci.core.adviser.AuthInterceptor;
 import com.flowci.core.adviser.CrosInterceptor;
 import com.flowci.core.domain.JsonablePage;
-import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.user.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;

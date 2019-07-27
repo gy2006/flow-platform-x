@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.helper;
+package com.flowci.core.common.helper;
 
 import org.springframework.core.task.TaskExecutor;
 
