@@ -23,12 +23,12 @@ import org.springframework.context.ApplicationEvent;
 /**
  * @author yang
  */
-public class StatusChangeEvent extends ApplicationEvent {
+public class AgentStatusChangeEvent extends ApplicationEvent {
 
     @Getter
     private final Agent agent;
 
-    public StatusChangeEvent(Object source, Agent agent) {
+    public AgentStatusChangeEvent(Object source, Agent agent) {
         super(source);
         this.agent = agent;
     }

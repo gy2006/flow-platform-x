@@ -16,7 +16,7 @@
 
 package com.flowci.core.test;
 
-import com.flowci.core.agent.event.StatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
@@ -61,7 +61,7 @@ public abstract class ZookeeperScenario extends SpringScenario {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
 
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<StatusChangeEvent>) event -> {
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
             wrapper.setValue(event.getAgent());
             counter.countDown();
         });
@@ -81,7 +81,7 @@ public abstract class ZookeeperScenario extends SpringScenario {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
 
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<StatusChangeEvent>) event -> {
+        applicationEventMulticaster.addApplicationListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
             wrapper.setValue(event.getAgent());
             counter.countDown();
         });

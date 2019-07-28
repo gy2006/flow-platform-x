@@ -17,7 +17,7 @@
 package com.flowci.core.test.job;
 
 import com.flowci.core.agent.event.CmdSentEvent;
-import com.flowci.core.agent.event.StatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
@@ -202,7 +202,7 @@ public class JobServiceTest extends ZookeeperScenario {
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
 
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // then: executed cmd should be saved
         ExecutedCmd saved = executedCmdDao.findById(executedCmd.getId()).get();
@@ -229,7 +229,7 @@ public class JobServiceTest extends ZookeeperScenario {
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
 
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // then: executed cmd of second node should be saved
         saved = executedCmdDao.findById(executedCmd.getId()).get();
@@ -265,7 +265,7 @@ public class JobServiceTest extends ZookeeperScenario {
         executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
         executedCmd.setOutput(output);
 
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // then: executed cmd should be recorded
         Assert.assertNotNull(executedCmdDao.findById(executedCmd.getId()).get());
@@ -290,7 +290,7 @@ public class JobServiceTest extends ZookeeperScenario {
         executedCmd.setStatus(ExecutedCmd.Status.TIMEOUT);
         executedCmd.setOutput(output);
 
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // then: executed cmd of second node should be recorded
         Assert.assertNotNull(executedCmdDao.findById(executedCmd.getId()).get());
@@ -314,14 +314,14 @@ public class JobServiceTest extends ZookeeperScenario {
         String cmdId = cmdManager.createId(job, firstNode).toString();
         ExecutedCmd executedCmd = new ExecutedCmd(cmdId, job.getFlowId(), firstNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // when: set final node as success status
         Node secondNode = tree.next(firstNode.getPath());
         cmdId = cmdManager.createId(job, secondNode).toString();
         executedCmd = new ExecutedCmd(cmdId, job.getFlowId(), secondNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // then: job status should be failure since final node does not count to step
         job = jobDao.findById(job.getId()).get();
@@ -402,7 +402,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         agent.setJobId(job.getId());
         agent.setStatus(Agent.Status.OFFLINE);
-        applicationEventMulticaster.multicastEvent(new StatusChangeEvent(this, agent));
+        applicationEventMulticaster.multicastEvent(new AgentStatusChangeEvent(this, agent));
 
         // then: job should be cancelled
         waitForCancelled.await();

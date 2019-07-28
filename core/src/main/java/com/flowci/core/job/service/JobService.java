@@ -88,5 +88,5 @@ public interface JobService {
     /**
      * Process executed cmd callback from queue
      */
-    void processCallback(ExecutedCmd execCmd);
+    void handleCallback(ExecutedCmd execCmd);
 }

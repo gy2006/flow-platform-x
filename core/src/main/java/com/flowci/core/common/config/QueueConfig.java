@@ -24,12 +24,10 @@ import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,7 +44,7 @@ public class QueueConfig {
 
     private static final Integer MaxPriority = 255;
 
-    private final Jackson2JsonMessageConverter jsonMessageConverter =
+    public static final Jackson2JsonMessageConverter JACKSON_2_JSON_MESSAGE_CONVERTER =
         new Jackson2JsonMessageConverter(Jsonable.getMapper());
 
     @Autowired
@@ -90,31 +88,10 @@ public class QueueConfig {
         return binding;
     }
 
-    @Bean("jobAndCallbackContainerFactory")
-    public SimpleRabbitListenerContainerFactory jobAndCallbackContainerFactory(ConnectionFactory connectionFactory) {
-        return createContainerFactory(connectionFactory, 1, jsonMessageConverter);
-    }
-
-    @Bean("logsContainerFactory")
-    public SimpleRabbitListenerContainerFactory logsContainerFactory(ConnectionFactory connectionFactory) {
-        return createContainerFactory(connectionFactory, 1, null);
-    }
-
     @Bean("queueTemplate")
     public RabbitTemplate rabbitTemplate(ConnectionFactory factory) {
         RabbitTemplate template = new RabbitTemplate(factory);
-        template.setMessageConverter(jsonMessageConverter);
+        template.setMessageConverter(JACKSON_2_JSON_MESSAGE_CONVERTER);
         return template;
-    }
-
-    private SimpleRabbitListenerContainerFactory createContainerFactory(ConnectionFactory connectionFactory,
-                                                                        int concurrent,
-                                                                        MessageConverter converter) {
-        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
-        factory.setConcurrentConsumers(concurrent);
-        factory.setMaxConcurrentConsumers(concurrent);
-        factory.setMessageConverter(converter);
-        return factory;
     }
 }

@@ -45,4 +45,12 @@ public abstract class ThreadHelper {
 
         }
     }
+
+    public static void wait(Object o, long millis) {
+        try {
+            o.wait(millis);
+        } catch (InterruptedException ignore) {
+
+        }
+    }
 }

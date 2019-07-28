@@ -18,7 +18,7 @@ package com.flowci.core.job.service;
 
 import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
-import com.flowci.core.agent.event.StatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
@@ -130,6 +130,12 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private StepService stepService;
+
+    //====================================================================
+    //        %% Private variables
+    //====================================================================
+
+    private final Object waitForAgent = new Object();
 
     //====================================================================
     //        %% Public function
@@ -285,9 +291,23 @@ public class JobServiceImpl implements JobService {
         start(job);
     }
 
-    @EventListener(value = StatusChangeEvent.class)
-    public void onApplicationEvent(StatusChangeEvent event) {
+    @EventListener(value = AgentStatusChangeEvent.class)
+    public void notifyToFindAvailableAgent(AgentStatusChangeEvent event) {
         Agent agent = event.getAgent();
+
+        if (agent.getStatus() != Status.IDLE) {
+            return;
+        }
+
+        synchronized (waitForAgent) {
+            waitForAgent.notifyAll();
+        }
+    }
+
+    @EventListener(value = AgentStatusChangeEvent.class)
+    public void updateJobAndStep(AgentStatusChangeEvent event) {
+        Agent agent = event.getAgent();
+
         if (agent.getStatus() != Status.OFFLINE || Objects.isNull(agent.getJobId())) {
             return;
         }
@@ -315,7 +335,7 @@ public class JobServiceImpl implements JobService {
     //====================================================================
 
     @Override
-    @RabbitListener(queues = "${app.job.queue-name}", containerFactory = "jobAndCallbackContainerFactory")
+    @RabbitListener(queues = "${app.job.queue-name}", containerFactory = "jobQueueContainerFactory")
     public void handleJob(Job job) {
         log.debug("Job {} received from queue", job.getId());
         applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
@@ -325,12 +345,26 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
-        dispatch(job);
+        Agent available;
+
+        synchronized (waitForAgent) {
+            while ((available = findAvailableAgent(job)) == null) {
+                ThreadHelper.wait(waitForAgent, 10 * 1000);
+                log.debug("Job '{}' not find available agent, waiting.....", job.getId());
+                if (isExpired(job)) {
+                    setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
+                    log.debug("Job '{}' is expired", job.getId());
+                    return;
+                }
+            }
+        }
+
+        dispatch(job, available);
     }
 
     @Override
-    @RabbitListener(queues = "${app.job.callback-queue-name}", containerFactory = "jobAndCallbackContainerFactory")
-    public void processCallback(ExecutedCmd execCmd) {
+    @RabbitListener(queues = "${app.job.callback-queue-name}", containerFactory = "callbackQueueContainerFactory")
+    public void handleCallback(ExecutedCmd execCmd) {
         CmdId cmdId = CmdId.parse(execCmd.getId());
         if (Objects.isNull(cmdId)) {
             log.debug("Illegal cmd callback: {}", execCmd.getId());
@@ -373,15 +407,14 @@ public class JobServiceImpl implements JobService {
 
         // find next node
         Node next = findNext(job, tree, node, execCmd.isSuccess());
+        Agent current = agentService.get(job.getAgentId());
 
         // job finished
         if (Objects.isNull(next)) {
             Job.Status statusFromContext = Job.Status.valueOf(job.getContext().get(Variables.Job.Status));
             setJobStatusAndSave(job, statusFromContext, execCmd.getError());
 
-            Agent agent = agentService.get(job.getAgentId());
-            agentService.tryRelease(agent);
-
+            agentService.tryRelease(current);
             log.info("Job {} been executed with status {}", job.getId(), statusFromContext);
             return;
         }
@@ -391,7 +424,7 @@ public class JobServiceImpl implements JobService {
         jobDao.save(job);
 
         log.debug("Send job {} step {} to agent", job.getKey(), node.getName());
-        sendToAgent(job, next);
+        sendToAgent(job, next, current);
     }
 
     //====================================================================
@@ -401,42 +434,8 @@ public class JobServiceImpl implements JobService {
     /**
      * Find available agent and dispatch job
      */
-    private void dispatch(Job job) {
-        // find available agents
-        Set<String> agentTags = job.getAgentSelector().getTags();
-        List<Agent> agents = agentService.find(Status.IDLE, agentTags);
-
-        // re-enqueue to job while agent not found
-        if (agents.isEmpty()) {
-            log.debug("Agent not available, job {} retry", job.getId());
-            retry(job);
-            return;
-        }
-
-        Boolean isLocked = Boolean.FALSE;
-        Agent available = null;
-        Iterator<Agent> availableList = agents.iterator();
-
-        // try to lock it
-        while (availableList.hasNext()) {
-            Agent agent = availableList.next();
-            agent.setJobId(job.getId());
-
-            isLocked = agentService.tryLock(agent);
-            if (isLocked) {
-                available = agent;
-                break;
-            }
-
-            availableList.remove();
-        }
-
-        // re-enqueue to job while agent been locked by other
-        if (!isLocked) {
-            log.debug("Agent not found for job {}, put into the retrying queue", job.getId());
-            retry(job);
-            return;
-        }
+    private void dispatch(Job job, Agent available) {
+        log.debug("Job '{}' will be dispatched to agent {}", job.getId(), available.getId());
 
         NodeTree tree = ymlManager.getTree(job);
         Node next = tree.next(currentNodePath(job));
@@ -458,20 +457,43 @@ public class JobServiceImpl implements JobService {
         Boolean executed = executeBeforeCondition(job, next);
         if (!executed) {
             ExecutedCmd executedCmd = stepService.get(job, next);
-            processCallback(executedCmd);
+            handleCallback(executedCmd);
             return;
         }
 
         // dispatch job to agent queue
-        sendToAgent(job, next);
+        sendToAgent(job, next, available);
+    }
+
+    private Agent findAvailableAgent(Job job) {
+        Set<String> agentTags = job.getAgentSelector().getTags();
+        List<Agent> agents = agentService.find(Status.IDLE, agentTags);
+
+        if (agents.isEmpty()) {
+            return null;
+        }
+
+        Iterator<Agent> availableList = agents.iterator();
+
+        // try to lock it
+        while (availableList.hasNext()) {
+            Agent agent = availableList.next();
+            agent.setJobId(job.getId());
+
+            if (agentService.tryLock(agent)) {
+                return agent;
+            }
+
+            availableList.remove();
+        }
+
+        return null;
     }
 
     /**
      * Send step to agent
      */
-    private void sendToAgent(Job job, Node node) {
-        Agent agent = agentService.get(job.getAgentId());
-
+    private void sendToAgent(Job job, Node node, Agent agent) {
         // set executed cmd step to running
         ExecutedCmd executedCmd = stepService.get(job, node);
 
@@ -580,7 +602,7 @@ public class JobServiceImpl implements JobService {
     private Job enqueue(Job job) {
         if (isExpired(job)) {
             setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
-            log.warn("Job '{}' is expired", job);
+            log.debug("Job '{}' is expired", job);
             return job;
         }
 
