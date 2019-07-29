@@ -25,6 +25,7 @@ import com.flowci.core.common.manager.QueueManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobNumberDao;
 import com.flowci.core.job.domain.CmdId;
@@ -272,6 +273,13 @@ public class JobServiceImpl implements JobService {
     //====================================================================
     //        %% Internal events
     //====================================================================
+
+    @EventListener(value = FlowOperationEvent.class)
+    public void onFlowDeleted(FlowOperationEvent event) {
+        if (event.isDeletedEvent()) {
+            delete(event.getFlow());
+        }
+    }
 
     @EventListener(value = CreateNewJobEvent.class)
     public void onApplicationEvent(CreateNewJobEvent event) {

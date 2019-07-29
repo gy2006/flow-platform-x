@@ -24,9 +24,9 @@ import org.springframework.context.ApplicationEvent;
 public class FlowOperationEvent extends ApplicationEvent {
 
     public enum Operation {
-        CREATE,
+        CREATED,
 
-        DELETE
+        DELETED
     }
 
     @Getter
@@ -39,5 +39,13 @@ public class FlowOperationEvent extends ApplicationEvent {
         super(source);
         this.flow = flow;
         this.operation = operation;
+    }
+
+    public boolean isDeletedEvent() {
+        return this.operation == Operation.DELETED;
+    }
+
+    public boolean isCreatedEvent() {
+        return this.operation == Operation.CREATED;
     }
 }

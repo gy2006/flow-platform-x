@@ -94,9 +94,6 @@ public class FlowServiceImpl implements FlowService {
     private CronService cronService;
 
     @Autowired
-    private JobService jobService;
-
-    @Autowired
     private CredentialService credentialService;
 
     @Autowired
@@ -173,7 +170,7 @@ public class FlowServiceImpl implements FlowService {
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
         flowDao.save(flow);
-        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATE));
+        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATED));
 
         return flow;
     }
@@ -228,9 +225,7 @@ public class FlowServiceImpl implements FlowService {
 
         }
 
-        jobService.delete(flow);
-        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.DELETE));
-
+        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.DELETED));
         return flow;
     }
 
