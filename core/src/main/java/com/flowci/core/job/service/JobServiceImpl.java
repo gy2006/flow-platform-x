@@ -16,14 +16,13 @@
 
 package com.flowci.core.job.service;
 
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
-
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.common.manager.QueueManager;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.dao.JobDao;
@@ -33,11 +32,7 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
-import com.flowci.core.job.event.CreateNewJobEvent;
-import com.flowci.core.job.event.JobCreatedEvent;
-import com.flowci.core.job.event.JobDeletedEvent;
-import com.flowci.core.job.event.JobReceivedEvent;
-import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.job.event.*;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
@@ -50,25 +45,12 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.GroovyRunner;
-import com.flowci.tree.Node;
-import com.flowci.tree.NodePath;
-import com.flowci.tree.NodeTree;
-import com.flowci.tree.YmlParser;
+import com.flowci.tree.*;
 import groovy.util.ScriptException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -76,6 +58,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 /**
  * @author yang
@@ -105,9 +93,6 @@ public class JobServiceImpl implements JobService {
     private JobNumberDao jobNumberDao;
 
     @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
-
-    @Autowired
     private Queue jobQueue;
 
     @Autowired
@@ -124,6 +109,9 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private QueueManager queueManager;
+
+    @Autowired
+    private SpringEventManager eventManager;
 
     @Autowired
     private AgentService agentService;
@@ -159,7 +147,7 @@ public class JobServiceImpl implements JobService {
 
         if (Objects.isNull(job)) {
             throw new NotFoundException(
-                "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
+                    "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
         }
 
         return job;
@@ -228,7 +216,7 @@ public class JobServiceImpl implements JobService {
         // init job steps as executed cmd
         stepService.init(job);
 
-        applicationEventPublisher.publishEvent(new JobCreatedEvent(this, job));
+        eventManager.publish(new JobCreatedEvent(this, job));
         return job;
     }
 
@@ -271,7 +259,7 @@ public class JobServiceImpl implements JobService {
             Long numOfStepDeleted = stepService.delete(flow.getId());
             log.info("Deleted: {} steps of flow {}", numOfStepDeleted, flow.getName());
 
-            applicationEventPublisher.publishEvent(new JobDeletedEvent(this, flow, numOfJobDeleted));
+            eventManager.publish(new JobDeletedEvent(this, flow, numOfJobDeleted));
         });
     }
 
@@ -338,7 +326,7 @@ public class JobServiceImpl implements JobService {
     @RabbitListener(queues = "${app.job.queue-name}", containerFactory = "jobQueueContainerFactory")
     public void handleJob(Job job) {
         log.debug("Job {} received from queue", job.getId());
-        applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
+        eventManager.publish(new JobReceivedEvent(this, job));
 
         if (!job.isQueuing()) {
             log.info("Job {} cannot be process since status not queuing", job.getId());
@@ -620,7 +608,7 @@ public class JobServiceImpl implements JobService {
         job.setMessage(message);
         job.getContext().put(Variables.Job.Status, newStatus.name());
         jobDao.save(job);
-        applicationEventPublisher.publishEvent(new JobStatusChangeEvent(this, job));
+        eventManager.publish(new JobStatusChangeEvent(this, job));
         return job;
     }
 

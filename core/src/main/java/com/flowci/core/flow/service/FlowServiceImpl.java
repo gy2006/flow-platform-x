@@ -17,24 +17,22 @@
 package com.flowci.core.flow.service;
 
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.domain.Variables;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.credential.service.CredentialService;
-import com.flowci.core.common.domain.Variables;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.job.service.JobService;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.domain.VariableMap;
-import com.flowci.exception.AccessException;
-import com.flowci.exception.ArgumentException;
-import com.flowci.exception.DuplicateException;
-import com.flowci.exception.NotAvailableException;
-import com.flowci.exception.NotFoundException;
+import com.flowci.exception.*;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
@@ -45,13 +43,6 @@ import com.google.common.base.Strings;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
@@ -64,9 +55,15 @@ import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.util.FS;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * @author yang
@@ -103,7 +100,7 @@ public class FlowServiceImpl implements FlowService {
     private CredentialService credentialService;
 
     @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    private SpringEventManager eventManager;
 
     @Autowired
     private Template defaultYmlTemplate;
@@ -175,7 +172,10 @@ public class FlowServiceImpl implements FlowService {
         vars.put(Variables.Flow.Name, name);
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
-        return flowDao.save(flow);
+        flowDao.save(flow);
+        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATE));
+
+        return flow;
     }
 
     @Override
@@ -229,6 +229,8 @@ public class FlowServiceImpl implements FlowService {
         }
 
         jobService.delete(flow);
+        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.DELETE));
+
         return flow;
     }
 
@@ -376,7 +378,7 @@ public class FlowServiceImpl implements FlowService {
         public void run() {
             try (PrivateKeySessionFactory sessionFactory = new PrivateKeySessionFactory(privateKey)) {
                 // publish FETCHING event
-                applicationEventPublisher.publishEvent(new GitTestEvent(this, flowId));
+                eventManager.publish(new GitTestEvent(this, flowId));
 
                 Collection<Ref> refs = Git.lsRemoteRepository()
                     .setRemote(url)
@@ -396,11 +398,11 @@ public class FlowServiceImpl implements FlowService {
                 gitBranchCache.put(flowId, branches);
 
                 // publish DONE event
-                applicationEventPublisher.publishEvent(new GitTestEvent(this, flowId, branches));
+                eventManager.publish(new GitTestEvent(this, flowId, branches));
 
             } catch (IOException | GitAPIException e) {
                 // publish ERROR event
-                applicationEventPublisher.publishEvent(new GitTestEvent(this, flowId, e.getMessage()));
+                eventManager.publish(new GitTestEvent(this, flowId, e.getMessage()));
             }
         }
     }

@@ -18,9 +18,10 @@ package com.flowci.core.agent.service;
 
 import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.agent.domain.AgentInit;
-import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
@@ -31,12 +32,6 @@ import com.flowci.util.ObjectsHelper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -48,14 +43,17 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import java.util.*;
+
 /**
  * Manage agent from zookeeper nodes
- *  - The ephemeral node present agent, path is /{root}/{agent id}
- *  - The persistent node present agent of lock, path is /{root}/{agent id}-lock, managed by server side
+ * - The ephemeral node present agent, path is /{root}/{agent id}
+ * - The persistent node present agent of lock, path is /{root}/{agent id}-lock, managed by server side
+ *
  * @author yang
  */
 @Log4j2
@@ -80,7 +78,7 @@ public class AgentServiceImpl implements AgentService {
     private RabbitTemplate queueTemplate;
 
     @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    private SpringEventManager eventManager;
 
     @Autowired
     private Settings baseSettings;
@@ -274,12 +272,12 @@ public class AgentServiceImpl implements AgentService {
     @Override
     public void dispatch(Cmd cmd, Agent agent) {
         queueTemplate.convertAndSend(agent.getQueueName(), cmd);
-        applicationEventPublisher.publishEvent(new CmdSentEvent(this, agent, cmd));
+        eventManager.publish(new CmdSentEvent(this, agent, cmd));
     }
 
     /**
      * Get agent id from zookeeper path
-     *
+     * <p>
      * Ex: /agents/123123, should get 123123
      */
     private static String getAgentIdFromPath(String path) {
@@ -289,7 +287,8 @@ public class AgentServiceImpl implements AgentService {
 
     /**
      * Update agent status from ZK and DB
-     * @param agent target agent
+     *
+     * @param agent  target agent
      * @param status new status
      */
     private void updateAgentStatus(Agent agent, Status status) {
@@ -313,7 +312,7 @@ public class AgentServiceImpl implements AgentService {
             log.warn("Unable to update status on zk node: {}", e.getMessage());
         } finally {
             agentDao.save(agent);
-            applicationEventPublisher.publishEvent(new AgentStatusChangeEvent(this, agent));
+            eventManager.publish(new AgentStatusChangeEvent(this, agent));
         }
     }
 
@@ -350,9 +349,9 @@ public class AgentServiceImpl implements AgentService {
     private class RootNodeListener implements PathChildrenCacheListener {
 
         private final Set<Type> ChildOperations = ImmutableSet.of(
-            Type.CHILD_ADDED,
-            Type.CHILD_REMOVED,
-            Type.CHILD_UPDATED
+                Type.CHILD_ADDED,
+                Type.CHILD_REMOVED,
+                Type.CHILD_UPDATED
         );
 
         @Override
@@ -382,12 +381,12 @@ public class AgentServiceImpl implements AgentService {
                 log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(), Status.IDLE);
                 return;
             }
-            
+
             if (event.getType() == Type.CHILD_REMOVED) {
                 syncLockNode(agent, Type.CHILD_REMOVED);
                 updateAgentStatus(agent, Status.OFFLINE);
                 log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(),
-                    Status.OFFLINE);
+                        Status.OFFLINE);
                 return;
             }
 
