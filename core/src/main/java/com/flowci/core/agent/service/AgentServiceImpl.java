@@ -39,7 +39,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
-import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -248,7 +248,7 @@ public class AgentServiceImpl implements AgentService {
 
         try {
             agentDao.insert(agent);
-            rabbitAdmin.declareQueue(new Queue(agent.getQueueName()));
+            rabbitAdmin.declareQueue(QueueBuilder.nonDurable(agent.getQueueName()).build());
             return agent;
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Agent name {0} is already defined", name);

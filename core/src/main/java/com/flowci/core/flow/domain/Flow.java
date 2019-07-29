@@ -16,6 +16,7 @@
 
 package com.flowci.core.flow.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
 import com.flowci.domain.VariableMap;
 import lombok.Getter;
@@ -54,5 +55,10 @@ public final class Flow extends Mongoable {
 
     public Flow(String name) {
         this.name = name;
+    }
+
+    @JsonIgnore
+    public String getQueueName() {
+        return "queue.flow." + id + ".job";
     }
 }

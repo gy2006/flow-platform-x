@@ -49,7 +49,6 @@ import com.flowci.exception.StatusException;
 import com.flowci.tree.*;
 import groovy.util.ScriptException;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -92,9 +91,6 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private JobNumberDao jobNumberDao;
-
-    @Autowired
-    private Queue jobQueue;
 
     @Autowired
     private ThreadPoolTaskExecutor retryExecutor;
@@ -604,7 +600,7 @@ public class JobServiceImpl implements JobService {
 
         try {
             setJobStatusAndSave(job, Job.Status.QUEUED, null);
-            queueManager.send(jobQueue.getName(), job, job.getPriority());
+            queueManager.send(job.getQueueName(), job, job.getPriority());
             return job;
         } catch (Throwable e) {
             throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());

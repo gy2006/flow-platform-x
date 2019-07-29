@@ -29,7 +29,6 @@ import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
-import com.flowci.core.job.service.JobService;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.*;
@@ -54,10 +53,13 @@ import org.eclipse.jgit.transport.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.util.FS;
+import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -105,6 +107,16 @@ public class FlowServiceImpl implements FlowService {
     @Autowired
     private Cache<String, List<String>> gitBranchCache;
 
+    @Autowired
+    private RabbitAdmin rabbitAdmin;
+
+    @PostConstruct
+    public void initFlowJobQueue() {
+        for (Flow flow : flowDao.findAll()) {
+            createFlowJobQueue(flow);
+        }
+    }
+
     @Override
     public List<Flow> list(Status status) {
         String userId = currentUserHelper.get().getId();
@@ -118,7 +130,7 @@ public class FlowServiceImpl implements FlowService {
         List<Flow> list = list(Status.CONFIRMED);
         Iterator<Flow> iter = list.iterator();
 
-        for (;iter.hasNext();) {
+        for (; iter.hasNext(); ) {
             Flow flow = iter.next();
             String value = flow.getVariables().get(Variables.Flow.SSH_RSA);
 
@@ -170,6 +182,9 @@ public class FlowServiceImpl implements FlowService {
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
         flowDao.save(flow);
+
+        createFlowJobQueue(flow);
+
         eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATED));
 
         return flow;
@@ -225,6 +240,7 @@ public class FlowServiceImpl implements FlowService {
 
         }
 
+        removeFlowJobQueue(flow);
         eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.DELETED));
         return flow;
     }
@@ -337,6 +353,16 @@ public class FlowServiceImpl implements FlowService {
         });
     }
 
+    private void createFlowJobQueue(Flow flow) {
+        rabbitAdmin.declareQueue(QueueBuilder.durable(flow.getQueueName())
+                .withArgument("x-max-priority", 255)
+                .build());
+    }
+
+    private void removeFlowJobQueue(Flow flow) {
+        rabbitAdmin.deleteQueue(flow.getQueueName());
+    }
+
     private String getWebhook(String name) {
         return appProperties.getServerAddress() + "/webhooks/" + name;
     }
@@ -376,13 +402,13 @@ public class FlowServiceImpl implements FlowService {
                 eventManager.publish(new GitTestEvent(this, flowId));
 
                 Collection<Ref> refs = Git.lsRemoteRepository()
-                    .setRemote(url)
-                    .setHeads(true)
-                    .setTransportConfigCallback(transport -> {
-                        SshTransport sshTransport = (SshTransport) transport;
-                        sshTransport.setSshSessionFactory(sessionFactory);
-                    })
-                    .call();
+                        .setRemote(url)
+                        .setHeads(true)
+                        .setTransportConfigCallback(transport -> {
+                            SshTransport sshTransport = (SshTransport) transport;
+                            sshTransport.setSshSessionFactory(sessionFactory);
+                        })
+                        .call();
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();

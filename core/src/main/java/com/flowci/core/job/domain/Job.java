@@ -174,6 +174,11 @@ public class Job extends Mongoable {
         return this.priority;
     }
 
+    @JsonIgnore
+    public String getQueueName() {
+        return "queue.flow." + flowId + ".job";
+    }
+
     @Override
     public boolean equals(Object o) {
         return super.equals(o);

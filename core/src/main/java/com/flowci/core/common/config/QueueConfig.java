@@ -42,8 +42,6 @@ public class QueueConfig {
 
     private static final String LoggingExchange = "cmd.logs";
 
-    private static final Integer MaxPriority = 255;
-
     public static final Jackson2JsonMessageConverter JACKSON_2_JSON_MESSAGE_CONVERTER =
         new Jackson2JsonMessageConverter(Jsonable.getMapper());
 
@@ -53,14 +51,6 @@ public class QueueConfig {
     @Bean("queueAdmin")
     public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
         return new RabbitAdmin(connectionFactory);
-    }
-
-    @Bean("jobQueue")
-    public Queue jobQueue() {
-        String jobQueue = jobProperties.getQueueName();
-        return QueueBuilder.durable(jobQueue)
-            .withArgument("x-max-priority", MaxPriority)
-            .build();
     }
 
     @Bean("callbackQueue")
