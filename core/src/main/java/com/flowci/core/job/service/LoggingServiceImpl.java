@@ -17,6 +17,7 @@
 package com.flowci.core.job.service;
 
 import com.flowci.core.common.helper.CacheHelper;
+import com.flowci.core.common.manager.QueueManager;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.flowci.exception.NotFoundException;
@@ -24,19 +25,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.google.common.collect.ImmutableList;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -50,6 +38,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.stereotype.Service;
 
 /**
  * @author yang
@@ -59,15 +60,15 @@ import java.util.stream.Stream;
 public class LoggingServiceImpl implements LoggingService {
 
     private static final Page<String> LogNotFound = new PageImpl<>(
-            ImmutableList.of("Log not available"),
-            PageRequest.of(0, 1),
-            1L
+        ImmutableList.of("Log not available"),
+        PageRequest.of(0, 1),
+        1L
     );
 
     private static final int FileBufferSize = 8000; // ~8k
 
     private Cache<String, BufferedReader> logReaderCache =
-            CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
+        CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
 
     @Autowired
     private String topicForLogs;
@@ -78,19 +79,31 @@ public class LoggingServiceImpl implements LoggingService {
     @Autowired
     private Path logDir;
 
+    @Autowired
+    private ThreadPoolTaskExecutor jobLogExecutor;
+
+    @Autowired
+    private QueueManager queueManager;
+
+    @Autowired
+    private String loggingQueue;
+
+    @EventListener(ContextRefreshedEvent.class)
+    public void onStart() {
+        jobLogExecutor.execute(() -> queueManager.startListen(loggingQueue, this::handleLoggingItem));
+    }
+
     @Override
-    @RabbitListener(queues = "#{logsQueue.getName()}", containerFactory = "logsContainerFactory")
-    public void processLogItem(Message message) {
-        String logItemAsString = new String(message.getBody());
-        log.debug("[LOG]: {}", logItemAsString);
+    public void handleLoggingItem(String message) {
+        log.debug("[LOG]: {}", message);
 
         // find cmd id from log item string
-        int firstIndex = logItemAsString.indexOf(LogItem.SPLITTER);
-        String cmdId = logItemAsString.substring(0, firstIndex);
+        int firstIndex = message.indexOf(LogItem.SPLITTER);
+        String cmdId = message.substring(0, firstIndex);
         String destination = topicForLogs + "/" + cmdId;
 
         // send string message without cmd id
-        String body = logItemAsString.substring(firstIndex + 1);
+        String body = message.substring(firstIndex + 1);
         simpMessagingTemplate.convertAndSend(destination, body);
     }
 
@@ -106,8 +119,8 @@ public class LoggingServiceImpl implements LoggingService {
             int i = pageable.getPageNumber() * pageable.getPageSize();
 
             List<String> logs = lines.skip(i)
-                    .limit(pageable.getPageSize())
-                    .collect(Collectors.toList());
+                .limit(pageable.getPageSize())
+                .collect(Collectors.toList());
 
             return new PageImpl<>(logs, pageable, cmd.getLogSize());
         } finally {

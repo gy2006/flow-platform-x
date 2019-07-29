@@ -18,11 +18,16 @@ package com.flowci.core.common.config;
 
 import java.nio.file.Path;
 import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author yang
  */
 @Data
+@Configuration
+@ConfigurationProperties(prefix = "app")
 public class ConfigProperties {
 
     private Path workspace;
@@ -32,6 +37,36 @@ public class ConfigProperties {
     private Boolean authEnabled;
 
     private String serverAddress;
+
+    @Bean("adminProperties")
+    @ConfigurationProperties(prefix = "app.admin")
+    public Admin admin() {
+        return new Admin();
+    }
+
+    @Bean("zkProperties")
+    @ConfigurationProperties(prefix = "app.zookeeper")
+    public Zookeeper zk() {
+        return new Zookeeper();
+    }
+
+    @Bean("jobProperties")
+    @ConfigurationProperties(prefix = "app.job")
+    public Job job() {
+        return new Job();
+    }
+
+    @Bean("pluginProperties")
+    @ConfigurationProperties(prefix = "app.plugin")
+    public Plugin plugin() {
+        return new Plugin();
+    }
+
+    @Bean("rabbitProperties")
+    @ConfigurationProperties(prefix = "app.rabbitmq")
+    public RabbitMQ rabbitMQ() {
+        return new RabbitMQ();
+    }
 
     @Data
     public static class Admin {
@@ -78,5 +113,17 @@ public class ConfigProperties {
         private Integer retry;
 
         private String dataDir;
+    }
+
+    @Data
+    public static class RabbitMQ {
+
+        private String host;
+
+        private Integer port;
+
+        private String username;
+
+        private String password;
     }
 }

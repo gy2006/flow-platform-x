@@ -17,6 +17,7 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
+import com.flowci.core.common.manager.QueueManager;
 import com.flowci.core.test.SpringScenario.Config;
 import com.flowci.core.test.flow.FlowMockHelper;
 import com.flowci.core.user.CurrentUserHelper;
@@ -29,8 +30,6 @@ import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.junit.After;
 import org.junit.runner.RunWith;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -73,16 +72,13 @@ public abstract class SpringScenario {
     private UserService userService;
 
     @Autowired
-    private RabbitAdmin queueAdmin;
+    private String callbackQueue;
 
     @Autowired
-    private Queue jobQueue;
+    private String loggingQueue;
 
     @Autowired
-    private Queue callbackQueue;
-
-    @Autowired
-    private Queue logsQueue;
+    private QueueManager queueManager;
 
     @Autowired
     private AgentDao agentDao;
@@ -102,13 +98,12 @@ public abstract class SpringScenario {
 
     @After
     public void queueCleanUp() {
-        queueAdmin.purgeQueue(jobQueue.getName(), true);
-        queueAdmin.purgeQueue(callbackQueue.getName(), true);
-        queueAdmin.purgeQueue(logsQueue.getName(), true);
+        queueManager.purge(callbackQueue);
+        queueManager.purge(loggingQueue);
 
         List<Agent> all = agentDao.findAll();
         for (Agent agent : all) {
-            queueAdmin.deleteQueue(agent.getQueueName());
+            queueManager.delete(agent.getQueueName());
         }
     }
 

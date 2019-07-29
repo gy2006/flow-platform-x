@@ -7,8 +7,6 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,8 +19,6 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class LoggingServiceTest extends SpringScenario {
-
-    private static final MessageProperties MessageProperties = new MessageProperties();
 
     @Autowired
     private Path logDir;
@@ -43,8 +39,7 @@ public class LoggingServiceTest extends SpringScenario {
             item.setCmdId(cmdId);
             item.setNumber(1);
 
-            Message message = new Message(item.toBytes(), MessageProperties);
-            loggingService.processLogItem(message);
+            loggingService.handleLoggingItem(item.toString());
         }
 
         // write for periodically flash

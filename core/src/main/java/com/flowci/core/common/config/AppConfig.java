@@ -75,10 +75,10 @@ public class AppConfig {
     }
 
     @Autowired
-    private ConfigProperties appProperties;
+    private MultipartProperties multipartProperties;
 
     @Autowired
-    private MultipartProperties multipartProperties;
+    private ConfigProperties appProperties;
 
     @PostConstruct
     private void initWorkspace() throws IOException {

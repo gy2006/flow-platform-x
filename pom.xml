@@ -35,6 +35,7 @@
     <docker-java.version>3.0.14</docker-java.version>
     <cron-utils.version>7.0.5</cron-utils.version>
     <velocity-engine-core.version>2.1</velocity-engine-core.version>
+    <amqp-client.version>5.7.2</amqp-client.version>
   </properties>
 
   <build>
@@ -141,6 +142,12 @@
         <groupId>com.cronutils</groupId>
         <artifactId>cron-utils</artifactId>
         <version>${cron-utils.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.rabbitmq</groupId>
+        <artifactId>amqp-client</artifactId>
+        <version>${amqp-client.version}</version>
       </dependency>
 
       <dependency>

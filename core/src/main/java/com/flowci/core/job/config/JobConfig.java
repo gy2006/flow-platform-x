@@ -21,15 +21,20 @@ import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.tree.NodeTree;
+import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.rabbitmq.client.AMQP.Queue;
+import com.rabbitmq.client.AMQP.Queue.DeclareOk;
+import com.rabbitmq.client.BuiltinExchangeType;
+import com.rabbitmq.client.Channel;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
-import java.nio.file.Path;
-import java.util.List;
 
 /**
  * @author yang
@@ -38,8 +43,30 @@ import java.util.List;
 @Configuration
 public class JobConfig {
 
+    public final static String LoggingExchange = "cmd.logs";
+
     @Autowired
     private ConfigProperties appProperties;
+
+    @Autowired
+    private ConfigProperties.Job jobProperties;
+
+    @Autowired
+    private Channel rabbitChannel;
+
+    @Bean("callbackQueue")
+    public String callbackQueue() throws IOException {
+        String name = jobProperties.getCallbackQueueName();
+        return rabbitChannel.queueDeclare(name, true, false, false, null).getQueue();
+    }
+
+    @Bean("loggingQueue")
+    public String loggingQueue() throws IOException {
+        DeclareOk loggingQueue = rabbitChannel.queueDeclare();
+        rabbitChannel.exchangeDeclare(LoggingExchange, BuiltinExchangeType.FANOUT);
+        rabbitChannel.queueBind(loggingQueue.getQueue(), LoggingExchange, StringHelper.EMPTY);
+        return loggingQueue.getQueue();
+    }
 
     @Bean("logDir")
     public Path logDir() {
@@ -49,6 +76,11 @@ public class JobConfig {
     @Bean("jobDeleteExecutor")
     public ThreadPoolTaskExecutor jobDeleteExecutor() {
         return ThreadHelper.createTaskExecutor(1, 1, 10, "job-delete-");
+    }
+
+    @Bean("jobLogExecutor")
+    public ThreadPoolTaskExecutor jobLogExecutor() {
+        return ThreadHelper.createTaskExecutor(1, 1, 1, "job-logging-");
     }
 
     @Bean("jobConsumerExecutor")

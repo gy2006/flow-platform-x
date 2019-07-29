@@ -18,6 +18,7 @@ package com.flowci.core.flow.service;
 
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
+import com.flowci.core.common.manager.QueueManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
@@ -32,7 +33,11 @@ import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.domain.VariableMap;
-import com.flowci.exception.*;
+import com.flowci.exception.AccessException;
+import com.flowci.exception.ArgumentException;
+import com.flowci.exception.DuplicateException;
+import com.flowci.exception.NotAvailableException;
+import com.flowci.exception.NotFoundException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
@@ -43,6 +48,20 @@ import com.google.common.base.Strings;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
@@ -54,20 +73,11 @@ import org.eclipse.jgit.transport.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.util.FS;
-import org.springframework.amqp.core.QueueBuilder;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
 
 /**
  * @author yang
@@ -110,9 +120,9 @@ public class FlowServiceImpl implements FlowService {
     private Cache<String, List<String>> gitBranchCache;
 
     @Autowired
-    private RabbitAdmin rabbitAdmin;
+    private QueueManager queueManager;
 
-    @EventListener(ContextRefreshedEvent.class)
+    @EventListener
     public void onInit(ContextRefreshedEvent ignore) {
         List<Flow> all = flowDao.findAll();
 
@@ -360,13 +370,11 @@ public class FlowServiceImpl implements FlowService {
     }
 
     private void createFlowJobQueue(Flow flow) {
-        rabbitAdmin.declareQueue(QueueBuilder.durable(flow.getQueueName())
-                .withArgument("x-max-priority", 255)
-                .build());
+        queueManager.declare(flow.getQueueName(), true, 255);
     }
 
     private void removeFlowJobQueue(Flow flow) {
-        rabbitAdmin.deleteQueue(flow.getQueueName());
+        queueManager.delete(flow.getQueueName());
     }
 
     private String getWebhook(String name) {
@@ -408,13 +416,13 @@ public class FlowServiceImpl implements FlowService {
                 eventManager.publish(new GitTestEvent(this, flowId));
 
                 Collection<Ref> refs = Git.lsRemoteRepository()
-                        .setRemote(url)
-                        .setHeads(true)
-                        .setTransportConfigCallback(transport -> {
-                            SshTransport sshTransport = (SshTransport) transport;
-                            sshTransport.setSshSessionFactory(sessionFactory);
-                        })
-                        .call();
+                    .setRemote(url)
+                    .setHeads(true)
+                    .setTransportConfigCallback(transport -> {
+                        SshTransport sshTransport = (SshTransport) transport;
+                        sshTransport.setSshSessionFactory(sessionFactory);
+                    })
+                    .call();
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();

@@ -21,6 +21,7 @@ import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.manager.QueueManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
@@ -32,6 +33,12 @@ import com.flowci.util.ObjectsHelper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -39,15 +46,9 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
-import org.springframework.amqp.core.QueueBuilder;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import java.util.*;
 
 /**
  * Manage agent from zookeeper nodes
@@ -72,10 +73,7 @@ public class AgentServiceImpl implements AgentService {
     private AgentDao agentDao;
 
     @Autowired
-    private RabbitAdmin rabbitAdmin;
-
-    @Autowired
-    private RabbitTemplate queueTemplate;
+    private QueueManager queueManager;
 
     @Autowired
     private SpringEventManager eventManager;
@@ -248,7 +246,7 @@ public class AgentServiceImpl implements AgentService {
 
         try {
             agentDao.insert(agent);
-            rabbitAdmin.declareQueue(QueueBuilder.nonDurable(agent.getQueueName()).build());
+            queueManager.declare(agent.getQueueName(), false);
             return agent;
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Agent name {0} is already defined", name);
@@ -271,7 +269,7 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     public void dispatch(Cmd cmd, Agent agent) {
-        queueTemplate.convertAndSend(agent.getQueueName(), cmd);
+        queueManager.send(agent.getQueueName(), cmd);
         eventManager.publish(new CmdSentEvent(this, agent, cmd));
     }
 
@@ -349,9 +347,9 @@ public class AgentServiceImpl implements AgentService {
     private class RootNodeListener implements PathChildrenCacheListener {
 
         private final Set<Type> ChildOperations = ImmutableSet.of(
-                Type.CHILD_ADDED,
-                Type.CHILD_REMOVED,
-                Type.CHILD_UPDATED
+            Type.CHILD_ADDED,
+            Type.CHILD_REMOVED,
+            Type.CHILD_UPDATED
         );
 
         @Override
@@ -386,7 +384,7 @@ public class AgentServiceImpl implements AgentService {
                 syncLockNode(agent, Type.CHILD_REMOVED);
                 updateAgentStatus(agent, Status.OFFLINE);
                 log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(),
-                        Status.OFFLINE);
+                    Status.OFFLINE);
                 return;
             }
 

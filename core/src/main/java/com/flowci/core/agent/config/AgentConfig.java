@@ -17,10 +17,9 @@
 package com.flowci.core.agent.config;
 
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.job.config.JobConfig;
 import com.flowci.domain.Settings;
-import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -37,10 +36,7 @@ public class AgentConfig {
     private ConfigProperties.Job jobProperties;
 
     @Autowired
-    private RabbitProperties rabbitProperties;
-
-    @Autowired
-    private FanoutExchange logsExchange;
+    private ConfigProperties.RabbitMQ rabbitProperties;
 
     @Bean("baseSettings")
     public Settings baseSettings() {
@@ -58,7 +54,7 @@ public class AgentConfig {
         settings.setCallbackQueueName(jobProperties.getCallbackQueueName());
         settings.setZookeeper(zk);
         settings.setQueue(mq);
-        settings.setLogsExchangeName(logsExchange.getName());
+        settings.setLogsExchangeName(JobConfig.LoggingExchange);
 
         return settings;
     }
