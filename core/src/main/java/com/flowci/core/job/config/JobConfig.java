@@ -17,22 +17,19 @@
 package com.flowci.core.job.config;
 
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.common.config.QueueConfig;
 import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.tree.NodeTree;
 import com.github.benmanes.caffeine.cache.Cache;
-import java.nio.file.Path;
-import java.util.List;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.nio.file.Path;
+import java.util.List;
 
 /**
  * @author yang
@@ -49,14 +46,14 @@ public class JobConfig {
         return appProperties.getLogDir();
     }
 
-    @Bean("retryExecutor")
-    public ThreadPoolTaskExecutor retryExecutor() {
-        return ThreadHelper.createTaskExecutor(1, 1, 100, "job-retry-");
-    }
-
     @Bean("jobDeleteExecutor")
     public ThreadPoolTaskExecutor jobDeleteExecutor() {
         return ThreadHelper.createTaskExecutor(1, 1, 10, "job-delete-");
+    }
+
+    @Bean("jobConsumerExecutor")
+    public ThreadPoolTaskExecutor jobConsumerExecutor() {
+        return ThreadHelper.createTaskExecutor(100, 100, 0, "job-consumer-");
     }
 
     @Bean("jobTreeCache")
@@ -67,31 +64,5 @@ public class JobConfig {
     @Bean("jobStepCache")
     public Cache<String, List<ExecutedCmd>> jobStepCache() {
         return CacheHelper.createLocalCache(100, 60);
-    }
-
-    @Bean("callbackQueueContainerFactory")
-    public SimpleRabbitListenerContainerFactory callbackQueueContainerFactory(ConnectionFactory connectionFactory) {
-        return createContainerFactory(connectionFactory, 1, QueueConfig.JACKSON_2_JSON_MESSAGE_CONVERTER);
-    }
-
-    @Bean("jobQueueContainerFactory")
-    public SimpleRabbitListenerContainerFactory jobQueueContainerFactory(ConnectionFactory connectionFactory) {
-        return createContainerFactory(connectionFactory, 20, QueueConfig.JACKSON_2_JSON_MESSAGE_CONVERTER);
-    }
-
-    @Bean("logsContainerFactory")
-    public SimpleRabbitListenerContainerFactory logsContainerFactory(ConnectionFactory connectionFactory) {
-        return createContainerFactory(connectionFactory, 1, null);
-    }
-
-    private SimpleRabbitListenerContainerFactory createContainerFactory(ConnectionFactory connectionFactory,
-                                                                        int concurrent,
-                                                                        MessageConverter converter) {
-        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
-        factory.setConcurrentConsumers(concurrent);
-        factory.setMaxConcurrentConsumers(concurrent);
-        factory.setMessageConverter(converter);
-        return factory;
     }
 }

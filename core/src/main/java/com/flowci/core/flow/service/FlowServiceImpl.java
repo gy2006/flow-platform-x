@@ -27,6 +27,7 @@ import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.user.CurrentUserHelper;
@@ -56,10 +57,11 @@ import org.eclipse.jgit.util.FS;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -110,11 +112,15 @@ public class FlowServiceImpl implements FlowService {
     @Autowired
     private RabbitAdmin rabbitAdmin;
 
-    @PostConstruct
-    public void initFlowJobQueue() {
-        for (Flow flow : flowDao.findAll()) {
+    @EventListener(ContextRefreshedEvent.class)
+    public void onInit(ContextRefreshedEvent ignore) {
+        List<Flow> all = flowDao.findAll();
+
+        for (Flow flow : all) {
             createFlowJobQueue(flow);
         }
+
+        eventManager.publish(new FlowInitEvent(this, all));
     }
 
     @Override

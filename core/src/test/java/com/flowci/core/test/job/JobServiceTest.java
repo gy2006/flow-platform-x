@@ -160,7 +160,7 @@ public class JobServiceTest extends ZookeeperScenario {
             counter.countDown();
         });
 
-        jobService.handleJob(job);
+//        jobService.handleJob(job);
 
         // then: verify cmd been sent
         counter.await(10, TimeUnit.SECONDS);
