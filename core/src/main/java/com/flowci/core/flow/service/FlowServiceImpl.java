@@ -18,7 +18,7 @@ package com.flowci.core.flow.service;
 
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.core.common.manager.QueueManager;
+import com.flowci.core.common.helper.RabbitBuilder;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
@@ -64,6 +64,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.apache.curator.framework.recipes.queue.QueueBuilder;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.eclipse.jgit.api.Git;
@@ -120,7 +121,7 @@ public class FlowServiceImpl implements FlowService {
     private Cache<String, List<String>> gitBranchCache;
 
     @Autowired
-    private QueueManager queueManager;
+    private RabbitBuilder jobQueueManager;
 
     @EventListener
     public void onInit(ContextRefreshedEvent ignore) {
@@ -370,11 +371,11 @@ public class FlowServiceImpl implements FlowService {
     }
 
     private void createFlowJobQueue(Flow flow) {
-        queueManager.declare(flow.getQueueName(), true, 255);
+        jobQueueManager.declare(flow.getQueueName(), true, 255);
     }
 
     private void removeFlowJobQueue(Flow flow) {
-        queueManager.delete(flow.getQueueName());
+        jobQueueManager.delete(flow.getQueueName());
     }
 
     private String getWebhook(String name) {

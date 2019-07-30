@@ -16,12 +16,14 @@
 
 package com.flowci.core.agent.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.common.manager.QueueManager;
+import com.flowci.core.common.helper.RabbitBuilder;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
@@ -73,13 +75,16 @@ public class AgentServiceImpl implements AgentService {
     private AgentDao agentDao;
 
     @Autowired
-    private QueueManager queueManager;
+    private RabbitBuilder agentQueueManager;
 
     @Autowired
     private SpringEventManager eventManager;
 
     @Autowired
     private Settings baseSettings;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @PostConstruct
     public void initRootNode() {
@@ -246,7 +251,7 @@ public class AgentServiceImpl implements AgentService {
 
         try {
             agentDao.insert(agent);
-            queueManager.declare(agent.getQueueName(), false);
+            agentQueueManager.declare(agent.getQueueName(), false);
             return agent;
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Agent name {0} is already defined", name);
@@ -269,8 +274,13 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     public void dispatch(Cmd cmd, Agent agent) {
-        queueManager.send(agent.getQueueName(), cmd);
-        eventManager.publish(new CmdSentEvent(this, agent, cmd));
+        try {
+            byte[] body = objectMapper.writeValueAsBytes(cmd);
+            agentQueueManager.send(agent.getQueueName(), body);
+            eventManager.publish(new CmdSentEvent(this, agent, cmd));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

@@ -17,7 +17,7 @@
 package com.flowci.core.job.service;
 
 import com.flowci.core.common.helper.CacheHelper;
-import com.flowci.core.common.manager.QueueManager;
+import com.flowci.core.common.helper.RabbitBuilder;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.flowci.exception.NotFoundException;
@@ -25,11 +25,15 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.google.common.collect.ImmutableList;
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,7 +53,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 /**
@@ -80,17 +83,23 @@ public class LoggingServiceImpl implements LoggingService {
     private Path logDir;
 
     @Autowired
-    private ThreadPoolTaskExecutor jobLogExecutor;
-
-    @Autowired
-    private QueueManager queueManager;
+    private RabbitBuilder loggingQueueManager;
 
     @Autowired
     private String loggingQueue;
 
     @EventListener(ContextRefreshedEvent.class)
     public void onStart() {
-        jobLogExecutor.execute(() -> queueManager.startListen(loggingQueue, this::handleLoggingItem));
+        loggingQueueManager.start(loggingQueue, new DefaultConsumer(loggingQueueManager.getChannel()) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+                throws IOException {
+
+                final String msg = new String(body, StandardCharsets.UTF_8);
+                handleLoggingItem(msg);
+                getChannel().basicAck(envelope.getDeliveryTag(), false);
+            }
+        });
     }
 
     @Override

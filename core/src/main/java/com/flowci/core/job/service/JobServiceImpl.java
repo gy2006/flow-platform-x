@@ -23,7 +23,8 @@ import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.core.common.manager.QueueManager;
+import com.flowci.core.common.helper.RabbitBuilder;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
@@ -39,6 +40,7 @@ import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.CreateNewJobEvent;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobDeletedEvent;
+import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
@@ -57,6 +59,10 @@ import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 import groovy.util.ScriptException;
 import java.io.IOException;
 import java.time.Instant;
@@ -67,7 +73,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -122,9 +127,6 @@ public class JobServiceImpl implements JobService {
     private YmlManager ymlManager;
 
     @Autowired
-    private QueueManager queueManager;
-
-    @Autowired
     private SpringEventManager eventManager;
 
     @Autowired
@@ -134,9 +136,10 @@ public class JobServiceImpl implements JobService {
     private StepService stepService;
 
     @Autowired
-    private ThreadPoolTaskExecutor jobConsumerExecutor;
+    private RabbitBuilder callbackQueueManager;
 
-    private ConcurrentHashMap<String, JobConsumer> jobConsumerMap = new ConcurrentHashMap<>();
+    @Autowired
+    private RabbitBuilder jobQueueManager;
 
     //====================================================================
     //        %% Public function
@@ -295,17 +298,24 @@ public class JobServiceImpl implements JobService {
 
     @EventListener(value = ContextRefreshedEvent.class)
     public void startCallbackQueueConsumer(ContextRefreshedEvent event) {
-        queueManager.startListen(callbackQueue, (raw) -> {
-            ExecutedCmd executedCmd;
+        callbackQueueManager.start(callbackQueue, new DefaultConsumer(callbackQueueManager.getChannel()) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+                throws IOException {
 
-            try {
-                executedCmd = objectMapper.readValue(raw, ExecutedCmd.class);
-            } catch (IOException e) {
-                log.error(e.getMessage());
-                return;
+                ExecutedCmd executedCmd;
+
+                try {
+                    executedCmd = objectMapper.readValue(body, ExecutedCmd.class);
+                } catch (IOException e) {
+                    log.error(e.getMessage());
+                    return;
+                }
+
+                handleCallback(executedCmd);
+
+                getChannel().basicAck(envelope.getDeliveryTag(), false);
             }
-
-            handleCallback(executedCmd);
         });
     }
 
@@ -339,11 +349,7 @@ public class JobServiceImpl implements JobService {
         }
 
         Job current = get(agent.getJobId());
-        JobConsumer consumer = jobConsumerMap.get(current.getFlowId());
 
-        if (consumer != null) {
-            consumer.resume();
-        }
     }
 
     @EventListener(value = AgentStatusChangeEvent.class)
@@ -379,9 +385,7 @@ public class JobServiceImpl implements JobService {
     /**
      * Job queue consumer for each flow
      */
-    private class JobConsumer implements Runnable {
-
-        private final static long ConsumerInterval = 5 * 1000; // 5 seconds
+    private class JobConsumer extends DefaultConsumer {
 
         private final static long RetryIntervalOnNotFound = 30 * 1000; // 60 seconds
 
@@ -389,68 +393,48 @@ public class JobServiceImpl implements JobService {
 
         private final Object lock = new Object();
 
-        private Boolean stop = Boolean.FALSE;
-
-        JobConsumer(Flow flow) {
+        public JobConsumer(Channel channel, Flow flow) {
+            super(channel);
             this.flow = flow;
         }
 
         @Override
-        public void run() {
-//            log.debug("[Start] Job consumer for flow {}", flow.getId());
-//
-//            while (!stop) {
-//                try {
-//                    queueTemplate.receiveAndReply(flow.getQueueName(), (ReceiveAndReplyCallback<Job, Object>) job -> {
-//                        log.debug("Job {} received from queue", job.getId());
-//                        eventManager.publish(new JobReceivedEvent(this, job));
-//
-//
-//                        if (!job.isQueuing()) {
-//                            log.info("Job {} cannot be process since status not queuing", job.getId());
-//                            return null;
-//                        }
-//
-//                        Agent available;
-//
-//                        while ((available = findAvailableAgent(job)) == null) {
-//                            log.debug("Job '{}' not find available agent, waiting.....", job.getId());
-//
-//                            synchronized (lock) {
-//                                ThreadHelper.wait(lock, RetryIntervalOnNotFound);
-//                            }
-//
-//                            if (isExpired(job)) {
-//                                setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
-//                                log.debug("Job '{}' is expired", job.getId());
-//                                return null;
-//                            }
-//
-//                            if (stop) {
-//                                //TODO: should manual handle queue ACK
-//                            }
-//                        }
-//
-//                        dispatch(job, available);
-//                        return null;
-//                    });
-//
-//                    ThreadHelper.sleep(ConsumerInterval);
-//                } catch (AmqpIOException ignore) {
-//                    // exception may happened if queue deleted..
-//                }
-//            }
-//
-//            log.debug("[Stop] Job consumer for flow {}", flow.getId());
+        public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+            throws IOException {
+
+            Job job = objectMapper.readValue(body, Job.class);
+
+            log.debug("Job {} received from queue", job.getId());
+            eventManager.publish(new JobReceivedEvent(this, job));
+
+            if (!job.isQueuing()) {
+                log.info("Job {} cannot be process since status not queuing", job.getId());
+                return;
+            }
+
+            Agent available;
+
+            while ((available = findAvailableAgent(job)) == null) {
+                log.debug("Job '{}' not find available agent, waiting.....", job.getId());
+
+                synchronized (lock) {
+                    ThreadHelper.wait(lock, RetryIntervalOnNotFound);
+                }
+
+                if (isExpired(job)) {
+                    setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
+                    log.debug("Job '{}' is expired", job.getId());
+                    return;
+                }
+            }
+
+            dispatch(job, available);
+
+            getChannel().basicAck(envelope.getDeliveryTag(), false);
         }
 
         void resume() {
             lock.notifyAll();
-        }
-
-        void stop() {
-            stop = Boolean.TRUE;
-            resume();
         }
     }
 
@@ -522,19 +506,13 @@ public class JobServiceImpl implements JobService {
     //        %% Utils
     //====================================================================
 
-    private JobConsumer startJobConsumer(Flow flow) {
-        JobConsumer consumer = new JobConsumer(flow);
-        jobConsumerMap.put(flow.getId(), consumer);
-        jobConsumerExecutor.execute(consumer);
-        return consumer;
+    private void startJobConsumer(Flow flow) {
+        JobConsumer consumer = new JobConsumer(jobQueueManager.getChannel(), flow);
+        jobQueueManager.start(flow.getQueueName(), consumer);
     }
 
-    private JobConsumer stopJobConsumer(Flow flow) {
-        JobConsumer consumer = jobConsumerMap.get(flow.getId());
-        if (consumer != null) {
-            consumer.stop();
-        }
-        return consumer;
+    private void stopJobConsumer(Flow flow) {
+        jobQueueManager.stop(flow.getQueueName());
     }
 
     /**
@@ -703,7 +681,9 @@ public class JobServiceImpl implements JobService {
 
         try {
             setJobStatusAndSave(job, Job.Status.QUEUED, null);
-            queueManager.send(job.getQueueName(), job, job.getPriority());
+
+            byte[] body = objectMapper.writeValueAsBytes(job);
+            jobQueueManager.send(job.getQueueName(), body, job.getPriority());
             return job;
         } catch (Throwable e) {
             throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());

@@ -17,7 +17,7 @@
 package com.flowci.core.agent.config;
 
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.job.config.JobConfig;
+import com.flowci.core.common.config.QueueConfig;
 import com.flowci.domain.Settings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -54,7 +54,7 @@ public class AgentConfig {
         settings.setCallbackQueueName(jobProperties.getCallbackQueueName());
         settings.setZookeeper(zk);
         settings.setQueue(mq);
-        settings.setLogsExchangeName(JobConfig.LoggingExchange);
+        settings.setLogsExchangeName(QueueConfig.LoggingExchange);
 
         return settings;
     }

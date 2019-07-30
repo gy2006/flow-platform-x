@@ -16,7 +16,11 @@
 
 package com.flowci.core.common.config;
 
+import com.flowci.core.common.helper.RabbitBuilder;
 import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.util.StringHelper;
+import com.rabbitmq.client.AMQP.Queue.DeclareOk;
+import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -35,28 +39,67 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Configuration
 public class QueueConfig {
 
+    public final static String LoggingExchange = "cmd.logs";
+
     @Autowired
     private ConfigProperties.RabbitMQ rabbitProperties;
 
+    @Autowired
+    private ConfigProperties.Job jobProperties;
+
     @Bean
     public ThreadPoolTaskExecutor rabbitConsumerExecutor() {
-        return ThreadHelper.createTaskExecutor(10, 10, 50, "rabbit-t-");
+        return ThreadHelper.createTaskExecutor(20, 20, 50, "rabbit-t-");
     }
 
     @Bean
-    public Connection rabbitConnection(ThreadPoolTaskExecutor rabbitConsumerExecutor) throws IOException, TimeoutException {
+    public Connection rabbitConnection(ThreadPoolTaskExecutor rabbitConsumerExecutor)
+        throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setUsername(rabbitProperties.getUsername());
         factory.setPassword(rabbitProperties.getPassword());
         factory.setVirtualHost("/");
         factory.setHost(rabbitProperties.getHost());
         factory.setPort(rabbitProperties.getPort());
-        factory.setSharedExecutor(rabbitConsumerExecutor.getThreadPoolExecutor());
-        return factory.newConnection();
+
+        return factory.newConnection(rabbitConsumerExecutor.getThreadPoolExecutor());
     }
 
     @Bean
-    public Channel rabbitChannel(Connection conn) throws IOException {
-        return conn.createChannel();
+    public RabbitBuilder jobQueueManager(Connection rabbitConnection) throws IOException {
+        return new RabbitBuilder(rabbitConnection, 1, "q-jobs");
+    }
+
+    @Bean
+    public RabbitBuilder callbackQueueManager(Connection rabbitConnection) throws IOException {
+        return new RabbitBuilder(rabbitConnection, 1, "q-callback");
+    }
+
+    @Bean
+    public RabbitBuilder loggingQueueManager(Connection rabbitConnection) throws IOException {
+        return new RabbitBuilder(rabbitConnection, 1, "q-logging");
+    }
+
+    @Bean
+    public RabbitBuilder agentQueueManager(Connection rabbitConnection) throws IOException {
+        return new RabbitBuilder(rabbitConnection, 1, "q-agent");
+    }
+
+    @Bean
+    public String callbackQueue(RabbitBuilder callbackQueueManager) {
+        String name = jobProperties.getCallbackQueueName();
+        callbackQueueManager.declare(name, true);
+        return name;
+    }
+
+    @Bean
+    public String loggingQueue(RabbitBuilder callbackQueueManager) throws IOException {
+        Channel rabbitChannel = callbackQueueManager.getChannel();
+        DeclareOk loggingQueue = rabbitChannel.queueDeclare();
+
+        rabbitChannel.exchangeDeclare(LoggingExchange, BuiltinExchangeType.FANOUT);
+        rabbitChannel.queueBind(loggingQueue.getQueue(), LoggingExchange, StringHelper.EMPTY);
+
+        return loggingQueue.getQueue();
     }
 }

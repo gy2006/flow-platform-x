@@ -21,13 +21,7 @@ import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.tree.NodeTree;
-import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
-import com.rabbitmq.client.AMQP.Queue;
-import com.rabbitmq.client.AMQP.Queue.DeclareOk;
-import com.rabbitmq.client.BuiltinExchangeType;
-import com.rabbitmq.client.Channel;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
@@ -42,31 +36,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Log4j2
 @Configuration
 public class JobConfig {
-
-    public final static String LoggingExchange = "cmd.logs";
-
     @Autowired
     private ConfigProperties appProperties;
 
-    @Autowired
-    private ConfigProperties.Job jobProperties;
-
-    @Autowired
-    private Channel rabbitChannel;
-
-    @Bean("callbackQueue")
-    public String callbackQueue() throws IOException {
-        String name = jobProperties.getCallbackQueueName();
-        return rabbitChannel.queueDeclare(name, true, false, false, null).getQueue();
-    }
-
-    @Bean("loggingQueue")
-    public String loggingQueue() throws IOException {
-        DeclareOk loggingQueue = rabbitChannel.queueDeclare();
-        rabbitChannel.exchangeDeclare(LoggingExchange, BuiltinExchangeType.FANOUT);
-        rabbitChannel.queueBind(loggingQueue.getQueue(), LoggingExchange, StringHelper.EMPTY);
-        return loggingQueue.getQueue();
-    }
 
     @Bean("logDir")
     public Path logDir() {
