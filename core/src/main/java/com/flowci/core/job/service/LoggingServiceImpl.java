@@ -90,14 +90,13 @@ public class LoggingServiceImpl implements LoggingService {
 
     @EventListener(ContextRefreshedEvent.class)
     public void onStart() {
-        loggingQueueManager.start(loggingQueue, new DefaultConsumer(loggingQueueManager.getChannel()) {
+        loggingQueueManager.start(loggingQueue, true, new DefaultConsumer(loggingQueueManager.getChannel()) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
                 throws IOException {
 
                 final String msg = new String(body, StandardCharsets.UTF_8);
                 handleLoggingItem(msg);
-                getChannel().basicAck(envelope.getDeliveryTag(), false);
             }
         });
     }

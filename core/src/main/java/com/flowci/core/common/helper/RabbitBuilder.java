@@ -116,9 +116,9 @@ public final class RabbitBuilder implements AutoCloseable {
         }
     }
 
-    public boolean start(String queueName, Consumer consumer) {
+    public boolean start(String queueName, boolean ack, Consumer consumer) {
         try {
-            String consumerTag = this.channel.basicConsume(queueName, false, consumer);
+            String consumerTag = this.channel.basicConsume(queueName, ack, consumer);
             tags.put(queueName, consumerTag);
             return true;
         } catch (IOException e) {

@@ -298,7 +298,7 @@ public class JobServiceImpl implements JobService {
 
     @EventListener(value = ContextRefreshedEvent.class)
     public void startCallbackQueueConsumer(ContextRefreshedEvent event) {
-        callbackQueueManager.start(callbackQueue, new DefaultConsumer(callbackQueueManager.getChannel()) {
+        callbackQueueManager.start(callbackQueue, false, new DefaultConsumer(callbackQueueManager.getChannel()) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
                 throws IOException {
@@ -508,7 +508,7 @@ public class JobServiceImpl implements JobService {
 
     private void startJobConsumer(Flow flow) {
         JobConsumer consumer = new JobConsumer(jobQueueManager.getChannel(), flow);
-        jobQueueManager.start(flow.getQueueName(), consumer);
+        jobQueueManager.start(flow.getQueueName(), false, consumer);
     }
 
     private void stopJobConsumer(Flow flow) {
