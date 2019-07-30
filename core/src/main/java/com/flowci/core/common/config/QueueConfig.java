@@ -16,6 +16,7 @@
 
 package com.flowci.core.common.config;
 
+import com.flowci.core.common.helper.ThreadHelper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -25,6 +26,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * @author yang
@@ -37,14 +39,19 @@ public class QueueConfig {
     private ConfigProperties.RabbitMQ rabbitProperties;
 
     @Bean
-    public Connection rabbitConnection() throws IOException, TimeoutException {
+    public ThreadPoolTaskExecutor rabbitConsumerExecutor() {
+        return ThreadHelper.createTaskExecutor(10, 10, 50, "rabbit-t-");
+    }
+
+    @Bean
+    public Connection rabbitConnection(ThreadPoolTaskExecutor rabbitConsumerExecutor) throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setUsername(rabbitProperties.getUsername());
         factory.setPassword(rabbitProperties.getPassword());
         factory.setVirtualHost("/");
         factory.setHost(rabbitProperties.getHost());
         factory.setPort(rabbitProperties.getPort());
-
+        factory.setSharedExecutor(rabbitConsumerExecutor.getThreadPoolExecutor());
         return factory.newConnection();
     }
 
