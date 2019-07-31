@@ -1,20 +1,21 @@
 /*
- * Copyright 2019 flow.ci
+ *   Copyright (c) 2019 flow.ci
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
  */
 
-package com.flowci.core.common.helper;
+package com.flowci.core.common.manager;
 
 import com.flowci.util.StringHelper;
 import com.rabbitmq.client.AMQP.BasicProperties;
@@ -28,10 +29,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 
 /**
+ * Create channel for each manager instance
+ * enable to declare, delete, purge queue, start and stop consumer on queue
+ *
  * @author yang
  */
 @Getter
-public final class RabbitBuilder implements AutoCloseable {
+public final class RabbitManager implements AutoCloseable {
 
     private final Connection conn;
 
@@ -43,7 +47,7 @@ public final class RabbitBuilder implements AutoCloseable {
 
     private final ConcurrentHashMap<String, String> tags = new ConcurrentHashMap<>();
 
-    public RabbitBuilder(Connection conn, Integer concurrency, String name) throws IOException {
+    public RabbitManager(Connection conn, Integer concurrency, String name) throws IOException {
         this.conn = conn;
         this.name = name;
         this.concurrency = concurrency;

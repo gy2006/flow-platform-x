@@ -17,7 +17,7 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
-import com.flowci.core.common.helper.RabbitBuilder;
+import com.flowci.core.common.manager.RabbitManager;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.test.SpringScenario.Config;
@@ -79,16 +79,16 @@ public abstract class SpringScenario {
     private String loggingQueue;
 
     @Autowired
-    private RabbitBuilder jobQueueManager;
+    private RabbitManager jobQueueManager;
 
     @Autowired
-    private RabbitBuilder callbackQueueManager;
+    private RabbitManager callbackQueueManager;
 
     @Autowired
-    private RabbitBuilder loggingQueueManager;
+    private RabbitManager loggingQueueManager;
 
     @Autowired
-    private RabbitBuilder agentQueueManager;
+    private RabbitManager agentQueueManager;
 
     @Autowired
     private AgentDao agentDao;

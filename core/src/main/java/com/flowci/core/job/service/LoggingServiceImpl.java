@@ -17,7 +17,7 @@
 package com.flowci.core.job.service;
 
 import com.flowci.core.common.helper.CacheHelper;
-import com.flowci.core.common.helper.RabbitBuilder;
+import com.flowci.core.common.manager.RabbitManager;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.flowci.exception.NotFoundException;
@@ -83,7 +83,7 @@ public class LoggingServiceImpl implements LoggingService {
     private Path logDir;
 
     @Autowired
-    private RabbitBuilder loggingQueueManager;
+    private RabbitManager loggingQueueManager;
 
     @Autowired
     private String loggingQueue;

@@ -23,7 +23,7 @@ import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.core.common.helper.RabbitBuilder;
+import com.flowci.core.common.manager.RabbitManager;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.flow.domain.Flow;
@@ -136,10 +136,10 @@ public class JobServiceImpl implements JobService {
     private StepService stepService;
 
     @Autowired
-    private RabbitBuilder callbackQueueManager;
+    private RabbitManager callbackQueueManager;
 
     @Autowired
-    private RabbitBuilder jobQueueManager;
+    private RabbitManager jobQueueManager;
 
     //====================================================================
     //        %% Public function

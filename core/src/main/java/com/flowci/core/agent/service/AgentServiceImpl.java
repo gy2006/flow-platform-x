@@ -23,7 +23,7 @@ import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.common.helper.RabbitBuilder;
+import com.flowci.core.common.manager.RabbitManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
@@ -75,7 +75,7 @@ public class AgentServiceImpl implements AgentService {
     private AgentDao agentDao;
 
     @Autowired
-    private RabbitBuilder agentQueueManager;
+    private RabbitManager agentQueueManager;
 
     @Autowired
     private SpringEventManager eventManager;
