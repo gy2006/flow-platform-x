@@ -16,15 +16,13 @@
 
 package com.flowci.core.job.service;
 
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.core.common.manager.RabbitManager;
 import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.core.common.manager.RabbitManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
@@ -37,11 +35,7 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
-import com.flowci.core.job.event.CreateNewJobEvent;
-import com.flowci.core.job.event.JobCreatedEvent;
-import com.flowci.core.job.event.JobDeletedEvent;
-import com.flowci.core.job.event.JobReceivedEvent;
-import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.job.event.*;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
@@ -54,23 +48,9 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.GroovyRunner;
-import com.flowci.tree.Node;
-import com.flowci.tree.NodePath;
-import com.flowci.tree.NodeTree;
-import com.flowci.tree.YmlParser;
+import com.flowci.tree.*;
 import groovy.util.ScriptException;
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -81,6 +61,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 /**
  * @author yang
@@ -139,6 +128,8 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private RabbitManager jobQueueManager;
 
+    private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
+
     //====================================================================
     //        %% Public function
     //====================================================================
@@ -161,7 +152,7 @@ public class JobServiceImpl implements JobService {
 
         if (Objects.isNull(job)) {
             throw new NotFoundException(
-                "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
+                    "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
         }
 
         return job;
@@ -344,7 +335,11 @@ public class JobServiceImpl implements JobService {
         }
 
         Job current = get(agent.getJobId());
+        JobConsumerHandler handler = consumeHandlers.get(current.getQueueName());
 
+        if (handler != null) {
+            handler.resume();
+        }
     }
 
     @EventListener(value = AgentStatusChangeEvent.class)
@@ -386,6 +381,13 @@ public class JobServiceImpl implements JobService {
 
         private final Object lock = new Object();
 
+        @Getter
+        private final String queueName;
+
+        public JobConsumerHandler(String queueName) {
+            this.queueName = queueName;
+        }
+
         @Override
         public Boolean apply(RabbitManager.Message message) {
             Job job = null;
@@ -424,7 +426,9 @@ public class JobServiceImpl implements JobService {
         }
 
         void resume() {
-            lock.notifyAll();
+            synchronized (lock) {
+                lock.notifyAll();
+            }
         }
     }
 
@@ -497,13 +501,19 @@ public class JobServiceImpl implements JobService {
     //====================================================================
 
     private void startJobConsumer(Flow flow) {
-        JobConsumerHandler handler = new JobConsumerHandler();
+        String queueName = flow.getQueueName();
+        JobConsumerHandler handler = new JobConsumerHandler(queueName);
+
         RabbitManager.QueueConsumer consumer = jobQueueManager.createConsumer(handler);
-        consumer.start(flow.getQueueName(), false);
+        consumer.start(queueName, false);
+
+        consumeHandlers.put(queueName, handler);
     }
 
     private void stopJobConsumer(Flow flow) {
-        jobQueueManager.stop(flow.getQueueName());
+        String queueName = flow.getQueueName();
+        jobQueueManager.stop(queueName);
+        consumeHandlers.remove(queueName);
     }
 
     /**

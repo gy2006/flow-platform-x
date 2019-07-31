@@ -24,6 +24,7 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
 import java.util.Enumeration;
@@ -38,6 +39,7 @@ import java.util.function.Function;
  *
  * @author yang
  */
+@Log4j2
 @Getter
 public final class RabbitManager implements AutoCloseable {
 
@@ -130,6 +132,7 @@ public final class RabbitManager implements AutoCloseable {
         if (consumerTag != null) {
             try {
                 this.channel.basicCancel(consumerTag);
+                log.info("[Consumer STOP] queue {} with tag {}", queueName, consumerTag);
                 return true;
             } catch (IOException e) {
                 return false;
@@ -175,6 +178,7 @@ public final class RabbitManager implements AutoCloseable {
             try {
                 String consumerTag = channel.basicConsume(queueName, ack, this);
                 tags.put(queueName, consumerTag);
+                log.info("[Consumer STARTED] queue {} with tag {}", queueName, consumerTag);
                 return consumerTag;
             } catch (IOException e) {
                 return null;
