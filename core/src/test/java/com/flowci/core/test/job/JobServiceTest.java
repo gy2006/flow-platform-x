@@ -142,12 +142,10 @@ public class JobServiceTest extends ZookeeperScenario {
     @Test
     public void should_dispatch_job_to_agent() throws InterruptedException {
         // init:
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
         Agent agent = agentService.create("hello.agent", null);
         mockAgentOnline(agentService.getPath(agent));
 
-        job.setStatus(Status.QUEUED);
-        jobDao.save(job);
+        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
 
         // when:
         ObjectWrapper<Agent> targetAgent = new ObjectWrapper<>();
@@ -160,7 +158,7 @@ public class JobServiceTest extends ZookeeperScenario {
             counter.countDown();
         });
 
-//        jobService.handleJob(job);
+        jobService.start(job);
 
         // then: verify cmd been sent
         counter.await(10, TimeUnit.SECONDS);
@@ -388,7 +386,7 @@ public class JobServiceTest extends ZookeeperScenario {
             }
         });
 
-        waitForRunning.await();
+        waitForRunning.await(10, TimeUnit.SECONDS);
         job = jobDao.findByKey(job.getKey());
         Assert.assertEquals(Status.RUNNING, job.getStatus());
 

@@ -111,15 +111,15 @@ public abstract class SpringScenario {
 
     @After
     public void queueCleanUp() {
-        callbackQueueManager.purge(callbackQueue);
-        loggingQueueManager.purge(loggingQueue);
+        callbackQueueManager.delete(callbackQueue);
+        loggingQueueManager.delete(loggingQueue);
 
         for (Agent agent : agentDao.findAll()) {
-            agentQueueManager.purge(agent.getQueueName());
+            agentQueueManager.delete(agent.getQueueName());
         }
 
         for (Flow flow : flowDao.findAll()) {
-            jobQueueManager.purge(flow.getQueueName());
+            jobQueueManager.delete(flow.getQueueName());
         }
     }
 

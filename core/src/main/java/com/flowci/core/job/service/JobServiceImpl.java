@@ -334,6 +334,10 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
+        if (!agent.hasJob()) {
+            return;
+        }
+
         Job current = get(agent.getJobId());
         JobConsumerHandler handler = consumeHandlers.get(current.getQueueName());
 
@@ -384,7 +388,7 @@ public class JobServiceImpl implements JobService {
         @Getter
         private final String queueName;
 
-        public JobConsumerHandler(String queueName) {
+        JobConsumerHandler(String queueName) {
             this.queueName = queueName;
         }
 

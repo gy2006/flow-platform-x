@@ -61,6 +61,7 @@ public class QueueConfig {
         factory.setVirtualHost("/");
         factory.setHost(rabbitProperties.getHost());
         factory.setPort(rabbitProperties.getPort());
+        factory.setRequestedHeartbeat(1800);
 
         return factory.newConnection(rabbitConsumerExecutor.getThreadPoolExecutor());
     }
