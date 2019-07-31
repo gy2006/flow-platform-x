@@ -162,6 +162,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // then: verify cmd been sent
         counter.await(10, TimeUnit.SECONDS);
+        Assert.assertEquals(0, counter.getCount());
         Assert.assertEquals(agent, targetAgent.getValue());
 
         // then: verify job status should be running

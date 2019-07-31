@@ -77,7 +77,8 @@ public class JobControllerTest extends SpringScenario {
     public void should_get_job_yml() throws Exception {
         createJobForFlow(flow);
 
-        String yml = mvcMockHelper.expectSuccessAndReturnString(get("/jobs/hello-flow/1/yml"));
+        String yml = mvcMockHelper.expectSuccessAndReturnString(get("/jobs/hello-flow/1/yml")
+                .accept(MediaType.TEXT_PLAIN));
         Assert.assertNotNull(yml);
         Assert.assertEquals(StringHelper.toString(load("flow.yml")), yml);
     }

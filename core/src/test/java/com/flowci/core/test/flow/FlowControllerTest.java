@@ -29,6 +29,8 @@ import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.util.StringHelper;
+
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +78,9 @@ public class FlowControllerTest extends SpringScenario {
         Assert.assertEquals(StatusCode.OK, getFlowResponse.getCode());
         Assert.assertEquals(flowName, getFlowResponse.getData().getName());
 
-        String ymlResponse = mvcMockHelper.expectSuccessAndReturnString(get("/flows/" + flowName + "/yml"));
+        ResponseMessage<String> responseMessage = mvcMockHelper
+                .expectSuccessAndReturnClass(get("/flows/" + flowName + "/yml"), FlowMockHelper.FlowYmlType);
+        String ymlResponse = new String(Base64.getDecoder().decode(responseMessage.getData()));
         Assert.assertEquals(StringHelper.toString(load("flow.yml")), ymlResponse);
 
         ResponseMessage<Flow> deleted = mvcMockHelper
@@ -93,37 +97,4 @@ public class FlowControllerTest extends SpringScenario {
         Assert.assertEquals(1, listFlowResponse.getData().size());
         Assert.assertEquals(flowName, listFlowResponse.getData().get(0).getName());
     }
-
-    @Test
-    public void should_update_and_clean_variables() throws Exception {
-        // init
-        Map<String, String> vars = new HashMap<>();
-        vars.put("test", "result");
-        vars.put("hello", "world");
-
-        // when: update variables
-        ResponseMessage updateVarResponse = mvcMockHelper.expectSuccessAndReturnClass(
-            patch("/flows/" + flowName + "/variables")
-                .content(objectMapper.writeValueAsString(vars))
-                .contentType(MediaType.APPLICATION_JSON),
-            ResponseMessage.class);
-
-        Assert.assertEquals(StatusCode.OK, updateVarResponse.getCode());
-
-        // then:
-        Flow flow = flowService.get(flowName);
-        Assert.assertEquals("result", flow.getVariables().get("test"));
-        Assert.assertEquals("world", flow.getVariables().get("hello"));
-
-        // when: clean variables
-        ResponseMessage cleanVarResponse = mvcMockHelper.expectSuccessAndReturnClass(
-            delete("/flows/" + flowName + "/variables"), ResponseMessage.class);
-
-        Assert.assertEquals(StatusCode.OK, cleanVarResponse.getCode());
-
-        // then:
-        flow = flowService.get(flowName);
-        Assert.assertTrue(flow.getVariables().isEmpty());
-    }
-
 }
