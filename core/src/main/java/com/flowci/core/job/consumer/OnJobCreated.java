@@ -42,6 +42,6 @@ public class OnJobCreated implements ApplicationListener<JobCreatedEvent> {
     public void onApplicationEvent(JobCreatedEvent event) {
         Job job = event.getJob();
         socketPushManager.push(topicForJobs, PushEvent.NEW_CREATED, job);
-        log.debug("Job {} been pushed", job.getId());
+        log.debug("Job created event {} been pushed", job.getId());
     }
 }

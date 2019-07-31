@@ -24,12 +24,10 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -177,9 +175,9 @@ public final class RabbitManager implements AutoCloseable {
 
         public String start(boolean ack) {
             try {
-                getChannel().basicConsume(queue, ack, this);
-                log.info("[Consumer STARTED] queue {} with tag {}", queue, getConsumerTag());
-                return getConsumerTag();
+                String tag = getChannel().basicConsume(queue, ack, this);
+                log.info("[Consumer STARTED] queue {} with tag {}", queue, tag);
+                return tag;
             } catch (IOException e) {
                 log.warn(e.getMessage());
                 return null;
