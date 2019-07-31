@@ -94,13 +94,9 @@ public class JobServiceTest extends ZookeeperScenario {
 
     @Before
     public void mockFlowAndYml() throws IOException {
+        mockLogin();
         flow = flowService.create("hello");
         yml = flowService.saveYml(flow, StringHelper.toString(load("flow.yml")));
-    }
-
-    @Before
-    public void userLogin() {
-        mockLogin();
     }
 
     @Test
@@ -144,6 +140,7 @@ public class JobServiceTest extends ZookeeperScenario {
         // init:
         Agent agent = agentService.create("hello.agent", null);
         mockAgentOnline(agentService.getPath(agent));
+        Assert.assertEquals(Agent.Status.IDLE, agentService.get(agent.getId()).getStatus());
 
         Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
 
