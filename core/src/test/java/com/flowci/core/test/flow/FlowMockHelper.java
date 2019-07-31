@@ -55,7 +55,7 @@ public class FlowMockHelper {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public Flow crate(String name, String yml) throws Exception {
+    public Flow create(String name, String yml) throws Exception {
         // create
         ResponseMessage<Flow> response = mvcMockHelper
             .expectSuccessAndReturnClass(post("/flows/" + name), FlowType);

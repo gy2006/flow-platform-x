@@ -54,7 +54,7 @@ public class FlowControllerTest extends SpringScenario {
     @Before
     public void createFlowWithYml() throws Exception {
         String yml = StringHelper.toString(load("flow.yml"));
-        flowMockHelper.crate(flowName, yml);
+        flowMockHelper.create(flowName, yml);
     }
 
     @Test

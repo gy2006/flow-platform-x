@@ -30,6 +30,8 @@ import com.flowci.core.job.service.StepService;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.NodePath;
+
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,11 +100,11 @@ public class JobController {
         }
     }
 
-    @GetMapping(value = "/{flow}/{buildNumber}/yml", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = "/{flow}/{buildNumber}/yml", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getYml(@PathVariable String flow, @PathVariable String buildNumber) {
         Job job = get(flow, buildNumber);
         JobYml yml = jobService.getYml(job);
-        return yml.getRaw();
+        return Base64.getEncoder().encodeToString(yml.getRaw().getBytes());
     }
 
     @GetMapping("/{flow}/{buildNumberOrLatest}/steps")
