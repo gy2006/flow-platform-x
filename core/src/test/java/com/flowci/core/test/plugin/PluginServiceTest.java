@@ -71,7 +71,7 @@ public class PluginServiceTest extends SpringScenario {
 
         PluginRepo repo = repos.get(0);
         Assert.assertEquals("gitclone", repo.getName());
-        Assert.assertEquals("https://github.com/gy2006/flowci-plugin-gitclone", repo.getSource());
+        Assert.assertEquals("https://github.com/yang-guo-2016/flowci-plugin-gitclone", repo.getSource());
         Assert.assertEquals("git clone plugin", repo.getDescription());
         Assert.assertEquals("gy@flow.ci", repo.getAuthor());
         Assert.assertEquals(Version.parse("0.0.1"), repo.getVersion());

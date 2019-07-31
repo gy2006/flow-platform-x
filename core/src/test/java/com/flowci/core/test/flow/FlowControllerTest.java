@@ -16,29 +16,22 @@
 
 package com.flowci.core.test.flow;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.StatusCode;
-import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.util.StringHelper;
-
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
+
+import java.util.Base64;
+import java.util.List;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 /**
  * @author yang
@@ -50,12 +43,6 @@ public class FlowControllerTest extends SpringScenario {
 
     @Autowired
     private MvcMockHelper mvcMockHelper;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private FlowService flowService;
 
     private final String flowName = "hello_world";
 
