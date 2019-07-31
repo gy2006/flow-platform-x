@@ -61,7 +61,7 @@ public abstract class ZookeeperScenario extends SpringScenario {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
 
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
+        addEventListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
             wrapper.setValue(event.getAgent());
             counter.countDown();
         });
@@ -81,7 +81,7 @@ public abstract class ZookeeperScenario extends SpringScenario {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
 
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
+        addEventListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
             wrapper.setValue(event.getAgent());
             counter.countDown();
         });

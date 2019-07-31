@@ -23,15 +23,16 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
-
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * Create channel and handle the operation on the channel
@@ -51,7 +52,7 @@ public final class RabbitManager implements AutoCloseable {
 
     private final Integer concurrency;
 
-    private final ConcurrentHashMap<String, String> tags = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, QueueConsumer> createdConsumers = new ConcurrentHashMap<>();
 
     public RabbitManager(Connection conn, Integer concurrency, String name) throws IOException {
         this.conn = conn;
@@ -126,68 +127,86 @@ public final class RabbitManager implements AutoCloseable {
         }
     }
 
-    public boolean stop(String queueName) {
-        String consumerTag = tags.remove(queueName);
+    public String getConsumer(String queueName) {
+        QueueConsumer queueConsumer = createdConsumers.get(queueName);
+        if (Objects.isNull(queueConsumer)) {
+            return null;
+        }
+        return queueConsumer.getConsumerTag();
+    }
 
-        if (consumerTag != null) {
-            try {
-                this.channel.basicCancel(consumerTag);
-                log.info("[Consumer STOP] queue {} with tag {}", queueName, consumerTag);
-                return true;
-            } catch (IOException e) {
-                return false;
-            }
+    public QueueConsumer createConsumer(String queue, Function<Message, Boolean> consume) {
+        QueueConsumer queueConsumer = new QueueConsumer(queue, consume);
+        createdConsumers.put(queue, queueConsumer);
+        return queueConsumer;
+    }
+
+    public boolean removeConsumer(String queue) {
+        QueueConsumer queueConsumer = createdConsumers.remove(queue);
+        if (Objects.isNull(queueConsumer)) {
+            return false;
         }
 
-        return false;
+        return queueConsumer.stop();
     }
 
     @Override
     public void close() throws Exception {
-        Enumeration<String> keys = tags.keys();
-
-        while (keys.hasMoreElements()) {
-            String queue = keys.nextElement();
-            stop(queue);
-        }
-
+        createdConsumers.forEach((s, queueConsumer) -> queueConsumer.stop());
         channel.close();
-    }
-
-    public QueueConsumer createConsumer(Function<Message, Boolean> consume) {
-        return new QueueConsumer(consume);
     }
 
     public class QueueConsumer extends DefaultConsumer {
 
+        private final String queue;
+
         private final Function<Message, Boolean> consume;
 
-        QueueConsumer(Function<Message, Boolean> consume) {
+        QueueConsumer(String queue, Function<Message, Boolean> consume) {
             super(channel);
+            this.queue = queue;
             this.consume = consume;
         }
 
         @Override
         public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-                throws IOException {
+            throws IOException {
 
-            Boolean ingoreForNow = consume.apply(new Message(channel, body, envelope));
+            Boolean ingoreForNow = consume.apply(new Message(getChannel(), body, envelope));
         }
 
-        public String start(String queueName, boolean ack) {
+        public String start(boolean ack) {
             try {
-                String consumerTag = channel.basicConsume(queueName, ack, this);
-                tags.put(queueName, consumerTag);
-                log.info("[Consumer STARTED] queue {} with tag {}", queueName, consumerTag);
-                return consumerTag;
+                getChannel().basicConsume(queue, ack, this);
+                log.info("[Consumer STARTED] queue {} with tag {}", queue, getConsumerTag());
+                return getConsumerTag();
             } catch (IOException e) {
+                log.warn(e.getMessage());
                 return null;
+            }
+        }
+
+        public boolean stop() {
+            try {
+                if (Objects.isNull(getConsumerTag())) {
+                    return true; // not started
+                }
+
+                consume.apply(Message.STOP_SIGN);
+                getChannel().basicCancel(getConsumerTag());
+                log.info("[Consumer STOP] queue {} with tag {}", queue, getConsumerTag());
+                return true;
+            } catch (IOException e) {
+                log.warn(e.getMessage());
+                return false;
             }
         }
     }
 
     @Getter
     public static class Message {
+
+        public static final Message STOP_SIGN = new Message(null, new byte[0], null);
 
         private final Channel channel;
 

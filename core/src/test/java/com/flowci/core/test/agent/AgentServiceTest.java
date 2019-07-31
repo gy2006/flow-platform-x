@@ -141,7 +141,7 @@ public class AgentServiceTest extends ZookeeperScenario {
 
         // when:
         CountDownLatch counter = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdSentEvent>) event -> {
+        addEventListener((ApplicationListener<CmdSentEvent>) event -> {
             counter.countDown();
         });
 

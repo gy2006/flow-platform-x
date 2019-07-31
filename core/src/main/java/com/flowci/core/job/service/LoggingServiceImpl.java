@@ -18,6 +18,7 @@ package com.flowci.core.job.service;
 
 import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.manager.RabbitManager;
+import com.flowci.core.common.manager.RabbitManager.Message;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.flowci.exception.NotFoundException;
@@ -88,13 +89,17 @@ public class LoggingServiceImpl implements LoggingService {
 
     @EventListener(ContextRefreshedEvent.class)
     public void onStart() {
-        RabbitManager.QueueConsumer consumer = loggingQueueManager.createConsumer(message -> {
+        RabbitManager.QueueConsumer consumer = loggingQueueManager.createConsumer(loggingQueue, message -> {
+            if (message == Message.STOP_SIGN) {
+                return true;
+            }
+
             final String msg = new String(message.getBody(), StandardCharsets.UTF_8);
             handleLoggingItem(msg);
             return true;
         });
 
-        consumer.start(loggingQueue, true);
+        consumer.start(true);
     }
 
     @Override

@@ -143,7 +143,7 @@ public class FlowServiceTest extends SpringScenario {
         CountDownLatch countDown = new CountDownLatch(2);
         List<String> branches = new LinkedList<>();
 
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<GitTestEvent>) event -> {
+        addEventListener((ApplicationListener<GitTestEvent>) event -> {
             if (!event.getFlowId().equals(flow.getId())) {
                 return;
             }

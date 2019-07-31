@@ -91,7 +91,7 @@ public class CronServiceTest extends ZookeeperScenario {
 
         final CountDownLatch counter = new CountDownLatch(2);
         final ObjectWrapper<Flow> result = new ObjectWrapper<>();
-        this.applicationEventMulticaster.addApplicationListener((ApplicationListener<CreateNewJobEvent>) event -> {
+        addEventListener((ApplicationListener<CreateNewJobEvent>) event -> {
             result.setValue(event.getFlow());
             counter.countDown();
         });

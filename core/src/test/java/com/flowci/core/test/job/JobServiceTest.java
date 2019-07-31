@@ -16,9 +16,10 @@
 
 package com.flowci.core.test.job;
 
-import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.common.manager.RabbitManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.service.FlowService;
@@ -88,6 +89,9 @@ public class JobServiceTest extends ZookeeperScenario {
     @Autowired
     private YmlManager ymlManager;
 
+    @Autowired
+    private RabbitManager jobQueueManager;
+
     private Flow flow;
 
     private Yml yml;
@@ -97,6 +101,7 @@ public class JobServiceTest extends ZookeeperScenario {
         mockLogin();
         flow = flowService.create("hello");
         yml = flowService.saveYml(flow, StringHelper.toString(load("flow.yml")));
+        Assert.assertNotNull(jobQueueManager.getConsumer(flow.getQueueName()));
     }
 
     @Test
@@ -105,7 +110,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // init: register JobReceivedEvent
         CountDownLatch waitForJobFromQueue = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobReceivedEvent>) event -> {
+        addEventListener((ApplicationListener<JobReceivedEvent>) event -> {
             receivedJob.setValue(event.getJob());
             waitForJobFromQueue.countDown();
         });
@@ -140,7 +145,6 @@ public class JobServiceTest extends ZookeeperScenario {
         // init:
         Agent agent = agentService.create("hello.agent", null);
         mockAgentOnline(agentService.getPath(agent));
-        Assert.assertEquals(Agent.Status.IDLE, agentService.get(agent.getId()).getStatus());
 
         Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
 
@@ -149,7 +153,7 @@ public class JobServiceTest extends ZookeeperScenario {
         ObjectWrapper<Cmd> targetCmd = new ObjectWrapper<>();
         CountDownLatch counter = new CountDownLatch(1);
 
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdSentEvent>) event -> {
+        addEventListener((ApplicationListener<CmdSentEvent>) event -> {
             targetAgent.setValue(event.getAgent());
             targetCmd.setValue(event.getCmd());
             counter.countDown();
@@ -158,8 +162,7 @@ public class JobServiceTest extends ZookeeperScenario {
         jobService.start(job);
 
         // then: verify cmd been sent
-        counter.await(10, TimeUnit.SECONDS);
-        Assert.assertEquals(0, counter.getCount());
+        Assert.assertTrue(counter.await(10, TimeUnit.SECONDS));
         Assert.assertEquals(agent, targetAgent.getValue());
 
         // then: verify job status should be running
@@ -325,15 +328,18 @@ public class JobServiceTest extends ZookeeperScenario {
     }
 
     @Test
-    public void should_job_with_before_condition() throws IOException, InterruptedException {
+    public void should_run_before_condition() throws IOException, InterruptedException {
+        // init: save yml, make agent online and create job
         yml = flowService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
-        Agent agent = agentService.create("hello.agent.1", null);
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
 
+        Agent agent = agentService.create("hello.agent.1", null);
         mockAgentOnline(agentService.getPath(agent));
 
+        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
+
+        // init: wait counter
         CountDownLatch waitForJobQueued = new CountDownLatch(2);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobStatusChangeEvent>) event -> {
+        addEventListener((ApplicationListener<JobStatusChangeEvent>) event -> {
             if (event.getJob().getStatus() == Status.QUEUED) {
                 waitForJobQueued.countDown();
             }
@@ -344,7 +350,7 @@ public class JobServiceTest extends ZookeeperScenario {
         });
 
         CountDownLatch waitForStep2Sent = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdSentEvent>) event -> {
+        addEventListener((ApplicationListener<CmdSentEvent>) event -> {
             waitForStep2Sent.countDown();
         });
 
@@ -378,7 +384,7 @@ public class JobServiceTest extends ZookeeperScenario {
         jobService.start(job);
 
         CountDownLatch waitForRunning = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobStatusChangeEvent>) event -> {
+        addEventListener((ApplicationListener<JobStatusChangeEvent>) event -> {
             if (event.getJob().getStatus() == Status.RUNNING) {
                 waitForRunning.countDown();
             }
@@ -390,7 +396,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: agent status change to offline
         CountDownLatch waitForCancelled = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobStatusChangeEvent>) event -> {
+        addEventListener((ApplicationListener<JobStatusChangeEvent>) event -> {
             if (event.getJob().getStatus() == Status.CANCELLED) {
                 waitForCancelled.countDown();
             }
@@ -398,7 +404,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         agent.setJobId(job.getId());
         agent.setStatus(Agent.Status.OFFLINE);
-        applicationEventMulticaster.multicastEvent(new AgentStatusChangeEvent(this, agent));
+        multicastEvent(new AgentStatusChangeEvent(this, agent));
 
         // then: job should be cancelled
         waitForCancelled.await();

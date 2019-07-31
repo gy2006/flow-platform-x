@@ -58,7 +58,7 @@ public class WebhookControllerTest extends SpringScenario {
 
         CountDownLatch waitForJobCreated = new CountDownLatch(1);
         ObjectWrapper<Job> jobCreated = new ObjectWrapper<>();
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobCreatedEvent>) event -> {
+        addEventListener((ApplicationListener<JobCreatedEvent>) event -> {
             jobCreated.setValue(event.getJob());
             waitForJobCreated.countDown();
         });
@@ -81,7 +81,7 @@ public class WebhookControllerTest extends SpringScenario {
 
         CountDownLatch waitForJobCreated = new CountDownLatch(1);
         ObjectWrapper<Job> jobCreated = new ObjectWrapper<>();
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobCreatedEvent>) event -> {
+        addEventListener((ApplicationListener<JobCreatedEvent>) event -> {
             jobCreated.setValue(event.getJob());
             waitForJobCreated.countDown();
         });

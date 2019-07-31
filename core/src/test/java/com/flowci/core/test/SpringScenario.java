@@ -27,6 +27,8 @@ import com.flowci.core.user.User;
 import com.flowci.core.user.UserService;
 import com.flowci.domain.Agent;
 import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.junit.After;
@@ -35,6 +37,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -97,11 +101,15 @@ public abstract class SpringScenario {
     private FlowDao flowDao;
 
     @Autowired
-    protected ApplicationEventMulticaster applicationEventMulticaster;
+    private ApplicationEventMulticaster applicationEventMulticaster;
+
+    private final List<ApplicationListener<?>> listenersForTest = new LinkedList<>();
 
     @After
     public void cleanListeners() {
-        applicationEventMulticaster.removeAllListeners();
+        for (ApplicationListener listener : listenersForTest) {
+            applicationEventMulticaster.removeApplicationListener(listener);
+        }
     }
 
     @After
@@ -111,16 +119,26 @@ public abstract class SpringScenario {
 
     @After
     public void queueCleanUp() {
-        callbackQueueManager.delete(callbackQueue);
-        loggingQueueManager.delete(loggingQueue);
+        callbackQueueManager.purge(callbackQueue);
+        loggingQueueManager.purge(loggingQueue);
 
         for (Agent agent : agentDao.findAll()) {
-            agentQueueManager.delete(agent.getQueueName());
+            agentQueueManager.purge(agent.getQueueName());
         }
 
         for (Flow flow : flowDao.findAll()) {
-            jobQueueManager.delete(flow.getQueueName());
+            jobQueueManager.removeConsumer(flow.getQueueName());
+            jobQueueManager.purge(flow.getQueueName());
         }
+    }
+
+    protected void addEventListener(ApplicationListener<?> listener) {
+        applicationEventMulticaster.addApplicationListener(listener);
+        listenersForTest.add(listener);
+    }
+
+    protected void multicastEvent(ApplicationEvent event) {
+        applicationEventMulticaster.multicastEvent(event);
     }
 
     protected InputStream load(String resource) {
