@@ -21,15 +21,19 @@ import com.flowci.util.StringHelper;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.Consumer;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
+import lombok.Getter;
+
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.Getter;
+import java.util.function.Function;
 
 /**
- * Create channel for each manager instance
+ * Create channel and handle the operation on the channel
  * enable to declare, delete, purge queue, start and stop consumer on queue
  *
  * @author yang
@@ -120,18 +124,8 @@ public final class RabbitManager implements AutoCloseable {
         }
     }
 
-    public boolean start(String queueName, boolean ack, Consumer consumer) {
-        try {
-            String consumerTag = this.channel.basicConsume(queueName, ack, consumer);
-            tags.put(queueName, consumerTag);
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
     public boolean stop(String queueName) {
-        String consumerTag = tags.get(queueName);
+        String consumerTag = tags.remove(queueName);
 
         if (consumerTag != null) {
             try {
@@ -147,7 +141,69 @@ public final class RabbitManager implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        Enumeration<String> keys = tags.keys();
+
+        while (keys.hasMoreElements()) {
+            String queue = keys.nextElement();
+            stop(queue);
+        }
+
         channel.close();
-        conn.close();
+    }
+
+    public QueueConsumer createConsumer(Function<Message, Boolean> consume) {
+        return new QueueConsumer(consume);
+    }
+
+    public class QueueConsumer extends DefaultConsumer {
+
+        private final Function<Message, Boolean> consume;
+
+        QueueConsumer(Function<Message, Boolean> consume) {
+            super(channel);
+            this.consume = consume;
+        }
+
+        @Override
+        public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+                throws IOException {
+
+            Boolean ingoreForNow = consume.apply(new Message(channel, body, envelope));
+        }
+
+        public String start(String queueName, boolean ack) {
+            try {
+                String consumerTag = channel.basicConsume(queueName, ack, this);
+                tags.put(queueName, consumerTag);
+                return consumerTag;
+            } catch (IOException e) {
+                return null;
+            }
+        }
+    }
+
+    @Getter
+    public static class Message {
+
+        private final Channel channel;
+
+        private final byte[] body;
+
+        private final Envelope envelope;
+
+        Message(Channel channel, byte[] body, Envelope envelope) {
+            this.channel = channel;
+            this.body = body;
+            this.envelope = envelope;
+        }
+
+        public boolean sendAck() {
+            try {
+                getChannel().basicAck(envelope.getDeliveryTag(), false);
+                return true;
+            } catch (IOException e) {
+                return false;
+            }
+        }
     }
 }

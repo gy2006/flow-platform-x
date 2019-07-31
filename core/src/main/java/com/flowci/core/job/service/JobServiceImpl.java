@@ -59,10 +59,6 @@ import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.DefaultConsumer;
-import com.rabbitmq.client.Envelope;
 import groovy.util.ScriptException;
 import java.io.IOException;
 import java.time.Instant;
@@ -73,6 +69,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -298,25 +296,22 @@ public class JobServiceImpl implements JobService {
 
     @EventListener(value = ContextRefreshedEvent.class)
     public void startCallbackQueueConsumer(ContextRefreshedEvent event) {
-        callbackQueueManager.start(callbackQueue, false, new DefaultConsumer(callbackQueueManager.getChannel()) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-                throws IOException {
+        RabbitManager.QueueConsumer consumer = callbackQueueManager.createConsumer((message -> {
+            ExecutedCmd executedCmd;
 
-                ExecutedCmd executedCmd;
-
-                try {
-                    executedCmd = objectMapper.readValue(body, ExecutedCmd.class);
-                } catch (IOException e) {
-                    log.error(e.getMessage());
-                    return;
-                }
-
-                handleCallback(executedCmd);
-
-                getChannel().basicAck(envelope.getDeliveryTag(), false);
+            try {
+                executedCmd = objectMapper.readValue(message.getBody(), ExecutedCmd.class);
+            } catch (IOException e) {
+                log.error(e.getMessage());
+                return false;
             }
-        });
+
+            handleCallback(executedCmd);
+
+            return message.sendAck();
+        }));
+
+        consumer.start(callbackQueue, false);
     }
 
     @EventListener(value = FlowOperationEvent.class)
@@ -385,31 +380,27 @@ public class JobServiceImpl implements JobService {
     /**
      * Job queue consumer for each flow
      */
-    private class JobConsumer extends DefaultConsumer {
+    private class JobConsumerHandler implements Function<RabbitManager.Message, Boolean> {
 
         private final static long RetryIntervalOnNotFound = 30 * 1000; // 60 seconds
 
-        private final Flow flow;
-
         private final Object lock = new Object();
 
-        public JobConsumer(Channel channel, Flow flow) {
-            super(channel);
-            this.flow = flow;
-        }
-
         @Override
-        public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-            throws IOException {
-
-            Job job = objectMapper.readValue(body, Job.class);
+        public Boolean apply(RabbitManager.Message message) {
+            Job job = null;
+            try {
+                job = objectMapper.readValue(message.getBody(), Job.class);
+            } catch (IOException e) {
+                return false;
+            }
 
             log.debug("Job {} received from queue", job.getId());
             eventManager.publish(new JobReceivedEvent(this, job));
 
             if (!job.isQueuing()) {
                 log.info("Job {} cannot be process since status not queuing", job.getId());
-                return;
+                return false;
             }
 
             Agent available;
@@ -424,13 +415,12 @@ public class JobServiceImpl implements JobService {
                 if (isExpired(job)) {
                     setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
                     log.debug("Job '{}' is expired", job.getId());
-                    return;
+                    return false;
                 }
             }
 
             dispatch(job, available);
-
-            getChannel().basicAck(envelope.getDeliveryTag(), false);
+            return message.sendAck();
         }
 
         void resume() {
@@ -507,8 +497,9 @@ public class JobServiceImpl implements JobService {
     //====================================================================
 
     private void startJobConsumer(Flow flow) {
-        JobConsumer consumer = new JobConsumer(jobQueueManager.getChannel(), flow);
-        jobQueueManager.start(flow.getQueueName(), false, consumer);
+        JobConsumerHandler handler = new JobConsumerHandler();
+        RabbitManager.QueueConsumer consumer = jobQueueManager.createConsumer(handler);
+        consumer.start(flow.getQueueName(), false);
     }
 
     private void stopJobConsumer(Flow flow) {

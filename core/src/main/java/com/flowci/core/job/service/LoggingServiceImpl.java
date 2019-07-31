@@ -25,9 +25,19 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.google.common.collect.ImmutableList;
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.DefaultConsumer;
-import com.rabbitmq.client.Envelope;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -42,18 +52,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
 
 /**
  * @author yang
@@ -90,15 +88,13 @@ public class LoggingServiceImpl implements LoggingService {
 
     @EventListener(ContextRefreshedEvent.class)
     public void onStart() {
-        loggingQueueManager.start(loggingQueue, true, new DefaultConsumer(loggingQueueManager.getChannel()) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-                throws IOException {
-
-                final String msg = new String(body, StandardCharsets.UTF_8);
-                handleLoggingItem(msg);
-            }
+        RabbitManager.QueueConsumer consumer = loggingQueueManager.createConsumer(message -> {
+            final String msg = new String(message.getBody(), StandardCharsets.UTF_8);
+            handleLoggingItem(msg);
+            return true;
         });
+
+        consumer.start(loggingQueue, true);
     }
 
     @Override
