@@ -6,6 +6,7 @@ import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ public class LoggingServiceTest extends SpringScenario {
     @Autowired
     private LoggingService loggingService;
 
+    @Ignore
     @Test
     public void should_write_logs_into_file() throws IOException {
         // init:
@@ -55,6 +57,7 @@ public class LoggingServiceTest extends SpringScenario {
         }
     }
 
+    @Ignore
     @Test
     public void should_read_logs_from_file() throws IOException {
         // init:
