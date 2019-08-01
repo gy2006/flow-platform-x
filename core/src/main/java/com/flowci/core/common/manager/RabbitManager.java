@@ -148,8 +148,13 @@ public final class RabbitManager implements AutoCloseable {
         return queueConsumer.stop();
     }
 
+    /**
+     * It will be called when spring context stop
+     * @throws Exception
+     */
     @Override
     public void close() throws Exception {
+        log.debug("[Close] RabbitManager {} will be closed", getName());
         createdConsumers.forEach((s, queueConsumer) -> queueConsumer.stop());
         channel.close();
     }
