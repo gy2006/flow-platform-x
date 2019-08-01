@@ -46,12 +46,9 @@ public class QueueConfig {
     @Autowired
     private ConfigProperties.RabbitMQ rabbitProperties;
 
-    @Autowired
-    private ConfigProperties.Job jobProperties;
-
     @Bean
     public ThreadPoolTaskExecutor rabbitConsumerExecutor() {
-        return ThreadHelper.createTaskExecutor(20, 20, 50, "rabbit-t-");
+        return ThreadHelper.createTaskExecutor(10, 10, 50, "rabbit-t-");
     }
 
     @Bean
@@ -70,7 +67,7 @@ public class QueueConfig {
 
     @Bean
     public RabbitQueueManager callbackQueueManager(Connection rabbitConnection) throws IOException {
-        String name = jobProperties.getCallbackQueueName();
+        String name = "q.callback." + UUID.randomUUID();
         RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 1, name);
         manager.declare(true);
         return manager;
@@ -78,7 +75,7 @@ public class QueueConfig {
 
     @Bean
     public RabbitQueueManager loggingQueueManager(Connection rabbitConnection) throws IOException {
-        String name = "queue.logging." + UUID.randomUUID();
+        String name = "q.logging." + UUID.randomUUID();
         RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 1, name);
         manager.declare(false);
 

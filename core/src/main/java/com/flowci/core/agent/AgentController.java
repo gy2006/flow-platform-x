@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.flowci.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -61,7 +62,7 @@ public class AgentController {
     }
 
     @PostMapping()
-    public Agent createOrUpdate(@RequestBody CreateOrUpdateAgent body) {
+    public Agent createOrUpdate(@Validated @RequestBody CreateOrUpdateAgent body) {
         if (body.hasToken()) {
             return agentService.update(body.getToken(), body.getName(), body.getTags());
         }
@@ -70,7 +71,7 @@ public class AgentController {
     }
 
     @DeleteMapping()
-    public Agent delete(@RequestBody DeleteAgent body) {
+    public Agent delete(@Validated @RequestBody DeleteAgent body) {
         return agentService.delete(body.getToken());
     }
 

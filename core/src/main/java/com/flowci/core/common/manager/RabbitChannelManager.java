@@ -34,11 +34,8 @@ import java.io.IOException;
 @Getter
 public final class RabbitChannelManager extends RabbitManager {
 
-    private final String name;
-
     public RabbitChannelManager(Connection conn, Integer concurrency, String name) throws IOException {
-        super(conn, concurrency);
-        this.name = name;
+        super(conn, concurrency, name);
     }
 
     @Override

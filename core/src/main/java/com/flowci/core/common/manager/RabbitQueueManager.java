@@ -30,7 +30,7 @@ public class RabbitQueueManager extends RabbitManager {
     private final String queueName;
 
     public RabbitQueueManager(Connection conn, Integer concurrency, String queueName) throws IOException {
-        super(conn, concurrency);
+        super(conn, concurrency, queueName);
         this.queueName = queueName;
     }
 

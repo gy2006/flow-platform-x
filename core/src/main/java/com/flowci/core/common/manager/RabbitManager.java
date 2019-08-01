@@ -17,6 +17,7 @@
 
 package com.flowci.core.common.manager;
 
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.util.StringHelper;
 import com.rabbitmq.client.*;
 import lombok.Getter;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Log4j2
 @Getter
@@ -39,14 +41,20 @@ public abstract class RabbitManager implements AutoCloseable {
 
     protected final Integer concurrency;
 
+    protected final String name;
+
+    protected final ThreadPoolTaskExecutor executor;
+
     // key as queue name, value as instance
     protected final ConcurrentHashMap<String, QueueConsumer> consumers = new ConcurrentHashMap<>();
 
-    public RabbitManager(Connection conn, Integer concurrency) throws IOException {
+    public RabbitManager(Connection conn, Integer concurrency, String name) throws IOException {
         this.conn = conn;
         this.concurrency = concurrency;
+        this.name = name;
         this.channel = conn.createChannel();
         this.channel.basicQos(0, concurrency, false);
+        this.executor = ThreadHelper.createTaskExecutor(concurrency, concurrency, 10, name + "-");
     }
 
     public String declare(String queue, boolean durable) {
@@ -141,6 +149,7 @@ public abstract class RabbitManager implements AutoCloseable {
     public void close() throws Exception {
         consumers.forEach((s, queueConsumer) -> queueConsumer.cancel());
         channel.close();
+        executor.shutdown();
     }
 
     public class QueueConsumer extends DefaultConsumer {
@@ -159,8 +168,9 @@ public abstract class RabbitManager implements AutoCloseable {
         public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
                 throws IOException {
 
-            // TODO: start new thread to consume the message, not occupy the shared rabbit consumer executor
-            Boolean ingoreForNow = consume.apply(new Message(getChannel(), body, envelope));
+            executor.execute(() -> {
+                Boolean ingoreForNow = consume.apply(new Message(getChannel(), body, envelope));
+            });
         }
 
         public String start(boolean ack) {

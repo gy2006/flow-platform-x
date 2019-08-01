@@ -16,10 +16,9 @@
 
 package com.flowci.core.agent.domain;
 
-import java.util.Set;
-import javax.validation.constraints.NotNull;
-
 import com.google.common.base.Strings;
+import java.util.Set;
+import javax.validation.constraints.NotEmpty;
 import lombok.Data;
 
 /**
@@ -28,7 +27,7 @@ import lombok.Data;
 @Data
 public class CreateOrUpdateAgent {
 
-    @NotNull
+    @NotEmpty
     private String name;
 
     private Set<String> tags;

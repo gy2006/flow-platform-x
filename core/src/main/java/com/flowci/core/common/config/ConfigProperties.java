@@ -79,10 +79,6 @@ public class ConfigProperties {
     @Data
     public static class Job {
 
-        private String queueName;
-
-        private String callbackQueueName;
-
         private Long expireInSeconds;
 
         private Long retryWaitingSeconds;
