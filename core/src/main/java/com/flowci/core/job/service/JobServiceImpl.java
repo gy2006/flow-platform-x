@@ -16,17 +16,13 @@
 
 package com.flowci.core.job.service;
 
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
-import com.flowci.core.common.manager.RabbitManager;
-import com.flowci.core.common.manager.RabbitManager.Message;
-import com.flowci.core.common.manager.SpringEventManager;
+import com.flowci.core.common.manager.*;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.FlowInitEvent;
@@ -38,12 +34,9 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
-import com.flowci.core.job.event.CreateNewJobEvent;
-import com.flowci.core.job.event.JobCreatedEvent;
-import com.flowci.core.job.event.JobDeletedEvent;
-import com.flowci.core.job.event.JobReceivedEvent;
-import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.job.event.*;
 import com.flowci.core.job.manager.CmdManager;
+import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
@@ -55,25 +48,8 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.GroovyRunner;
-import com.flowci.tree.Node;
-import com.flowci.tree.NodePath;
-import com.flowci.tree.NodeTree;
-import com.flowci.tree.YmlParser;
+import com.flowci.tree.*;
 import groovy.util.ScriptException;
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,6 +61,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 /**
  * @author yang
@@ -106,9 +92,6 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private CurrentUserHelper currentUserHelper;
-
-    @Autowired
-    private String callbackQueue;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -138,10 +121,10 @@ public class JobServiceImpl implements JobService {
     private StepService stepService;
 
     @Autowired
-    private RabbitManager callbackQueueManager;
+    private FlowJobQueueManager flowJobQueueManager;
 
     @Autowired
-    private RabbitManager jobQueueManager;
+    private RabbitQueueManager callbackQueueManager;
 
     private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
 
@@ -302,8 +285,8 @@ public class JobServiceImpl implements JobService {
 
     @EventListener(value = ContextRefreshedEvent.class)
     public void startCallbackQueueConsumer(ContextRefreshedEvent event) {
-        RabbitManager.QueueConsumer consumer = callbackQueueManager.createConsumer(callbackQueue, (message -> {
-            if (message == Message.STOP_SIGN) {
+        RabbitChannelManager.QueueConsumer consumer = callbackQueueManager.createConsumer((message -> {
+            if (message == RabbitManager.Message.STOP_SIGN) {
                 return true;
             }
 
@@ -354,11 +337,7 @@ public class JobServiceImpl implements JobService {
         }
 
         Job current = get(agent.getJobId());
-        JobConsumerHandler handler = consumeHandlers.get(current.getQueueName());
-
-        if (handler != null) {
-            handler.resume();
-        }
+        resumeJobConsumer(current.getQueueName());
     }
 
     @EventListener(value = AgentStatusChangeEvent.class)
@@ -394,7 +373,7 @@ public class JobServiceImpl implements JobService {
     /**
      * Job queue consumer for each flow
      */
-    private class JobConsumerHandler implements Function<RabbitManager.Message, Boolean> {
+    private class JobConsumerHandler implements Function<RabbitChannelManager.Message, Boolean> {
 
         private final static long RetryIntervalOnNotFound = 30 * 1000; // 60 seconds
 
@@ -411,8 +390,8 @@ public class JobServiceImpl implements JobService {
         }
 
         @Override
-        public Boolean apply(RabbitManager.Message message) {
-            if (message == Message.STOP_SIGN) {
+        public Boolean apply(RabbitChannelManager.Message message) {
+            if (message == RabbitManager.Message.STOP_SIGN) {
                 log.debug("[Job Consumer] {} will be stopped", queueName);
                 isStop.set(true);
                 resume();
@@ -537,7 +516,8 @@ public class JobServiceImpl implements JobService {
         String queueName = flow.getQueueName();
         JobConsumerHandler handler = new JobConsumerHandler(queueName);
 
-        RabbitManager.QueueConsumer consumer = jobQueueManager.createConsumer(queueName, handler);
+        RabbitQueueManager manager = flowJobQueueManager.create(queueName);
+        RabbitManager.QueueConsumer consumer = manager.createConsumer(queueName, handler);
         consumer.start(false);
 
         consumeHandlers.put(queueName, handler);
@@ -545,9 +525,26 @@ public class JobServiceImpl implements JobService {
 
     private void stopJobConsumer(Flow flow) {
         String queueName = flow.getQueueName();
-        jobQueueManager.removeConsumer(queueName);
+
+        // remove queue manager and send Message.STOP_SIGN to consumer
+        flowJobQueueManager.remove(queueName);
+
+        // resume
+        resumeJobConsumer(queueName);
         consumeHandlers.remove(queueName);
     }
+
+    /**
+     * Resume job consumer if waiting for agent
+     */
+    private void resumeJobConsumer(String flowJobQueue) {
+        JobConsumerHandler handler = consumeHandlers.get(flowJobQueue);
+
+        if (handler != null) {
+            handler.resume();
+        }
+    }
+
 
     /**
      * Find available agent and dispatch job
@@ -714,10 +711,12 @@ public class JobServiceImpl implements JobService {
         }
 
         try {
-            setJobStatusAndSave(job, Job.Status.QUEUED, null);
+            RabbitQueueManager manager = flowJobQueueManager.get(job.getQueueName());
 
+            setJobStatusAndSave(job, Job.Status.QUEUED, null);
             byte[] body = objectMapper.writeValueAsBytes(job);
-            jobQueueManager.send(job.getQueueName(), body, job.getPriority());
+
+            manager.send(body, job.getPriority());
             return job;
         } catch (Throwable e) {
             throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());

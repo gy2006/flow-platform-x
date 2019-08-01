@@ -19,7 +19,6 @@ package com.flowci.core.test.job;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.common.manager.RabbitManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.service.FlowService;
@@ -31,24 +30,17 @@ import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
+import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.service.JobService;
 import com.flowci.core.job.service.StepService;
 import com.flowci.core.test.ZookeeperScenario;
-import com.flowci.domain.Agent;
-import com.flowci.domain.Cmd;
-import com.flowci.domain.ExecutedCmd;
-import com.flowci.domain.ObjectWrapper;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.*;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.log4j.Log4j2;
 import org.junit.Assert;
 import org.junit.Before;
@@ -57,6 +49,11 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yang
@@ -90,7 +87,7 @@ public class JobServiceTest extends ZookeeperScenario {
     private YmlManager ymlManager;
 
     @Autowired
-    private RabbitManager jobQueueManager;
+    private FlowJobQueueManager flowJobQueueManager;
 
     private Flow flow;
 
@@ -99,9 +96,11 @@ public class JobServiceTest extends ZookeeperScenario {
     @Before
     public void mockFlowAndYml() throws IOException {
         mockLogin();
+
         flow = flowService.create("hello");
         yml = flowService.saveYml(flow, StringHelper.toString(load("flow.yml")));
-        Assert.assertNotNull(jobQueueManager.getConsumer(flow.getQueueName()));
+
+        Assert.assertNotNull(flowJobQueueManager.get(flow.getQueueName()));
     }
 
     @Test

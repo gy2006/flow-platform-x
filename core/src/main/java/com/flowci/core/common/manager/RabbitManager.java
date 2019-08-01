@@ -18,45 +18,33 @@
 package com.flowci.core.common.manager;
 
 import com.flowci.util.StringHelper;
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.DefaultConsumer;
-import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.*;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
 
-/**
- * Create channel and handle the operation on the channel
- * enable to declare, delete, purge queue, start and stop consumer on queue
- *
- * @author yang
- */
 @Log4j2
 @Getter
-public final class RabbitManager implements AutoCloseable {
+public abstract class RabbitManager implements AutoCloseable {
 
-    private final Connection conn;
+    protected final Connection conn;
 
-    private final Channel channel;
+    protected final Channel channel;
 
-    private final String name;
+    protected final Integer concurrency;
 
-    private final Integer concurrency;
+    // key as queue name, value as instance
+    protected final ConcurrentHashMap<String, QueueConsumer> consumers = new ConcurrentHashMap<>();
 
-    private final ConcurrentHashMap<String, QueueConsumer> createdConsumers = new ConcurrentHashMap<>();
-
-    public RabbitManager(Connection conn, Integer concurrency, String name) throws IOException {
+    public RabbitManager(Connection conn, Integer concurrency) throws IOException {
         this.conn = conn;
-        this.name = name;
         this.concurrency = concurrency;
-
         this.channel = conn.createChannel();
         this.channel.basicQos(0, concurrency, false);
     }
@@ -115,7 +103,7 @@ public final class RabbitManager implements AutoCloseable {
      */
     public boolean send(String routingKey, byte[] body, Integer priority) {
         try {
-            BasicProperties.Builder basicProps = new BasicProperties.Builder();
+            AMQP.BasicProperties.Builder basicProps = new AMQP.BasicProperties.Builder();
             basicProps.priority(priority);
 
             this.channel.basicPublish(StringHelper.EMPTY, routingKey, basicProps.build(), body);
@@ -125,27 +113,24 @@ public final class RabbitManager implements AutoCloseable {
         }
     }
 
-    public String getConsumer(String queueName) {
-        QueueConsumer queueConsumer = createdConsumers.get(queueName);
-        if (Objects.isNull(queueConsumer)) {
-            return null;
-        }
-        return queueConsumer.getConsumerTag();
+    public QueueConsumer getConsumer(String queue) {
+        return consumers.get(queue);
     }
 
     public QueueConsumer createConsumer(String queue, Function<Message, Boolean> consume) {
-        QueueConsumer queueConsumer = new QueueConsumer(queue, consume);
-        createdConsumers.put(queue, queueConsumer);
-        return queueConsumer;
+        QueueConsumer consumer = new QueueConsumer(queue, consume);
+        consumers.put(queue, consumer);
+        return consumer;
     }
 
     public boolean removeConsumer(String queue) {
-        QueueConsumer queueConsumer = createdConsumers.remove(queue);
-        if (Objects.isNull(queueConsumer)) {
+        QueueConsumer consumer = consumers.remove(queue);
+
+        if (Objects.isNull(consumer)) {
             return false;
         }
 
-        return queueConsumer.stop();
+        return consumer.cancel();
     }
 
     /**
@@ -154,8 +139,7 @@ public final class RabbitManager implements AutoCloseable {
      */
     @Override
     public void close() throws Exception {
-        log.debug("[Close] RabbitManager {} will be closed", getName());
-        createdConsumers.forEach((s, queueConsumer) -> queueConsumer.stop());
+        consumers.forEach((s, queueConsumer) -> queueConsumer.cancel());
         channel.close();
     }
 
@@ -172,8 +156,8 @@ public final class RabbitManager implements AutoCloseable {
         }
 
         @Override
-        public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-            throws IOException {
+        public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+                throws IOException {
 
             Boolean ingoreForNow = consume.apply(new Message(getChannel(), body, envelope));
         }
@@ -189,7 +173,7 @@ public final class RabbitManager implements AutoCloseable {
             }
         }
 
-        public boolean stop() {
+        boolean cancel() {
             try {
                 if (Objects.isNull(getConsumerTag())) {
                     return true; // not started

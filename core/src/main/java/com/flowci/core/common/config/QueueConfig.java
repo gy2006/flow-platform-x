@@ -16,8 +16,9 @@
 
 package com.flowci.core.common.config;
 
-import com.flowci.core.common.manager.RabbitManager;
+import com.flowci.core.common.manager.RabbitChannelManager;
 import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.core.common.manager.RabbitQueueManager;
 import com.flowci.util.StringHelper;
 import com.rabbitmq.client.AMQP.Queue.DeclareOk;
 import com.rabbitmq.client.BuiltinExchangeType;
@@ -25,6 +26,8 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,40 +70,28 @@ public class QueueConfig {
     }
 
     @Bean
-    public RabbitManager jobQueueManager(Connection rabbitConnection) throws IOException {
-        return new RabbitManager(rabbitConnection, 1, "q-jobs");
-    }
-
-    @Bean
-    public RabbitManager callbackQueueManager(Connection rabbitConnection) throws IOException {
-        return new RabbitManager(rabbitConnection, 1, "q-callback");
-    }
-
-    @Bean
-    public RabbitManager loggingQueueManager(Connection rabbitConnection) throws IOException {
-        return new RabbitManager(rabbitConnection, 1, "q-logging");
-    }
-
-    @Bean
-    public RabbitManager agentQueueManager(Connection rabbitConnection) throws IOException {
-        return new RabbitManager(rabbitConnection, 1, "q-agent");
-    }
-
-    @Bean
-    public String callbackQueue(RabbitManager callbackQueueManager) {
+    public RabbitQueueManager callbackQueueManager(Connection rabbitConnection) throws IOException {
         String name = jobProperties.getCallbackQueueName();
-        callbackQueueManager.declare(name, true);
-        return name;
+        RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 1, name);
+        manager.declare(true);
+        return manager;
     }
 
     @Bean
-    public String loggingQueue(RabbitManager callbackQueueManager) throws IOException {
-        Channel rabbitChannel = callbackQueueManager.getChannel();
-        DeclareOk loggingQueue = rabbitChannel.queueDeclare();
+    public RabbitQueueManager loggingQueueManager(Connection rabbitConnection) throws IOException {
+        String name = "queue.logging." + UUID.randomUUID();
+        RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 1, name);
+        manager.declare(false);
 
-        rabbitChannel.exchangeDeclare(LoggingExchange, BuiltinExchangeType.FANOUT);
-        rabbitChannel.queueBind(loggingQueue.getQueue(), LoggingExchange, StringHelper.EMPTY);
+        Channel channel = manager.getChannel();
+        channel.exchangeDeclare(LoggingExchange, BuiltinExchangeType.FANOUT);
+        channel.queueBind(manager.getQueueName(), LoggingExchange, StringHelper.EMPTY);
 
-        return loggingQueue.getQueue();
+        return manager;
+    }
+
+    @Bean
+    public RabbitChannelManager agentQueueManager(Connection rabbitConnection) throws IOException {
+        return new RabbitChannelManager(rabbitConnection, 1, "agent-channel-mgr");
     }
 }

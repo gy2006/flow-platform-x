@@ -17,19 +17,17 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
-import com.flowci.core.common.manager.RabbitManager;
+import com.flowci.core.common.manager.RabbitChannelManager;
+import com.flowci.core.common.manager.RabbitQueueManager;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.test.SpringScenario.Config;
 import com.flowci.core.test.flow.FlowMockHelper;
 import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.core.user.User;
 import com.flowci.core.user.UserService;
 import com.flowci.domain.Agent;
-import java.io.InputStream;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.junit.After;
 import org.junit.runner.RunWith;
@@ -43,6 +41,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yang
@@ -77,22 +80,16 @@ public abstract class SpringScenario {
     private UserService userService;
 
     @Autowired
-    private String callbackQueue;
+    private RabbitQueueManager callbackQueueManager;
 
     @Autowired
-    private String loggingQueue;
+    private RabbitQueueManager loggingQueueManager;
 
     @Autowired
-    private RabbitManager jobQueueManager;
+    private RabbitChannelManager agentQueueManager;
 
     @Autowired
-    private RabbitManager callbackQueueManager;
-
-    @Autowired
-    private RabbitManager loggingQueueManager;
-
-    @Autowired
-    private RabbitManager agentQueueManager;
+    private FlowJobQueueManager flowJobQueueManager;
 
     @Autowired
     private AgentDao agentDao;
@@ -119,16 +116,15 @@ public abstract class SpringScenario {
 
     @After
     public void queueCleanUp() {
-        callbackQueueManager.purge(callbackQueue);
-        loggingQueueManager.purge(loggingQueue);
+        callbackQueueManager.purge();
+        loggingQueueManager.purge();
 
         for (Agent agent : agentDao.findAll()) {
-            agentQueueManager.purge(agent.getQueueName());
+            agentQueueManager.delete(agent.getQueueName());
         }
 
         for (Flow flow : flowDao.findAll()) {
-            jobQueueManager.removeConsumer(flow.getQueueName());
-            jobQueueManager.purge(flow.getQueueName());
+            flowJobQueueManager.remove(flow.getQueueName());
         }
     }
 
