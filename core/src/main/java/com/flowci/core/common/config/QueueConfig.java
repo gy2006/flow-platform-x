@@ -16,24 +16,23 @@
 
 package com.flowci.core.common.config;
 
-import com.flowci.core.common.manager.RabbitChannelManager;
 import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.core.common.manager.RabbitChannelManager;
 import com.flowci.core.common.manager.RabbitQueueManager;
 import com.flowci.util.StringHelper;
-import com.rabbitmq.client.AMQP.Queue.DeclareOk;
 import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import java.io.IOException;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeoutException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author yang

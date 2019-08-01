@@ -159,6 +159,7 @@ public abstract class RabbitManager implements AutoCloseable {
         public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
                 throws IOException {
 
+            // TODO: start new thread to consume the message, not occupy the shared rabbit consumer executor
             Boolean ingoreForNow = consume.apply(new Message(getChannel(), body, envelope));
         }
 
