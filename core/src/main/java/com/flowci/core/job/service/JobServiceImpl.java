@@ -297,6 +297,9 @@ public class JobServiceImpl implements JobService {
 
             try {
                 ExecutedCmd executedCmd = objectMapper.readValue(message.getBody(), ExecutedCmd.class);
+                CmdId cmdId = CmdId.parse(executedCmd.getId());
+                log.info("[Callback]: {}-{} = {}", cmdId.getJobId(), cmdId.getNodePath(), executedCmd.getStatus());
+
                 handleCallback(executedCmd);
                 return message.sendAck();
             } catch (IOException e) {
@@ -397,7 +400,7 @@ public class JobServiceImpl implements JobService {
         @Override
         public Boolean apply(RabbitChannelManager.Message message) {
             if (message == RabbitManager.Message.STOP_SIGN) {
-                log.debug("[Job Consumer] {} will be stopped", queueName);
+                log.info("[Job Consumer] {} will be stopped", queueName);
                 isStop.set(true);
                 resume();
                 return true;
@@ -410,7 +413,7 @@ public class JobServiceImpl implements JobService {
                 return false;
             }
 
-            log.debug("Job {} received from queue", job.getId());
+            log.info("[Job] {} received", job.getId());
             eventManager.publish(new JobReceivedEvent(this, job));
 
             if (!job.isQueuing()) {
@@ -421,7 +424,7 @@ public class JobServiceImpl implements JobService {
             Agent available;
 
             while ((available = findAvailableAgent(job)) == null) {
-                log.debug("Job '{}' not find available agent, waiting.....", job.getId());
+                log.info("[Job] {} waiting for agent.....", job.getId());
 
                 synchronized (lock) {
                     ThreadHelper.wait(lock, RetryIntervalOnNotFound);
@@ -433,7 +436,7 @@ public class JobServiceImpl implements JobService {
 
                 if (isExpired(job)) {
                     setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
-                    log.debug("Job '{}' is expired", job.getId());
+                    log.info("[Job] {} has expired", job.getId());
                     return false;
                 }
             }
@@ -703,7 +706,7 @@ public class JobServiceImpl implements JobService {
     private Job enqueue(Job job) {
         if (isExpired(job)) {
             setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
-            log.debug("Job '{}' is expired", job);
+            log.debug("[Job] {} has expired", job);
             return job;
         }
 
@@ -714,6 +717,8 @@ public class JobServiceImpl implements JobService {
             byte[] body = objectMapper.writeValueAsBytes(job);
 
             manager.send(body, job.getPriority());
+            log.info("[Job] {} has enqueue", job.getId());
+
             return job;
         } catch (Throwable e) {
             throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());
