@@ -22,7 +22,10 @@ import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
-import com.flowci.core.common.manager.*;
+import com.flowci.core.common.manager.RabbitChannelManager;
+import com.flowci.core.common.manager.RabbitManager;
+import com.flowci.core.common.manager.RabbitQueueManager;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.FlowInitEvent;
@@ -126,6 +129,8 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private RabbitQueueManager callbackQueueManager;
 
+    private final Object jobNumberSync = new Object();
+
     private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
 
     //====================================================================
@@ -185,14 +190,14 @@ public class JobServiceImpl implements JobService {
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
         // create job number
-        Long buildNumber = getJobNumber(flow);
+        JobNumber jobNumber = jobNumberDao.increaseBuildNumber(flow.getId());
 
         // create job
         Job job = new Job();
-        job.setKey(JobKeyBuilder.build(flow, buildNumber));
+        job.setKey(JobKeyBuilder.build(flow, jobNumber.getNumber()));
         job.setFlowId(flow.getId());
         job.setTrigger(trigger);
-        job.setBuildNumber(buildNumber);
+        job.setBuildNumber(jobNumber.getNumber());
         job.setCurrentPath(root.getPathAsString());
         job.setAgentSelector(root.getSelector());
 
@@ -211,7 +216,7 @@ public class JobServiceImpl implements JobService {
         // set expire at
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
-        jobDao.save(job);
+        jobDao.insert(job);
 
         // create job yml
         ymlManager.create(flow, job, yml);
@@ -336,8 +341,8 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
-        Job current = get(agent.getJobId());
-        resumeJobConsumer(current.getQueueName());
+        // notify all consumer to find agent
+        consumeHandlers.forEach((s, handler) -> handler.resume());
     }
 
     @EventListener(value = AgentStatusChangeEvent.class)
@@ -530,21 +535,13 @@ public class JobServiceImpl implements JobService {
         flowJobQueueManager.remove(queueName);
 
         // resume
-        resumeJobConsumer(queueName);
-        consumeHandlers.remove(queueName);
-    }
-
-    /**
-     * Resume job consumer if waiting for agent
-     */
-    private void resumeJobConsumer(String flowJobQueue) {
-        JobConsumerHandler handler = consumeHandlers.get(flowJobQueue);
-
+        JobConsumerHandler handler = consumeHandlers.get(queueName);
         if (handler != null) {
             handler.resume();
         }
-    }
 
+        consumeHandlers.remove(queueName);
+    }
 
     /**
      * Find available agent and dispatch job
@@ -730,16 +727,5 @@ public class JobServiceImpl implements JobService {
         jobDao.save(job);
         eventManager.publish(new JobStatusChangeEvent(this, job));
         return job;
-    }
-
-    private Long getJobNumber(Flow flow) {
-        Optional<JobNumber> optional = jobNumberDao.findById(flow.getId());
-        if (optional.isPresent()) {
-            JobNumber number = optional.get();
-            number.setNumber(number.getNumber() + 1);
-            return jobNumberDao.save(number).getNumber();
-        }
-
-        return jobNumberDao.save(new JobNumber(flow.getId())).getNumber();
     }
 }

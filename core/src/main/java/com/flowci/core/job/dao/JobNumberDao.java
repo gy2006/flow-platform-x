@@ -24,7 +24,7 @@ import org.springframework.stereotype.Repository;
  * @author yang
  */
 @Repository
-public interface JobNumberDao extends MongoRepository<JobNumber, String> {
+public interface JobNumberDao extends MongoRepository<JobNumber, String>, CustomJobNumberDao {
 
     void deleteByFlowId(String flowId);
 }

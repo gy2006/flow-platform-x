@@ -58,7 +58,7 @@ public class YmlManagerImpl implements YmlManager {
     @Override
     public JobYml create(Flow flow, Job job, Yml yml) {
         JobYml jobYml = new JobYml(job.getId(), flow.getName(), yml.getRaw());
-        return jobYmlDao.save(jobYml);
+        return jobYmlDao.insert(jobYml);
     }
 
     @Override

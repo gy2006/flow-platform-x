@@ -68,7 +68,7 @@ public class QueueConfig {
     @Bean
     public RabbitQueueManager callbackQueueManager(Connection rabbitConnection) throws IOException {
         String name = "q.callback." + UUID.randomUUID();
-        RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 1, name);
+        RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 10, name);
         manager.declare(true);
         return manager;
     }
@@ -76,7 +76,7 @@ public class QueueConfig {
     @Bean
     public RabbitQueueManager loggingQueueManager(Connection rabbitConnection) throws IOException {
         String name = "q.logging." + UUID.randomUUID();
-        RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 1, name);
+        RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 10, name);
         manager.declare(false);
 
         Channel channel = manager.getChannel();
