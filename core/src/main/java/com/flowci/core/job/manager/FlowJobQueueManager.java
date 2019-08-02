@@ -17,24 +17,30 @@
 
 package com.flowci.core.job.manager;
 
+import com.flowci.core.common.manager.RabbitManager;
+import com.flowci.core.common.manager.RabbitManager.Message;
 import com.flowci.core.common.manager.RabbitQueueManager;
-import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.job.dao.JobMessageDao;
+import com.flowci.core.job.domain.JobMessage;
 import com.flowci.exception.NotAvailableException;
 import com.flowci.exception.NotFoundException;
 import com.rabbitmq.client.Connection;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Component
 public class FlowJobQueueManager implements AutoCloseable {
 
     @Autowired
     private Connection rabbitConnection;
+
+    @Autowired
+    private JobMessageDao jobMessageDao;
 
     private final Map<String, RabbitQueueManager> queueManagerMap = new ConcurrentHashMap<>();
 
@@ -61,6 +67,21 @@ public class FlowJobQueueManager implements AutoCloseable {
         if (manager != null) {
             manager.delete();
         }
+    }
+
+    public JobMessage persistent(RabbitManager.Message message) {
+        return jobMessageDao.save(new JobMessage(message));
+    }
+
+    /**
+     * Recover not processed job from database
+     */
+    public Optional<JobMessage> recovery(String queueName) {
+       return jobMessageDao.findById(queueName);
+    }
+
+    public void remove(JobMessage message) {
+        jobMessageDao.delete(message);
     }
 
     @Override

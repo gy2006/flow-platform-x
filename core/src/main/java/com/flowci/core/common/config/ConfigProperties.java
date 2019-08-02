@@ -121,5 +121,9 @@ public class ConfigProperties {
         private String username;
 
         private String password;
+
+        private String callbackQueueName;
+
+        private String loggingQueueName;
     }
 }

@@ -16,6 +16,8 @@
 
 package com.flowci.core.job.service;
 
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
@@ -35,9 +37,14 @@ import com.flowci.core.job.dao.JobNumberDao;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobMessage;
 import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
-import com.flowci.core.job.event.*;
+import com.flowci.core.job.event.CreateNewJobEvent;
+import com.flowci.core.job.event.JobCreatedEvent;
+import com.flowci.core.job.event.JobDeletedEvent;
+import com.flowci.core.job.event.JobReceivedEvent;
+import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
@@ -51,8 +58,25 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.*;
+import com.flowci.tree.GroovyRunner;
+import com.flowci.tree.Node;
+import com.flowci.tree.NodePath;
+import com.flowci.tree.NodeTree;
+import com.flowci.tree.YmlParser;
 import groovy.util.ScriptException;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,16 +88,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 /**
  * @author yang
@@ -128,8 +142,6 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private RabbitQueueManager callbackQueueManager;
-
-    private final Object jobNumberSync = new Object();
 
     private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
 
@@ -249,7 +261,7 @@ public class JobServiceImpl implements JobService {
             Cmd killCmd = cmdManager.createKillCmd();
 
             agentService.dispatch(killCmd, agent);
-            log.info("Stop cmd been send to {} for job {}", agent.getName(), job.getId());
+            logInfo(job, " cancel cmd been send to {}", agent.getName());
         }
 
         return job;
@@ -406,25 +418,27 @@ public class JobServiceImpl implements JobService {
                 return true;
             }
 
-            Job job = null;
-            try {
-                job = objectMapper.readValue(message.getBody(), Job.class);
-            } catch (IOException e) {
-                return false;
+            Optional<Job> optional = convert(message);
+            if (!optional.isPresent()) {
+                return true;
             }
 
-            log.info("[Job] {} received", job.getId());
+            Job job = optional.get();
+            logInfo(job, "received from queue");
             eventManager.publish(new JobReceivedEvent(this, job));
 
             if (!job.isQueuing()) {
-                log.info("Job {} cannot be process since status not queuing", job.getId());
+                logInfo(job, "can't handle it since status is not in queuing");
                 return false;
             }
+
+            // save incoming message for current queue
+            JobMessage pending = flowJobQueueManager.persistent(message);
 
             Agent available;
 
             while ((available = findAvailableAgent(job)) == null) {
-                log.info("[Job] {} waiting for agent.....", job.getId());
+                logInfo(job, "waiting for agent...");
 
                 synchronized (lock) {
                     ThreadHelper.wait(lock, RetryIntervalOnNotFound);
@@ -436,18 +450,27 @@ public class JobServiceImpl implements JobService {
 
                 if (isExpired(job)) {
                     setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
-                    log.info("[Job] {} has expired", job.getId());
+                    logInfo(job, "expired");
                     return false;
                 }
             }
 
             dispatch(job, available);
+            flowJobQueueManager.remove(pending);
             return message.sendAck();
         }
 
         void resume() {
             synchronized (lock) {
                 lock.notifyAll();
+            }
+        }
+
+        private Optional<Job> convert(RabbitChannelManager.Message message) {
+            try {
+                return Optional.of(objectMapper.readValue(message.getBody(), Job.class));
+            } catch (IOException e) {
+                return Optional.empty();
             }
         }
     }
@@ -504,7 +527,7 @@ public class JobServiceImpl implements JobService {
             setJobStatusAndSave(job, statusFromContext, execCmd.getError());
 
             agentService.tryRelease(current);
-            log.info("Job {} been executed with status {}", job.getId(), statusFromContext);
+            logInfo(job, "finished with status {}", statusFromContext);
             return;
         }
 
@@ -522,13 +545,22 @@ public class JobServiceImpl implements JobService {
 
     private void startJobConsumer(Flow flow) {
         String queueName = flow.getQueueName();
+
         JobConsumerHandler handler = new JobConsumerHandler(queueName);
+        consumeHandlers.put(queueName, handler);
 
         RabbitQueueManager manager = flowJobQueueManager.create(queueName);
         RabbitManager.QueueConsumer consumer = manager.createConsumer(queueName, handler);
-        consumer.start(false);
 
-        consumeHandlers.put(queueName, handler);
+        // find out pended job message and resume it
+        Optional<JobMessage> optional = flowJobQueueManager.recovery(queueName);
+        if (optional.isPresent()) {
+            JobMessage pending = optional.get();
+            consumer.consume(pending.getBody(), pending.toEnvelop());
+        }
+
+        // start consumer
+        consumer.start(false);
     }
 
     private void stopJobConsumer(Flow flow) {
@@ -550,8 +582,6 @@ public class JobServiceImpl implements JobService {
      * Find available agent and dispatch job
      */
     private void dispatch(Job job, Agent available) {
-        log.debug("Job '{}' will be dispatched to agent {}", job.getId(), available.getId());
-
         NodeTree tree = ymlManager.getTree(job);
         Node next = tree.next(currentNodePath(job));
 
@@ -620,7 +650,7 @@ public class JobServiceImpl implements JobService {
 
             Cmd cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
-            log.debug("Job {} with cmd {} been dispatched to agent {}", job.getId(), cmd.getId(), agent.getId());
+            logInfo(job, "send to agent: step={}, agent={}", node.getName(), agent.getName());
         } catch (Throwable e) {
             log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
 
@@ -630,7 +660,6 @@ public class JobServiceImpl implements JobService {
 
             // set current job failure
             setJobStatusAndSave(job, Job.Status.FAILURE, e.getMessage());
-
             agentService.tryRelease(agent);
         }
     }
@@ -706,7 +735,7 @@ public class JobServiceImpl implements JobService {
     private Job enqueue(Job job) {
         if (isExpired(job)) {
             setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
-            log.debug("[Job] {} has expired", job);
+            log.debug("[Job: Timeout] {} has expired", job.getKey());
             return job;
         }
 
@@ -717,7 +746,7 @@ public class JobServiceImpl implements JobService {
             byte[] body = objectMapper.writeValueAsBytes(job);
 
             manager.send(body, job.getPriority());
-            log.info("[Job] {} has enqueue", job.getId());
+            logInfo(job, "enqueue");
 
             return job;
         } catch (Throwable e) {
@@ -732,5 +761,9 @@ public class JobServiceImpl implements JobService {
         jobDao.save(job);
         eventManager.publish(new JobStatusChangeEvent(this, job));
         return job;
+    }
+
+    private void logInfo(Job job, String message, Object ...params) {
+        log.info("[Job] " + job.getKey() + " " + message, params);
     }
 }

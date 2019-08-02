@@ -19,16 +19,19 @@ package com.flowci.core.common.manager;
 
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.util.StringHelper;
-import com.rabbitmq.client.*;
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
-
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Log4j2
@@ -166,8 +169,11 @@ public abstract class RabbitManager implements AutoCloseable {
 
         @Override
         public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
-                throws IOException {
+            throws IOException {
+            consume(body, envelope);
+        }
 
+        public void consume(byte[] body, Envelope envelope) {
             executor.execute(() -> {
                 Boolean ingoreForNow = consume.apply(new Message(getChannel(), body, envelope));
             });
@@ -212,7 +218,7 @@ public abstract class RabbitManager implements AutoCloseable {
 
         private final Envelope envelope;
 
-        Message(Channel channel, byte[] body, Envelope envelope) {
+        public Message(Channel channel, byte[] body, Envelope envelope) {
             this.channel = channel;
             this.body = body;
             this.envelope = envelope;
