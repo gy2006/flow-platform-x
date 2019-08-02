@@ -24,6 +24,8 @@ import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.ShutdownSignalException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -62,7 +64,14 @@ public class QueueConfig {
         factory.setPort(rabbitProperties.getPort());
         factory.setRequestedHeartbeat(1800);
 
-        return factory.newConnection(rabbitConsumerExecutor.getThreadPoolExecutor());
+        Connection connection = factory.newConnection(rabbitConsumerExecutor.getThreadPoolExecutor());
+        connection.addShutdownListener(new ShutdownListener() {
+            @Override
+            public void shutdownCompleted(ShutdownSignalException cause) {
+                log.error(cause);
+            }
+        });
+        return connection;
     }
 
     @Bean

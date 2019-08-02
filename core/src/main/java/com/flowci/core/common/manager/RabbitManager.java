@@ -24,6 +24,8 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.ShutdownSignalException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,6 +60,12 @@ public abstract class RabbitManager implements AutoCloseable {
         this.channel = conn.createChannel();
         this.channel.basicQos(0, concurrency, false);
         this.executor = ThreadHelper.createTaskExecutor(concurrency, concurrency, 10, name + "-");
+        this.channel.addShutdownListener(new ShutdownListener() {
+            @Override
+            public void shutdownCompleted(ShutdownSignalException cause) {
+                log.error(cause);
+            }
+        });
     }
 
     public String declare(String queue, boolean durable) {

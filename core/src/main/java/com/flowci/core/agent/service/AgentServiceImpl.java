@@ -398,7 +398,7 @@ public class AgentServiceImpl implements AgentService {
                 return;
             }
 
-            if (event.getType() == Type.CHILD_UPDATED || event.getType() == Type.CONNECTION_RECONNECTED) {
+            if (event.getType() == Type.CONNECTION_RECONNECTED) {
                 Status status = getStatusFromZk(agent);
                 updateAgentStatus(agent, status);
                 log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(), status);

@@ -37,7 +37,6 @@ import com.flowci.core.job.dao.JobNumberDao;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
-import com.flowci.core.job.domain.JobMessage;
 import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.CreateNewJobEvent;
@@ -432,9 +431,6 @@ public class JobServiceImpl implements JobService {
                 return false;
             }
 
-            // save incoming message for current queue
-            JobMessage pending = flowJobQueueManager.persistent(message);
-
             Agent available;
 
             while ((available = findAvailableAgent(job)) == null) {
@@ -456,7 +452,6 @@ public class JobServiceImpl implements JobService {
             }
 
             dispatch(job, available);
-            flowJobQueueManager.remove(pending);
             return message.sendAck();
         }
 
@@ -551,13 +546,6 @@ public class JobServiceImpl implements JobService {
 
         RabbitQueueManager manager = flowJobQueueManager.create(queueName);
         RabbitManager.QueueConsumer consumer = manager.createConsumer(queueName, handler);
-
-        // find out pended job message and resume it
-        Optional<JobMessage> optional = flowJobQueueManager.recovery(queueName);
-        if (optional.isPresent()) {
-            JobMessage pending = optional.get();
-            consumer.consume(pending.getBody(), pending.toEnvelop());
-        }
 
         // start consumer
         consumer.start(false);
