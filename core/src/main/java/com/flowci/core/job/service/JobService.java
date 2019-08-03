@@ -20,6 +20,7 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
@@ -51,9 +52,9 @@ public interface JobService {
     Job getLatest(Flow flow);
 
     /**
-     * List job for flow
+     * List job with fields only shown on the list
      */
-    Page<Job> list(Flow flow, int page, int size);
+    Page<JobItem> list(Flow flow, int page, int size);
 
     /**
      * Create job by flow and yml

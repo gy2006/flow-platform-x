@@ -23,6 +23,7 @@ import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.service.JobService;
 import com.flowci.core.job.service.LoggingService;
@@ -30,7 +31,6 @@ import com.flowci.core.job.service.StepService;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.NodePath;
-
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
@@ -76,9 +76,9 @@ public class JobController {
     private LoggingService loggingService;
 
     @GetMapping("/{flow}")
-    public Page<Job> list(@PathVariable("flow") String name,
-                          @RequestParam(required = false, defaultValue = DefaultPage) int page,
-                          @RequestParam(required = false, defaultValue = DefaultSize) int size) {
+    public Page<JobItem> list(@PathVariable("flow") String name,
+                              @RequestParam(required = false, defaultValue = DefaultPage) int page,
+                              @RequestParam(required = false, defaultValue = DefaultSize) int size) {
 
         Flow flow = flowService.get(name);
         return jobService.list(flow, page, size);

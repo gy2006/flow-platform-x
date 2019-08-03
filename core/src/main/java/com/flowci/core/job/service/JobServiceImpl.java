@@ -24,19 +24,21 @@ import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
-import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.job.dao.JobDao;
+import com.flowci.core.job.dao.JobItemDao;
 import com.flowci.core.job.dao.JobNumberDao;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.CreateNewJobEvent;
@@ -116,6 +118,9 @@ public class JobServiceImpl implements JobService {
     private JobDao jobDao;
 
     @Autowired
+    private JobItemDao jobItemDao;
+
+    @Autowired
     private JobNumberDao jobNumberDao;
 
     @Autowired
@@ -190,9 +195,9 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Page<Job> list(Flow flow, int page, int size) {
+    public Page<JobItem> list(Flow flow, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size, SortByBuildNumber);
-        return jobDao.findAllByFlowId(flow.getId(), pageable);
+        return jobItemDao.findAllByFlowId(flow.getId(), pageable);
     }
 
     @Override

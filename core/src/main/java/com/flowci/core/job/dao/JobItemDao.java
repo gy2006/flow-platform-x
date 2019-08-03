@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 fir.im
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.flowci.core.job.dao;
 
-import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.domain.JobItem;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -26,9 +26,8 @@ import org.springframework.stereotype.Repository;
  * @author yang
  */
 @Repository
-public interface JobDao extends MongoRepository<Job, String> {
+public interface JobItemDao extends MongoRepository<JobItem, String> {
 
-    Job findByKey(String key);
+    Page<JobItem> findAllByFlowId(String flowId, Pageable pageable);
 
-    Long deleteByFlowId(String flowId);
 }

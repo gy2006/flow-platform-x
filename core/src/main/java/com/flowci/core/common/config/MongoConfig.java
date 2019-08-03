@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.coverter.VariableMapReader;
 import com.flowci.core.common.coverter.VariableMapWriter;
 import com.flowci.core.common.mongo.FlowMappingContext;
+import com.flowci.core.job.domain.JobItem;
 import com.flowci.domain.ExecutedCmd;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
@@ -68,6 +69,7 @@ public class MongoConfig extends AbstractMongoConfiguration {
         List<Converter<?, ?>> converters = new ArrayList<>();
         converters.add(new VariableMapReader(objectMapper));
         converters.add(new VariableMapWriter(objectMapper));
+        converters.add(new JobItem.ContextReader());
         return new MongoCustomConversions(converters);
     }
 
