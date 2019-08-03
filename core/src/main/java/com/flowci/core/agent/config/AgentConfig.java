@@ -18,7 +18,7 @@ package com.flowci.core.agent.config;
 
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.config.QueueConfig;
-import com.flowci.core.common.manager.RabbitQueueManager;
+import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.domain.Settings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -37,7 +37,7 @@ public class AgentConfig {
     private ConfigProperties.RabbitMQ rabbitProperties;
 
     @Autowired
-    private RabbitQueueManager callbackQueueManager;
+    private RabbitQueueOperation callbackQueueManager;
 
     @Bean("baseSettings")
     public Settings baseSettings() {

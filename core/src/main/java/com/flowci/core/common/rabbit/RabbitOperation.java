@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.common.manager;
+package com.flowci.core.common.rabbit;
 
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.util.StringHelper;
@@ -38,7 +38,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Log4j2
 @Getter
-public abstract class RabbitManager implements AutoCloseable {
+public abstract class RabbitOperation implements AutoCloseable {
 
     protected final Connection conn;
 
@@ -53,19 +53,14 @@ public abstract class RabbitManager implements AutoCloseable {
     // key as queue name, value as instance
     protected final ConcurrentHashMap<String, QueueConsumer> consumers = new ConcurrentHashMap<>();
 
-    public RabbitManager(Connection conn, Integer concurrency, String name) throws IOException {
+    public RabbitOperation(Connection conn, Integer concurrency, String name) throws IOException {
         this.conn = conn;
         this.concurrency = concurrency;
         this.name = name;
         this.channel = conn.createChannel();
         this.channel.basicQos(0, concurrency, false);
         this.executor = ThreadHelper.createTaskExecutor(concurrency, concurrency, 10, name + "-");
-        this.channel.addShutdownListener(new ShutdownListener() {
-            @Override
-            public void shutdownCompleted(ShutdownSignalException cause) {
-                log.error(cause);
-            }
-        });
+        this.channel.addShutdownListener(cause -> log.error(cause));
     }
 
     public String declare(String queue, boolean durable) {

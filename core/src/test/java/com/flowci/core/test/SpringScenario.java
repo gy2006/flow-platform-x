@@ -17,8 +17,8 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
-import com.flowci.core.common.manager.RabbitChannelManager;
-import com.flowci.core.common.manager.RabbitQueueManager;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
+import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.job.manager.FlowJobQueueManager;
@@ -80,13 +80,13 @@ public abstract class SpringScenario {
     private UserService userService;
 
     @Autowired
-    private RabbitQueueManager callbackQueueManager;
+    private RabbitQueueOperation callbackQueueManager;
 
     @Autowired
-    private RabbitQueueManager loggingQueueManager;
+    private RabbitQueueOperation loggingQueueManager;
 
     @Autowired
-    private RabbitChannelManager agentQueueManager;
+    private RabbitChannelOperation agentQueueManager;
 
     @Autowired
     private FlowJobQueueManager flowJobQueueManager;

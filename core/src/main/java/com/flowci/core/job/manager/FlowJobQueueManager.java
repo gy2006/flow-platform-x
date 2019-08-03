@@ -17,7 +17,7 @@
 
 package com.flowci.core.job.manager;
 
-import com.flowci.core.common.manager.RabbitQueueManager;
+import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.exception.NotAvailableException;
 import com.flowci.exception.NotFoundException;
 import com.rabbitmq.client.Connection;
@@ -34,11 +34,11 @@ public class FlowJobQueueManager implements AutoCloseable {
     @Autowired
     private Connection rabbitConnection;
 
-    private final Map<String, RabbitQueueManager> queueManagerMap = new ConcurrentHashMap<>();
+    private final Map<String, RabbitQueueOperation> queueManagerMap = new ConcurrentHashMap<>();
 
-    public RabbitQueueManager create(String queueName) {
+    public RabbitQueueOperation create(String queueName) {
         try {
-            RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 1, queueName);
+            RabbitQueueOperation manager = new RabbitQueueOperation(rabbitConnection, 1, queueName);
             queueManagerMap.put(queueName, manager);
             return manager;
         } catch (IOException e) {
@@ -46,8 +46,8 @@ public class FlowJobQueueManager implements AutoCloseable {
         }
     }
 
-    public RabbitQueueManager get(String queueName) {
-        RabbitQueueManager manager = queueManagerMap.get(queueName);
+    public RabbitQueueOperation get(String queueName) {
+        RabbitQueueOperation manager = queueManagerMap.get(queueName);
         if (Objects.isNull(manager)) {
             throw new NotFoundException("RabbitQueueManager not found for flow job queue {0}", queueName);
         }
@@ -55,7 +55,7 @@ public class FlowJobQueueManager implements AutoCloseable {
     }
 
     public void remove(String queueName) {
-        RabbitQueueManager manager = queueManagerMap.remove(queueName);
+        RabbitQueueOperation manager = queueManagerMap.remove(queueName);
         if (manager != null) {
             manager.delete();
         }

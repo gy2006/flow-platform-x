@@ -17,9 +17,9 @@
 package com.flowci.core.job.service;
 
 import com.flowci.core.common.helper.CacheHelper;
-import com.flowci.core.common.manager.RabbitChannelManager;
-import com.flowci.core.common.manager.RabbitManager;
-import com.flowci.core.common.manager.RabbitQueueManager;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
+import com.flowci.core.common.rabbit.RabbitOperation;
+import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.flowci.exception.NotFoundException;
@@ -83,12 +83,12 @@ public class LoggingServiceImpl implements LoggingService {
     private Path logDir;
 
     @Autowired
-    private RabbitQueueManager loggingQueueManager;
+    private RabbitQueueOperation loggingQueueManager;
 
     @EventListener(ContextRefreshedEvent.class)
     public void onStart() {
-        RabbitChannelManager.QueueConsumer consumer = loggingQueueManager.createConsumer(message -> {
-            if (message == RabbitManager.Message.STOP_SIGN) {
+        RabbitChannelOperation.QueueConsumer consumer = loggingQueueManager.createConsumer(message -> {
+            if (message == RabbitOperation.Message.STOP_SIGN) {
                 return true;
             }
 

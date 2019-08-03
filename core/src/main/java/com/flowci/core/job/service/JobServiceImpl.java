@@ -24,9 +24,9 @@ import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
-import com.flowci.core.common.manager.RabbitChannelManager;
-import com.flowci.core.common.manager.RabbitManager;
-import com.flowci.core.common.manager.RabbitQueueManager;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
+import com.flowci.core.common.rabbit.RabbitOperation;
+import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
@@ -140,7 +140,7 @@ public class JobServiceImpl implements JobService {
     private FlowJobQueueManager flowJobQueueManager;
 
     @Autowired
-    private RabbitQueueManager callbackQueueManager;
+    private RabbitQueueOperation callbackQueueManager;
 
     private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
 
@@ -301,8 +301,8 @@ public class JobServiceImpl implements JobService {
 
     @EventListener(value = ContextRefreshedEvent.class)
     public void startCallbackQueueConsumer(ContextRefreshedEvent event) {
-        RabbitChannelManager.QueueConsumer consumer = callbackQueueManager.createConsumer((message -> {
-            if (message == RabbitManager.Message.STOP_SIGN) {
+        RabbitChannelOperation.QueueConsumer consumer = callbackQueueManager.createConsumer((message -> {
+            if (message == RabbitOperation.Message.STOP_SIGN) {
                 return true;
             }
 
@@ -392,7 +392,7 @@ public class JobServiceImpl implements JobService {
     /**
      * Job queue consumer for each flow
      */
-    private class JobConsumerHandler implements Function<RabbitChannelManager.Message, Boolean> {
+    private class JobConsumerHandler implements Function<RabbitChannelOperation.Message, Boolean> {
 
         private final static long RetryIntervalOnNotFound = 30 * 1000; // 60 seconds
 
@@ -409,8 +409,8 @@ public class JobServiceImpl implements JobService {
         }
 
         @Override
-        public Boolean apply(RabbitChannelManager.Message message) {
-            if (message == RabbitManager.Message.STOP_SIGN) {
+        public Boolean apply(RabbitChannelOperation.Message message) {
+            if (message == RabbitOperation.Message.STOP_SIGN) {
                 log.info("[Job Consumer] {} will be stopped", queueName);
                 isStop.set(true);
                 resume();
@@ -461,7 +461,7 @@ public class JobServiceImpl implements JobService {
             }
         }
 
-        private Optional<Job> convert(RabbitChannelManager.Message message) {
+        private Optional<Job> convert(RabbitChannelOperation.Message message) {
             try {
                 return Optional.of(objectMapper.readValue(message.getBody(), Job.class));
             } catch (IOException e) {
@@ -544,8 +544,8 @@ public class JobServiceImpl implements JobService {
         JobConsumerHandler handler = new JobConsumerHandler(queueName);
         consumeHandlers.put(queueName, handler);
 
-        RabbitQueueManager manager = flowJobQueueManager.create(queueName);
-        RabbitManager.QueueConsumer consumer = manager.createConsumer(queueName, handler);
+        RabbitQueueOperation manager = flowJobQueueManager.create(queueName);
+        RabbitOperation.QueueConsumer consumer = manager.createConsumer(queueName, handler);
 
         // start consumer
         consumer.start(false);
@@ -728,7 +728,7 @@ public class JobServiceImpl implements JobService {
         }
 
         try {
-            RabbitQueueManager manager = flowJobQueueManager.get(job.getQueueName());
+            RabbitQueueOperation manager = flowJobQueueManager.get(job.getQueueName());
 
             setJobStatusAndSave(job, Job.Status.QUEUED, null);
             byte[] body = objectMapper.writeValueAsBytes(job);

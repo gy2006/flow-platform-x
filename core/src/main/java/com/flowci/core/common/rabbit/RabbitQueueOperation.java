@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.common.manager;
+package com.flowci.core.common.rabbit;
 
 
 import com.rabbitmq.client.Connection;
@@ -25,11 +25,11 @@ import java.io.IOException;
 import java.util.function.Function;
 
 @Getter
-public class RabbitQueueManager extends RabbitManager {
+public class RabbitQueueOperation extends RabbitOperation {
 
     private final String queueName;
 
-    public RabbitQueueManager(Connection conn, Integer concurrency, String queueName) throws IOException {
+    public RabbitQueueOperation(Connection conn, Integer concurrency, String queueName) throws IOException {
         super(conn, concurrency, queueName);
         this.queueName = queueName;
     }

@@ -17,8 +17,8 @@
 package com.flowci.core.common.config;
 
 import com.flowci.core.common.helper.ThreadHelper;
-import com.flowci.core.common.manager.RabbitChannelManager;
-import com.flowci.core.common.manager.RabbitQueueManager;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
+import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.util.StringHelper;
 import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
@@ -33,7 +33,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.io.IOException;
-import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -65,27 +64,22 @@ public class QueueConfig {
         factory.setRequestedHeartbeat(1800);
 
         Connection connection = factory.newConnection(rabbitConsumerExecutor.getThreadPoolExecutor());
-        connection.addShutdownListener(new ShutdownListener() {
-            @Override
-            public void shutdownCompleted(ShutdownSignalException cause) {
-                log.error(cause);
-            }
-        });
+        connection.addShutdownListener(cause -> log.error(cause));
         return connection;
     }
 
     @Bean
-    public RabbitQueueManager callbackQueueManager(Connection rabbitConnection) throws IOException {
+    public RabbitQueueOperation callbackQueueManager(Connection rabbitConnection) throws IOException {
         String name = rabbitProperties.getCallbackQueueName();
-        RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 10, name);
+        RabbitQueueOperation manager = new RabbitQueueOperation(rabbitConnection, 10, name);
         manager.declare(true);
         return manager;
     }
 
     @Bean
-    public RabbitQueueManager loggingQueueManager(Connection rabbitConnection) throws IOException {
+    public RabbitQueueOperation loggingQueueManager(Connection rabbitConnection) throws IOException {
         String name = rabbitProperties.getLoggingQueueName();
-        RabbitQueueManager manager = new RabbitQueueManager(rabbitConnection, 10, name);
+        RabbitQueueOperation manager = new RabbitQueueOperation(rabbitConnection, 10, name);
         manager.declare(false);
 
         Channel channel = manager.getChannel();
@@ -96,7 +90,7 @@ public class QueueConfig {
     }
 
     @Bean
-    public RabbitChannelManager agentQueueManager(Connection rabbitConnection) throws IOException {
-        return new RabbitChannelManager(rabbitConnection, 1, "agent-channel-mgr");
+    public RabbitChannelOperation agentQueueManager(Connection rabbitConnection) throws IOException {
+        return new RabbitChannelOperation(rabbitConnection, 1, "agent-channel-mgr");
     }
 }

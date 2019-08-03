@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.common.manager;
+package com.flowci.core.common.rabbit;
 
 import com.rabbitmq.client.Connection;
 import lombok.Getter;
@@ -32,9 +32,9 @@ import java.io.IOException;
  */
 @Log4j2
 @Getter
-public final class RabbitChannelManager extends RabbitManager {
+public final class RabbitChannelOperation extends RabbitOperation {
 
-    public RabbitChannelManager(Connection conn, Integer concurrency, String name) throws IOException {
+    public RabbitChannelOperation(Connection conn, Integer concurrency, String name) throws IOException {
         super(conn, concurrency, name);
     }
 

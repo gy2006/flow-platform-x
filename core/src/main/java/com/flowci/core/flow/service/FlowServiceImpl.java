@@ -18,7 +18,7 @@ package com.flowci.core.flow.service;
 
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.core.common.manager.RabbitChannelManager;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
@@ -120,7 +120,7 @@ public class FlowServiceImpl implements FlowService {
     private Cache<String, List<String>> gitBranchCache;
 
     @Autowired
-    private RabbitChannelManager jobQueueManager;
+    private RabbitChannelOperation jobQueueManager;
 
     @EventListener
     public void onInit(ContextRefreshedEvent ignore) {
