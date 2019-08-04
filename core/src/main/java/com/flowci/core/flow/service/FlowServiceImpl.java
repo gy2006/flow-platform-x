@@ -32,6 +32,7 @@ import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.user.CurrentUserHelper;
+import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
@@ -62,7 +63,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -330,7 +330,7 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public void testGitConnection(String name, String url, String privateKeyOrCredentialName) {
         final Flow flow = get(name);
-        String privateKey = privateKeyOrCredentialName;
+        final ObjectWrapper<String> privateKeyWrapper = new ObjectWrapper<>(privateKeyOrCredentialName);
 
         if (!CipherHelper.isRsaPrivateKey(privateKeyOrCredentialName)) {
             RSAKeyPair sshRsa = (RSAKeyPair) credentialService.get(privateKeyOrCredentialName);
@@ -339,10 +339,14 @@ public class FlowServiceImpl implements FlowService {
                 throw new ArgumentException("Invalid ssh-rsa name");
             }
 
-            privateKey = sshRsa.getPrivateKey();
+            privateKeyWrapper.setValue(sshRsa.getPrivateKey());
         }
 
-        gitTestExecutor.execute(new GitTestRunner(flow.getId(), privateKey, url));
+        gitTestExecutor.execute(() -> {
+            GitBranchLoader loader = new GitBranchLoader(flow.getId(), privateKeyWrapper.getValue(), url);
+            List<String> branches = loader.load();
+            gitBranchCache.put(flow.getId(), branches);
+        });
     }
 
     @Override
@@ -363,9 +367,8 @@ public class FlowServiceImpl implements FlowService {
         }
 
         return gitBranchCache.get(flow.getId(), (Function<String, List<String>>) flowId -> {
-            GitTestRunner gitTestRunner = new GitTestRunner(flow.getId(), sshRsa.getPrivateKey(), gitUrl);
-            gitTestRunner.run();
-            return gitTestRunner.getBranches();
+            GitBranchLoader gitTestRunner = new GitBranchLoader(flow.getId(), sshRsa.getPrivateKey(), gitUrl);
+            return gitTestRunner.load();
         });
     }
 
@@ -392,7 +395,7 @@ public class FlowServiceImpl implements FlowService {
         }
     }
 
-    private class GitTestRunner implements Runnable {
+    private class GitBranchLoader {
 
         private final String flowId;
 
@@ -400,17 +403,15 @@ public class FlowServiceImpl implements FlowService {
 
         private final String url;
 
-        @Getter
-        private final List<String> branches = new LinkedList<>();
-
-        GitTestRunner(String flowId, String privateKey, String url) {
+        GitBranchLoader(String flowId, String privateKey, String url) {
             this.flowId = flowId;
             this.privateKey = privateKey;
             this.url = url;
         }
 
-        @Override
-        public void run() {
+        public List<String> load() {
+            List<String> branches = new LinkedList<>();
+
             try (PrivateKeySessionFactory sessionFactory = new PrivateKeySessionFactory(privateKey)) {
                 // publish FETCHING event
                 eventManager.publish(new GitTestEvent(this, flowId));
@@ -422,15 +423,13 @@ public class FlowServiceImpl implements FlowService {
                         SshTransport sshTransport = (SshTransport) transport;
                         sshTransport.setSshSessionFactory(sessionFactory);
                     })
+                    .setTimeout(10)
                     .call();
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();
                     branches.add(refName.substring(refName.lastIndexOf("/") + 1));
                 }
-
-                // add to cache
-                gitBranchCache.put(flowId, branches);
 
                 // publish DONE event
                 eventManager.publish(new GitTestEvent(this, flowId, branches));
@@ -439,6 +438,8 @@ public class FlowServiceImpl implements FlowService {
                 // publish ERROR event
                 eventManager.publish(new GitTestEvent(this, flowId, e.getMessage()));
             }
+
+            return branches;
         }
     }
 
