@@ -16,6 +16,7 @@
 
 package com.flowci.util;
 
+import com.google.common.base.Strings;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +31,10 @@ public abstract class StringHelper {
     public final static String EMPTY = "";
 
     private static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
+
+    public static boolean hasValue(String value) {
+        return !Strings.isNullOrEmpty(value);
+    }
 
     public static String toString(InputStream is) throws IOException {
         try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {

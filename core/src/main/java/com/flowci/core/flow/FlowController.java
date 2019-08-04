@@ -20,6 +20,7 @@ import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.FlowGitTest;
+import com.flowci.core.flow.domain.GitSettings;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.domain.http.RequestMessage;
 import com.flowci.exception.ArgumentException;
@@ -75,8 +76,8 @@ public class FlowController {
     }
 
     @PostMapping(value = "/{name}/confirm")
-    public Flow confirm(@PathVariable String name) {
-        return flowService.confirm(name);
+    public Flow confirm(@PathVariable String name, @RequestBody GitSettings gitSettings) {
+        return flowService.confirm(name, gitSettings.getGitUrl(), gitSettings.getCredentialName());
     }
 
     @PostMapping("/{name}/yml")
@@ -122,8 +123,8 @@ public class FlowController {
      * Create credential for flow only
      */
     @PostMapping("/{name}/credentials/rsa")
-    public void setupRSACredential(@PathVariable String name, @RequestBody RSAKeyPair keyPair) {
-        flowService.setSshRsaCredential(name, keyPair);
+    public String setupRSACredential(@PathVariable String name, @RequestBody RSAKeyPair keyPair) {
+        return flowService.setSshRsaCredential(name, keyPair);
     }
 
     @GetMapping("/credentials/{name}")

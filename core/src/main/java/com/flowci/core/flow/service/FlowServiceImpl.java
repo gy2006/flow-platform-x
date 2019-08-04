@@ -18,8 +18,8 @@ package com.flowci.core.flow.service;
 
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.manager.SpringEventManager;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.credential.service.CredentialService;
@@ -37,12 +37,12 @@ import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
-import com.flowci.exception.NotAvailableException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.CipherHelper;
+import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
@@ -207,12 +207,16 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
-    public Flow confirm(String name) {
+    public Flow confirm(String name, String gitUrl, String credential) {
         Flow flow = get(name);
 
         if (flow.getStatus() == Status.CONFIRMED) {
-            throw new NotAvailableException("Flow {0} is created", name);
+            throw new DuplicateException("Flow {0} has created", name);
         }
+
+        VariableMap variables = flow.getVariables();
+        variables.putIfNotEmpty(Variables.Flow.GitUrl, gitUrl);
+        variables.putIfNotEmpty(Variables.Flow.SSH_RSA, credential);
 
         flow.setStatus(Status.CONFIRMED);
         flowDao.save(flow);
@@ -278,7 +282,7 @@ public class FlowServiceImpl implements FlowService {
             defaultYmlTemplate.merge(context, sw);
             return sw.toString();
         } catch (IOException e) {
-            return null;
+            return StringHelper.EMPTY;
         }
     }
 
@@ -317,14 +321,13 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
-    public void setSshRsaCredential(String name, RSAKeyPair keyPair) {
+    public String setSshRsaCredential(String name, RSAKeyPair keyPair) {
         Flow flow = get(name);
 
         String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
         credentialService.createRSA(credentialName, keyPair.getPublicKey(), keyPair.getPrivateKey());
 
-        flow.getVariables().put(Variables.Flow.SSH_RSA, credentialName);
-        update(flow);
+        return credentialName;
     }
 
     @Override

@@ -18,7 +18,9 @@ package com.flowci.core.flow.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
+import com.flowci.core.common.domain.Variables;
 import com.flowci.domain.VariableMap;
+import com.flowci.util.StringHelper;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -60,5 +62,17 @@ public final class Flow extends Mongoable {
     @JsonIgnore
     public String getQueueName() {
         return "queue.flow." + id + ".job";
+    }
+
+    @JsonIgnore
+    public boolean hasGitUrl() {
+        String val = variables.get(Variables.Flow.GitUrl);
+        return StringHelper.hasValue(val);
+    }
+
+    @JsonIgnore
+    public boolean hasCredential() {
+        String val = variables.get(Variables.Flow.SSH_RSA);
+        return StringHelper.hasValue(val);
     }
 }

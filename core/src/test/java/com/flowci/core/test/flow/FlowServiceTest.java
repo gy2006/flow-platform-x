@@ -26,11 +26,14 @@ import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.VariableMap;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.YmlException;
+import com.flowci.tree.Node;
+import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -68,14 +71,53 @@ public class FlowServiceTest extends SpringScenario {
     }
 
     @Test
-    public void should_create_flow_by_name() {
+    public void should_create_and_confirm_flow_with_git_template() {
+        // when: create flow
         String name = "hello";
         flowService.create(name);
-        Assert.assertNotNull(flowService.get(name));
-        flowService.confirm(name);
 
+        // then: flow with pending status
+        Flow created = flowService.get(name);
+        Assert.assertNotNull(created);
+        Assert.assertEquals(Status.PENDING, created.getStatus());
+
+        // when: confirm the flow
+        String gitUrl = "git@github.com:FlowCI/docs.git";
+        String credential = "ssh-ras-credential";
+        flowService.confirm(name, gitUrl, credential);
+
+        // then: flow should be with confirmed status
+        Flow confirmed = flowService.get(name);
+        Assert.assertNotNull(confirmed);
+        Assert.assertEquals(Status.CONFIRMED, confirmed.getStatus());
+
+        // then: the default yml should be created with expected variables
+        Yml yml = flowService.getYml(confirmed);
+        Assert.assertNotNull(yml);
+
+        Node root = YmlParser.load("test", yml.getRaw());
+        Assert.assertEquals(gitUrl, root.getEnv(Variables.Flow.GitUrl));
+        Assert.assertEquals(credential, root.getEnv(Variables.Flow.SSH_RSA));
+
+        // then:
         List<Flow> flows = flowService.list(Status.CONFIRMED);
         Assert.assertEquals(1, flows.size());
+    }
+
+    @Test
+    public void should_create_and_confirm_flow_with_default_template() {
+        // when: create and confirm flow without git settings
+        String name = "hello";
+        flowService.create(name);
+        Flow confirmed = flowService.confirm(name, null, null);
+
+        // then:
+        Yml yml = flowService.getYml(confirmed);
+        Assert.assertNotNull(yml);
+
+        Node root = YmlParser.load("test", yml.getRaw());
+        Assert.assertNull(root.getEnv(Variables.Flow.GitUrl));
+        Assert.assertNull(root.getEnv(Variables.Flow.SSH_RSA));
     }
 
     @Test
@@ -91,7 +133,7 @@ public class FlowServiceTest extends SpringScenario {
         flow.getVariables().put("FLOW_NAME", "hello.world");
         flow.getVariables().put(Variables.Flow.SSH_RSA, credentialName);
         flowService.update(flow);
-        flowService.confirm(flow.getName());
+        flowService.confirm(flow.getName(), null, null);
 
         VariableMap variables = flowService.get(flow.getName()).getVariables();
         Assert.assertEquals(credentialName, variables.get(Variables.Flow.SSH_RSA));

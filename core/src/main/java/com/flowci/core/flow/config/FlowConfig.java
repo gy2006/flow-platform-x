@@ -35,6 +35,16 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Configuration
 public class FlowConfig {
 
+    private static final Properties templateProperties = new Properties();
+
+    static {
+        templateProperties.setProperty("resource.loader", "class");
+        templateProperties.setProperty("class.resource.loader.class",
+            "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+
+        Velocity.init(templateProperties);
+    }
+
     @Bean("gitTestExecutor")
     public ThreadPoolTaskExecutor gitTestExecutor() {
         return ThreadHelper.createTaskExecutor(20, 20, 100, "git-test-");
@@ -42,14 +52,7 @@ public class FlowConfig {
 
     @Bean
     public Template defaultYmlTemplate() {
-        Properties p = new Properties();
-        p.setProperty("resource.loader", "class");
-        p.setProperty("class.resource.loader.class",
-            "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
-
-        Velocity.init(p);
-
-        return Velocity.getTemplate("example.yml.vm");
+        return Velocity.getTemplate("templates/example.yml.vm");
     }
 
     @Bean("gitBranchCache")

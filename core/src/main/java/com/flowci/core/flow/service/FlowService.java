@@ -49,8 +49,12 @@ public interface FlowService {
 
     /**
      * Confirm flow
+     *
+     * @param name flow name
+     * @param gitUrl defined git url, can be null
+     * @param credential defined credential
      */
-    Flow confirm(String name);
+    Flow confirm(String name, String gitUrl, String credential);
 
     /**
      * Get flow by name
@@ -90,8 +94,10 @@ public interface FlowService {
     /**
      * Create ssh-rsa credential
      * It will create default credential name: 'flow-{flow name}-ssh-rsa'
+     *
+     * @return credential name
      */
-    void setSshRsaCredential(String name, RSAKeyPair keyPair);
+    String setSshRsaCredential(String name, RSAKeyPair keyPair);
 
     /**
      * Test git connection for flow and dispatch application event

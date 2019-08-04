@@ -16,6 +16,8 @@
 
 package com.flowci.domain;
 
+import com.flowci.util.StringHelper;
+import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -49,6 +51,12 @@ public class VariableMap extends LinkedHashMap<String, String> implements Serial
     public VariableMap(Map<String, String> data) {
         super(data.size() + 10);
         load(data);
+    }
+
+    public void putIfNotEmpty(String key, String value) {
+        if (StringHelper.hasValue(value)) {
+            put(key, value);
+        }
     }
 
     public VariableMap merge(VariableMap other) {
