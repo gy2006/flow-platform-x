@@ -27,6 +27,7 @@ import com.flowci.exception.ArgumentException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -76,7 +77,10 @@ public class FlowController {
     }
 
     @PostMapping(value = "/{name}/confirm")
-    public Flow confirm(@PathVariable String name, @RequestBody GitSettings gitSettings) {
+    public Flow confirm(@PathVariable String name, @RequestBody(required = false) GitSettings gitSettings) {
+        if (Objects.isNull(gitSettings)) {
+            gitSettings = new GitSettings();
+        }
         return flowService.confirm(name, gitSettings.getGitUrl(), gitSettings.getCredential());
     }
 
