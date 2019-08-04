@@ -26,6 +26,6 @@ public class GitSettings {
 
     private String gitUrl;
 
-    private String credentialName;
+    private String credential;
 
 }

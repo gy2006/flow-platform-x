@@ -77,7 +77,7 @@ public class FlowController {
 
     @PostMapping(value = "/{name}/confirm")
     public Flow confirm(@PathVariable String name, @RequestBody GitSettings gitSettings) {
-        return flowService.confirm(name, gitSettings.getGitUrl(), gitSettings.getCredentialName());
+        return flowService.confirm(name, gitSettings.getGitUrl(), gitSettings.getCredential());
     }
 
     @PostMapping("/{name}/yml")
