@@ -56,6 +56,11 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
+    public List<Credential> listName() {
+        return credentialDao.listNameOnly(currentUserHelper.getUserId());
+    }
+
+    @Override
     public Credential get(String name) {
         Credential c = credentialDao.findByNameAndCreatedBy(name, currentUserHelper.getUserId());
 

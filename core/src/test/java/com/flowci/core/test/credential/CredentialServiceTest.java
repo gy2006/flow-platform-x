@@ -73,5 +73,11 @@ public class CredentialServiceTest extends SpringScenario {
 
         Assert.assertEquals("hello.rsa.1", list.get(0).getName());
         Assert.assertEquals("hello.rsa.2", list.get(1).getName());
+
+        List<Credential> names = credentialService.listName();
+        Assert.assertEquals(2, names.size());
+
+        Assert.assertEquals("hello.rsa.1", names.get(0).getName());
+        Assert.assertEquals("hello.rsa.2", names.get(1).getName());
     }
 }

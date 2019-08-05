@@ -46,6 +46,11 @@ public class CredentialController {
         return credentialService.list();
     }
 
+    @GetMapping("/list/name")
+    public List<Credential> listName() {
+        return credentialService.listName();
+    }
+
     @PostMapping("/rsa")
     public Credential create(@Validated @RequestBody CreateRSA body) {
         if (body.hasKeyPair()) {

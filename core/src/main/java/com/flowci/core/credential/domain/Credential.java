@@ -28,7 +28,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document
 @Getter
 @Setter
-public abstract class Credential extends Mongoable {
+public class Credential extends Mongoable {
 
     public enum Category {
 
