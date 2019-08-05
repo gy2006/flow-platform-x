@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.flowci.core.user;
+package com.flowci.core.user.helper;
 
+import com.flowci.core.user.domain.User;
 import com.flowci.exception.CIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

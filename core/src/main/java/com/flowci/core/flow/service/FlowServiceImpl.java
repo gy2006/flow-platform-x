@@ -31,7 +31,7 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
-import com.flowci.core.user.CurrentUserHelper;
+import com.flowci.core.user.helper.CurrentUserHelper;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;

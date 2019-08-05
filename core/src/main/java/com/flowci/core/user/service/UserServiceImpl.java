@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.flowci.core.user;
+package com.flowci.core.user.service;
 
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.user.dao.UserDao;
+import com.flowci.core.user.domain.User;
 import com.flowci.exception.DuplicateException;
 import com.flowci.util.HashingHelper;
 import java.util.Objects;

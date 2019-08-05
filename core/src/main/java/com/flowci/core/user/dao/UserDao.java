@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package com.flowci.core.user;
+package com.flowci.core.user.dao;
+
+import com.flowci.core.user.domain.User;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author yang
  */
-public interface UserService {
+@Repository
+public interface UserDao extends MongoRepository<User, String> {
 
-    User defaultAdmin();
-
-    /**
-     * Create user by email and password;
-     */
-    User create(String email, String password);
-
-    /**
-     * Get user by email
-     */
-    User getByEmail(String email);
+    @Query
+    User findByEmail(String email);
 
 }

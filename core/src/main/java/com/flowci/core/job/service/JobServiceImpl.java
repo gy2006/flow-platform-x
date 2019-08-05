@@ -51,7 +51,7 @@ import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
-import com.flowci.core.user.CurrentUserHelper;
+import com.flowci.core.user.helper.CurrentUserHelper;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;

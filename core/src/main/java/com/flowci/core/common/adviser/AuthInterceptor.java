@@ -17,9 +17,9 @@
 package com.flowci.core.common.adviser;
 
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.user.CurrentUserHelper;
-import com.flowci.core.user.User;
-import com.flowci.core.user.UserService;
+import com.flowci.core.user.helper.CurrentUserHelper;
+import com.flowci.core.user.domain.User;
+import com.flowci.core.user.service.UserService;
 import com.flowci.exception.AuthenticationException;
 import com.google.common.base.Strings;
 import java.util.Objects;

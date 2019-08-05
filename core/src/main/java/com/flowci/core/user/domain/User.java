@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.user;
+package com.flowci.core.user.domain;
 
 import com.flowci.core.common.domain.Mongoable;
 import lombok.Getter;

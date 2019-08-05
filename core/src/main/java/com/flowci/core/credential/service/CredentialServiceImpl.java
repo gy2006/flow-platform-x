@@ -19,7 +19,7 @@ package com.flowci.core.credential.service;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
-import com.flowci.core.user.CurrentUserHelper;
+import com.flowci.core.user.helper.CurrentUserHelper;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
