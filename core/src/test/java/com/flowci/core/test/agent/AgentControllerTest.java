@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.domain.CreateOrUpdateAgent;
 import com.flowci.core.agent.domain.DeleteAgent;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
@@ -69,6 +70,9 @@ public class AgentControllerTest extends SpringScenario {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ConfigProperties.RabbitMQ rabbitConfig;
 
     @Before
     public void login() {
@@ -143,7 +147,7 @@ public class AgentControllerTest extends SpringScenario {
 
         // then:
         Settings settings = settingsR.getData();
-        Assert.assertEquals("queue.jobs.callback-test", settings.getCallbackQueueName());
+        Assert.assertEquals(rabbitConfig.getCallbackQueueName(), settings.getCallbackQueueName());
 
         Assert.assertEquals("/flow-agents-test", settings.getZookeeper().getRoot());
         Assert.assertEquals("127.0.0.1:2181", settings.getZookeeper().getHost());
