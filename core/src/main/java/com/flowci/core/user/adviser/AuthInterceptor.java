@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.common.adviser;
+package com.flowci.core.user.adviser;
 
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.user.helper.CurrentUserHelper;

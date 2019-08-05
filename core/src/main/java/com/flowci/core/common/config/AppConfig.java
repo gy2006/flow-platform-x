@@ -18,7 +18,7 @@ package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.flowci.core.common.adviser.AuthInterceptor;
+import com.flowci.core.user.adviser.AuthInterceptor;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.domain.JsonablePage;
 import com.flowci.core.user.domain.User;
