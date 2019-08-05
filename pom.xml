@@ -36,6 +36,7 @@
     <cron-utils.version>7.0.5</cron-utils.version>
     <velocity-engine-core.version>2.1</velocity-engine-core.version>
     <amqp-client.version>5.7.2</amqp-client.version>
+    <java-jwt.version>3.8.1</java-jwt.version>
   </properties>
 
   <build>
@@ -130,6 +131,12 @@
         <groupId>com.flowci</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.auth0</groupId>
+        <artifactId>java-jwt</artifactId>
+        <version>${java-jwt.version}</version>
       </dependency>
 
       <dependency>
