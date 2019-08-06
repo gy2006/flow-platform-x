@@ -18,7 +18,8 @@
 package com.flowci.core.test.auth;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.flowci.core.auth.JwtHelper;
+import com.flowci.core.auth.helper.JwtHelper;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
@@ -30,9 +31,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.Base64;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 public class AuthControllerTest extends SpringScenario {
 
@@ -45,8 +47,12 @@ public class AuthControllerTest extends SpringScenario {
     @Autowired
     private MvcMockHelper mvcMockHelper;
 
+    @Autowired
+    private ConfigProperties appProperties;
+
     @Before
     public void createUser() {
+        appProperties.setAuthEnabled(true);
         user = userService.create("test@flow.ci", "12345", User.Role.Admin);
     }
 
@@ -73,10 +79,23 @@ public class AuthControllerTest extends SpringScenario {
         Assert.assertEquals("Invalid password", message.getMessage());
     }
 
+    @Test
+    public void should_logout_successfully() throws Exception {
+        // init: log in
+        MockHttpServletRequestBuilder builder = buildLoginRequest(user.getEmail(), user.getPasswordOnMd5());
+        ResponseMessage<String> message = mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
+        String token = message.getData();
+
+        // when: request logout
+        builder = post("/auth/logout").header("Token", token);
+        ResponseMessage logoutMsg = mvcMockHelper.expectSuccessAndReturnClass(builder, ResponseMessage.class);
+        Assert.assertEquals(StatusCode.OK, logoutMsg.getCode());
+    }
+
     private MockHttpServletRequestBuilder buildLoginRequest(String email, String passwordOnMd5) {
         String authContent = email + ":" + passwordOnMd5;
         String base64Content = Base64.getEncoder().encodeToString(authContent.getBytes());
 
-        return MockMvcRequestBuilders.post("auth").header("Authorization", "Basic " + base64Content);
+        return post("/auth/login").header("Authorization", "Basic " + base64Content);
     }
 }

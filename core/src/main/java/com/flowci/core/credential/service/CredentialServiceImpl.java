@@ -16,7 +16,7 @@
 
 package com.flowci.core.credential.service;
 
-import com.flowci.core.auth.AuthService;
+import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;

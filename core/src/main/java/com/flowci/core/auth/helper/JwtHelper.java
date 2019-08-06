@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.auth;
+package com.flowci.core.auth.helper;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;

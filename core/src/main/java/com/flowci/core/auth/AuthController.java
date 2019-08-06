@@ -17,27 +17,35 @@
 
 package com.flowci.core.auth;
 
+import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.user.domain.User;
 import com.flowci.exception.AuthenticationException;
 import com.google.common.base.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-@RestController("auth")
+@RestController()
+@RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
     private AuthService authService;
 
-    @PostMapping()
+    @PostMapping("/login")
     public String login(@RequestHeader("Authorization") String authorization) {
         User user = getFromAuthorization(authorization);
         return authService.login(user.getEmail(), user.getPasswordOnMd5());
+    }
+
+    @PostMapping("/logout")
+    public void logout() {
+        authService.logout();
     }
 
     private User getFromAuthorization(String authorization) {

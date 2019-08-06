@@ -15,8 +15,9 @@
  *
  */
 
-package com.flowci.core.auth;
+package com.flowci.core.auth.service;
 
+import com.flowci.core.auth.helper.JwtHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.exception.AuthenticationException;
@@ -67,6 +68,12 @@ public class AuthServiceImpl implements AuthService {
         String token = JwtHelper.create(user, defaultExpiredSeconds);
         currentUser.set(user);
         return token;
+    }
+
+    @Override
+    public void logout() {
+        //TODO: make token invalid
+        throw new UnsupportedOperationException();
     }
 
     @Override

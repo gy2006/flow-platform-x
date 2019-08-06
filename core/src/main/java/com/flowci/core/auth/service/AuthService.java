@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.auth;
+package com.flowci.core.auth.service;
 
 import com.flowci.core.user.domain.User;
 
@@ -35,6 +35,11 @@ public interface AuthService {
      * Login and return jwt token
      */
     String login(String email, String passwordOnMd5);
+
+    /**
+     * Logout from current user
+     */
+    void logout();
 
     /**
      * Check is logged in

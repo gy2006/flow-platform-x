@@ -16,7 +16,7 @@
 
 package com.flowci.core.flow.service;
 
-import com.flowci.core.auth.AuthService;
+import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.manager.SpringEventManager;

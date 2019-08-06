@@ -18,18 +18,13 @@ package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.flowci.core.common.adviser.AuthInterceptor;
+import com.flowci.core.auth.AuthInterceptor;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.domain.JsonablePage;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
@@ -50,6 +45,12 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
 /**
  * @author yang
  */
@@ -61,10 +62,10 @@ public class AppConfig {
     private static final ObjectMapper Mapper = Jsonable.getMapper();
 
     private static final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
-        new ByteArrayHttpMessageConverter(),
-        new MappingJackson2HttpMessageConverter(Mapper),
-        new ResourceHttpMessageConverter(),
-        new AllEncompassingFormHttpMessageConverter()
+            new ByteArrayHttpMessageConverter(),
+            new MappingJackson2HttpMessageConverter(Mapper),
+            new ResourceHttpMessageConverter(),
+            new AllEncompassingFormHttpMessageConverter()
     );
 
     static {
@@ -136,12 +137,13 @@ public class AppConfig {
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(new CrosInterceptor());
                 registry.addInterceptor(authHandler())
-                    .addPathPatterns("/flows/**")
-                    .addPathPatterns("/jobs/**")
-                    .addPathPatterns("/agents/**")
-                    .addPathPatterns("/credentials/**")
-                    .excludePathPatterns("/agents/connect")
-                    .excludePathPatterns("/agents/logs/upload");
+                        .addPathPatterns("/flows/**")
+                        .addPathPatterns("/jobs/**")
+                        .addPathPatterns("/agents/**")
+                        .addPathPatterns("/credentials/**")
+                        .addPathPatterns("/auth/logout")
+                        .excludePathPatterns("/agents/connect")
+                        .excludePathPatterns("/agents/logs/upload");
             }
 
             @Override

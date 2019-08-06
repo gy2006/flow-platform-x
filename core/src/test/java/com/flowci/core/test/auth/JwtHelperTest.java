@@ -19,7 +19,7 @@ package com.flowci.core.test.auth;
 
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.user.domain.User;
-import com.flowci.core.auth.JwtHelper;
+import com.flowci.core.auth.helper.JwtHelper;
 import com.flowci.domain.ObjectWrapper;
 import org.junit.Assert;
 import org.junit.Before;
