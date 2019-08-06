@@ -17,6 +17,7 @@
 
 package com.flowci.core.test.common.auth;
 
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.common.auth.JwtHelper;
 import com.flowci.domain.ObjectWrapper;
@@ -51,9 +52,22 @@ public class JwtHelperTest {
     }
 
     @Test
-    public void should_not_verify_token_if_pw_changed() {
+    public void should_fail_if_pw_changed() {
         user.setPasswordOnMd5("22345");
         boolean verify = JwtHelper.verify(token.getValue(), user);
+        Assert.assertFalse(verify);
+    }
+
+    @Test
+    public void should_fail_if_token_expired() {
+        // init: set expired seconds to 1
+        token.setValue(JwtHelper.create(user, 1));
+
+        // when:
+        ThreadHelper.sleep(5);
+        boolean verify = JwtHelper.verify(token.getValue(), user);
+
+        // then: should be fail
         Assert.assertFalse(verify);
     }
 }

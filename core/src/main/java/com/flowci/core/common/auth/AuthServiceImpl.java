@@ -30,7 +30,7 @@ import java.util.Objects;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    private static int DefaultExpiredSeconds = 600; // 10 minutes
+    private final int defaultExpiredSeconds = 600; // 10 minutes
 
     @Autowired
     private ThreadLocal<User> currentUser;
@@ -64,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthenticationException("Invalid password");
         }
 
-        String token = JwtHelper.create(user, DefaultExpiredSeconds);
+        String token = JwtHelper.create(user, defaultExpiredSeconds);
         currentUser.set(user);
         return token;
     }

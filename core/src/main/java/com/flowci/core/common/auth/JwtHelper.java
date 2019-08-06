@@ -65,8 +65,9 @@ public class JwtHelper {
         try {
             Algorithm algorithm = Algorithm.HMAC256(user.getPasswordOnMd5());
             JWTVerifier verifier = JWT.require(algorithm).withIssuer(issuer).build();
-            verifier.verify(token);
-            return true;
+
+            DecodedJWT decoded = verifier.verify(token);
+            return decoded.getExpiresAt().before(Date.from(Instant.now()));
         } catch (JWTVerificationException e) {
             return false;
         }
