@@ -28,7 +28,7 @@ public interface UserService {
     /**
      * Create user by email and password;
      */
-    User create(String email, String password);
+    User create(String email, String password, User.Role role);
 
     /**
      * Get user by email

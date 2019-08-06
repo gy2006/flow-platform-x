@@ -21,11 +21,12 @@ import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
 import com.flowci.exception.DuplicateException;
 import com.flowci.util.HashingHelper;
-import java.util.Objects;
-import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
 
 /**
  * @author yang
@@ -46,7 +47,7 @@ public class UserServiceImpl implements UserService {
         String adminPassword = adminProperties.getDefaultPassword();
 
         try {
-            create(adminEmail, adminPassword);
+            create(adminEmail, adminPassword, User.Role.Admin);
             log.info("Admin {} been initialized", adminEmail);
         } catch (DuplicateException ignore) {
 
@@ -60,12 +61,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User create(String email, String password) {
-        if (!Objects.isNull(getByEmail(email))) {
+    public User create(String email, String password, User.Role role) {
+        try {
+            User user = new User(email, HashingHelper.md5(password));
+            user.setRole(role);
+            return userDao.insert(user);
+        } catch (DuplicateKeyException e) {
             throw new DuplicateException("Email {0} is already existed", email);
         }
-
-        return userDao.save(new User(email, HashingHelper.md5(password)));
     }
 
     @Override

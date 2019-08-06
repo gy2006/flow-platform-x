@@ -26,19 +26,27 @@ import org.springframework.data.mongodb.core.index.Indexed;
 /**
  * @author yang
  */
+
+@Getter
+@Setter
 @ToString(of = {"email"}, callSuper = true)
 public class User extends Mongoable {
 
-    @Getter
-    @Setter
+    public enum Role {
+        Admin,
+
+        Developer
+    }
+
     @NonNull
     @Indexed(unique = true, name = "index_user_email")
     private String email;
 
-    @Getter
-    @Setter
     @NonNull
     private String passwordOnMd5;
+
+    @NonNull
+    private Role role;
 
     public User(String email, String passwordOnMd5) {
         this.email = email;

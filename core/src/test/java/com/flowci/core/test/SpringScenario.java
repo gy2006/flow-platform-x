@@ -144,7 +144,7 @@ public abstract class SpringScenario {
     protected void mockLogin() {
         User user = userService.getByEmail("test@flow.ci");
         if (Objects.isNull(user)) {
-            user = userService.create("test@flow.ci", "12345");
+            user = userService.create("test@flow.ci", "12345", User.Role.Admin);
         }
         currentUserHelper.set(user);
     }

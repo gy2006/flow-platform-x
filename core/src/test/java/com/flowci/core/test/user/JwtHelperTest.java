@@ -1,0 +1,59 @@
+/*
+ *   Copyright (c) 2019 flow.ci
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ */
+
+package com.flowci.core.test.user;
+
+import com.flowci.core.user.domain.User;
+import com.flowci.core.user.helper.JwtHelper;
+import com.flowci.domain.ObjectWrapper;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+public class JwtHelperTest {
+
+    private final User user  = new User("test@flow.ci", "12345");
+
+    private ObjectWrapper<String> token = new ObjectWrapper<>();
+
+    @Before
+    public void createToken() {
+        user.setRole(User.Role.Admin);
+
+        token.setValue(JwtHelper.create(user, 60));
+        Assert.assertNotNull(token.getValue());
+    }
+
+    @Test
+    public void should_decode_token_and_get_user_id() {
+        String email = JwtHelper.decode(token.getValue());
+        Assert.assertEquals(user.getEmail(), email);
+    }
+
+    @Test
+    public void should_verify_token() {
+        boolean verify = JwtHelper.verify(token.getValue(), user);
+        Assert.assertTrue(verify);
+    }
+
+    @Test
+    public void should_not_verify_token_if_pw_changed() {
+        user.setPasswordOnMd5("22345");
+        boolean verify = JwtHelper.verify(token.getValue(), user);
+        Assert.assertFalse(verify);
+    }
+}
