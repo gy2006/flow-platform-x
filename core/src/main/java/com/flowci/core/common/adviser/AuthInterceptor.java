@@ -17,17 +17,16 @@
 
 package com.flowci.core.common.adviser;
 
-import com.flowci.core.common.auth.AuthManager;
+import com.flowci.core.common.auth.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.user.domain.User;
-import com.flowci.core.user.service.UserService;
 import com.flowci.exception.AuthenticationException;
 import com.google.common.base.Strings;
-import java.util.Objects;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author yang
@@ -44,28 +43,29 @@ public class AuthInterceptor implements HandlerInterceptor {
     private ConfigProperties appProperties;
 
     @Autowired
-    private AuthManager authManager;
-
-    @Autowired
-    private UserService userService;
+    private AuthService authService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (!appProperties.getAuthEnabled()) {
-            if (Objects.isNull(authManager.get())) {
-                return setAdminToCurrentUser();
-            }
-            return true;
+            return authService.setAsDefaultAdmin();
         }
 
-        authManager.reset();
         String token = getToken(request);
 
         if (token.equals(MagicToken)) {
-            return setAdminToCurrentUser();
+            return authService.setAsDefaultAdmin();
         }
 
-        return true;
+        return authService.set(token);
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest request,
+                           HttpServletResponse response,
+                           Object handler,
+                           ModelAndView modelAndView) throws Exception {
+        authService.reset();
     }
 
     private String getToken(HttpServletRequest request) {
@@ -80,11 +80,5 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         return token;
-    }
-
-    private boolean setAdminToCurrentUser() {
-        User defaultAdmin = userService.defaultAdmin();
-        authManager.set(defaultAdmin);
-        return true;
     }
 }

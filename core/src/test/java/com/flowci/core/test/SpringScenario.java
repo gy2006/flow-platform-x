@@ -17,7 +17,7 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
-import com.flowci.core.common.auth.AuthManager;
+import com.flowci.core.common.auth.AuthService;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.core.flow.dao.FlowDao;
@@ -71,13 +71,13 @@ public abstract class SpringScenario {
     }
 
     @Autowired
-    protected AuthManager authManager;
+    protected AuthService authService;
+
+    @Autowired
+    protected UserService userService;
 
     @Autowired
     private MongoTemplate mongoTemplate;
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private RabbitQueueOperation callbackQueueManager;
@@ -146,6 +146,6 @@ public abstract class SpringScenario {
         if (Objects.isNull(user)) {
             user = userService.create("test@flow.ci", "12345", User.Role.Admin);
         }
-        authManager.set(user);
+        authService.set(user);
     }
 }

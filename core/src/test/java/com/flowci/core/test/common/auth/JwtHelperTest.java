@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.test.user;
+package com.flowci.core.test.common.auth;
 
 import com.flowci.core.user.domain.User;
 import com.flowci.core.common.auth.JwtHelper;

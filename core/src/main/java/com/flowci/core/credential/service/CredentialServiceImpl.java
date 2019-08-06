@@ -16,7 +16,7 @@
 
 package com.flowci.core.credential.service;
 
-import com.flowci.core.common.auth.AuthManager;
+import com.flowci.core.common.auth.AuthService;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
@@ -26,16 +26,17 @@ import com.flowci.exception.StatusException;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.stereotype.Service;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.stereotype.Service;
 
 /**
  * @author yang
@@ -48,21 +49,21 @@ public class CredentialServiceImpl implements CredentialService {
     private CredentialDao credentialDao;
 
     @Autowired
-    private AuthManager authManager;
+    private AuthService authService;
 
     @Override
     public List<Credential> list() {
-        return credentialDao.findAllByCreatedByOrderByCreatedAt(authManager.getUserId());
+        return credentialDao.findAllByCreatedByOrderByCreatedAt(authService.getUserId());
     }
 
     @Override
     public List<Credential> listName() {
-        return credentialDao.listNameOnly(authManager.getUserId());
+        return credentialDao.listNameOnly(authService.getUserId());
     }
 
     @Override
     public Credential get(String name) {
-        Credential c = credentialDao.findByNameAndCreatedBy(name, authManager.getUserId());
+        Credential c = credentialDao.findByNameAndCreatedBy(name, authService.getUserId());
 
         if (Objects.isNull(c)) {
             throw new NotFoundException("Credential {0} is not found", name);
@@ -89,7 +90,7 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public RSAKeyPair createRSA(String name) {
-        String email = authManager.get().getEmail();
+        String email = authService.get().getEmail();
         RSAKeyPair rsaKeyPair = genRSA(email);
         rsaKeyPair.setName(name);
         return save(rsaKeyPair);
@@ -109,7 +110,7 @@ public class CredentialServiceImpl implements CredentialService {
             Date now = Date.from(Instant.now());
             keyPair.setUpdatedAt(now);
             keyPair.setCreatedAt(now);
-            keyPair.setCreatedBy(authManager.getUserId());
+            keyPair.setCreatedBy(authService.getUserId());
             return credentialDao.insert(keyPair);
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Credential name {0} is already defined", keyPair.getName());

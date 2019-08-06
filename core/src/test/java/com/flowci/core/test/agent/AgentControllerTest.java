@@ -133,7 +133,7 @@ public class AgentControllerTest extends SpringScenario {
         Assert.assertTrue(agent.getTags().contains("test"));
 
         // when: request to connect agent
-        authManager.reset();
+        authService.reset();
 
         AgentInit connect = new AgentInit();
         connect.setPort(8080);

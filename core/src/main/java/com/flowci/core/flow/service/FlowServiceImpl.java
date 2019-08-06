@@ -16,7 +16,7 @@
 
 package com.flowci.core.flow.service;
 
-import com.flowci.core.common.auth.AuthManager;
+import com.flowci.core.common.auth.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.manager.SpringEventManager;
@@ -49,20 +49,6 @@ import com.google.common.base.Strings;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -78,6 +64,13 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * @author yang
@@ -96,7 +89,7 @@ public class FlowServiceImpl implements FlowService {
     private Path tmpDir;
 
     @Autowired
-    private AuthManager authManager;
+    private AuthService authService;
 
     @Autowired
     private FlowDao flowDao;
@@ -135,7 +128,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public List<Flow> list(Status status) {
-        String userId = authManager.get().getId();
+        String userId = authService.get().getId();
         return flowDao.findAllByStatusAndCreatedBy(status, userId);
     }
 
@@ -177,7 +170,7 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException(message, name);
         }
 
-        String userId = authManager.getUserId();
+        String userId = authService.getUserId();
 
         Flow flow = flowDao.findByName(name);
         if (flow != null && flow.getStatus() == Status.CONFIRMED) {
@@ -230,7 +223,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Flow get(String name) {
-        Flow flow = flowDao.findByNameAndCreatedBy(name, authManager.getUserId());
+        Flow flow = flowDao.findByNameAndCreatedBy(name, authService.getUserId());
         if (Objects.isNull(flow)) {
             throw new NotFoundException("Flow {0} is not found", name);
         }
@@ -306,7 +299,7 @@ public class FlowServiceImpl implements FlowService {
 
         YmlParser.load(flow.getName(), yml);
         Yml ymlObj = new Yml(flow.getId(), yml);
-        ymlObj.setCreatedBy(authManager.getUserId());
+        ymlObj.setCreatedBy(authService.getUserId());
         ymlDao.save(ymlObj);
 
         Node node = YmlParser.load(flow.getName(), ymlObj.getRaw());
@@ -393,7 +386,7 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException("The flow id is missing");
         }
 
-        if (!Objects.equals(flow.getCreatedBy(), authManager.getUserId())) {
+        if (!Objects.equals(flow.getCreatedBy(), authService.getUserId())) {
             throw new AccessException("Illegal account for flow {0}", flow.getName());
         }
     }
