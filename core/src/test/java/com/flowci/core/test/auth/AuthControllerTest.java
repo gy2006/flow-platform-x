@@ -21,16 +21,20 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.flowci.core.auth.helper.JwtHelper;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.StatusCode;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.AuthenticationException;
 import com.flowci.exception.ErrorCode;
+import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.util.Base64;
@@ -49,35 +53,19 @@ public class AuthControllerTest extends SpringScenario {
     private MvcMockHelper mvcMockHelper;
 
     @Autowired
-    private ConfigProperties appProperties;
+    private ConfigProperties.Auth authProperties;
+
+    @Autowired
+    private CacheManager authCacheManager;
 
     @Before
     public void createUser() {
-        appProperties.setAuthEnabled(true);
+        authProperties.setEnabled(true);
+
+        CaffeineCacheManager cacheManager = (CaffeineCacheManager) this.authCacheManager;
+        cacheManager.setCaffeineSpec(CaffeineSpec.parse("expireAfterWrite=2s"));
+
         user = userService.create("test@flow.ci", "12345", User.Role.Admin);
-    }
-
-    @Test
-    public void should_login_and_return_jwt_token() throws Exception {
-        // when: send login request
-        MockHttpServletRequestBuilder builder = buildLoginRequest(user.getEmail(), user.getPasswordOnMd5());
-
-        ResponseMessage<String> message = mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
-        Assert.assertEquals(StatusCode.OK, message.getCode());
-
-        // then:
-        String token = message.getData();
-        Assert.assertNotNull(token);
-        Assert.assertTrue(JwtHelper.verify(token, user));
-    }
-
-    @Test
-    public void should_login_and_return_401_with_invalid_password() throws Exception {
-        MockHttpServletRequestBuilder builder = buildLoginRequest(user.getEmail(), "wrong..");
-
-        ResponseMessage<String> message = mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
-        Assert.assertEquals(ErrorCode.AUTH_FAILURE, message.getCode());
-        Assert.assertEquals("Invalid password", message.getMessage());
     }
 
     @Test(expected = AuthenticationException.class)
@@ -98,6 +86,29 @@ public class AuthControllerTest extends SpringScenario {
         // then: should throw new AuthenticationException("Not logged in") exception
         Assert.assertFalse(authService.set(token));
         authService.get();
+    }
+
+    @Test
+    public void should_login_and_return_401_with_invalid_password() throws Exception {
+        MockHttpServletRequestBuilder builder = buildLoginRequest(user.getEmail(), "wrong..");
+
+        ResponseMessage<String> message = mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
+        Assert.assertEquals(ErrorCode.AUTH_FAILURE, message.getCode());
+        Assert.assertEquals("Invalid password", message.getMessage());
+    }
+
+    @Test
+    public void should_login_and_token_expired() throws Exception {
+        // init: log in
+        MockHttpServletRequestBuilder builder = buildLoginRequest(user.getEmail(), user.getPasswordOnMd5());
+        ResponseMessage<String> message = mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
+        String token = message.getData();
+
+        // when: wait for expire
+        ThreadHelper.sleep(5000);
+
+        // then: token should be expired
+        Assert.assertFalse(authService.set(token));
     }
 
     private MockHttpServletRequestBuilder buildLoginRequest(String email, String passwordOnMd5) {

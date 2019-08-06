@@ -21,13 +21,12 @@ import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.exception.AuthenticationException;
 import com.google.common.base.Strings;
+import java.util.Objects;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.Objects;
 
 /**
  * @author yang
@@ -41,14 +40,11 @@ public class AuthInterceptor implements HandlerInterceptor {
     private static final String ParameterToken = "token";
 
     @Autowired
-    private ConfigProperties appProperties;
-
-    @Autowired
     private AuthService authService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        if (!appProperties.getAuthEnabled()) {
+        if (!authService.isEnabled()) {
             return authService.setAsDefaultAdmin();
         }
 

@@ -34,8 +34,6 @@ public class ConfigProperties {
 
     private Path logDir;
 
-    private Boolean authEnabled;
-
     private String serverAddress;
 
     @Bean("adminProperties")
@@ -66,6 +64,12 @@ public class ConfigProperties {
     @ConfigurationProperties(prefix = "app.rabbitmq")
     public RabbitMQ rabbitMQ() {
         return new RabbitMQ();
+    }
+
+    @Bean("authProperties")
+    @ConfigurationProperties(prefix = "app.auth")
+    public Auth auth() {
+        return new Auth();
     }
 
     @Data
@@ -125,5 +129,15 @@ public class ConfigProperties {
         private String callbackQueueName;
 
         private String loggingQueueName;
+    }
+
+    @Data
+    public static class Auth {
+
+        private Boolean enabled;
+
+        private Integer maxUsers;
+
+        private Integer expireSeconds;
     }
 }

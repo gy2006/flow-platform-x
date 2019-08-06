@@ -16,9 +16,11 @@
 
 package com.flowci.core.auth.config;
 
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.user.domain.User;
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import java.text.MessageFormat;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
@@ -32,9 +34,8 @@ public class AuthConfig {
 
     public static final String CACHE_ONLINE = "online_users";
 
-    private static final int MaxOnlineUsers = 500;
-
-    private static final int expireSeconds = 600;
+    @Autowired
+    private ConfigProperties.Auth authProperties;
 
     @Bean
     public ThreadLocal<User> currentUser() {
@@ -45,7 +46,11 @@ public class AuthConfig {
     public CacheManager authCacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(CACHE_ONLINE);
 
-        String spec = MessageFormat.format("maximumSize={0},expireAfterWrite={1}s", MaxOnlineUsers, expireSeconds);
+        String spec = MessageFormat.format(
+            "maximumSize={0},expireAfterWrite={1}s",
+            authProperties.getMaxUsers(),
+            authProperties.getExpireSeconds()
+        );
         cacheManager.setCaffeineSpec(CaffeineSpec.parse(spec));
         return cacheManager;
     }

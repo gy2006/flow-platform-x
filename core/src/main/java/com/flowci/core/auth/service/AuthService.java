@@ -27,6 +27,8 @@ import com.flowci.core.user.domain.User;
  */
 public interface AuthService {
 
+    Boolean isEnabled();
+
     /**
      * Get current logged in user
      */

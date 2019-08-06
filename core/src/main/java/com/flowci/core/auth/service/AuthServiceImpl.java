@@ -19,6 +19,7 @@ package com.flowci.core.auth.service;
 
 import com.flowci.core.auth.config.AuthConfig;
 import com.flowci.core.auth.helper.JwtHelper;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.exception.AuthenticationException;
@@ -33,16 +34,22 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    private final int defaultExpiredSeconds = 600; // 10 minutes
-
     @Autowired
     private ThreadLocal<User> currentUser;
+
+    @Autowired
+    private ConfigProperties.Auth authProperties;
 
     @Autowired
     private UserService userService;
 
     @Autowired
     private CacheManager authCacheManager;
+
+    @Override
+    public Boolean isEnabled() {
+        return authProperties.getEnabled();
+    }
 
     @Override
     public User get() {
@@ -70,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthenticationException("Invalid password");
         }
 
-        String token = JwtHelper.create(user, defaultExpiredSeconds);
+        String token = JwtHelper.create(user, authProperties.getExpireSeconds());
         currentUser.set(user);
         getOnlineCache().put(email, user);
         return token;
