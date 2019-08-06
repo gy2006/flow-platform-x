@@ -95,6 +95,23 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public String refresh(String token) {
+        String email = JwtHelper.decode(token);
+
+        User user = getOnlineCache().get(email, User.class);
+        if (Objects.isNull(user)) {
+            throw new AuthenticationException("Invalid token");
+        }
+
+        boolean verify = JwtHelper.verify(token, user);
+        if (verify) {
+            return JwtHelper.create(user, authProperties.getExpireSeconds());
+        }
+
+        throw new AuthenticationException("Invalid token");
+    }
+
+    @Override
     public boolean set(String token) {
         String email = JwtHelper.decode(token);
 

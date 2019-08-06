@@ -17,8 +17,9 @@
 
 package com.flowci.core.test.auth;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.flowci.core.auth.helper.JwtHelper;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.common.helper.ThreadHelper;
@@ -29,6 +30,7 @@ import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.AuthenticationException;
 import com.flowci.exception.ErrorCode;
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
+import java.util.Base64;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,15 +39,11 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import java.util.Base64;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
 public class AuthControllerTest extends SpringScenario {
 
     private final TypeReference<ResponseMessage<String>> loginType =
-            new TypeReference<ResponseMessage<String>>() {
-            };
+        new TypeReference<ResponseMessage<String>>() {
+        };
 
     private User user;
 
@@ -71,16 +69,17 @@ public class AuthControllerTest extends SpringScenario {
     @Test(expected = AuthenticationException.class)
     public void should_login_and_logout_successfully() throws Exception {
         // init: log in
-        MockHttpServletRequestBuilder builder = buildLoginRequest(user.getEmail(), user.getPasswordOnMd5());
-        ResponseMessage<String> message = mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
+        ResponseMessage<String> message = sendLoginRequest(user.getEmail(), user.getPasswordOnMd5());
         String token = message.getData();
 
         Assert.assertEquals(user, authService.get());
         Assert.assertTrue(authService.set(token));
 
         // when: request logout
-        builder = post("/auth/logout").header("Token", token);
-        ResponseMessage logoutMsg = mvcMockHelper.expectSuccessAndReturnClass(builder, ResponseMessage.class);
+        ResponseMessage logoutMsg = mvcMockHelper.expectSuccessAndReturnClass(
+            post("/auth/logout").header("Token", token),
+            ResponseMessage.class
+        );
         Assert.assertEquals(StatusCode.OK, logoutMsg.getCode());
 
         // then: should throw new AuthenticationException("Not logged in") exception
@@ -90,9 +89,8 @@ public class AuthControllerTest extends SpringScenario {
 
     @Test
     public void should_login_and_return_401_with_invalid_password() throws Exception {
-        MockHttpServletRequestBuilder builder = buildLoginRequest(user.getEmail(), "wrong..");
+        ResponseMessage<String> message = sendLoginRequest(user.getEmail(), "wrong..");
 
-        ResponseMessage<String> message = mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
         Assert.assertEquals(ErrorCode.AUTH_FAILURE, message.getCode());
         Assert.assertEquals("Invalid password", message.getMessage());
     }
@@ -100,8 +98,7 @@ public class AuthControllerTest extends SpringScenario {
     @Test
     public void should_login_and_token_expired() throws Exception {
         // init: log in
-        MockHttpServletRequestBuilder builder = buildLoginRequest(user.getEmail(), user.getPasswordOnMd5());
-        ResponseMessage<String> message = mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
+        ResponseMessage<String> message = sendLoginRequest(user.getEmail(), user.getPasswordOnMd5());
         String token = message.getData();
 
         // when: wait for expire
@@ -111,9 +108,28 @@ public class AuthControllerTest extends SpringScenario {
         Assert.assertFalse(authService.set(token));
     }
 
-    private MockHttpServletRequestBuilder buildLoginRequest(String email, String passwordOnMd5) {
+    @Test
+    public void should_refresh_token() throws Exception {
+        ResponseMessage<String> message = sendLoginRequest(user.getEmail(), user.getPasswordOnMd5());
+        String token = message.getData();
+
+        // when:
+        ResponseMessage<String> refreshed = mvcMockHelper.expectSuccessAndReturnClass(
+            post("/auth/refresh").header("Token", token),
+            loginType
+        );
+
+        // then:
+        Assert.assertNotEquals(token, refreshed.getData());
+        Assert.assertTrue(authService.set(refreshed.getData()));
+        Assert.assertEquals(user, authService.get());
+    }
+
+    private ResponseMessage<String> sendLoginRequest(String email, String passwordOnMd5) throws Exception {
         String authContent = email + ":" + passwordOnMd5;
         String base64Content = Base64.getEncoder().encodeToString(authContent.getBytes());
-        return post("/auth/login").header("Authorization", "Basic " + base64Content);
+        MockHttpServletRequestBuilder builder = post("/auth/login").header("Authorization", "Basic " + base64Content);
+
+        return mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
     }
 }

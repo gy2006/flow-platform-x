@@ -22,7 +22,7 @@ import com.flowci.core.user.domain.User;
 /**
  * 'login' ->
  * 'set' per request ->
- * 'get' current user | 'hasLogin' | 'getUserId' ->
+ * 'get' current user | 'hasLogin' | 'getUserId' | 'refresh' ->
  * 'logout'
  */
 public interface AuthService {
@@ -48,6 +48,11 @@ public interface AuthService {
      * Logout from current user
      */
     void logout();
+
+    /**
+     * Refresh and return new token
+     */
+    String refresh(String token);
 
     /**
      * Check is logged in

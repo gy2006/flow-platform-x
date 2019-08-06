@@ -43,6 +43,11 @@ public class AuthController {
         return authService.login(user.getEmail(), user.getPasswordOnMd5());
     }
 
+    @PostMapping("/refresh")
+    public String refresh(@RequestHeader("Token") String token) {
+        return authService.refresh(token);
+    }
+
     @PostMapping("/logout")
     public void logout() {
         authService.logout();
