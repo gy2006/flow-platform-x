@@ -17,7 +17,7 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
-import com.flowci.core.common.auth.AuthService;
+import com.flowci.core.auth.AuthService;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.core.flow.dao.FlowDao;

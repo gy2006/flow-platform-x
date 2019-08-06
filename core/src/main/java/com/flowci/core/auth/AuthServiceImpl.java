@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.common.auth;
+package com.flowci.core.auth;
 
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;

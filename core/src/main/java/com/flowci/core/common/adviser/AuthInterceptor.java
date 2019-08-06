@@ -17,7 +17,7 @@
 
 package com.flowci.core.common.adviser;
 
-import com.flowci.core.common.auth.AuthService;
+import com.flowci.core.auth.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.exception.AuthenticationException;
 import com.google.common.base.Strings;

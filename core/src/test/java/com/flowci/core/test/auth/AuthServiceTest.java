@@ -15,9 +15,9 @@
  *
  */
 
-package com.flowci.core.test.common.auth;
+package com.flowci.core.test.auth;
 
-import com.flowci.core.common.auth.JwtHelper;
+import com.flowci.core.auth.JwtHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
 import org.junit.Assert;
