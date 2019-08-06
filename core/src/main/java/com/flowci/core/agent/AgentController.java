@@ -17,7 +17,8 @@
 package com.flowci.core.agent;
 
 import com.flowci.core.agent.domain.AgentInit;
-import com.flowci.core.agent.domain.CreateAgent;
+import com.flowci.core.agent.domain.CreateOrUpdateAgent;
+import com.flowci.core.agent.domain.DeleteAgent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.domain.Agent;
@@ -27,11 +28,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import com.flowci.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,9 +51,9 @@ public class AgentController {
     @Autowired
     private LoggingService loggingService;
 
-    @GetMapping("/{token}")
-    public Agent getByToken(@PathVariable String token) {
-        return agentService.getByToken(token);
+    @GetMapping("/{name}")
+    public Agent getByName(@PathVariable String name) {
+        return agentService.getByName(name);
     }
 
     @GetMapping
@@ -61,21 +62,23 @@ public class AgentController {
     }
 
     @PostMapping()
-    public Agent create(@RequestBody CreateAgent body) {
+    public Agent createOrUpdate(@Validated @RequestBody CreateOrUpdateAgent body) {
+        if (body.hasToken()) {
+            return agentService.update(body.getToken(), body.getName(), body.getTags());
+        }
+
         return agentService.create(body.getName(), body.getTags());
     }
 
-    @DeleteMapping("/{token}")
-    public Agent delete(@PathVariable String token) {
-        return agentService.delete(token);
+    @DeleteMapping()
+    public Agent delete(@Validated @RequestBody DeleteAgent body) {
+        return agentService.delete(body.getToken());
     }
 
-    @PatchMapping("/{token}/tags")
-    public Agent setTags(@PathVariable String token, @RequestBody Set<String> tags) {
-        return agentService.setTags(token, tags);
-    }
+    // --------------------------------------------------------
+    //      Functions require agent token header
+    // --------------------------------------------------------
 
-    // handle request from agent
     @PostMapping("/connect")
     public Settings connect(@RequestHeader(HeaderAgentToken) String token,
                             @RequestBody AgentInit init,

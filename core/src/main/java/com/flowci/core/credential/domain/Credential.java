@@ -16,7 +16,7 @@
 
 package com.flowci.core.credential.domain;
 
-import com.flowci.core.domain.Mongoable;
+import com.flowci.core.common.domain.Mongoable;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -28,9 +28,20 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document
 @Getter
 @Setter
-public abstract class Credential extends Mongoable {
+public class Credential extends Mongoable {
+
+    public enum Category {
+
+        SSH_RSA,
+
+        SSH_DSS,
+
+        SSH_ED25519
+    }
 
     @Indexed(name = "index_credential_name", unique = true)
     private String name;
+
+    private Category category;
 
 }

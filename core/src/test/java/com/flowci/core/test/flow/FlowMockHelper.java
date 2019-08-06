@@ -19,10 +19,14 @@ package com.flowci.core.test.flow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.flowci.core.domain.StatusCode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.test.MvcMockHelper;
+import com.flowci.domain.http.RequestMessage;
 import com.flowci.domain.http.ResponseMessage;
+
+import java.util.Base64;
 import java.util.List;
 import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,24 +37,44 @@ import org.springframework.http.MediaType;
  */
 public class FlowMockHelper {
 
-    public final static TypeReference<ResponseMessage<Flow>> FlowType =
+    final static TypeReference<ResponseMessage<Flow>> FlowType =
         new TypeReference<ResponseMessage<Flow>>() {
         };
 
-    public final static TypeReference<ResponseMessage<List<Flow>>> ListFlowType =
+    final static TypeReference<ResponseMessage<List<Flow>>> ListFlowType =
         new TypeReference<ResponseMessage<List<Flow>>>() {
         };
+
+    final static TypeReference<ResponseMessage<String>> FlowYmlType =
+            new TypeReference<ResponseMessage<String>>() {
+            };
 
     @Autowired
     private MvcMockHelper mvcMockHelper;
 
-    public Flow crate(String name, String yml) throws Exception {
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    public Flow create(String name, String yml) throws Exception {
+        // create
         ResponseMessage<Flow> response = mvcMockHelper
-            .expectSuccessAndReturnClass(post("/flows/" + name)
-                .contentType(MediaType.TEXT_PLAIN)
-                .content(yml), FlowType);
+            .expectSuccessAndReturnClass(post("/flows/" + name), FlowType);
 
         Assert.assertEquals(StatusCode.OK, response.getCode());
+
+        // confirm
+        response = mvcMockHelper.expectSuccessAndReturnClass(post("/flows/" + name + "/confirm"), FlowType);
+
+        // save yml
+        String base64Encoded = Base64.getEncoder().encodeToString(yml.getBytes());
+        RequestMessage<String> message = new RequestMessage<>(base64Encoded);
+
+        mvcMockHelper.expectSuccessAndReturnString(
+                post("/flows/" + name + "/yml")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(message))
+        );
+
         return response.getData();
     }
 }

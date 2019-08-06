@@ -53,12 +53,12 @@ public class WebhookControllerTest extends SpringScenario {
     @Test
     public void should_start_job_from_github_push_event() throws Exception {
         String yml = StringHelper.toString(load("flow.yml"));
-        flowMockHelper.crate("github-test", yml);
+        flowMockHelper.create("github-test", yml);
         String payload = StringHelper.toString(load("github/webhook_push.json"));
 
         CountDownLatch waitForJobCreated = new CountDownLatch(1);
         ObjectWrapper<Job> jobCreated = new ObjectWrapper<>();
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobCreatedEvent>) event -> {
+        addEventListener((ApplicationListener<JobCreatedEvent>) event -> {
             jobCreated.setValue(event.getJob());
             waitForJobCreated.countDown();
         });
@@ -76,12 +76,12 @@ public class WebhookControllerTest extends SpringScenario {
     @Test
     public void should_not_start_job_form_github_push_event_since_branch_not_match() throws Exception {
         String yml = StringHelper.toString(load("flow-with-filter.yml"));
-        flowMockHelper.crate("github-test", yml);
+        flowMockHelper.create("github-test", yml);
         String payload = StringHelper.toString(load("github/webhook_push.json"));
 
         CountDownLatch waitForJobCreated = new CountDownLatch(1);
         ObjectWrapper<Job> jobCreated = new ObjectWrapper<>();
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobCreatedEvent>) event -> {
+        addEventListener((ApplicationListener<JobCreatedEvent>) event -> {
             jobCreated.setValue(event.getJob());
             waitForJobCreated.countDown();
         });

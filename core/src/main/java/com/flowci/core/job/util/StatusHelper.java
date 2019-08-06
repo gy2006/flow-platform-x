@@ -28,6 +28,8 @@ import java.util.Map;
 public abstract class StatusHelper {
 
     private final static Map<Status, Job.Status> StatusMapping = ImmutableMap.<Status, Job.Status>builder()
+        .put(Status.PENDING, Job.Status.PENDING)
+        .put(Status.RUNNING, Job.Status.RUNNING)
         .put(Status.SUCCESS, Job.Status.SUCCESS)
         .put(Status.SKIPPED, Job.Status.SUCCESS)
         .put(Status.EXCEPTION, Job.Status.FAILURE)

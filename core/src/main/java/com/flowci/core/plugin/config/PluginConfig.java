@@ -16,8 +16,8 @@
 
 package com.flowci.core.plugin.config;
 
-import com.flowci.core.config.ConfigProperties;
-import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.plugin.PluginRepoResolver;
 import com.flowci.util.FileHelper;
 import java.io.IOException;

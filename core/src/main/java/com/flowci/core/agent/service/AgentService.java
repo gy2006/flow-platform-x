@@ -36,6 +36,11 @@ public interface AgentService {
     Agent get(String id);
 
     /**
+     * Get agent by name
+     */
+    Agent getByName(String name);
+
+    /**
      * Get agent by token
      */
     Agent getByToken(String token);
@@ -83,6 +88,11 @@ public interface AgentService {
      * Create agent by name and tags
      */
     Agent create(String name, Set<String> tags);
+
+    /**
+     * Update agent name or and tags
+     */
+    Agent update(String token, String name, Set<String> tags);
 
     /**
      * Dispatch cmd to agent

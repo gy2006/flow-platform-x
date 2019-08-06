@@ -18,8 +18,8 @@ package com.flowci.core.test.agent;
 
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.config.ConfigProperties;
-import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
@@ -141,7 +141,7 @@ public class AgentServiceTest extends ZookeeperScenario {
 
         // when:
         CountDownLatch counter = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdSentEvent>) event -> {
+        addEventListener((ApplicationListener<CmdSentEvent>) event -> {
             counter.countDown();
         });
 

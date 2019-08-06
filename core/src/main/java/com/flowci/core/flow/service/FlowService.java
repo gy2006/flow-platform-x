@@ -16,7 +16,9 @@
 
 package com.flowci.core.flow.service;
 
+import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import java.util.List;
 
@@ -26,14 +28,33 @@ import java.util.List;
 public interface FlowService {
 
     /**
-     * List all flow by current user
+     * List flows by current user
      */
-    List<Flow> list();
+    List<Flow> list(Status status);
 
     /**
-     * Create flow by name
+     * List flows of current user by credential name
+     */
+    List<Flow> listByCredential(String credentialName);
+
+    /**
+     * Check the flow name is existed
+     */
+    Boolean exist(String name);
+
+    /**
+     * Create flow by name with pending status
      */
     Flow create(String name);
+
+    /**
+     * Confirm flow
+     *
+     * @param name flow name
+     * @param gitUrl defined git url, can be null
+     * @param credential defined credential
+     */
+    Flow confirm(String name, String gitUrl, String credential);
 
     /**
      * Get flow by name
@@ -56,6 +77,11 @@ public interface FlowService {
     void update(Flow flow);
 
     /**
+     * Get default template yml of flow
+     */
+    String getTemplateYml(Flow flow);
+
+    /**
      * Get yml by flow
      */
     Yml getYml(Flow flow);
@@ -64,4 +90,23 @@ public interface FlowService {
      * Create or update yml for flow
      */
     Yml saveYml(Flow flow, String yml);
+
+    /**
+     * Create ssh-rsa credential
+     * It will create default credential name: 'flow-{flow name}-ssh-rsa'
+     *
+     * @return credential name
+     */
+    String setSshRsaCredential(String name, RSAKeyPair keyPair);
+
+    /**
+     * Test git connection for flow and dispatch application event
+     */
+    void testGitConnection(String name, String url, String privateKeyOrCredentialName);
+
+    /**
+     * List remote branches
+     * @return list of branches or empty list if git config not defined
+     */
+    List<String> listGitBranch(String name);
 }

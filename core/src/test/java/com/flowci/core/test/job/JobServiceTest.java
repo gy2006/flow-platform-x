@@ -16,12 +16,12 @@
 
 package com.flowci.core.test.job;
 
+import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
-import com.flowci.core.agent.event.StatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.Job;
@@ -30,24 +30,17 @@ import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.JobReceivedEvent;
 import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
+import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.service.JobService;
 import com.flowci.core.job.service.StepService;
 import com.flowci.core.test.ZookeeperScenario;
-import com.flowci.domain.Agent;
-import com.flowci.domain.Cmd;
-import com.flowci.domain.ExecutedCmd;
-import com.flowci.domain.ObjectWrapper;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.*;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.log4j.Log4j2;
 import org.junit.Assert;
 import org.junit.Before;
@@ -56,6 +49,11 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yang
@@ -88,19 +86,21 @@ public class JobServiceTest extends ZookeeperScenario {
     @Autowired
     private YmlManager ymlManager;
 
+    @Autowired
+    private FlowJobQueueManager flowJobQueueManager;
+
     private Flow flow;
 
     private Yml yml;
 
     @Before
     public void mockFlowAndYml() throws IOException {
+        mockLogin();
+
         flow = flowService.create("hello");
         yml = flowService.saveYml(flow, StringHelper.toString(load("flow.yml")));
-    }
 
-    @Before
-    public void userLogin() {
-        mockLogin();
+        Assert.assertNotNull(flowJobQueueManager.get(flow.getQueueName()));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // init: register JobReceivedEvent
         CountDownLatch waitForJobFromQueue = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobReceivedEvent>) event -> {
+        addEventListener((ApplicationListener<JobReceivedEvent>) event -> {
             receivedJob.setValue(event.getJob());
             waitForJobFromQueue.countDown();
         });
@@ -142,28 +142,26 @@ public class JobServiceTest extends ZookeeperScenario {
     @Test
     public void should_dispatch_job_to_agent() throws InterruptedException {
         // init:
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
         Agent agent = agentService.create("hello.agent", null);
         mockAgentOnline(agentService.getPath(agent));
 
-        job.setStatus(Status.QUEUED);
-        jobDao.save(job);
+        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
 
         // when:
         ObjectWrapper<Agent> targetAgent = new ObjectWrapper<>();
         ObjectWrapper<Cmd> targetCmd = new ObjectWrapper<>();
         CountDownLatch counter = new CountDownLatch(1);
 
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdSentEvent>) event -> {
+        addEventListener((ApplicationListener<CmdSentEvent>) event -> {
             targetAgent.setValue(event.getAgent());
             targetCmd.setValue(event.getCmd());
             counter.countDown();
         });
 
-        jobService.processJob(job);
+        jobService.start(job);
 
         // then: verify cmd been sent
-        counter.await(10, TimeUnit.SECONDS);
+        Assert.assertTrue(counter.await(10, TimeUnit.SECONDS));
         Assert.assertEquals(agent, targetAgent.getValue());
 
         // then: verify job status should be running
@@ -176,8 +174,8 @@ public class JobServiceTest extends ZookeeperScenario {
 
         Cmd cmd = targetCmd.getValue();
         Assert.assertEquals(cmdManager.createId(job, first).toString(), cmd.getId());
-        Assert.assertEquals("echo step version", cmd.getInputs().getString("FLOW_VERSION"));
-        Assert.assertEquals("echo step", cmd.getInputs().getString("FLOW_WORKSPACE"));
+        Assert.assertEquals("echo step version", cmd.getInputs().get("FLOW_VERSION"));
+        Assert.assertEquals("echo step", cmd.getInputs().get("FLOW_WORKSPACE"));
         Assert.assertEquals("echo hello\n", cmd.getScripts().get(0));
     }
 
@@ -192,14 +190,17 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: cmd of first node been executed
         VariableMap output = new VariableMap();
-        output.putString("HELLO_WORLD", "hello.world");
+        output.put("HELLO_WORLD", "hello.world");
 
-        ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString(),
-            firstNode.isAllowFailure());
+        ExecutedCmd executedCmd = new ExecutedCmd(
+            cmdManager.createId(job, firstNode).toString(),
+            job.getFlowId(),
+            firstNode.isAllowFailure()
+        );
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
 
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // then: executed cmd should be saved
         ExecutedCmd saved = executedCmdDao.findById(executedCmd.getId()).get();
@@ -208,7 +209,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // then: job context should be updated
         job = jobDao.findById(job.getId()).get();
-        Assert.assertEquals("hello.world", job.getContext().getString("HELLO_WORLD"));
+        Assert.assertEquals("hello.world", job.getContext().get("HELLO_WORLD"));
 
         // then: job current context should be updated
         Node secondNode = tree.next(firstNode.getPath());
@@ -216,13 +217,17 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: cmd of second node been executed
         output = new VariableMap();
-        output.putString("HELLO_JAVA", "hello.java");
+        output.put("HELLO_JAVA", "hello.java");
 
-        executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString(), secondNode.isAllowFailure());
+        executedCmd = new ExecutedCmd(
+            cmdManager.createId(job, secondNode).toString(),
+            job.getFlowId(),
+            secondNode.isAllowFailure()
+        );
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
 
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // then: executed cmd of second node should be saved
         saved = executedCmdDao.findById(executedCmd.getId()).get();
@@ -231,8 +236,8 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // then: job context should be updated
         job = jobDao.findById(job.getId()).get();
-        Assert.assertEquals("hello.java", job.getContext().getString("HELLO_JAVA"));
-        Assert.assertEquals("hello.world", job.getContext().getString("HELLO_WORLD"));
+        Assert.assertEquals("hello.java", job.getContext().get("HELLO_JAVA"));
+        Assert.assertEquals("hello.world", job.getContext().get("HELLO_WORLD"));
         Assert.assertEquals(Status.SUCCESS, job.getStatus());
     }
 
@@ -248,14 +253,17 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: cmd of first node with failure
         VariableMap output = new VariableMap();
-        output.putString("HELLO_WORLD", "hello.world");
+        output.put("HELLO_WORLD", "hello.world");
 
-        ExecutedCmd executedCmd = new ExecutedCmd(cmdManager.createId(job, firstNode).toString(),
-            firstNode.isAllowFailure());
+        ExecutedCmd executedCmd = new ExecutedCmd(
+            cmdManager.createId(job, firstNode).toString(),
+            job.getFlowId(),
+            firstNode.isAllowFailure()
+        );
         executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
         executedCmd.setOutput(output);
 
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // then: executed cmd should be recorded
         Assert.assertNotNull(executedCmdDao.findById(executedCmd.getId()).get());
@@ -266,17 +274,21 @@ public class JobServiceTest extends ZookeeperScenario {
 
         Assert.assertEquals(Status.RUNNING, job.getStatus());
         Assert.assertEquals(secondNode.getPathAsString(), job.getCurrentPath());
-        Assert.assertEquals("hello.world", job.getContext().getString("HELLO_WORLD"));
+        Assert.assertEquals("hello.world", job.getContext().get("HELLO_WORLD"));
 
         // when: second cmd of node been timeout
         output = new VariableMap();
-        output.putString("HELLO_TIMEOUT", "hello.timeout");
+        output.put("HELLO_TIMEOUT", "hello.timeout");
 
-        executedCmd = new ExecutedCmd(cmdManager.createId(job, secondNode).toString(), secondNode.isAllowFailure());
+        executedCmd = new ExecutedCmd(
+            cmdManager.createId(job, secondNode).toString(),
+            job.getFlowId(),
+            secondNode.isAllowFailure()
+        );
         executedCmd.setStatus(ExecutedCmd.Status.TIMEOUT);
         executedCmd.setOutput(output);
 
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // then: executed cmd of second node should be recorded
         Assert.assertNotNull(executedCmdDao.findById(executedCmd.getId()).get());
@@ -284,7 +296,7 @@ public class JobServiceTest extends ZookeeperScenario {
         // then: job should be timeout with error message
         job = jobDao.findById(job.getId()).get();
         Assert.assertEquals(Status.SUCCESS, job.getStatus());
-        Assert.assertEquals("hello.timeout", job.getContext().getString("HELLO_TIMEOUT"));
+        Assert.assertEquals("hello.timeout", job.getContext().get("HELLO_TIMEOUT"));
     }
 
     @Test
@@ -298,16 +310,16 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: set first step as failure status
         String cmdId = cmdManager.createId(job, firstNode).toString();
-        ExecutedCmd executedCmd = new ExecutedCmd(cmdId, firstNode.isAllowFailure());
+        ExecutedCmd executedCmd = new ExecutedCmd(cmdId, job.getFlowId(), firstNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // when: set final node as success status
         Node secondNode = tree.next(firstNode.getPath());
         cmdId = cmdManager.createId(job, secondNode).toString();
-        executedCmd = new ExecutedCmd(cmdId, secondNode.isAllowFailure());
+        executedCmd = new ExecutedCmd(cmdId, job.getFlowId(), secondNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
-        jobService.processCallback(executedCmd);
+        jobService.handleCallback(executedCmd);
 
         // then: job status should be failure since final node does not count to step
         job = jobDao.findById(job.getId()).get();
@@ -315,15 +327,18 @@ public class JobServiceTest extends ZookeeperScenario {
     }
 
     @Test
-    public void should_job_with_before_condition() throws IOException, InterruptedException {
+    public void should_run_before_condition() throws IOException, InterruptedException {
+        // init: save yml, make agent online and create job
         yml = flowService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
-        Agent agent = agentService.create("hello.agent.1", null);
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
 
+        Agent agent = agentService.create("hello.agent.1", null);
         mockAgentOnline(agentService.getPath(agent));
 
+        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
+
+        // init: wait counter
         CountDownLatch waitForJobQueued = new CountDownLatch(2);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobStatusChangeEvent>) event -> {
+        addEventListener((ApplicationListener<JobStatusChangeEvent>) event -> {
             if (event.getJob().getStatus() == Status.QUEUED) {
                 waitForJobQueued.countDown();
             }
@@ -334,7 +349,7 @@ public class JobServiceTest extends ZookeeperScenario {
         });
 
         CountDownLatch waitForStep2Sent = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<CmdSentEvent>) event -> {
+        addEventListener((ApplicationListener<CmdSentEvent>) event -> {
             waitForStep2Sent.countDown();
         });
 
@@ -368,19 +383,19 @@ public class JobServiceTest extends ZookeeperScenario {
         jobService.start(job);
 
         CountDownLatch waitForRunning = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobStatusChangeEvent>) event -> {
+        addEventListener((ApplicationListener<JobStatusChangeEvent>) event -> {
             if (event.getJob().getStatus() == Status.RUNNING) {
                 waitForRunning.countDown();
             }
         });
 
-        waitForRunning.await();
+        waitForRunning.await(10, TimeUnit.SECONDS);
         job = jobDao.findByKey(job.getKey());
         Assert.assertEquals(Status.RUNNING, job.getStatus());
 
         // when: agent status change to offline
         CountDownLatch waitForCancelled = new CountDownLatch(1);
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<JobStatusChangeEvent>) event -> {
+        addEventListener((ApplicationListener<JobStatusChangeEvent>) event -> {
             if (event.getJob().getStatus() == Status.CANCELLED) {
                 waitForCancelled.countDown();
             }
@@ -388,7 +403,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         agent.setJobId(job.getId());
         agent.setStatus(Agent.Status.OFFLINE);
-        applicationEventMulticaster.multicastEvent(new StatusChangeEvent(this, agent));
+        multicastEvent(new AgentStatusChangeEvent(this, agent));
 
         // then: job should be cancelled
         waitForCancelled.await();

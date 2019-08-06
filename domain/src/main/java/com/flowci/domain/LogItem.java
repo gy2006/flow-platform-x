@@ -56,7 +56,11 @@ public final class LogItem implements Serializable {
      *
      */
     public byte[] toBytes() {
-        String raw = cmdId + SPLITTER + type + SPLITTER + number + SPLITTER + content;
-        return raw.getBytes();
+        return toString().getBytes();
+    }
+
+    @Override
+    public String toString() {
+        return cmdId + SPLITTER + type + SPLITTER + number + SPLITTER + content;
     }
 }

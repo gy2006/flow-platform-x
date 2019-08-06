@@ -16,21 +16,22 @@
 
 package com.flowci.core.job;
 
-import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.service.JobService;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.core.job.service.StepService;
 import com.flowci.domain.ExecutedCmd;
-import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.NodePath;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,9 +76,9 @@ public class JobController {
     private LoggingService loggingService;
 
     @GetMapping("/{flow}")
-    public Page<Job> list(@PathVariable("flow") String name,
-                          @RequestParam(required = false, defaultValue = DefaultPage) int page,
-                          @RequestParam(required = false, defaultValue = DefaultSize) int size) {
+    public Page<JobItem> list(@PathVariable("flow") String name,
+                              @RequestParam(required = false, defaultValue = DefaultPage) int page,
+                              @RequestParam(required = false, defaultValue = DefaultSize) int size) {
 
         Flow flow = flowService.get(name);
         return jobService.list(flow, page, size);
@@ -99,11 +100,11 @@ public class JobController {
         }
     }
 
-    @GetMapping(value = "/{flow}/{buildNumber}/yml", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = "/{flow}/{buildNumber}/yml", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getYml(@PathVariable String flow, @PathVariable String buildNumber) {
         Job job = get(flow, buildNumber);
         JobYml yml = jobService.getYml(job);
-        return yml.getRaw();
+        return Base64.getEncoder().encodeToString(yml.getRaw().getBytes());
     }
 
     @GetMapping("/{flow}/{buildNumberOrLatest}/steps")
@@ -148,7 +149,7 @@ public class JobController {
     public Job create(@Validated @RequestBody CreateJob data) {
         Flow flow = flowService.get(data.getFlow());
         Yml yml = flowService.getYml(flow);
-        return jobService.create(flow, yml, Trigger.API, VariableMap.EMPTY);
+        return jobService.create(flow, yml, Trigger.API, data.getInputs());
     }
 
     @PostMapping("/run")

@@ -19,13 +19,14 @@ package com.flowci.core.credential.dao;
 import com.flowci.core.credential.domain.Credential;
 import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 /**
  * @author yang
  */
 @Repository
-public interface CredentialDao extends MongoRepository<Credential, String> {
+public interface CredentialDao extends MongoRepository<Credential, String>, CustomCredentialDao {
 
     List<Credential> findAllByCreatedByOrderByCreatedAt(String createdBy);
 

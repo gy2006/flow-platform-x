@@ -26,4 +26,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ExecutedCmdDao extends MongoRepository<ExecutedCmd, String> {
 
+    Long deleteByFlowId(String flowId);
 }

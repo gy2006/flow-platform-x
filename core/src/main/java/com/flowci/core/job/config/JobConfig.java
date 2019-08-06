@@ -16,20 +16,19 @@
 
 package com.flowci.core.job.config;
 
-import com.flowci.core.config.ConfigProperties;
-import com.flowci.core.helper.CacheHelper;
-import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.helper.CacheHelper;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.tree.NodeTree;
 import com.github.benmanes.caffeine.cache.Cache;
+import java.nio.file.Path;
+import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
-import java.nio.file.Path;
-import java.util.List;
 
 /**
  * @author yang
@@ -37,18 +36,28 @@ import java.util.List;
 @Log4j2
 @Configuration
 public class JobConfig {
-
     @Autowired
     private ConfigProperties appProperties;
+
 
     @Bean("logDir")
     public Path logDir() {
         return appProperties.getLogDir();
     }
 
-    @Bean("retryExecutor")
-    public ThreadPoolTaskExecutor retryExecutor() {
-        return ThreadHelper.createTaskExecutor(1, 1, 100, "job-retry-");
+    @Bean("jobDeleteExecutor")
+    public ThreadPoolTaskExecutor jobDeleteExecutor() {
+        return ThreadHelper.createTaskExecutor(1, 1, 10, "job-delete-");
+    }
+
+    @Bean("jobLogExecutor")
+    public ThreadPoolTaskExecutor jobLogExecutor() {
+        return ThreadHelper.createTaskExecutor(1, 1, 1, "job-logging-");
+    }
+
+    @Bean("jobConsumerExecutor")
+    public ThreadPoolTaskExecutor jobConsumerExecutor() {
+        return ThreadHelper.createTaskExecutor(100, 100, 0, "job-consumer-");
     }
 
     @Bean("jobTreeCache")

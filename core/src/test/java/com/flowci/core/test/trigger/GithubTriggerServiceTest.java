@@ -28,7 +28,6 @@ import static com.flowci.core.trigger.domain.Variables.GIT_SOURCE;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.core.trigger.domain.Variables;
@@ -78,19 +77,19 @@ public class GithubTriggerServiceTest extends SpringScenario {
         VariableMap variables = trigger.toVariableMap();
         Assert.assertNotNull(variables);
 
-        Assert.assertEquals("PUSH", variables.getString(GIT_EVENT));
-        Assert.assertEquals("GITHUB", variables.getString(GIT_SOURCE));
+        Assert.assertEquals("PUSH", variables.get(GIT_EVENT));
+        Assert.assertEquals("GITHUB", variables.get(GIT_SOURCE));
 
-        Assert.assertEquals("master", variables.getString(GIT_BRANCH));
+        Assert.assertEquals("master", variables.get(GIT_BRANCH));
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/compare/5a1e8ee1007b...40d0dd6e8e94",
-            variables.getString(GIT_COMPARE_URL));
+            variables.get(GIT_COMPARE_URL));
 
-        Assert.assertEquals("40d0dd6e8e942643d794d7ed8d27610fb8729914", variables.getString(GIT_COMMIT_ID));
-        Assert.assertEquals("fdafadsf\n\ndfsdafad", variables.getString(GIT_COMMIT_MESSAGE));
-        Assert.assertEquals("2017-08-08T11:19:05+08:00", variables.getString(GIT_COMMIT_TIME));
+        Assert.assertEquals("40d0dd6e8e942643d794d7ed8d27610fb8729914", variables.get(GIT_COMMIT_ID));
+        Assert.assertEquals("fdafadsf\n\ndfsdafad", variables.get(GIT_COMMIT_MESSAGE));
+        Assert.assertEquals("2017-08-08T11:19:05+08:00", variables.get(GIT_COMMIT_TIME));
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/commit/40d0dd6e8e942643d794d7ed8d27610fb8729914",
-            variables.getString(GIT_COMMIT_URL));
-        Assert.assertEquals("gy@fir.im", variables.getString(Variables.GIT_AUTHOR));
+            variables.get(GIT_COMMIT_URL));
+        Assert.assertEquals("gy@fir.im", variables.get(Variables.GIT_AUTHOR));
 
     }
 

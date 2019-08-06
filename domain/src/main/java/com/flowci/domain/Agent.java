@@ -83,6 +83,11 @@ public class Agent implements Serializable {
     }
 
     @JsonIgnore
+    public boolean hasJob() {
+        return !Strings.isNullOrEmpty(jobId);
+    }
+
+    @JsonIgnore
     public boolean isBusy() {
         return isOnline() && status == Status.BUSY;
     }

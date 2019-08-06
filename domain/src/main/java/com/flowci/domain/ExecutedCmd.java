@@ -77,6 +77,11 @@ public class ExecutedCmd extends CmdBase {
     }
 
     /**
+     * Flow id
+     */
+    private String flowId;
+
+    /**
      * Process id
      */
     private Integer processId;
@@ -116,13 +121,14 @@ public class ExecutedCmd extends CmdBase {
      */
     private Long logSize = -1L;
 
-    public ExecutedCmd(String id, boolean allowFailure) {
+    public ExecutedCmd(String id, String flowId, boolean allowFailure) {
         setId(id);
+        setFlowId(flowId);
         setAllowFailure(allowFailure);
     }
 
-    public ExecutedCmd(Cmd cmd) {
-        this(cmd.getId(), cmd.getAllowFailure());
+    public ExecutedCmd(Cmd cmd, String flowId) {
+        this(cmd.getId(), flowId, cmd.getAllowFailure());
     }
 
     @JsonProperty

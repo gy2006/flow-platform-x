@@ -16,32 +16,80 @@
 
 package com.flowci.core.flow.service;
 
+import com.flowci.core.auth.service.AuthService;
+import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.domain.Variables;
+import com.flowci.core.common.manager.SpringEventManager;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
+import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.user.CurrentUserHelper;
+import com.flowci.core.flow.event.FlowInitEvent;
+import com.flowci.core.flow.event.FlowOperationEvent;
+import com.flowci.core.flow.event.GitTestEvent;
+import com.flowci.domain.ObjectWrapper;
+import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
+import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
+import com.flowci.util.CipherHelper;
+import com.flowci.util.StringHelper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.google.common.base.Function;
 import com.google.common.base.Strings;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import lombok.extern.log4j.Log4j2;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.transport.JschConfigSessionFactory;
+import org.eclipse.jgit.transport.OpenSshConfig.Host;
+import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.util.FS;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * @author yang
  */
+@Log4j2
 @Service
 public class FlowServiceImpl implements FlowService {
 
     @Autowired
-    private CurrentUserHelper currentUserHelper;
+    private ConfigProperties appProperties;
+
+    @Autowired
+    private ThreadPoolTaskExecutor gitTestExecutor;
+
+    @Autowired
+    private Path tmpDir;
+
+    @Autowired
+    private AuthService authService;
 
     @Autowired
     private FlowDao flowDao;
@@ -52,34 +100,132 @@ public class FlowServiceImpl implements FlowService {
     @Autowired
     private CronService cronService;
 
+    @Autowired
+    private CredentialService credentialService;
+
+    @Autowired
+    private SpringEventManager eventManager;
+
+    @Autowired
+    private Template defaultYmlTemplate;
+
+    @Autowired
+    private Cache<String, List<String>> gitBranchCache;
+
+    @Autowired
+    private RabbitChannelOperation jobQueueManager;
+
+    @EventListener
+    public void onInit(ContextRefreshedEvent ignore) {
+        List<Flow> all = flowDao.findAll();
+
+        for (Flow flow : all) {
+            createFlowJobQueue(flow);
+        }
+
+        eventManager.publish(new FlowInitEvent(this, all));
+    }
+
     @Override
-    public List<Flow> list() {
-        return flowDao.findAllByCreatedBy(currentUserHelper.get().getId());
+    public List<Flow> list(Status status) {
+        String userId = authService.get().getId();
+        return flowDao.findAllByStatusAndCreatedBy(status, userId);
+    }
+
+    @Override
+    public List<Flow> listByCredential(String credentialName) {
+        Credential credential = credentialService.get(credentialName);
+
+        List<Flow> list = list(Status.CONFIRMED);
+        Iterator<Flow> iter = list.iterator();
+
+        for (; iter.hasNext(); ) {
+            Flow flow = iter.next();
+            String value = flow.getVariables().get(Variables.Flow.SSH_RSA);
+
+            if (Objects.equals(value, credential.getName())) {
+                continue;
+            }
+
+            iter.remove();
+        }
+
+        return list;
+    }
+
+    @Override
+    public Boolean exist(String name) {
+        try {
+            Flow flow = get(name);
+            return flow.getStatus() != Status.PENDING;
+        } catch (NotFoundException e) {
+            return false;
+        }
     }
 
     @Override
     public Flow create(String name) {
-        Flow existed = flowDao.findByName(name);
-
-        if (!Objects.isNull(existed)) {
-            throw new DuplicateException("The flow {0} already existed", name);
-        }
-
         if (!NodePath.validate(name)) {
             String message = "Illegal flow name {0}, the length cannot over 100 and '*' ',' is not available";
             throw new ArgumentException(message, name);
         }
 
-        Flow newFlow = new Flow(name);
-        newFlow.setCreatedBy(currentUserHelper.get().getId());
-        return flowDao.save(newFlow);
+        String userId = authService.getUserId();
+
+        Flow flow = flowDao.findByName(name);
+        if (flow != null && flow.getStatus() == Status.CONFIRMED) {
+            throw new DuplicateException("Flow {0} already exists", name);
+        }
+
+        // reuse from pending list
+        List<Flow> pending = flowDao.findAllByStatusAndCreatedBy(Status.PENDING, userId);
+        flow = pending.size() > 0 ? pending.get(0) : new Flow();
+
+        // set properties
+        flow.setName(name);
+        flow.setCreatedBy(userId);
+
+        VariableMap vars = flow.getVariables();
+        vars.put(Variables.App.Url, appProperties.getServerAddress());
+        vars.put(Variables.Flow.Name, name);
+        vars.put(Variables.Flow.Webhook, getWebhook(name));
+
+        flowDao.save(flow);
+
+        createFlowJobQueue(flow);
+
+        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATED));
+
+        return flow;
+    }
+
+    @Override
+    public Flow confirm(String name, String gitUrl, String credential) {
+        Flow flow = get(name);
+
+        if (flow.getStatus() == Status.CONFIRMED) {
+            throw new DuplicateException("Flow {0} has created", name);
+        }
+
+        VariableMap variables = flow.getVariables();
+        variables.putIfNotEmpty(Variables.Flow.GitUrl, gitUrl);
+        variables.putIfNotEmpty(Variables.Flow.SSH_RSA, credential);
+
+        flow.setStatus(Status.CONFIRMED);
+        flowDao.save(flow);
+
+        // create template yml
+        String templateYml = getTemplateYml(flow);
+        saveYml(flow, templateYml);
+
+        return flow;
     }
 
     @Override
     public Flow get(String name) {
-        Flow flow = flowDao.findByNameAndCreatedBy(name, currentUserHelper.get().getId());
+        Flow flow = flowDao.findByNameAndCreatedBy(name, authService.getUserId());
         if (Objects.isNull(flow)) {
-            throw new NotFoundException("The flow with name {0} cannot found", name);
+            throw new NotFoundException("Flow {0} is not found", name);
         }
         return flow;
     }
@@ -107,6 +253,8 @@ public class FlowServiceImpl implements FlowService {
 
         }
 
+        removeFlowJobQueue(flow);
+        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.DELETED));
         return flow;
     }
 
@@ -114,6 +262,21 @@ public class FlowServiceImpl implements FlowService {
     public void update(Flow flow) {
         verifyFlowIdAndUser(flow);
         flowDao.save(flow);
+    }
+
+    @Override
+    public String getTemplateYml(Flow flow) {
+        VelocityContext context = new VelocityContext();
+        for (Map.Entry<String, String> entry : flow.getVariables().entrySet()) {
+            context.put(entry.getKey(), entry.getValue());
+        }
+
+        try (StringWriter sw = new StringWriter()) {
+            defaultYmlTemplate.merge(context, sw);
+            return sw.toString();
+        } catch (IOException e) {
+            return StringHelper.EMPTY;
+        }
     }
 
     @Override
@@ -136,12 +299,85 @@ public class FlowServiceImpl implements FlowService {
 
         YmlParser.load(flow.getName(), yml);
         Yml ymlObj = new Yml(flow.getId(), yml);
-        ymlObj.setCreatedBy(currentUserHelper.get().getId());
+        ymlObj.setCreatedBy(authService.getUserId());
         ymlDao.save(ymlObj);
 
+        Node node = YmlParser.load(flow.getName(), ymlObj.getRaw());
+
+        // sync flow envs from yml root envs
+        flow.getVariables().merge(node.getEnvironments());
+        flowDao.save(flow);
+
         // update cron task
-        cronService.update(flow, ymlObj);
+        cronService.update(flow, node, ymlObj);
         return ymlObj;
+    }
+
+    @Override
+    public String setSshRsaCredential(String name, RSAKeyPair keyPair) {
+        Flow flow = get(name);
+
+        String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
+        credentialService.createRSA(credentialName, keyPair.getPublicKey(), keyPair.getPrivateKey());
+
+        return credentialName;
+    }
+
+    @Override
+    public void testGitConnection(String name, String url, String privateKeyOrCredentialName) {
+        final Flow flow = get(name);
+        final ObjectWrapper<String> privateKeyWrapper = new ObjectWrapper<>(privateKeyOrCredentialName);
+
+        if (!CipherHelper.isRsaPrivateKey(privateKeyOrCredentialName)) {
+            RSAKeyPair sshRsa = (RSAKeyPair) credentialService.get(privateKeyOrCredentialName);
+
+            if (Objects.isNull(sshRsa)) {
+                throw new ArgumentException("Invalid ssh-rsa name");
+            }
+
+            privateKeyWrapper.setValue(sshRsa.getPrivateKey());
+        }
+
+        gitTestExecutor.execute(() -> {
+            GitBranchLoader loader = new GitBranchLoader(flow.getId(), privateKeyWrapper.getValue(), url);
+            List<String> branches = loader.load();
+            gitBranchCache.put(flow.getId(), branches);
+        });
+    }
+
+    @Override
+    public List<String> listGitBranch(String name) {
+        final Flow flow = get(name);
+
+        String gitUrl = flow.getVariables().get(Variables.Flow.GitUrl);
+        String credentialName = flow.getVariables().get(Variables.Flow.SSH_RSA);
+
+        if (Strings.isNullOrEmpty(gitUrl) || Strings.isNullOrEmpty(credentialName)) {
+            return Collections.emptyList();
+        }
+
+        RSAKeyPair sshRsa = (RSAKeyPair) credentialService.get(credentialName);
+
+        if (Objects.isNull(sshRsa)) {
+            throw new ArgumentException("Invalid ssh-rsa name");
+        }
+
+        return gitBranchCache.get(flow.getId(), (Function<String, List<String>>) flowId -> {
+            GitBranchLoader gitTestRunner = new GitBranchLoader(flow.getId(), sshRsa.getPrivateKey(), gitUrl);
+            return gitTestRunner.load();
+        });
+    }
+
+    private void createFlowJobQueue(Flow flow) {
+        jobQueueManager.declare(flow.getQueueName(), true, 255);
+    }
+
+    private void removeFlowJobQueue(Flow flow) {
+        jobQueueManager.delete(flow.getQueueName());
+    }
+
+    private String getWebhook(String name) {
+        return appProperties.getServerAddress() + "/webhooks/" + name;
     }
 
     private void verifyFlowIdAndUser(Flow flow) {
@@ -150,8 +386,82 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException("The flow id is missing");
         }
 
-        if (!Objects.equals(flow.getCreatedBy(), currentUserHelper.get().getId())) {
+        if (!Objects.equals(flow.getCreatedBy(), authService.getUserId())) {
             throw new AccessException("Illegal account for flow {0}", flow.getName());
+        }
+    }
+
+    private class GitBranchLoader {
+
+        private final String flowId;
+
+        private final String privateKey;
+
+        private final String url;
+
+        GitBranchLoader(String flowId, String privateKey, String url) {
+            this.flowId = flowId;
+            this.privateKey = privateKey;
+            this.url = url;
+        }
+
+        public List<String> load() {
+            List<String> branches = new LinkedList<>();
+
+            try (PrivateKeySessionFactory sessionFactory = new PrivateKeySessionFactory(privateKey)) {
+                // publish FETCHING event
+                eventManager.publish(new GitTestEvent(this, flowId));
+
+                Collection<Ref> refs = Git.lsRemoteRepository()
+                    .setRemote(url)
+                    .setHeads(true)
+                    .setTransportConfigCallback(transport -> {
+                        SshTransport sshTransport = (SshTransport) transport;
+                        sshTransport.setSshSessionFactory(sessionFactory);
+                    })
+                    .setTimeout(10)
+                    .call();
+
+                for (Ref ref : refs) {
+                    String refName = ref.getName();
+                    branches.add(refName.substring(refName.lastIndexOf("/") + 1));
+                }
+
+                // publish DONE event
+                eventManager.publish(new GitTestEvent(this, flowId, branches));
+
+            } catch (IOException | GitAPIException e) {
+                // publish ERROR event
+                eventManager.publish(new GitTestEvent(this, flowId, e.getMessage()));
+            }
+
+            return branches;
+        }
+    }
+
+    private class PrivateKeySessionFactory extends JschConfigSessionFactory implements AutoCloseable {
+
+        private Path tmpPrivateKeyFile = Paths.get(tmpDir.toString(), UUID.randomUUID().toString());
+
+        PrivateKeySessionFactory(String privateKey) throws IOException {
+            Files.write(tmpPrivateKeyFile, privateKey.getBytes());
+        }
+
+        @Override
+        protected void configure(Host host, Session session) {
+            // do nothing
+        }
+
+        @Override
+        protected JSch createDefaultJSch(FS fs) throws JSchException {
+            JSch defaultJSch = super.createDefaultJSch(fs);
+            defaultJSch.addIdentity(tmpPrivateKeyFile.toString());
+            return defaultJSch;
+        }
+
+        @Override
+        public void close() throws IOException {
+            Files.deleteIfExists(tmpPrivateKeyFile);
         }
     }
 }

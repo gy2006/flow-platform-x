@@ -16,6 +16,7 @@
 
 package com.flowci.core.job.service;
 
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
@@ -29,7 +30,6 @@ import com.flowci.tree.NodeTree;
 import com.github.benmanes.caffeine.cache.Cache;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+ * ExecutedCmd == Step
+ *
  * @author yang
  */
 @Log4j2
@@ -57,7 +59,7 @@ public class StepServiceImpl implements StepService {
     private CmdManager cmdManager;
 
     @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    private SpringEventManager eventManager;
 
     @Override
     public List<ExecutedCmd> init(Job job) {
@@ -66,7 +68,7 @@ public class StepServiceImpl implements StepService {
 
         for (Node node : tree.getOrdered()) {
             CmdId id = cmdManager.createId(job, node);
-            steps.add(new ExecutedCmd(id.toString(), node.isAllowFailure()));
+            steps.add(new ExecutedCmd(id.toString(), job.getFlowId(), node.isAllowFailure()));
         }
 
         return executedCmdDao.insert(steps);
@@ -111,6 +113,11 @@ public class StepServiceImpl implements StepService {
     public void update(Job job, ExecutedCmd cmd) {
         executedCmdDao.save(cmd);
         jobStepCache.invalidate(job.getId());
-        applicationEventPublisher.publishEvent(new StepStatusChangeEvent(this, job, cmd));
+        eventManager.publish(new StepStatusChangeEvent(this, job, cmd));
+    }
+
+    @Override
+    public Long delete(String flowId) {
+        return executedCmdDao.deleteByFlowId(flowId);
     }
 }
