@@ -64,7 +64,7 @@ public class JwtHelperTest {
         token.setValue(JwtHelper.create(user, 1));
 
         // when:
-        ThreadHelper.sleep(5);
+        ThreadHelper.sleep(3000);
         boolean verify = JwtHelper.verify(token.getValue(), user);
 
         // then: should be fail

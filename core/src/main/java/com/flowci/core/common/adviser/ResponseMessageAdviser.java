@@ -30,6 +30,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
  * @author yang
  */
 @ControllerAdvice({
+    "com.flowci.core.auth",
     "com.flowci.core.flow",
     "com.flowci.core.job",
     "com.flowci.core.agent",

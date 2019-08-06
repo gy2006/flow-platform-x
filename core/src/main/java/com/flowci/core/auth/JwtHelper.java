@@ -67,7 +67,7 @@ public class JwtHelper {
             JWTVerifier verifier = JWT.require(algorithm).withIssuer(issuer).build();
 
             DecodedJWT decoded = verifier.verify(token);
-            return decoded.getExpiresAt().before(Date.from(Instant.now()));
+            return decoded.getExpiresAt().after(Date.from(Instant.now()));
         } catch (JWTVerificationException e) {
             return false;
         }

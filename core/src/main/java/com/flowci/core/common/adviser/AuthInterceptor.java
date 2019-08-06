@@ -27,6 +27,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Objects;
 
 /**
  * @author yang
@@ -53,11 +54,15 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         String token = getToken(request);
 
-        if (token.equals(MagicToken)) {
+        if (Objects.equals(token, MagicToken)) {
             return authService.setAsDefaultAdmin();
         }
 
-        return authService.set(token);
+        if (!authService.set(token)) {
+            throw new AuthenticationException("Invalid token");
+        }
+
+        return true;
     }
 
     @Override
