@@ -45,7 +45,7 @@ public class CredentialServiceTest extends SpringScenario {
         Credential rsa = credentialService.createRSA("hello.rsa");
         Assert.assertNotNull(rsa);
         Assert.assertEquals(Credential.Category.SSH_RSA, rsa.getCategory());
-        Assert.assertEquals(currentUserHelper.getUserId(), rsa.getCreatedBy());
+        Assert.assertEquals(authManager.getUserId(), rsa.getCreatedBy());
         Assert.assertNotNull(rsa.getCreatedAt());
         Assert.assertNotNull(rsa.getUpdatedAt());
 

@@ -16,6 +16,7 @@
 
 package com.flowci.core.flow.service;
 
+import com.flowci.core.common.auth.AuthManager;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.manager.SpringEventManager;
@@ -31,7 +32,6 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
-import com.flowci.core.user.helper.CurrentUserHelper;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;
@@ -96,7 +96,7 @@ public class FlowServiceImpl implements FlowService {
     private Path tmpDir;
 
     @Autowired
-    private CurrentUserHelper currentUserHelper;
+    private AuthManager authManager;
 
     @Autowired
     private FlowDao flowDao;
@@ -135,7 +135,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public List<Flow> list(Status status) {
-        String userId = currentUserHelper.get().getId();
+        String userId = authManager.get().getId();
         return flowDao.findAllByStatusAndCreatedBy(status, userId);
     }
 
@@ -177,7 +177,7 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException(message, name);
         }
 
-        String userId = currentUserHelper.get().getId();
+        String userId = authManager.getUserId();
 
         Flow flow = flowDao.findByName(name);
         if (flow != null && flow.getStatus() == Status.CONFIRMED) {
@@ -230,7 +230,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Flow get(String name) {
-        Flow flow = flowDao.findByNameAndCreatedBy(name, currentUserHelper.get().getId());
+        Flow flow = flowDao.findByNameAndCreatedBy(name, authManager.getUserId());
         if (Objects.isNull(flow)) {
             throw new NotFoundException("Flow {0} is not found", name);
         }
@@ -306,7 +306,7 @@ public class FlowServiceImpl implements FlowService {
 
         YmlParser.load(flow.getName(), yml);
         Yml ymlObj = new Yml(flow.getId(), yml);
-        ymlObj.setCreatedBy(currentUserHelper.get().getId());
+        ymlObj.setCreatedBy(authManager.getUserId());
         ymlDao.save(ymlObj);
 
         Node node = YmlParser.load(flow.getName(), ymlObj.getRaw());
@@ -393,7 +393,7 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException("The flow id is missing");
         }
 
-        if (!Objects.equals(flow.getCreatedBy(), currentUserHelper.get().getId())) {
+        if (!Objects.equals(flow.getCreatedBy(), authManager.getUserId())) {
             throw new AccessException("Illegal account for flow {0}", flow.getName());
         }
     }

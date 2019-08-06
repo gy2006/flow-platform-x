@@ -16,10 +16,10 @@
 
 package com.flowci.core.credential.service;
 
+import com.flowci.core.common.auth.AuthManager;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
-import com.flowci.core.user.helper.CurrentUserHelper;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
@@ -48,21 +48,21 @@ public class CredentialServiceImpl implements CredentialService {
     private CredentialDao credentialDao;
 
     @Autowired
-    private CurrentUserHelper currentUserHelper;
+    private AuthManager authManager;
 
     @Override
     public List<Credential> list() {
-        return credentialDao.findAllByCreatedByOrderByCreatedAt(currentUserHelper.getUserId());
+        return credentialDao.findAllByCreatedByOrderByCreatedAt(authManager.getUserId());
     }
 
     @Override
     public List<Credential> listName() {
-        return credentialDao.listNameOnly(currentUserHelper.getUserId());
+        return credentialDao.listNameOnly(authManager.getUserId());
     }
 
     @Override
     public Credential get(String name) {
-        Credential c = credentialDao.findByNameAndCreatedBy(name, currentUserHelper.getUserId());
+        Credential c = credentialDao.findByNameAndCreatedBy(name, authManager.getUserId());
 
         if (Objects.isNull(c)) {
             throw new NotFoundException("Credential {0} is not found", name);
@@ -89,7 +89,7 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public RSAKeyPair createRSA(String name) {
-        String email = currentUserHelper.get().getEmail();
+        String email = authManager.get().getEmail();
         RSAKeyPair rsaKeyPair = genRSA(email);
         rsaKeyPair.setName(name);
         return save(rsaKeyPair);
@@ -109,7 +109,7 @@ public class CredentialServiceImpl implements CredentialService {
             Date now = Date.from(Instant.now());
             keyPair.setUpdatedAt(now);
             keyPair.setCreatedAt(now);
-            keyPair.setCreatedBy(currentUserHelper.getUserId());
+            keyPair.setCreatedBy(authManager.getUserId());
             return credentialDao.insert(keyPair);
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Credential name {0} is already defined", keyPair.getName());

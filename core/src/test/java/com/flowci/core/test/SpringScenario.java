@@ -17,6 +17,7 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
+import com.flowci.core.common.auth.AuthManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.core.flow.dao.FlowDao;
@@ -24,7 +25,6 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.test.SpringScenario.Config;
 import com.flowci.core.test.flow.FlowMockHelper;
-import com.flowci.core.user.helper.CurrentUserHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.domain.Agent;
@@ -71,7 +71,7 @@ public abstract class SpringScenario {
     }
 
     @Autowired
-    protected CurrentUserHelper currentUserHelper;
+    protected AuthManager authManager;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -146,6 +146,6 @@ public abstract class SpringScenario {
         if (Objects.isNull(user)) {
             user = userService.create("test@flow.ci", "12345", User.Role.Admin);
         }
-        currentUserHelper.set(user);
+        authManager.set(user);
     }
 }

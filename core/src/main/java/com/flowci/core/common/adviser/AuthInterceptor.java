@@ -1,23 +1,24 @@
 /*
- * Copyright 2018 flow.ci
+ *   Copyright (c) 2019 flow.ci
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
  */
 
-package com.flowci.core.user.adviser;
+package com.flowci.core.common.adviser;
 
+import com.flowci.core.common.auth.AuthManager;
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.user.helper.CurrentUserHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.exception.AuthenticationException;
@@ -43,7 +44,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     private ConfigProperties appProperties;
 
     @Autowired
-    private CurrentUserHelper currentUserHelper;
+    private AuthManager authManager;
 
     @Autowired
     private UserService userService;
@@ -51,13 +52,13 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (!appProperties.getAuthEnabled()) {
-            if (Objects.isNull(currentUserHelper.get())) {
+            if (Objects.isNull(authManager.get())) {
                 return setAdminToCurrentUser();
             }
             return true;
         }
 
-        currentUserHelper.reset();
+        authManager.reset();
         String token = getToken(request);
 
         if (token.equals(MagicToken)) {
@@ -83,7 +84,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private boolean setAdminToCurrentUser() {
         User defaultAdmin = userService.defaultAdmin();
-        currentUserHelper.set(defaultAdmin);
+        authManager.set(defaultAdmin);
         return true;
     }
 }

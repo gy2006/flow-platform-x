@@ -21,6 +21,7 @@ import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.common.auth.AuthManager;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
@@ -51,7 +52,6 @@ import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
-import com.flowci.core.user.helper.CurrentUserHelper;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
@@ -109,7 +109,7 @@ public class JobServiceImpl implements JobService {
     private ConfigProperties.Job jobProperties;
 
     @Autowired
-    private CurrentUserHelper currentUserHelper;
+    private AuthManager authManager;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -222,8 +222,8 @@ public class JobServiceImpl implements JobService {
         job.getContext().merge(defaultContext);
 
         // setup created by form login user or git event author
-        if (currentUserHelper.hasLogin()) {
-            job.setCreatedBy(currentUserHelper.get().getId());
+        if (authManager.hasLogin()) {
+            job.setCreatedBy(authManager.get().getId());
         } else {
             String createdBy = job.getContext().get(GIT_AUTHOR, "Unknown");
             job.setCreatedBy(createdBy);
