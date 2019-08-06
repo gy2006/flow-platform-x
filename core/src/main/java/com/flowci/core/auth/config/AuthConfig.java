@@ -1,0 +1,52 @@
+/*
+ * Copyright 2019 flow.ci
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.flowci.core.auth.config;
+
+import com.flowci.core.user.domain.User;
+import com.github.benmanes.caffeine.cache.CaffeineSpec;
+import java.text.MessageFormat;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * @author yang
+ */
+@Configuration
+public class AuthConfig {
+
+    public static final String CACHE_ONLINE = "online_users";
+
+    private static final int MaxOnlineUsers = 500;
+
+    private static final int expireSeconds = 600;
+
+    @Bean
+    public ThreadLocal<User> currentUser() {
+        return new ThreadLocal<>();
+    }
+
+    @Bean
+    public CacheManager authCacheManager() {
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager(CACHE_ONLINE);
+
+        String spec = MessageFormat.format("maximumSize={0},expireAfterWrite={1}s", MaxOnlineUsers, expireSeconds);
+        cacheManager.setCaffeineSpec(CaffeineSpec.parse(spec));
+        return cacheManager;
+    }
+}

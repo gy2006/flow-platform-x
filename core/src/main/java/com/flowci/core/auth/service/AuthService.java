@@ -19,6 +19,12 @@ package com.flowci.core.auth.service;
 
 import com.flowci.core.user.domain.User;
 
+/**
+ * 'login' ->
+ * 'set' per request ->
+ * 'get' current user | 'hasLogin' | 'getUserId' ->
+ * 'logout'
+ */
 public interface AuthService {
 
     /**

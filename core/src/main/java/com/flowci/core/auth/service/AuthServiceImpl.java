@@ -17,15 +17,17 @@
 
 package com.flowci.core.auth.service;
 
+import com.flowci.core.auth.config.AuthConfig;
 import com.flowci.core.auth.helper.JwtHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.exception.AuthenticationException;
+import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
-
-import java.util.Objects;
 
 @Log4j2
 @Service
@@ -38,6 +40,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private CacheManager authCacheManager;
 
     @Override
     public User get() {
@@ -67,13 +72,14 @@ public class AuthServiceImpl implements AuthService {
 
         String token = JwtHelper.create(user, defaultExpiredSeconds);
         currentUser.set(user);
+        getOnlineCache().put(email, user);
         return token;
     }
 
     @Override
     public void logout() {
-        //TODO: make token invalid
-        throw new UnsupportedOperationException();
+        User user = get();
+        getOnlineCache().evict(user.getEmail());
     }
 
     @Override
@@ -84,7 +90,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public boolean set(String token) {
         String email = JwtHelper.decode(token);
-        User user = userService.getByEmail(email);
+
+        User user = getOnlineCache().get(email, User.class);
         if (Objects.isNull(user)) {
             return false;
         }
@@ -114,5 +121,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void reset() {
         currentUser.set(null);
+    }
+
+    private Cache getOnlineCache() {
+        return authCacheManager.getCache(AuthConfig.CACHE_ONLINE);
     }
 }

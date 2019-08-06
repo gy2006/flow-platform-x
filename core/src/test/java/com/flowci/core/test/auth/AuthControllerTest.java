@@ -25,6 +25,7 @@ import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.ResponseMessage;
+import com.flowci.exception.AuthenticationException;
 import com.flowci.exception.ErrorCode;
 import org.junit.Assert;
 import org.junit.Before;
@@ -79,23 +80,29 @@ public class AuthControllerTest extends SpringScenario {
         Assert.assertEquals("Invalid password", message.getMessage());
     }
 
-    @Test
-    public void should_logout_successfully() throws Exception {
+    @Test(expected = AuthenticationException.class)
+    public void should_login_and_logout_successfully() throws Exception {
         // init: log in
         MockHttpServletRequestBuilder builder = buildLoginRequest(user.getEmail(), user.getPasswordOnMd5());
         ResponseMessage<String> message = mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
         String token = message.getData();
 
+        Assert.assertEquals(user, authService.get());
+        Assert.assertTrue(authService.set(token));
+
         // when: request logout
         builder = post("/auth/logout").header("Token", token);
         ResponseMessage logoutMsg = mvcMockHelper.expectSuccessAndReturnClass(builder, ResponseMessage.class);
         Assert.assertEquals(StatusCode.OK, logoutMsg.getCode());
+
+        // then: should throw new AuthenticationException("Not logged in") exception
+        Assert.assertFalse(authService.set(token));
+        authService.get();
     }
 
     private MockHttpServletRequestBuilder buildLoginRequest(String email, String passwordOnMd5) {
         String authContent = email + ":" + passwordOnMd5;
         String base64Content = Base64.getEncoder().encodeToString(authContent.getBytes());
-
         return post("/auth/login").header("Authorization", "Basic " + base64Content);
     }
 }

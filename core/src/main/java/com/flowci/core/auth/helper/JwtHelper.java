@@ -36,6 +36,9 @@ public class JwtHelper {
 
     private static final String issuer = "flow.ci";
 
+    /**
+     * Create jwt token, user email as JWT id
+     */
     public static String create(User user, int expiredAfterSeconds) {
         Algorithm algorithm = Algorithm.HMAC256(user.getPasswordOnMd5());
         Instant expired = Instant.now().plusSeconds(expiredAfterSeconds);

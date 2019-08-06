@@ -21,13 +21,18 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flowci.core.auth.AuthInterceptor;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.domain.JsonablePage;
-import com.flowci.core.user.domain.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
@@ -45,18 +50,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-
 /**
  * @author yang
  */
 @Log4j2
 @Configuration
 @EnableScheduling
+@EnableCaching
 public class AppConfig {
 
     private static final ObjectMapper Mapper = Jsonable.getMapper();
@@ -118,11 +118,6 @@ public class AppConfig {
         RestTemplate restTemplate = new RestTemplate(factory);
         restTemplate.setMessageConverters(DefaultConverters);
         return restTemplate;
-    }
-
-    @Bean("currentUser")
-    public ThreadLocal<User> currentUser() {
-        return new ThreadLocal<>();
     }
 
     @Bean
