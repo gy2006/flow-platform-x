@@ -21,17 +21,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.domain.JsonablePage;
-import com.flowci.core.domain.StatusCode;
+import com.flowci.core.common.domain.JsonablePage;
+import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.core.test.flow.FlowMockHelper;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.ExecutedCmd.Status;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.util.StringHelper;
+
+import java.util.Base64;
 import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -48,16 +52,23 @@ import org.springframework.http.MediaType;
 public class JobControllerTest extends SpringScenario {
 
     private static final TypeReference<ResponseMessage<Job>> JobType =
-        new TypeReference<ResponseMessage<Job>>() {
-        };
+            new TypeReference<ResponseMessage<Job>>() {
+            };
 
     private static final TypeReference<ResponseMessage<JsonablePage<Job>>> JobListType =
-        new TypeReference<ResponseMessage<JsonablePage<Job>>>() {
-        };
+            new TypeReference<ResponseMessage<JsonablePage<Job>>>() {
+            };
 
     private static final TypeReference<ResponseMessage<List<ExecutedCmd>>> JobStepsType =
-        new TypeReference<ResponseMessage<List<ExecutedCmd>>>() {
-        };
+            new TypeReference<ResponseMessage<List<ExecutedCmd>>>() {
+            };
+
+    private static final TypeReference<ResponseMessage<String>> JobYmlType =
+            new TypeReference<ResponseMessage<String>>() {
+            };
+
+    @Autowired
+    private FlowMockHelper flowMockHelper;
 
     @Autowired
     private MvcMockHelper mvcMockHelper;
@@ -70,14 +81,18 @@ public class JobControllerTest extends SpringScenario {
     @Before
     public void init() throws Exception {
         mockLogin();
-        createFlow(flow);
+        String yml = StringHelper.toString(load("flow.yml"));
+        flowMockHelper.create(flow, yml);
     }
 
     @Test
     public void should_get_job_yml() throws Exception {
         createJobForFlow(flow);
 
-        String yml = mvcMockHelper.expectSuccessAndReturnString(get("/jobs/hello-flow/1/yml"));
+        ResponseMessage<String> responseMessage =
+                mvcMockHelper.expectSuccessAndReturnClass(get("/jobs/hello-flow/1/yml"), JobYmlType);
+        String yml = new String(Base64.getDecoder().decode(responseMessage.getData()));
+
         Assert.assertNotNull(yml);
         Assert.assertEquals(StringHelper.toString(load("flow.yml")), yml);
     }
@@ -109,7 +124,7 @@ public class JobControllerTest extends SpringScenario {
 
         // when:
         ResponseMessage<Job> response =
-            mvcMockHelper.expectSuccessAndReturnClass(get("/jobs/hello-flow/latest"), JobType);
+                mvcMockHelper.expectSuccessAndReturnClass(get("/jobs/hello-flow/latest"), JobType);
         Assert.assertEquals(StatusCode.OK, response.getCode());
 
         // then:
@@ -126,7 +141,7 @@ public class JobControllerTest extends SpringScenario {
 
         // when:
         ResponseMessage<JsonablePage<Job>> message = mvcMockHelper
-            .expectSuccessAndReturnClass(get("/jobs/hello-flow"), JobListType);
+                .expectSuccessAndReturnClass(get("/jobs/hello-flow"), JobListType);
         Assert.assertEquals(StatusCode.OK, message.getCode());
 
         // then:
@@ -144,7 +159,7 @@ public class JobControllerTest extends SpringScenario {
 
         // when:
         ResponseMessage<List<ExecutedCmd>> message = mvcMockHelper
-            .expectSuccessAndReturnClass(get("/jobs/hello-flow/1/steps"), JobStepsType);
+                .expectSuccessAndReturnClass(get("/jobs/hello-flow/1/steps"), JobStepsType);
         Assert.assertEquals(StatusCode.OK, message.getCode());
 
         // then:
@@ -156,18 +171,8 @@ public class JobControllerTest extends SpringScenario {
 
     public Job createJobForFlow(String name) throws Exception {
         return mvcMockHelper.expectSuccessAndReturnClass(post("/jobs")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsBytes(new CreateJob(name))), JobType)
-            .getData();
-    }
-
-    public void createFlow(String name) throws Exception {
-        String yml = StringHelper.toString(load("flow.yml"));
-
-        ResponseMessage message = mvcMockHelper.expectSuccessAndReturnClass(post("/flows/" + name)
-            .contentType(MediaType.TEXT_PLAIN)
-            .content(yml), ResponseMessage.class);
-
-        Assert.assertEquals(StatusCode.OK, message.getCode());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(new CreateJob(name))), JobType)
+                .getData();
     }
 }

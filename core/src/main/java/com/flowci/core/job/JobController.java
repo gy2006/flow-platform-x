@@ -16,23 +16,31 @@
 
 package com.flowci.core.job;
 
-import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.service.JobService;
+import com.flowci.core.job.service.LoggingService;
 import com.flowci.core.job.service.StepService;
 import com.flowci.domain.ExecutedCmd;
-import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
+import com.flowci.tree.NodePath;
+import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -64,10 +72,13 @@ public class JobController {
     @Autowired
     private StepService stepService;
 
+    @Autowired
+    private LoggingService loggingService;
+
     @GetMapping("/{flow}")
-    public Page<Job> list(@PathVariable("flow") String name,
-                          @RequestParam(required = false, defaultValue = DefaultPage) int page,
-                          @RequestParam(required = false, defaultValue = DefaultSize) int size) {
+    public Page<JobItem> list(@PathVariable("flow") String name,
+                              @RequestParam(required = false, defaultValue = DefaultPage) int page,
+                              @RequestParam(required = false, defaultValue = DefaultSize) int size) {
 
         Flow flow = flowService.get(name);
         return jobService.list(flow, page, size);
@@ -89,11 +100,11 @@ public class JobController {
         }
     }
 
-    @GetMapping(value = "/{flow}/{buildNumber}/yml", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = "/{flow}/{buildNumber}/yml", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getYml(@PathVariable String flow, @PathVariable String buildNumber) {
         Job job = get(flow, buildNumber);
         JobYml yml = jobService.getYml(job);
-        return yml.getRaw();
+        return Base64.getEncoder().encodeToString(yml.getRaw().getBytes());
     }
 
     @GetMapping("/{flow}/{buildNumberOrLatest}/steps")
@@ -103,21 +114,42 @@ public class JobController {
         return stepService.list(job);
     }
 
-    @GetMapping("/{flow}/{buildNumber}/{executedCmdId}")
-    public Page<String> getStepLog(@PathVariable String flow,
-                                   @PathVariable String buildNumber,
-                                   @PathVariable String executedCmdId,
+    @GetMapping("/logs/{executedCmdId}")
+    public Page<String> getStepLog(@PathVariable String executedCmdId,
                                    @RequestParam(required = false, defaultValue = "0") int page,
                                    @RequestParam(required = false, defaultValue = "50") int size) {
-        Job job = get(flow, buildNumber);
-        return stepService.logs(job, executedCmdId, PageRequest.of(page, size));
+
+        return loggingService.read(stepService.get(executedCmdId), PageRequest.of(page, size));
+    }
+
+    @GetMapping("/logs/{executedCmdId}/download")
+    public ResponseEntity<Resource> downloadStepLog(@PathVariable String executedCmdId,
+                                                    @RequestParam(required = false) boolean raw) {
+        CmdId cmdId = CmdId.parse(executedCmdId);
+
+        if (Objects.isNull(cmdId)) {
+            throw new ArgumentException("Illegal cmd id");
+        }
+
+        Resource resource = loggingService.get(executedCmdId, raw);
+
+        Job job = jobService.get(cmdId.getJobId());
+        Flow flow = flowService.getById(job.getFlowId());
+        NodePath path = NodePath.create(cmdId.getNodePath());
+
+        String fileName = String.format("%s-#%s-%s.log", flow.getName(), job.getBuildNumber(), path.name());
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+            .body(resource);
     }
 
     @PostMapping
     public Job create(@Validated @RequestBody CreateJob data) {
         Flow flow = flowService.get(data.getFlow());
         Yml yml = flowService.getYml(flow);
-        return jobService.create(flow, yml, Trigger.API, VariableMap.EMPTY);
+        return jobService.create(flow, yml, Trigger.API, data.getInputs());
     }
 
     @PostMapping("/run")

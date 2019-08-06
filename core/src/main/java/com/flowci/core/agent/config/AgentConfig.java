@@ -16,11 +16,11 @@
 
 package com.flowci.core.agent.config;
 
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.config.QueueConfig;
+import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.domain.Settings;
-import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -34,13 +34,10 @@ public class AgentConfig {
     private ConfigProperties.Zookeeper zkProperties;
 
     @Autowired
-    private ConfigProperties.Job jobProperties;
+    private ConfigProperties.RabbitMQ rabbitProperties;
 
     @Autowired
-    private RabbitProperties rabbitProperties;
-
-    @Autowired
-    private FanoutExchange logsExchange;
+    private RabbitQueueOperation callbackQueueManager;
 
     @Bean("baseSettings")
     public Settings baseSettings() {
@@ -55,10 +52,10 @@ public class AgentConfig {
         mq.setUsername(rabbitProperties.getUsername());
 
         Settings settings = new Settings();
-        settings.setCallbackQueueName(jobProperties.getCallbackQueueName());
+        settings.setCallbackQueueName(callbackQueueManager.getQueueName());
         settings.setZookeeper(zk);
         settings.setQueue(mq);
-        settings.setLogsExchangeName(logsExchange.getName());
+        settings.setLogsExchangeName(QueueConfig.LoggingExchange);
 
         return settings;
     }

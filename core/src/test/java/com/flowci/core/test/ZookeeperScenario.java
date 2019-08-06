@@ -16,34 +16,29 @@
 
 package com.flowci.core.test;
 
-import com.flowci.core.agent.event.StatusChangeEvent;
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.zookeeper.ZookeeperClient;
-import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.log4j.Log4j2;
-import org.apache.curator.test.TestingServer;
 import org.apache.zookeeper.CreateMode;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yang
  */
 @Log4j2
 public abstract class ZookeeperScenario extends SpringScenario {
-
-    private static TestingServer server;
 
     @Autowired
     private ZookeeperClient zk;
@@ -53,17 +48,6 @@ public abstract class ZookeeperScenario extends SpringScenario {
 
     @ClassRule
     public static TemporaryFolder temp = new TemporaryFolder();
-
-    @BeforeClass
-    public static void start() throws Exception {
-        server = new TestingServer(2181);
-        server.start();
-    }
-
-    @AfterClass
-    public static void close() throws IOException {
-        server.close();
-    }
 
     @Before
     public void cleanZkNodes() {
@@ -77,7 +61,7 @@ public abstract class ZookeeperScenario extends SpringScenario {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
 
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<StatusChangeEvent>) event -> {
+        addEventListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
             wrapper.setValue(event.getAgent());
             counter.countDown();
         });
@@ -97,7 +81,7 @@ public abstract class ZookeeperScenario extends SpringScenario {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
 
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<StatusChangeEvent>) event -> {
+        addEventListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
             wrapper.setValue(event.getAgent());
             counter.countDown();
         });

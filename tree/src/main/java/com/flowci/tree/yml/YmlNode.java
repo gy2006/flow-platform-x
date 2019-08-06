@@ -42,7 +42,7 @@ public abstract class YmlNode implements Serializable {
     VariableMap getVariableMap() {
         VariableMap variables = new VariableMap(envs.size());
         for (Map.Entry<String, String> entry : envs.entrySet()) {
-            variables.putString(entry.getKey(), entry.getValue());
+            variables.put(entry.getKey(), entry.getValue());
         }
         return variables;
     }

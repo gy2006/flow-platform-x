@@ -16,8 +16,11 @@
 
 package com.flowci.core.flow.domain;
 
-import com.flowci.core.domain.Mongoable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.flowci.core.common.domain.Mongoable;
+import com.flowci.core.common.domain.Variables;
 import com.flowci.domain.VariableMap;
+import com.flowci.util.StringHelper;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -30,22 +33,46 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * @author yang
  */
 @Document(collection = "flow")
+@Getter
+@Setter
 @NoArgsConstructor
 @ToString(of = {"name"}, callSuper = true)
 public final class Flow extends Mongoable {
 
-    @Getter
-    @Setter
+    public enum Status {
+        PENDING,
+
+        CONFIRMED
+    }
+
     @NonNull
     @Indexed(name = "index_flow_name")
     private String name;
 
-    @Getter
-    @Setter
+    @NonNull
+    private Status status = Status.PENDING;
+
     @NonNull
     private VariableMap variables = new VariableMap();
 
     public Flow(String name) {
         this.name = name;
+    }
+
+    @JsonIgnore
+    public String getQueueName() {
+        return "queue.flow." + id + ".job";
+    }
+
+    @JsonIgnore
+    public boolean hasGitUrl() {
+        String val = variables.get(Variables.Flow.GitUrl);
+        return StringHelper.hasValue(val);
+    }
+
+    @JsonIgnore
+    public boolean hasCredential() {
+        String val = variables.get(Variables.Flow.SSH_RSA);
+        return StringHelper.hasValue(val);
     }
 }

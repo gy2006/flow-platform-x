@@ -1,0 +1,24 @@
+## Docker-Compose file is used to start dependent services
+
+version: '3'
+services:
+  db:
+    image: mongo:3.6
+    restart: always
+    container_name: flowci-debug-db
+    ports:
+      - "27017:27017"
+
+  zk:
+    image: zookeeper:3.4
+    container_name: flowci-debug-zk
+    restart: always
+    ports:
+      - "2181:2181"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: flowci-debug-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"

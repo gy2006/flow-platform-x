@@ -16,10 +16,15 @@
 
 package com.flowci.core.agent.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.dao.AgentDao;
+import com.flowci.core.agent.domain.AgentInit;
+import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
-import com.flowci.core.agent.event.StatusChangeEvent;
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
@@ -43,19 +48,15 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 /**
  * Manage agent from zookeeper nodes
- *  - The ephemeral node present agent, path is /{root}/{agent id}
- *  - The persistent node present agent of lock, path is /{root}/{agent id}-lock, managed by server side
+ * - The ephemeral node present agent, path is /{root}/{agent id}
+ * - The persistent node present agent of lock, path is /{root}/{agent id}-lock, managed by server side
+ *
  * @author yang
  */
 @Log4j2
@@ -74,16 +75,16 @@ public class AgentServiceImpl implements AgentService {
     private AgentDao agentDao;
 
     @Autowired
-    private RabbitAdmin rabbitAdmin;
+    private RabbitChannelOperation agentQueueManager;
 
     @Autowired
-    private RabbitTemplate queueTemplate;
-
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    private SpringEventManager eventManager;
 
     @Autowired
     private Settings baseSettings;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @PostConstruct
     public void initRootNode() {
@@ -125,9 +126,10 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public Settings connect(String token, String ip, Integer port) {
-        Agent target = getByToken(token);
-        target.setHost("http://" + ip + ":" + port);
+    public Settings connect(AgentInit init) {
+        Agent target = getByToken(init.getToken());
+        target.setHost("http://" + init.getIp() + ":" + init.getPort());
+        target.setOs(init.getOs());
         agentDao.save(target);
 
         Settings settings = ObjectsHelper.copy(baseSettings);
@@ -142,6 +144,15 @@ public class AgentServiceImpl implements AgentService {
             throw new NotFoundException("Agent {0} does not existed", id);
         }
         return optional.get();
+    }
+
+    @Override
+    public Agent getByName(String name) {
+        Agent agent = agentDao.findByName(name);
+        if (Objects.isNull(agent)) {
+            throw new NotFoundException("Agent name {0} is not available", name);
+        }
+        return agent;
     }
 
     @Override
@@ -174,11 +185,6 @@ public class AgentServiceImpl implements AgentService {
             agents = agentDao.findAllByStatusAndTagsIn(status, tags);
         }
 
-        if (agents.isEmpty()) {
-            String tagsInStr = StringUtils.collectionToCommaDelimitedString(tags);
-            throw new NotFoundException("Agent not found by status : {0} and tags: {1}", status.name(), tagsInStr);
-        }
-
         return agents;
     }
 
@@ -186,6 +192,7 @@ public class AgentServiceImpl implements AgentService {
     public Agent delete(String token) {
         Agent agent = getByToken(token);
         agentDao.delete(agent);
+        log.debug("{} has been deleted", agent);
         return agent;
     }
 
@@ -244,7 +251,7 @@ public class AgentServiceImpl implements AgentService {
 
         try {
             agentDao.insert(agent);
-            rabbitAdmin.declareQueue(new Queue(agent.getQueueName()));
+            agentQueueManager.declare(agent.getQueueName(), false);
             return agent;
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Agent name {0} is already defined", name);
@@ -252,14 +259,33 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
+    public Agent update(String token, String name, Set<String> tags) {
+        Agent agent = getByToken(token);
+
+        agent.setName(name);
+        agent.setTags(tags);
+
+        try {
+            return agentDao.save(agent);
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateException("Agent name {0} is already defined", name);
+        }
+    }
+
+    @Override
     public void dispatch(Cmd cmd, Agent agent) {
-        queueTemplate.convertAndSend(agent.getQueueName(), cmd);
-        applicationEventPublisher.publishEvent(new CmdSentEvent(this, agent, cmd));
+        try {
+            byte[] body = objectMapper.writeValueAsBytes(cmd);
+            agentQueueManager.send(agent.getQueueName(), body);
+            eventManager.publish(new CmdSentEvent(this, agent, cmd));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * Get agent id from zookeeper path
-     *
+     * <p>
      * Ex: /agents/123123, should get 123123
      */
     private static String getAgentIdFromPath(String path) {
@@ -269,7 +295,8 @@ public class AgentServiceImpl implements AgentService {
 
     /**
      * Update agent status from ZK and DB
-     * @param agent target agent
+     *
+     * @param agent  target agent
      * @param status new status
      */
     private void updateAgentStatus(Agent agent, Status status) {
@@ -293,7 +320,7 @@ public class AgentServiceImpl implements AgentService {
             log.warn("Unable to update status on zk node: {}", e.getMessage());
         } finally {
             agentDao.save(agent);
-            applicationEventPublisher.publishEvent(new StatusChangeEvent(this, agent));
+            eventManager.publish(new AgentStatusChangeEvent(this, agent));
         }
     }
 
@@ -362,7 +389,7 @@ public class AgentServiceImpl implements AgentService {
                 log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(), Status.IDLE);
                 return;
             }
-            
+
             if (event.getType() == Type.CHILD_REMOVED) {
                 syncLockNode(agent, Type.CHILD_REMOVED);
                 updateAgentStatus(agent, Status.OFFLINE);
@@ -371,7 +398,7 @@ public class AgentServiceImpl implements AgentService {
                 return;
             }
 
-            if (event.getType() == Type.CHILD_UPDATED || event.getType() == Type.CONNECTION_RECONNECTED) {
+            if (event.getType() == Type.CONNECTION_RECONNECTED) {
                 Status status = getStatusFromZk(agent);
                 updateAgentStatus(agent, status);
                 log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(), status);

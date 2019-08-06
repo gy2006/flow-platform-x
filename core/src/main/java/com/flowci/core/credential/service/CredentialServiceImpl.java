@@ -16,24 +16,27 @@
 
 package com.flowci.core.credential.service;
 
+import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
-import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.exception.DuplicateException;
+import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.util.CipherHelper.RSA;
-import com.flowci.util.CipherHelper.StringKeyPair;
-import java.io.IOException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.KeyPair;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yang
@@ -46,45 +49,93 @@ public class CredentialServiceImpl implements CredentialService {
     private CredentialDao credentialDao;
 
     @Autowired
-    private CurrentUserHelper currentUserHelper;
+    private AuthService authService;
 
     @Override
     public List<Credential> list() {
-        return credentialDao.findAllByCreatedByOrderByCreatedAt(currentUserHelper.getUserId());
+        return credentialDao.findAllByCreatedByOrderByCreatedAt(authService.getUserId());
+    }
+
+    @Override
+    public List<Credential> listName() {
+        return credentialDao.listNameOnly(authService.getUserId());
     }
 
     @Override
     public Credential get(String name) {
-        return credentialDao.findByNameAndCreatedBy(name, currentUserHelper.getUserId());
+        Credential c = credentialDao.findByNameAndCreatedBy(name, authService.getUserId());
+
+        if (Objects.isNull(c)) {
+            throw new NotFoundException("Credential {0} is not found", name);
+        }
+
+        return c;
     }
 
     @Override
-    public Credential createRSA(String name) {
-        try {
-            String email = currentUserHelper.get().getEmail();
+    public Credential delete(String name) {
+        Credential c = get(name);
+        credentialDao.delete(c);
+        return c;
+    }
 
-            KeyPair keyPair = RSA.buildKeyPair(RSA.SIZE_1024);
-            StringKeyPair stringKeyPair = RSA.encodeAsOpenSSH(keyPair, email);
-
-            return createRSA(name, stringKeyPair);
-        } catch (NoSuchAlgorithmException | IOException e) {
-            log.error(e.getMessage());
+    @Override
+    public RSAKeyPair genRSA(String email) {
+        RSAKeyPair keyPair = rsaKeyGen(email);
+        if (Objects.isNull(keyPair)) {
             throw new StatusException("Unable to generate RSA key pair");
+        }
+        return keyPair;
+    }
+
+    @Override
+    public RSAKeyPair createRSA(String name) {
+        String email = authService.get().getEmail();
+        RSAKeyPair rsaKeyPair = genRSA(email);
+        rsaKeyPair.setName(name);
+        return save(rsaKeyPair);
+    }
+
+    @Override
+    public RSAKeyPair createRSA(String name, String publicKey, String privateKey) {
+        RSAKeyPair rsaKeyPair = new RSAKeyPair();
+        rsaKeyPair.setName(name);
+        rsaKeyPair.setPublicKey(publicKey);
+        rsaKeyPair.setPrivateKey(privateKey);
+        return save(rsaKeyPair);
+    }
+
+    private RSAKeyPair save(RSAKeyPair keyPair) {
+        try {
+            Date now = Date.from(Instant.now());
+            keyPair.setUpdatedAt(now);
+            keyPair.setCreatedAt(now);
+            keyPair.setCreatedBy(authService.getUserId());
+            return credentialDao.insert(keyPair);
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateException("Credential name {0} is already defined", keyPair.getName());
         }
     }
 
-    @Override
-    public Credential createRSA(String name, StringKeyPair rasKeyPair) {
-        try {
-            Date now = Date.from(Instant.now());
-            RSAKeyPair rsaKeyPair = new RSAKeyPair(rasKeyPair);
-            rsaKeyPair.setName(name);
-            rsaKeyPair.setUpdatedAt(now);
-            rsaKeyPair.setCreatedAt(now);
-            rsaKeyPair.setCreatedBy(currentUserHelper.getUserId());
-            return credentialDao.insert(rsaKeyPair);
-        } catch (DuplicateKeyException e) {
-            throw new DuplicateException("Credential name {0} is already defined", name);
+    private RSAKeyPair rsaKeyGen(String email) {
+        try (ByteArrayOutputStream pubKeyOS = new ByteArrayOutputStream()) {
+            try (ByteArrayOutputStream prvKeyOS = new ByteArrayOutputStream()) {
+                JSch jsch = new JSch();
+                RSAKeyPair rsa = new RSAKeyPair();
+
+                KeyPair kpair = KeyPair.genKeyPair(jsch, KeyPair.RSA, 2048);
+                kpair.writePrivateKey(prvKeyOS);
+                kpair.writePublicKey(pubKeyOS, email);
+
+                rsa.setPublicKey(pubKeyOS.toString());
+                rsa.setPrivateKey(prvKeyOS.toString());
+
+                kpair.dispose();
+                return rsa;
+            }
+        } catch (IOException | JSchException e) {
+            log.error(e);
+            return null;
         }
     }
 }

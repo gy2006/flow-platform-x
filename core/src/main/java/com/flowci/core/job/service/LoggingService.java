@@ -16,13 +16,43 @@
 
 package com.flowci.core.job.service;
 
-import org.springframework.amqp.core.Message;
+import com.flowci.domain.ExecutedCmd;
+import java.io.InputStream;
+import java.nio.file.Path;
+import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * @author yang
  */
 public interface LoggingService {
 
-    void processLogItem(Message message);
+    /**
+     * To receive the message from amqp
+     */
+    void handleLoggingItem(String message);
+
+    /**
+     * To read logs from file store
+     */
+    Page<String> read(ExecutedCmd cmd, Pageable pageable);
+
+    /**
+     * Save log into file system
+     *
+     * @param fileName {cmd id}.log
+     * @param stream file stream
+     */
+    Path save(String fileName, InputStream stream);
+
+    /**
+     * Get log resource
+     *
+     * @param executedCmdId cmd id
+     * @param isRaw indicated to get raw log data or not
+     * @return file resource
+     */
+    Resource get(String executedCmdId, boolean isRaw);
 
 }

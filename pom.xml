@@ -10,7 +10,6 @@
   <version>1.0-SNAPSHOT</version>
   <modules>
     <module>domain</module>
-    <module>agent</module>
     <module>core</module>
     <module>util</module>
     <module>exception</module>
@@ -35,6 +34,9 @@
     <groovy-all.version>2.4.12</groovy-all.version>
     <docker-java.version>3.0.14</docker-java.version>
     <cron-utils.version>7.0.5</cron-utils.version>
+    <velocity-engine-core.version>2.1</velocity-engine-core.version>
+    <amqp-client.version>5.7.2</amqp-client.version>
+    <java-jwt.version>3.8.1</java-jwt.version>
   </properties>
 
   <build>
@@ -132,6 +134,12 @@
       </dependency>
 
       <dependency>
+        <groupId>com.auth0</groupId>
+        <artifactId>java-jwt</artifactId>
+        <version>${java-jwt.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.codehaus.groovy</groupId>
         <artifactId>groovy-all</artifactId>
         <version>${groovy-all.version}</version>
@@ -141,6 +149,12 @@
         <groupId>com.cronutils</groupId>
         <artifactId>cron-utils</artifactId>
         <version>${cron-utils.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.rabbitmq</groupId>
+        <artifactId>amqp-client</artifactId>
+        <version>${amqp-client.version}</version>
       </dependency>
 
       <dependency>
@@ -168,9 +182,9 @@
       </dependency>
 
       <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>${h2.version}</version>
+        <groupId>org.apache.velocity</groupId>
+        <artifactId>velocity-engine-core</artifactId>
+        <version>${velocity-engine-core.version}</version>
       </dependency>
 
       <dependency>

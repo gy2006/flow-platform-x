@@ -85,7 +85,7 @@ public class PluginServiceTest extends SpringScenario {
         // init counter
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Plugin> pluginWrapper = new ObjectWrapper<>();
-        applicationEventMulticaster.addApplicationListener((ApplicationListener<RepoCloneEvent>) event -> {
+        addEventListener((ApplicationListener<RepoCloneEvent>) event -> {
             pluginWrapper.setValue(event.getPlugin());
             counter.countDown();
         });

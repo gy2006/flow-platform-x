@@ -32,13 +32,13 @@ public class JsonableTest {
     @Test
     public void should_parse_variable_map_to_json() throws IOException {
         VariableMap vm = new VariableMap();
-        vm.putString("hello", "world");
+        vm.put("hello", "world");
         String json = mapper.writeValueAsString(vm);
         Assert.assertNotNull(json);
 
         VariableMap value = mapper.readValue(json, VariableMap.class);
         Assert.assertNotNull(value);
-        Assert.assertEquals("world", value.getString("hello"));
+        Assert.assertEquals("world", value.get("hello"));
     }
 
 }

@@ -16,6 +16,7 @@
 
 package com.flowci.core.agent.service;
 
+import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Cmd;
 import com.flowci.domain.Settings;
@@ -27,12 +28,17 @@ import java.util.Set;
  */
 public interface AgentService {
 
-    Settings connect(String token, String ip, Integer port);
+    Settings connect(AgentInit initData);
 
     /**
      * Get agent by id
      */
     Agent get(String id);
+
+    /**
+     * Get agent by name
+     */
+    Agent getByName(String name);
 
     /**
      * Get agent by token
@@ -82,6 +88,11 @@ public interface AgentService {
      * Create agent by name and tags
      */
     Agent create(String name, Set<String> tags);
+
+    /**
+     * Update agent name or and tags
+     */
+    Agent update(String token, String name, Set<String> tags);
 
     /**
      * Dispatch cmd to agent

@@ -16,30 +16,32 @@
 
 package com.flowci.core.job.service;
 
-import static com.flowci.core.trigger.domain.GitTrigger.Variables.GIT_AUTHOR;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.config.ConfigProperties;
-import com.flowci.core.domain.Variables;
+import com.flowci.core.auth.service.AuthService;
+import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.domain.Variables;
+import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.core.common.manager.SpringEventManager;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
+import com.flowci.core.common.rabbit.RabbitOperation;
+import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.helper.ThreadHelper;
+import com.flowci.core.flow.event.FlowInitEvent;
+import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.job.dao.JobDao;
+import com.flowci.core.job.dao.JobItemDao;
 import com.flowci.core.job.dao.JobNumberDao;
-import com.flowci.core.job.domain.CmdId;
-import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.domain.*;
 import com.flowci.core.job.domain.Job.Trigger;
-import com.flowci.core.job.domain.JobNumber;
-import com.flowci.core.job.domain.JobYml;
-import com.flowci.core.job.event.CreateNewJobEvent;
-import com.flowci.core.job.event.JobCreatedEvent;
-import com.flowci.core.job.event.JobReceivedEvent;
-import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.job.event.*;
 import com.flowci.core.job.manager.CmdManager;
+import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
-import com.flowci.core.user.CurrentUserHelper;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.Cmd;
@@ -47,26 +49,13 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.GroovyRunner;
-import com.flowci.tree.Node;
-import com.flowci.tree.NodePath;
-import com.flowci.tree.NodeTree;
-import com.flowci.tree.YmlParser;
+import com.flowci.tree.*;
 import groovy.util.ScriptException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -74,43 +63,51 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
+
 /**
  * @author yang
  */
 @Log4j2
 @Service
-public class JobServiceImpl implements JobService, ApplicationListener<CreateNewJobEvent> {
+public class JobServiceImpl implements JobService {
 
     private static final Sort SortByBuildNumber = Sort.by(Direction.DESC, "buildNumber");
 
     private static final Integer DefaultBeforeTimeout = 5;
 
-    @Autowired
-    private ConfigProperties appProperties;
+    //====================================================================
+    //        %% Spring injection
+    //====================================================================
 
     @Autowired
     private ConfigProperties.Job jobProperties;
 
     @Autowired
-    private CurrentUserHelper currentUserHelper;
+    private AuthService authService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private JobDao jobDao;
 
     @Autowired
+    private JobItemDao jobItemDao;
+
+    @Autowired
     private JobNumberDao jobNumberDao;
 
     @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
-
-    @Autowired
-    private RabbitTemplate queueTemplate;
-
-    @Autowired
-    private Queue jobQueue;
-
-    @Autowired
-    private ThreadPoolTaskExecutor retryExecutor;
+    private ThreadPoolTaskExecutor jobDeleteExecutor;
 
     @Autowired
     private CmdManager cmdManager;
@@ -119,10 +116,36 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
     private YmlManager ymlManager;
 
     @Autowired
+    private SpringEventManager eventManager;
+
+    @Autowired
     private AgentService agentService;
 
     @Autowired
     private StepService stepService;
+
+    @Autowired
+    private FlowJobQueueManager flowJobQueueManager;
+
+    @Autowired
+    private RabbitQueueOperation callbackQueueManager;
+
+    private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
+
+    //====================================================================
+    //        %% Public function
+    //====================================================================
+
+    @Override
+    public Job get(String jobId) {
+        Optional<Job> job = jobDao.findById(jobId);
+
+        if (job.isPresent()) {
+            return job.get();
+        }
+
+        throw new NotFoundException("Job '{}' not found", jobId);
+    }
 
     @Override
     public Job get(Flow flow, Long buildNumber) {
@@ -144,14 +167,20 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
 
     @Override
     public Job getLatest(Flow flow) {
-        JobNumber latest = jobNumberDao.findById(flow.getId()).get();
-        return get(flow, latest.getNumber());
+        Optional<JobNumber> optional = jobNumberDao.findById(flow.getId());
+
+        if (optional.isPresent()) {
+            JobNumber latest = optional.get();
+            return get(flow, latest.getNumber());
+        }
+
+        throw new NotFoundException("No jobs for flow {0}", flow.getName());
     }
 
     @Override
-    public Page<Job> list(Flow flow, int page, int size) {
+    public Page<JobItem> list(Flow flow, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size, SortByBuildNumber);
-        return jobDao.findAllByFlowId(flow.getId(), pageable);
+        return jobItemDao.findAllByFlowId(flow.getId(), pageable);
     }
 
     @Override
@@ -160,14 +189,14 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
         // create job number
-        Long buildNumber = getJobNumber(flow);
+        JobNumber jobNumber = jobNumberDao.increaseBuildNumber(flow.getId());
 
         // create job
         Job job = new Job();
-        job.setKey(JobKeyBuilder.build(flow, buildNumber));
+        job.setKey(JobKeyBuilder.build(flow, jobNumber.getNumber()));
         job.setFlowId(flow.getId());
         job.setTrigger(trigger);
-        job.setBuildNumber(buildNumber);
+        job.setBuildNumber(jobNumber.getNumber());
         job.setCurrentPath(root.getPathAsString());
         job.setAgentSelector(root.getSelector());
 
@@ -176,8 +205,8 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         job.getContext().merge(defaultContext);
 
         // setup created by form login user or git event author
-        if (currentUserHelper.hasLogin()) {
-            job.setCreatedBy(currentUserHelper.get().getId());
+        if (authService.hasLogin()) {
+            job.setCreatedBy(authService.get().getId());
         } else {
             String createdBy = job.getContext().get(GIT_AUTHOR, "Unknown");
             job.setCreatedBy(createdBy);
@@ -186,7 +215,7 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         // set expire at
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
-        jobDao.save(job);
+        jobDao.insert(job);
 
         // create job yml
         ymlManager.create(flow, job, yml);
@@ -194,7 +223,7 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         // init job steps as executed cmd
         stepService.init(job);
 
-        applicationEventPublisher.publishEvent(new JobCreatedEvent(this, job));
+        eventManager.publish(new JobCreatedEvent(this, job));
         return job;
     }
 
@@ -207,7 +236,7 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         try {
             return enqueue(job);
         } catch (StatusException e) {
-            return setJobStatus(job, Job.Status.FAILURE, e.getMessage());
+            return setJobStatusAndSave(job, Job.Status.FAILURE, e.getMessage());
         }
     }
 
@@ -219,10 +248,26 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
             Cmd killCmd = cmdManager.createKillCmd();
 
             agentService.dispatch(killCmd, agent);
-            log.info("Stop cmd been send to {} for job {}", agent.getName(), job.getId());
+            logInfo(job, " cancel cmd been send to {}", agent.getName());
         }
 
         return job;
+    }
+
+    @Override
+    public void delete(Flow flow) {
+        jobDeleteExecutor.execute(() -> {
+            jobNumberDao.deleteByFlowId(flow.getId());
+            log.info("Deleted: job number of flow {}", flow.getName());
+
+            Long numOfJobDeleted = jobDao.deleteByFlowId(flow.getId());
+            log.info("Deleted: {} jobs of flow {}", numOfJobDeleted, flow.getName());
+
+            Long numOfStepDeleted = stepService.delete(flow.getId());
+            log.info("Deleted: {} steps of flow {}", numOfStepDeleted, flow.getName());
+
+            eventManager.publish(new JobDeletedEvent(this, flow, numOfJobDeleted));
+        });
     }
 
     @Override
@@ -231,116 +276,190 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         return Instant.now().compareTo(expireAt) == 1;
     }
 
-    @Override
-    public boolean dispatch(Job job) {
-        NodeTree tree = ymlManager.getTree(job);
-        Node node = tree.get(currentNodePath(job));
-        Agent agent = agentService.get(job.getAgentId());
+    //====================================================================
+    //        %% Internal events
+    //====================================================================
 
-        try {
-            // set executed cmd step to running
-            ExecutedCmd executedCmd = stepService.get(job, node);
-
-            if (!executedCmd.isRunning()) {
-                executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
-                stepService.update(job, executedCmd);
-            }
-
-            Cmd cmd = cmdManager.createShellCmd(job, node);
-            agentService.dispatch(cmd, agent);
-            log.debug("Job {} with cmd {} been dispatched to agent {}", job.getId(), cmd.getId());
-
-            return true;
-        } catch (Throwable e) {
-            log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
-            setJobStatus(job, Job.Status.FAILURE, e.getMessage());
-            agentService.tryRelease(agent);
-            return false;
+    @EventListener(FlowInitEvent.class)
+    public void startJobQueueConsumers(FlowInitEvent event) {
+        for (Flow flow : event.getFlows()) {
+            startJobConsumer(flow);
         }
     }
 
-    @Override
+    @EventListener(value = ContextRefreshedEvent.class)
+    public void startCallbackQueueConsumer(ContextRefreshedEvent event) {
+        RabbitChannelOperation.QueueConsumer consumer = callbackQueueManager.createConsumer((message -> {
+            if (message == RabbitOperation.Message.STOP_SIGN) {
+                return true;
+            }
+
+            try {
+                ExecutedCmd executedCmd = objectMapper.readValue(message.getBody(), ExecutedCmd.class);
+                CmdId cmdId = CmdId.parse(executedCmd.getId());
+                log.info("[Callback]: {}-{} = {}", cmdId.getJobId(), cmdId.getNodePath(), executedCmd.getStatus());
+
+                handleCallback(executedCmd);
+                return message.sendAck();
+            } catch (IOException e) {
+                log.error(e.getMessage());
+                return false;
+            }
+        }));
+
+        consumer.start(false);
+    }
+
+    @EventListener(value = FlowOperationEvent.class)
+    public void onFlowDeleted(FlowOperationEvent event) {
+        if (event.isDeletedEvent()) {
+            stopJobConsumer(event.getFlow());
+            delete(event.getFlow());
+        }
+    }
+
+    @EventListener(value = FlowOperationEvent.class)
+    public void onFlowCreated(FlowOperationEvent event) {
+        if (event.isCreatedEvent()) {
+            startJobConsumer(event.getFlow());
+        }
+    }
+
+    @EventListener(value = CreateNewJobEvent.class)
     public void onApplicationEvent(CreateNewJobEvent event) {
         Job job = create(event.getFlow(), event.getYml(), event.getTrigger(), event.getInput());
         start(job);
     }
 
-    @Override
-    @RabbitListener(queues = "${app.job.queue-name}", containerFactory = "jobAndCallbackContainerFactory")
-    public void processJob(Job job) {
-        log.debug("Job {} received from queue", job.getId());
-        applicationEventPublisher.publishEvent(new JobReceivedEvent(this, job));
+    @EventListener(value = AgentStatusChangeEvent.class)
+    public void notifyToFindAvailableAgent(AgentStatusChangeEvent event) {
+        Agent agent = event.getAgent();
 
-        if (!job.isQueuing()) {
-            log.info("Job {} cannot be process since status not queuing", job.getId());
+        if (agent.getStatus() != Status.IDLE) {
             return;
         }
 
-        try {
-            // find available agents
-            Set<String> agentTags = job.getAgentSelector().getTags();
-            Iterator<Agent> availableList = agentService.find(Status.IDLE, agentTags).iterator();
+        if (!agent.hasJob()) {
+            return;
+        }
 
-            // try to lock it
-            Boolean isLocked = Boolean.FALSE;
-            Agent available = null;
+        // notify all consumer to find agent
+        consumeHandlers.forEach((s, handler) -> handler.resume());
+    }
 
-            while (availableList.hasNext()) {
-                Agent agent = availableList.next();
-                agent.setJobId(job.getId());
+    @EventListener(value = AgentStatusChangeEvent.class)
+    public void updateJobAndStep(AgentStatusChangeEvent event) {
+        Agent agent = event.getAgent();
 
-                isLocked = agentService.tryLock(agent);
-                if (isLocked) {
-                    available = agent;
-                    break;
+        if (agent.getStatus() != Status.OFFLINE || Objects.isNull(agent.getJobId())) {
+            return;
+        }
+
+        Job job = get(agent.getJobId());
+        if (job.isDone()) {
+            return;
+        }
+
+        // update step status
+        List<ExecutedCmd> steps = stepService.list(job);
+        for (ExecutedCmd step : steps) {
+            if (step.isRunning() || step.isPending()) {
+                step.setStatus(ExecutedCmd.Status.SKIPPED);
+                stepService.update(job, step);
+            }
+        }
+
+        // update job status
+        setJobStatusAndSave(job, Job.Status.CANCELLED, "Agent unexpected offline");
+    }
+
+    //====================================================================
+    //        %% Rabbit events
+    //====================================================================
+
+    /**
+     * Job queue consumer for each flow
+     */
+    private class JobConsumerHandler implements Function<RabbitChannelOperation.Message, Boolean> {
+
+        private final static long RetryIntervalOnNotFound = 30 * 1000; // 60 seconds
+
+        private final Object lock = new Object();
+
+        @Getter
+        private final String queueName;
+
+        // Message.STOP_SIGN will be coming from other thread
+        private final AtomicBoolean isStop = new AtomicBoolean(false);
+
+        JobConsumerHandler(String queueName) {
+            this.queueName = queueName;
+        }
+
+        @Override
+        public Boolean apply(RabbitChannelOperation.Message message) {
+            if (message == RabbitOperation.Message.STOP_SIGN) {
+                log.info("[Job Consumer] {} will be stopped", queueName);
+                isStop.set(true);
+                resume();
+                return true;
+            }
+
+            Optional<Job> optional = convert(message);
+            if (!optional.isPresent()) {
+                return true;
+            }
+
+            Job job = optional.get();
+            logInfo(job, "received from queue");
+            eventManager.publish(new JobReceivedEvent(this, job));
+
+            if (!job.isQueuing()) {
+                logInfo(job, "can't handle it since status is not in queuing");
+                return false;
+            }
+
+            Agent available;
+
+            while ((available = findAvailableAgent(job)) == null) {
+                logInfo(job, "waiting for agent...");
+
+                synchronized (lock) {
+                    ThreadHelper.wait(lock, RetryIntervalOnNotFound);
                 }
 
-                availableList.remove();
+                if (isStop.get()) {
+                    return false;
+                }
+
+                if (isExpired(job)) {
+                    setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
+                    logInfo(job, "expired");
+                    return false;
+                }
             }
 
-            // re-enqueue to job while agent been locked by other
-            if (!isLocked) {
-                log.debug("Agent not found for job {}, put into the retrying queue", job.getId());
-                retry(job);
-                return;
+            dispatch(job, available);
+            return message.sendAck();
+        }
+
+        void resume() {
+            synchronized (lock) {
+                lock.notifyAll();
             }
+        }
 
-            NodeTree tree = ymlManager.getTree(job);
-            Node next =  tree.next(currentNodePath(job));
-
-            // do not accept job without regular steps
-            if (Objects.isNull(next)) {
-                log.debug("Next node cannot be found when process job {}", job);
-                return;
+        private Optional<Job> convert(RabbitChannelOperation.Message message) {
+            try {
+                return Optional.of(objectMapper.readValue(message.getBody(), Job.class));
+            } catch (IOException e) {
+                return Optional.empty();
             }
-
-            log.debug("Next step of job {} is {}", job.getId(), next.getName());
-
-            // set path, agent id, and status to job
-            job.setCurrentPath(next.getPathAsString());
-            job.setAgentId(available.getId());
-            setJobStatus(job, Job.Status.RUNNING, null);
-
-            // execute condition script
-            Boolean executed = executeBeforeCondition(job, next);
-            if (!executed) {
-                ExecutedCmd executedCmd = stepService.get(job, next);
-                processCallback(executedCmd);
-                return;
-            }
-
-            // dispatch job to agent queue
-            dispatch(job);
-        } catch (NotFoundException e) {
-            // re-enqueue to job while agent not found
-            log.debug("Agent not available, job {} retry", job.getId());
-            retry(job);
         }
     }
 
     @Override
-    @RabbitListener(queues = "${app.job.callback-queue-name}", containerFactory = "jobAndCallbackContainerFactory")
-    public void processCallback(ExecutedCmd execCmd) {
+    public void handleCallback(ExecutedCmd execCmd) {
         CmdId cmdId = CmdId.parse(execCmd.getId());
         if (Objects.isNull(cmdId)) {
             log.debug("Illegal cmd callback: {}", execCmd.getId());
@@ -348,7 +467,7 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         }
 
         // get cmd related job
-        Job job = jobDao.findById(cmdId.getJobId()).get();
+        Job job = get(cmdId.getJobId());
         NodePath currentFromCmd = NodePath.create(cmdId.getNodePath());
 
         NodeTree tree = ymlManager.getTree(job);
@@ -376,23 +495,22 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
 
         // setup current job status if not tail node
         if (!node.isTail()) {
-            context.putString(Variables.JOB_STATUS, StatusHelper.convert(execCmd).name());
+            context.put(Variables.Job.Status, StatusHelper.convert(execCmd).name());
         }
 
         jobDao.save(job);
 
         // find next node
         Node next = findNext(job, tree, node, execCmd.isSuccess());
+        Agent current = agentService.get(job.getAgentId());
 
         // job finished
         if (Objects.isNull(next)) {
-            Job.Status statusFromContext = Job.Status.valueOf(job.getContext().get(Variables.JOB_STATUS));
-            setJobStatus(job, statusFromContext, execCmd.getError());
+            Job.Status statusFromContext = Job.Status.valueOf(job.getContext().get(Variables.Job.Status));
+            setJobStatusAndSave(job, statusFromContext, execCmd.getError());
 
-            Agent agent = agentService.get(job.getAgentId());
-            agentService.tryRelease(agent);
-
-            log.info("Job {} been executed with status {}", job.getId(), statusFromContext);
+            agentService.tryRelease(current);
+            logInfo(job, "finished with status {}", statusFromContext);
             return;
         }
 
@@ -400,8 +518,126 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         job.setCurrentPath(next.getPathAsString());
         jobDao.save(job);
 
-        log.debug("Dispatch job : {}", job);
-        dispatch(job);
+        log.debug("Send job {} step {} to agent", job.getKey(), node.getName());
+        sendToAgent(job, next, current);
+    }
+
+    //====================================================================
+    //        %% Utils
+    //====================================================================
+
+    private void startJobConsumer(Flow flow) {
+        String queueName = flow.getQueueName();
+
+        JobConsumerHandler handler = new JobConsumerHandler(queueName);
+        consumeHandlers.put(queueName, handler);
+
+        RabbitQueueOperation manager = flowJobQueueManager.create(queueName);
+        RabbitOperation.QueueConsumer consumer = manager.createConsumer(queueName, handler);
+
+        // start consumer
+        consumer.start(false);
+    }
+
+    private void stopJobConsumer(Flow flow) {
+        String queueName = flow.getQueueName();
+
+        // remove queue manager and send Message.STOP_SIGN to consumer
+        flowJobQueueManager.remove(queueName);
+
+        // resume
+        JobConsumerHandler handler = consumeHandlers.get(queueName);
+        if (handler != null) {
+            handler.resume();
+        }
+
+        consumeHandlers.remove(queueName);
+    }
+
+    /**
+     * Find available agent and dispatch job
+     */
+    private void dispatch(Job job, Agent available) {
+        NodeTree tree = ymlManager.getTree(job);
+        Node next = tree.next(currentNodePath(job));
+
+        // do not accept job without regular steps
+        if (Objects.isNull(next)) {
+            log.debug("Next node cannot be found when process job {}", job);
+            return;
+        }
+
+        log.debug("Next step of job {} is {}", job.getId(), next.getName());
+
+        // set path, agent id, and status to job
+        job.setCurrentPath(next.getPathAsString());
+        job.setAgentId(available.getId());
+        setJobStatusAndSave(job, Job.Status.RUNNING, null);
+
+        // execute condition script
+        Boolean executed = executeBeforeCondition(job, next);
+        if (!executed) {
+            ExecutedCmd executedCmd = stepService.get(job, next);
+            handleCallback(executedCmd);
+            return;
+        }
+
+        // dispatch job to agent queue
+        sendToAgent(job, next, available);
+    }
+
+    private Agent findAvailableAgent(Job job) {
+        Set<String> agentTags = job.getAgentSelector().getTags();
+        List<Agent> agents = agentService.find(Status.IDLE, agentTags);
+
+        if (agents.isEmpty()) {
+            return null;
+        }
+
+        Iterator<Agent> availableList = agents.iterator();
+
+        // try to lock it
+        while (availableList.hasNext()) {
+            Agent agent = availableList.next();
+            agent.setJobId(job.getId());
+
+            if (agentService.tryLock(agent)) {
+                return agent;
+            }
+
+            availableList.remove();
+        }
+
+        return null;
+    }
+
+    /**
+     * Send step to agent
+     */
+    private void sendToAgent(Job job, Node node, Agent agent) {
+        // set executed cmd step to running
+        ExecutedCmd executedCmd = stepService.get(job, node);
+
+        try {
+            if (!executedCmd.isRunning()) {
+                executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
+                stepService.update(job, executedCmd);
+            }
+
+            Cmd cmd = cmdManager.createShellCmd(job, node);
+            agentService.dispatch(cmd, agent);
+            logInfo(job, "send to agent: step={}, agent={}", node.getName(), agent.getName());
+        } catch (Throwable e) {
+            log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
+
+            // set current step to exception
+            executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
+            stepService.update(job, executedCmd);
+
+            // set current job failure
+            setJobStatusAndSave(job, Job.Status.FAILURE, e.getMessage());
+            agentService.tryRelease(agent);
+        }
     }
 
     private Node findNext(Job job, NodeTree tree, Node current, boolean isSuccess) {
@@ -449,12 +685,10 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
     }
 
     private VariableMap initJobContext(Flow flow, Job job, VariableMap... inputs) {
-        VariableMap context = new VariableMap(20);
-        context.putString(Variables.SERVER_URL, appProperties.getServerAddress());
-        context.putString(Variables.FLOW_NAME, flow.getName());
-        context.putString(Variables.JOB_TRIGGER, job.getTrigger().toString());
-        context.putString(Variables.JOB_BUILD_NUMBER, job.getBuildNumber().toString());
-        context.putString(Variables.JOB_STATUS, Job.Status.PENDING.name());
+        VariableMap context = new VariableMap(flow.getVariables());
+        context.put(Variables.Job.Trigger, job.getTrigger().toString());
+        context.put(Variables.Job.BuildNumber, job.getBuildNumber().toString());
+        context.put(Variables.Job.Status, Job.Status.PENDING.name());
 
         if (Objects.isNull(inputs)) {
             return context;
@@ -470,60 +704,42 @@ public class JobServiceImpl implements JobService, ApplicationListener<CreateNew
         return context;
     }
 
-    private void setupNodePathAndDispatch(Job job, Node next) {
-        job.setCurrentPath(next.getPathAsString());
-        jobDao.save(job);
-
-        dispatch(job);
-    }
-
     private NodePath currentNodePath(Job job) {
         return NodePath.create(job.getCurrentPath());
     }
 
-    /**
-     * Re-enqueue job after few seconds
-     */
-    private void retry(Job job) {
-        retryExecutor.execute(() -> {
-            ThreadHelper.sleep(jobProperties.getRetryWaitingSeconds() * 1000);
-            enqueue(job);
-        });
-    }
-
     private Job enqueue(Job job) {
         if (isExpired(job)) {
-            setJobStatus(job, Job.Status.TIMEOUT, null);
-            log.warn("Job '{}' is expired", job);
+            setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
+            log.debug("[Job: Timeout] {} has expired", job.getKey());
             return job;
         }
 
         try {
-            setJobStatus(job, Job.Status.QUEUED, null);
-            queueTemplate.convertAndSend(jobQueue.getName(), job);
+            RabbitQueueOperation manager = flowJobQueueManager.get(job.getQueueName());
+
+            setJobStatusAndSave(job, Job.Status.QUEUED, null);
+            byte[] body = objectMapper.writeValueAsBytes(job);
+
+            manager.send(body, job.getPriority());
+            logInfo(job, "enqueue");
+
             return job;
         } catch (Throwable e) {
             throw new StatusException("Unable to enqueue the job {0} since {1}", job.getId(), e.getMessage());
         }
     }
 
-    private Job setJobStatus(Job job, Job.Status newStatus, String message) {
+    private Job setJobStatusAndSave(Job job, Job.Status newStatus, String message) {
         job.setStatus(newStatus);
         job.setMessage(message);
-        job.getContext().putString(Variables.JOB_STATUS, newStatus.name());
+        job.getContext().put(Variables.Job.Status, newStatus.name());
         jobDao.save(job);
-        applicationEventPublisher.publishEvent(new JobStatusChangeEvent(this, job));
+        eventManager.publish(new JobStatusChangeEvent(this, job));
         return job;
     }
 
-    private Long getJobNumber(Flow flow) {
-        Optional<JobNumber> optional = jobNumberDao.findById(flow.getId());
-        if (optional.isPresent()) {
-            JobNumber number = optional.get();
-            number.setNumber(number.getNumber() + 1);
-            return jobNumberDao.save(number).getNumber();
-        }
-
-        return jobNumberDao.save(new JobNumber(flow.getId())).getNumber();
+    private void logInfo(Job job, String message, Object ...params) {
+        log.info("[Job] " + job.getKey() + " " + message, params);
     }
 }

@@ -16,23 +16,25 @@
 
 package com.flowci.core.agent;
 
-import com.flowci.core.agent.domain.CreateAgent;
+import com.flowci.core.agent.domain.AgentInit;
+import com.flowci.core.agent.domain.CreateOrUpdateAgent;
+import com.flowci.core.agent.domain.DeleteAgent;
 import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.job.service.LoggingService;
 import com.flowci.domain.Agent;
-import com.flowci.domain.AgentConnect;
 import com.flowci.domain.Settings;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
+
+import com.flowci.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @author yang
@@ -41,12 +43,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/agents")
 public class AgentController {
 
+    private static final String HeaderAgentToken = "AGENT-TOKEN";
+
     @Autowired
     private AgentService agentService;
 
-    @GetMapping("/{token}")
-    public Agent getByToken(@PathVariable String token) {
-        return agentService.getByToken(token);
+    @Autowired
+    private LoggingService loggingService;
+
+    @GetMapping("/{name}")
+    public Agent getByName(@PathVariable String name) {
+        return agentService.getByName(name);
     }
 
     @GetMapping
@@ -54,25 +61,46 @@ public class AgentController {
         return agentService.list();
     }
 
-    @PostMapping("/connect")
-    public Settings connect(@RequestBody AgentConnect connect, HttpServletRequest request) {
-        String agentIp = request.getRemoteHost();
-        Integer port = connect.getPort();
-        return agentService.connect(connect.getToken(), agentIp, port);
-    }
-
     @PostMapping()
-    public Agent create(@RequestBody CreateAgent body) {
+    public Agent createOrUpdate(@Validated @RequestBody CreateOrUpdateAgent body) {
+        if (body.hasToken()) {
+            return agentService.update(body.getToken(), body.getName(), body.getTags());
+        }
+
         return agentService.create(body.getName(), body.getTags());
     }
 
-    @DeleteMapping("/{token}")
-    public Agent delete(@PathVariable String token) {
-        return agentService.delete(token);
+    @DeleteMapping()
+    public Agent delete(@Validated @RequestBody DeleteAgent body) {
+        return agentService.delete(body.getToken());
     }
 
-    @PatchMapping("/{token}/tags")
-    public Agent setTags(@PathVariable String token, @RequestBody Set<String> tags) {
-        return agentService.setTags(token, tags);
+    // --------------------------------------------------------
+    //      Functions require agent token header
+    // --------------------------------------------------------
+
+    @PostMapping("/connect")
+    public Settings connect(@RequestHeader(HeaderAgentToken) String token,
+                            @RequestBody AgentInit init,
+                            HttpServletRequest request) {
+        init.setToken(token);
+        init.setIp(request.getRemoteHost());
+        return agentService.connect(init);
+    }
+
+    @PostMapping("/logs/upload")
+    public void upload(@RequestHeader(HeaderAgentToken) String token,
+                       @RequestPart("file") MultipartFile file) {
+
+        Agent agent = agentService.getByToken(token);
+        if (Objects.isNull(agent)) {
+            throw new NotFoundException("Agent not existed");
+        }
+
+        try(InputStream stream = file.getInputStream()) {
+            loggingService.save(file.getOriginalFilename(), stream);
+        } catch (IOException ignored) {
+
+        }
     }
 }

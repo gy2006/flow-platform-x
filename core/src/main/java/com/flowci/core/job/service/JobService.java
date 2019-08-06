@@ -20,6 +20,7 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
@@ -29,6 +30,11 @@ import org.springframework.data.domain.Page;
  * @author yang
  */
 public interface JobService {
+
+    /**
+     * Get job by id
+     */
+    Job get(String id);
 
     /**
      * Get job by flow and build number
@@ -46,9 +52,9 @@ public interface JobService {
     Job getLatest(Flow flow);
 
     /**
-     * List job for flow
+     * List job with fields only shown on the list
      */
-    Page<Job> list(Flow flow, int page, int size);
+    Page<JobItem> list(Flow flow, int page, int size);
 
     /**
      * Create job by flow and yml
@@ -66,22 +72,17 @@ public interface JobService {
     Job cancel(Job job);
 
     /**
+     * Delete all jobs of the flow within an executor
+     */
+    void delete(Flow flow);
+
+    /**
      * Job is expired compare to now
      */
     boolean isExpired(Job job);
 
     /**
-     * Convert node to cmd and dispatch to agent
+     * Handle the executed cmd form callback queue
      */
-    boolean dispatch(Job job);
-
-    /**
-     * Process job from queue
-     */
-    void processJob(Job job);
-
-    /**
-     * Process executed cmd callback from queue
-     */
-    void processCallback(ExecutedCmd execCmd);
+    void handleCallback(ExecutedCmd execCmd);
 }

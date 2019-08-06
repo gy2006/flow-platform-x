@@ -17,28 +17,35 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
+import com.flowci.core.auth.service.AuthService;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
+import com.flowci.core.common.rabbit.RabbitQueueOperation;
+import com.flowci.core.flow.dao.FlowDao;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.test.SpringScenario.Config;
 import com.flowci.core.test.flow.FlowMockHelper;
-import com.flowci.core.user.CurrentUserHelper;
-import com.flowci.core.user.User;
-import com.flowci.core.user.UserService;
+import com.flowci.core.user.domain.User;
+import com.flowci.core.user.service.UserService;
 import com.flowci.domain.Agent;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.junit.After;
 import org.junit.runner.RunWith;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yang
@@ -64,35 +71,42 @@ public abstract class SpringScenario {
     }
 
     @Autowired
-    protected CurrentUserHelper currentUserHelper;
+    protected AuthService authService;
+
+    @Autowired
+    protected UserService userService;
 
     @Autowired
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    private UserService userService;
+    private RabbitQueueOperation callbackQueueManager;
 
     @Autowired
-    private RabbitAdmin queueAdmin;
+    private RabbitQueueOperation loggingQueueManager;
 
     @Autowired
-    private Queue jobQueue;
+    private RabbitChannelOperation agentQueueManager;
 
     @Autowired
-    private Queue callbackQueue;
-
-    @Autowired
-    private Queue logsQueue;
+    private FlowJobQueueManager flowJobQueueManager;
 
     @Autowired
     private AgentDao agentDao;
 
     @Autowired
-    protected ApplicationEventMulticaster applicationEventMulticaster;
+    private FlowDao flowDao;
+
+    @Autowired
+    private ApplicationEventMulticaster applicationEventMulticaster;
+
+    private final List<ApplicationListener<?>> listenersForTest = new LinkedList<>();
 
     @After
     public void cleanListeners() {
-        applicationEventMulticaster.removeAllListeners();
+        for (ApplicationListener listener : listenersForTest) {
+            applicationEventMulticaster.removeApplicationListener(listener);
+        }
     }
 
     @After
@@ -102,14 +116,25 @@ public abstract class SpringScenario {
 
     @After
     public void queueCleanUp() {
-        queueAdmin.purgeQueue(jobQueue.getName(), true);
-        queueAdmin.purgeQueue(callbackQueue.getName(), true);
-        queueAdmin.purgeQueue(logsQueue.getName(), true);
+        callbackQueueManager.purge();
+        loggingQueueManager.purge();
 
-        List<Agent> all = agentDao.findAll();
-        for (Agent agent : all) {
-            queueAdmin.deleteQueue(agent.getQueueName());
+        for (Agent agent : agentDao.findAll()) {
+            agentQueueManager.delete(agent.getQueueName());
         }
+
+        for (Flow flow : flowDao.findAll()) {
+            flowJobQueueManager.remove(flow.getQueueName());
+        }
+    }
+
+    protected void addEventListener(ApplicationListener<?> listener) {
+        applicationEventMulticaster.addApplicationListener(listener);
+        listenersForTest.add(listener);
+    }
+
+    protected void multicastEvent(ApplicationEvent event) {
+        applicationEventMulticaster.multicastEvent(event);
     }
 
     protected InputStream load(String resource) {
@@ -119,8 +144,8 @@ public abstract class SpringScenario {
     protected void mockLogin() {
         User user = userService.getByEmail("test@flow.ci");
         if (Objects.isNull(user)) {
-            user = userService.create("test@flow.ci", "12345");
+            user = userService.create("test@flow.ci", "12345", User.Role.Admin);
         }
-        currentUserHelper.set(user);
+        authService.set(user);
     }
 }

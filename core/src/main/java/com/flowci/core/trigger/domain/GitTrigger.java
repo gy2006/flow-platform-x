@@ -58,29 +58,10 @@ public abstract class GitTrigger implements Serializable {
         TAG
     }
 
-    public static class Variables {
-
-        /**
-         * Git event source
-         */
-        public static final String GIT_SOURCE = "FLOWCI_GIT_SOURCE";
-
-        /**
-         * Git event type
-         */
-        public static final String GIT_EVENT = "FLOWCI_GIT_EVENT";
-
-        /**
-         * Should be email of the git user who start an event
-         */
-        public static final String GIT_AUTHOR = "FLOWCI_GIT_AUTHOR";
-
-    }
-
     public VariableMap toVariableMap() {
         VariableMap map = new VariableMap(15);
-        map.putString(Variables.GIT_SOURCE, source.name());
-        map.putString(Variables.GIT_EVENT, event.name());
+        map.put(Variables.GIT_SOURCE, source.name());
+        map.put(Variables.GIT_EVENT, event.name());
         return map;
     }
 }

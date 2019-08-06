@@ -49,14 +49,14 @@ public class GitPushTrigger extends GitTrigger {
     public VariableMap toVariableMap() {
         VariableMap map = super.toVariableMap();
 
-        map.putString(Variables.GIT_BRANCH, ref);
-        map.putString(Variables.GIT_COMPARE_URL, compareUrl);
-        map.putString(GitTrigger.Variables.GIT_AUTHOR, author.email);
+        map.put(Variables.GIT_BRANCH, ref);
+        map.put(Variables.GIT_COMPARE_URL, compareUrl);
+        map.put(Variables.GIT_AUTHOR, author.email);
 
-        map.putString(Variables.GIT_COMMIT_ID, commitId);
-        map.putString(Variables.GIT_COMMIT_MESSAGE, message);
-        map.putString(Variables.GIT_COMMIT_TIME, time);
-        map.putString(Variables.GIT_COMMIT_URL, commitUrl);
+        map.put(Variables.GIT_COMMIT_ID, commitId);
+        map.put(Variables.GIT_COMMIT_MESSAGE, message);
+        map.put(Variables.GIT_COMMIT_TIME, time);
+        map.put(Variables.GIT_COMMIT_URL, commitUrl);
         return map;
     }
 
@@ -68,20 +68,5 @@ public class GitPushTrigger extends GitTrigger {
         private String username;
 
         private String email;
-    }
-
-    public static class Variables {
-
-        public static final String GIT_BRANCH = "FLOWCI_GIT_BRANCH";
-
-        public static final String GIT_COMPARE_URL = "FLOWCI_GIT_COMPARE_URL";
-
-        public static final String GIT_COMMIT_ID = "FLOWCI_GIT_COMMIT_ID";
-
-        public static final String GIT_COMMIT_MESSAGE = "FLOWCI_GIT_COMMIT_MESSAGE";
-
-        public static final String GIT_COMMIT_TIME = "FLOWCI_GIT_COMMIT_TIME";
-
-        public static final String GIT_COMMIT_URL = "FLOWCI_GIT_COMMIT_URL";
     }
 }

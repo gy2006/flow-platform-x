@@ -28,7 +28,7 @@ public abstract class FileHelper {
 
     public static Path createDirectory(Path dir) throws IOException {
         try {
-            return Files.createDirectory(dir);
+            return Files.createDirectories(dir);
         } catch (FileAlreadyExistsException ignore) {
             return dir;
         }

@@ -16,27 +16,21 @@
 
 package com.flowci.core.credential.domain;
 
-import com.flowci.util.CipherHelper.StringKeyPair;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
  */
 @Getter
 @Setter
-@NoArgsConstructor
-@Document(collection = "rsa_keypair")
 public final class RSAKeyPair extends Credential {
 
     private String publicKey;
 
     private String privateKey;
 
-    public RSAKeyPair(StringKeyPair pair) {
-        this.publicKey = pair.getPublicKey();
-        this.privateKey = pair.getPrivateKey();
+    public RSAKeyPair() {
+        this.setCategory(Category.SSH_RSA);
     }
 }

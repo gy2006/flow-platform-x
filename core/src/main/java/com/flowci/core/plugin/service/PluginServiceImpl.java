@@ -16,9 +16,7 @@
 
 package com.flowci.core.plugin.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.config.ConfigProperties;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginParser;
 import com.flowci.core.plugin.domain.PluginRepo;
@@ -26,29 +24,31 @@ import com.flowci.core.plugin.event.RepoCloneEvent;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.CIException;
 import com.flowci.exception.NotFoundException;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author yang
@@ -57,17 +57,13 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class PluginServiceImpl implements PluginService {
 
-    private static final TypeReference<List<PluginRepo>> RepoListType =
-        new TypeReference<List<PluginRepo>>() {
-        };
+    private static final ParameterizedTypeReference<List<PluginRepo>> RepoListType =
+            new ParameterizedTypeReference<List<PluginRepo>>() {};
 
     private static final String PluginFileName = "plugin.yml";
 
     @Autowired
     private RestTemplate restTemplate;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Autowired
     private Path pluginDir;
@@ -107,9 +103,10 @@ public class PluginServiceImpl implements PluginService {
     @Override
     public List<PluginRepo> load(String repoUrl) {
         try {
-            String json = restTemplate.getForObject(repoUrl, String.class);
-            return objectMapper.readValue(json, RepoListType);
-        } catch (RestClientException | IOException e) {
+            RequestEntity<Object> request = new RequestEntity<>(HttpMethod.GET, URI.create(repoUrl));
+            ResponseEntity<List<PluginRepo>> response = restTemplate.exchange(request, RepoListType);
+            return response.getBody();
+        } catch (RestClientException e) {
             log.warn("Unable to load plugin repo '{}' : {}", repoUrl, e.getMessage());
             return Collections.emptyList();
         }

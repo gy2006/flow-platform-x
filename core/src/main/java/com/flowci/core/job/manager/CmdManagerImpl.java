@@ -77,14 +77,12 @@ public class CmdManagerImpl implements CmdManager {
             allowFailure = plugin.isAllowFailure();
         }
 
-        String failureScript = allowFailure ? "set +e" : "set -e";
-
         // create cmd based on plugin
         Cmd cmd = new Cmd(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
         cmd.setAllowFailure(allowFailure);
         cmd.setEnvFilters(Sets.newHashSet(node.getExports()));
-        cmd.setScripts(Lists.newArrayList(failureScript, script));
+        cmd.setScripts(Lists.newArrayList(script));
         cmd.setPlugin(node.getPlugin());
 
         return cmd;
@@ -109,7 +107,7 @@ public class CmdManagerImpl implements CmdManager {
 
     private void verifyPluginInput(VariableMap context, Plugin plugin) {
         for (Variable variable : plugin.getInputs()) {
-            String value = context.getString(variable.getName());
+            String value = context.get(variable.getName());
             if (Strings.isNullOrEmpty(value) && variable.isRequired()) {
                 throw new ArgumentException(
                     "The input {0} is required for plugin {1}", variable.getName(), plugin.getName());

@@ -60,6 +60,8 @@ public class Agent implements Serializable {
 
     private String host;
 
+    private Common.OS os;
+
     private Set<String> tags = Collections.emptySet();
 
     private Status status = Status.OFFLINE;
@@ -78,6 +80,11 @@ public class Agent implements Serializable {
     @JsonIgnore
     public boolean hasHost() {
         return !Strings.isNullOrEmpty(host);
+    }
+
+    @JsonIgnore
+    public boolean hasJob() {
+        return !Strings.isNullOrEmpty(jobId);
     }
 
     @JsonIgnore

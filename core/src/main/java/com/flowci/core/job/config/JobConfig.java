@@ -16,12 +16,16 @@
 
 package com.flowci.core.job.config;
 
-import com.flowci.core.helper.ThreadHelper;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import java.util.concurrent.TimeUnit;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
+import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.helper.CacheHelper;
+import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.domain.ExecutedCmd;
+import com.flowci.tree.NodeTree;
+import com.github.benmanes.caffeine.cache.Cache;
+import java.nio.file.Path;
+import java.util.List;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -29,32 +33,40 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 /**
  * @author yang
  */
+@Log4j2
 @Configuration
 public class JobConfig {
+    @Autowired
+    private ConfigProperties appProperties;
 
-    @Bean("retryExecutor")
-    public ThreadPoolTaskExecutor retryExecutor() {
-        return ThreadHelper.createTaskExecutor(1, 1, 100, "job-retry-");
+
+    @Bean("logDir")
+    public Path logDir() {
+        return appProperties.getLogDir();
     }
 
-    @Bean("jobCacheManager")
-    public CacheManager cacheManager() {
-        Caffeine<Object, Object> cache = Caffeine.newBuilder()
-            .maximumSize(100)
-            .expireAfterWrite(120, TimeUnit.SECONDS);
+    @Bean("jobDeleteExecutor")
+    public ThreadPoolTaskExecutor jobDeleteExecutor() {
+        return ThreadHelper.createTaskExecutor(1, 1, 10, "job-delete-");
+    }
 
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        cacheManager.setCaffeine(cache);
-        return cacheManager;
+    @Bean("jobLogExecutor")
+    public ThreadPoolTaskExecutor jobLogExecutor() {
+        return ThreadHelper.createTaskExecutor(1, 1, 1, "job-logging-");
+    }
+
+    @Bean("jobConsumerExecutor")
+    public ThreadPoolTaskExecutor jobConsumerExecutor() {
+        return ThreadHelper.createTaskExecutor(100, 100, 0, "job-consumer-");
     }
 
     @Bean("jobTreeCache")
-    public Cache jobTreeCache(CacheManager jobCacheManager) {
-        return jobCacheManager.getCache("JOB_TREE");
+    public Cache<String, NodeTree> jobTreeCache() {
+        return CacheHelper.createLocalCache(50, 60);
     }
 
     @Bean("jobStepCache")
-    public Cache jobStepCache(CacheManager jobCacheManager) {
-        return jobCacheManager.getCache("JOB_STEPS");
+    public Cache<String, List<ExecutedCmd>> jobStepCache() {
+        return CacheHelper.createLocalCache(100, 60);
     }
 }

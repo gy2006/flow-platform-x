@@ -16,60 +16,41 @@
 
 package com.flowci.core.job.service;
 
-import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.domain.JsonablePage;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.job.dao.ExecutedCmdDao;
-import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.StepStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
-import com.flowci.domain.Agent;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.NotFoundException;
-import com.flowci.exception.StatusException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodeTree;
-import java.net.URI;
+import com.github.benmanes.caffeine.cache.Cache;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 /**
+ * ExecutedCmd == Step
+ *
  * @author yang
  */
 @Log4j2
 @Service
 public class StepServiceImpl implements StepService {
 
-    private static final ParameterizedTypeReference<JsonablePage<String>> AgentLogsType =
-        new ParameterizedTypeReference<JsonablePage<String>>() {
-        };
-
     @Autowired
-    private Cache jobStepCache;
+    private Cache<String, List<ExecutedCmd>> jobStepCache;
 
     @Autowired
     private ExecutedCmdDao executedCmdDao;
-
-    @Autowired
-    private JobDao jobDao;
 
     @Autowired
     private YmlManager ymlManager;
@@ -78,13 +59,7 @@ public class StepServiceImpl implements StepService {
     private CmdManager cmdManager;
 
     @Autowired
-    private AgentService agentService;
-
-    @Autowired
-    private RestTemplate restTemplate;
-
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    private SpringEventManager eventManager;
 
     @Override
     public List<ExecutedCmd> init(Job job) {
@@ -93,7 +68,7 @@ public class StepServiceImpl implements StepService {
 
         for (Node node : tree.getOrdered()) {
             CmdId id = cmdManager.createId(job, node);
-            steps.add(new ExecutedCmd(id.toString(), node.isAllowFailure()));
+            steps.add(new ExecutedCmd(id.toString(), job.getFlowId(), node.isAllowFailure()));
         }
 
         return executedCmdDao.insert(steps);
@@ -102,18 +77,23 @@ public class StepServiceImpl implements StepService {
     @Override
     public ExecutedCmd get(Job job, Node node) {
         CmdId id = cmdManager.createId(job, node);
-        Optional<ExecutedCmd> optional = executedCmdDao.findById(id.toString());
+        return get(id.toString());
+    }
+
+    @Override
+    public ExecutedCmd get(String cmdId) {
+        Optional<ExecutedCmd> optional = executedCmdDao.findById(cmdId);
 
         if (optional.isPresent()) {
             return optional.get();
         }
 
-        throw new NotFoundException("Executed cmd for job {0} and node {1} not found", job.getId(), node.getName());
+        throw new NotFoundException("Executed cmd {0} not found", cmdId);
     }
 
     @Override
     public List<ExecutedCmd> list(Job job) {
-        return jobStepCache.get(job.getId(), () -> {
+        return jobStepCache.get(job.getId(), s -> {
             NodeTree tree = ymlManager.getTree(job);
             List<Node> nodes = tree.getOrdered();
 
@@ -130,46 +110,14 @@ public class StepServiceImpl implements StepService {
     }
 
     @Override
-    public Page<String> logs(Job job, String executedCmdId, Pageable pageable) {
-        CmdId cmdId = CmdId.parse(executedCmdId);
-
-        if (!getJob(cmdId.getJobId()).equals(job)) {
-            throw new StatusException("Job does not matched");
-        }
-
-        Agent agent = agentService.get(job.getAgentId());
-
-        if (!agent.hasHost()) {
-            throw new StatusException("Agent host not available");
-        }
-
-        URI agentUri = UriComponentsBuilder.fromHttpUrl(agent.getHost())
-            .pathSegment("cmd", executedCmdId, "logs")
-            .queryParam("page", pageable.getPageNumber())
-            .queryParam("size", pageable.getPageSize())
-            .build()
-            .toUri();
-
-        try {
-            RequestEntity<Object> request = new RequestEntity<>(HttpMethod.GET, agentUri);
-            ResponseEntity<JsonablePage<String>> entity = restTemplate.exchange(request, AgentLogsType);
-            return entity.getBody().toPage();
-        } catch (RestClientException e) {
-            throw new StatusException("Agent not available: {0}", e.getMessage());
-        }
+    public void update(Job job, ExecutedCmd cmd) {
+        executedCmdDao.save(cmd);
+        jobStepCache.invalidate(job.getId());
+        eventManager.publish(new StepStatusChangeEvent(this, job, cmd));
     }
 
     @Override
-    public void update(Job job, ExecutedCmd cmd) {
-        executedCmdDao.save(cmd);
-        applicationEventPublisher.publishEvent(new StepStatusChangeEvent(this, job, cmd));
-    }
-
-    private Job getJob(String id) {
-        Optional<Job> optional = jobDao.findById(id);
-        if (optional.isPresent()) {
-            return optional.get();
-        }
-        throw new NotFoundException("Job {0} is not existed");
+    public Long delete(String flowId) {
+        return executedCmdDao.deleteByFlowId(flowId);
     }
 }

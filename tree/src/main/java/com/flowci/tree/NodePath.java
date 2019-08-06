@@ -133,7 +133,11 @@ public final class NodePath implements Serializable {
     }
 
     /**
-     * Validate node name
+     * Validate node name with the criteria
+     * - not empty
+     * - cannot start with '/'
+     * - 1 <= length <= 100
+     * - cannot contains '*' '.' '/'
      */
     public static boolean validate(String name) {
         name = name.trim();

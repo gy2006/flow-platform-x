@@ -16,17 +16,17 @@
 
 package com.flowci.core.trigger.domain;
 
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_BASE_REPO_BRANCH;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_BASE_REPO_COMMIT;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_BASE_REPO_NAME;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_HEAD_REPO_BRANCH;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_HEAD_REPO_COMMIT;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_HEAD_REPO_NAME;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_MESSAGE;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_NUMBER;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_TIME;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_TITLE;
-import static com.flowci.core.trigger.domain.GitPrTrigger.Variables.PR_URL;
+import static com.flowci.core.trigger.domain.Variables.PR_BASE_REPO_BRANCH;
+import static com.flowci.core.trigger.domain.Variables.PR_BASE_REPO_COMMIT;
+import static com.flowci.core.trigger.domain.Variables.PR_BASE_REPO_NAME;
+import static com.flowci.core.trigger.domain.Variables.PR_HEAD_REPO_BRANCH;
+import static com.flowci.core.trigger.domain.Variables.PR_HEAD_REPO_COMMIT;
+import static com.flowci.core.trigger.domain.Variables.PR_HEAD_REPO_NAME;
+import static com.flowci.core.trigger.domain.Variables.PR_MESSAGE;
+import static com.flowci.core.trigger.domain.Variables.PR_NUMBER;
+import static com.flowci.core.trigger.domain.Variables.PR_TIME;
+import static com.flowci.core.trigger.domain.Variables.PR_TITLE;
+import static com.flowci.core.trigger.domain.Variables.PR_URL;
 
 import com.flowci.domain.VariableMap;
 import lombok.Getter;
@@ -64,47 +64,22 @@ public class GitPrTrigger extends GitTrigger {
     @Override
     public VariableMap toVariableMap() {
         VariableMap map = super.toVariableMap();
-        map.putString(GitTrigger.Variables.GIT_AUTHOR, sender.username);
+        map.put(Variables.GIT_AUTHOR, sender.username);
 
-        map.putString(PR_TITLE, title);
-        map.putString(PR_MESSAGE, body);
-        map.putString(PR_URL, url);
-        map.putString(PR_TIME, time);
-        map.putString(PR_NUMBER, number);
+        map.put(PR_TITLE, title);
+        map.put(PR_MESSAGE, body);
+        map.put(PR_URL, url);
+        map.put(PR_TIME, time);
+        map.put(PR_NUMBER, number);
 
-        map.putString(PR_HEAD_REPO_NAME, head.repoName);
-        map.putString(PR_HEAD_REPO_BRANCH, head.ref);
-        map.putString(PR_HEAD_REPO_COMMIT, head.commit);
+        map.put(PR_HEAD_REPO_NAME, head.repoName);
+        map.put(PR_HEAD_REPO_BRANCH, head.ref);
+        map.put(PR_HEAD_REPO_COMMIT, head.commit);
 
-        map.putString(PR_BASE_REPO_NAME, base.repoName);
-        map.putString(PR_BASE_REPO_BRANCH, base.ref);
-        map.putString(PR_BASE_REPO_COMMIT, base.commit);
+        map.put(PR_BASE_REPO_NAME, base.repoName);
+        map.put(PR_BASE_REPO_BRANCH, base.ref);
+        map.put(PR_BASE_REPO_COMMIT, base.commit);
         return map;
-    }
-
-    public static class Variables {
-
-        public static final String PR_TITLE = "FLOWCI_GIT_PR_TITLE";
-
-        public static final String PR_MESSAGE = "FLOWCI_GIT_PR_MESSAGE";
-
-        public static final String PR_URL = "FLOWCI_GIT_PR_URL";
-
-        public static final String PR_TIME = "FLOWCI_GIT_PR_TIME";
-
-        public static final String PR_NUMBER = "FLOWCI_GIT_PR_NUMBER";
-
-        public static final String PR_HEAD_REPO_NAME = "FLOWCI_GIT_PR_HEAD_REPO_NAME";
-
-        public static final String PR_HEAD_REPO_BRANCH = "FLOWCI_GIT_PR_HEAD_REPO_BRANCH";
-
-        public static final String PR_HEAD_REPO_COMMIT = "FLOWCI_GIT_PR_HEAD_REPO_COMMIT";
-
-        public static final String PR_BASE_REPO_NAME = "FLOWCI_GIT_PR_BASE_REPO_NAME";
-
-        public static final String PR_BASE_REPO_BRANCH = "FLOWCI_GIT_PR_BASE_REPO_BRANCH";
-
-        public static final String PR_BASE_REPO_COMMIT = "FLOWCI_GIT_PR_BASE_REPO_COMMIT";
     }
 
     @Getter
