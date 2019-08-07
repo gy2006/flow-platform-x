@@ -17,7 +17,7 @@
 
 package com.flowci.core.flow.domain;
 
-public abstract class FlowActions {
+public abstract class FlowAction {
 
     public static final String CREATE = "create_flow";
 
@@ -44,5 +44,21 @@ public abstract class FlowActions {
     public static final String LIST_BRANCH = "list_branch";
 
     public static final String SETUP_CREDENTIAL = "setup_credential";
+
+    public static final String[] ALL = {
+            CREATE,
+            CHECK_NAME,
+            CONFIRM,
+            DELETE,
+            LIST,
+            LIST_BY_CREDENTIAL,
+            GET,
+            ADD_VARS,
+            GET_YML,
+            SET_YML,
+            GIT_TEST,
+            LIST_BRANCH,
+            SETUP_CREDENTIAL
+    };
 
 }

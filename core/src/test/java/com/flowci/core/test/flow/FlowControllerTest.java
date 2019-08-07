@@ -47,12 +47,8 @@ public class FlowControllerTest extends SpringScenario {
     private final String flowName = "hello_world";
 
     @Before
-    public void login() {
-        mockLogin();
-    }
-
-    @Before
     public void createFlowWithYml() throws Exception {
+        mockLogin();
         String yml = StringHelper.toString(load("flow.yml"));
         flowMockHelper.create(flowName, yml);
     }
@@ -60,7 +56,7 @@ public class FlowControllerTest extends SpringScenario {
     @Test
     public void should_get_flow_and_yml_then_delete() throws Exception {
         ResponseMessage<Flow> getFlowResponse = mvcMockHelper
-            .expectSuccessAndReturnClass(get("/flows/" + flowName), FlowMockHelper.FlowType);
+                .expectSuccessAndReturnClass(get("/flows/" + flowName), FlowMockHelper.FlowType);
 
         Assert.assertEquals(StatusCode.OK, getFlowResponse.getCode());
         Assert.assertEquals(flowName, getFlowResponse.getData().getName());
@@ -71,14 +67,14 @@ public class FlowControllerTest extends SpringScenario {
         Assert.assertEquals(StringHelper.toString(load("flow.yml")), ymlResponse);
 
         ResponseMessage<Flow> deleted = mvcMockHelper
-            .expectSuccessAndReturnClass(delete("/flows/" + flowName), FlowMockHelper.FlowType);
+                .expectSuccessAndReturnClass(delete("/flows/" + flowName), FlowMockHelper.FlowType);
         Assert.assertEquals(StatusCode.OK, deleted.getCode());
     }
 
     @Test
     public void should_list_flows() throws Exception {
         ResponseMessage<List<Flow>> listFlowResponse = mvcMockHelper
-            .expectSuccessAndReturnClass(get("/flows"), FlowMockHelper.ListFlowType);
+                .expectSuccessAndReturnClass(get("/flows"), FlowMockHelper.ListFlowType);
 
         Assert.assertEquals(StatusCode.OK, listFlowResponse.getCode());
         Assert.assertEquals(1, listFlowResponse.getData().size());

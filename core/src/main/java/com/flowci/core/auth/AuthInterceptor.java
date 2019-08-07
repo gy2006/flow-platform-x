@@ -48,6 +48,12 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (!authService.isEnabled()) {
+
+            // do not update existing user
+            if (authService.hasLogin()) {
+                return true;
+            }
+
             return authService.setAsDefaultAdmin();
         }
 
@@ -76,7 +82,10 @@ public class AuthInterceptor implements HandlerInterceptor {
                            HttpServletResponse response,
                            Object handler,
                            ModelAndView modelAndView) throws Exception {
-        authService.reset();
+
+        if (authService.isEnabled()) {
+            authService.reset();
+        }
     }
 
     private String getToken(HttpServletRequest request) {

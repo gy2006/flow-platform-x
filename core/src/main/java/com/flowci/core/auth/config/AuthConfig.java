@@ -18,7 +18,8 @@ package com.flowci.core.auth.config;
 
 import com.flowci.core.auth.domain.PermissionMap;
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.flow.domain.FlowActions;
+import com.flowci.core.flow.domain.FlowAction;
+import com.flowci.core.job.domain.JobAction;
 import com.flowci.core.user.domain.User;
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import java.text.MessageFormat;
@@ -61,13 +62,14 @@ public class AuthConfig {
     public PermissionMap actionMap() {
         PermissionMap permissionMap = new PermissionMap();
 
+        // admin
+        permissionMap.add(User.Role.Admin, FlowAction.ALL);
+        permissionMap.add(User.Role.Admin, JobAction.ALL);
+
+        // developer
         permissionMap.add(User.Role.Developer,
-                FlowActions.GET,
-                FlowActions.LIST,
-                FlowActions.LIST_BRANCH,
-                FlowActions.GET,
-                FlowActions.GET_YML
-        );
+                FlowAction.GET, FlowAction.LIST, FlowAction.LIST_BRANCH, FlowAction.GET, FlowAction.GET_YML);
+        permissionMap.add(User.Role.Developer, JobAction.ALL);
 
         return permissionMap;
     }

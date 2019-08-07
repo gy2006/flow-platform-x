@@ -103,10 +103,6 @@ public class AuthServiceImpl implements AuthService {
 
         // admin has all permission
         User user = get();
-        if (user.isAdmin()) {
-            return true;
-        }
-
         return permissionMap.hasPermission(user.getRole(), action.value());
     }
 
