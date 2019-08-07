@@ -22,11 +22,13 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
  */
 
+@Document(collection = "user")
 @Getter
 @Setter
 @ToString(of = {"email"}, callSuper = true)
