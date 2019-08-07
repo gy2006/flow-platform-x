@@ -120,6 +120,7 @@ public class Job extends Mongoable {
     @Indexed(name = "index_job_key", unique = true)
     private String key;
 
+    @Indexed(name = "index_flow_id", sparse = true)
     private String flowId;
 
     private Long buildNumber;
