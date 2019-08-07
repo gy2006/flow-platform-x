@@ -18,6 +18,7 @@ package com.flowci.core.auth.config;
 
 import com.flowci.core.auth.domain.PermissionMap;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.credential.domain.CredentialAction;
 import com.flowci.core.flow.domain.FlowAction;
 import com.flowci.core.job.domain.JobAction;
 import com.flowci.core.user.domain.User;
@@ -65,11 +66,13 @@ public class AuthConfig {
         // admin
         permissionMap.add(User.Role.Admin, FlowAction.ALL);
         permissionMap.add(User.Role.Admin, JobAction.ALL);
+        permissionMap.add(User.Role.Admin, CredentialAction.ALL);
 
         // developer
         permissionMap.add(User.Role.Developer,
                 FlowAction.GET, FlowAction.LIST, FlowAction.LIST_BRANCH, FlowAction.GET, FlowAction.GET_YML);
         permissionMap.add(User.Role.Developer, JobAction.ALL);
+        permissionMap.add(User.Role.Developer, CredentialAction.LIST_NAME);
 
         return permissionMap;
     }
