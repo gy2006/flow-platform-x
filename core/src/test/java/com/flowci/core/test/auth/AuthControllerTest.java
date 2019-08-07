@@ -25,6 +25,7 @@ import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.AuthenticationException;
 import com.flowci.exception.ErrorCode;
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,6 +51,11 @@ public class AuthControllerTest extends SpringScenario {
         cacheManager.setCaffeineSpec(CaffeineSpec.parse("expireAfterWrite=2s"));
 
         user = userService.create("test@flow.ci", "12345", User.Role.Admin);
+    }
+
+    @After
+    public void reset() {
+        authHelper.disableAuth();
     }
 
     @Test(expected = AuthenticationException.class)

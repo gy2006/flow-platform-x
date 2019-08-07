@@ -22,6 +22,7 @@ import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ErrorCode;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,6 +41,11 @@ public class FlowAuthTest extends SpringScenario {
     @Before
     public void init() {
         authHelper.enableAuth();
+    }
+
+    @After
+    public void reset() {
+        authHelper.disableAuth();
     }
 
     @Test

@@ -44,6 +44,10 @@ public class AuthHelper {
         authProperties.setEnabled(true);
     }
 
+    public void disableAuth() {
+        authProperties.setEnabled(false);
+    }
+
     public ResponseMessage<String> login(String email, String passwordOnMd5) throws Exception {
         String authContent = email + ":" + passwordOnMd5;
         String base64Content = Base64.getEncoder().encodeToString(authContent.getBytes());
