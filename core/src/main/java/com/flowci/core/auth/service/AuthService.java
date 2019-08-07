@@ -17,6 +17,7 @@
 
 package com.flowci.core.auth.service;
 
+import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.user.domain.User;
 
 /**
@@ -53,6 +54,12 @@ public interface AuthService {
      * Refresh and return new token
      */
     String refresh(String token);
+
+    /**
+     * Check current user has access right to given action
+     * @param action can be null which means no permission control
+     */
+    boolean hasPermission(Action action);
 
     /**
      * Check is logged in

@@ -31,6 +31,6 @@ public class AccessException extends CIException {
 
     @Override
     public Integer getCode() {
-        return ErrorCode.ILLEGAL_ACCESS;
+        return ErrorCode.NO_PERMISSION;
     }
 }

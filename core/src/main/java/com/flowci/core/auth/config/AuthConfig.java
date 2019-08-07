@@ -16,7 +16,9 @@
 
 package com.flowci.core.auth.config;
 
+import com.flowci.core.auth.domain.PermissionMap;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.flow.domain.FlowActions;
 import com.flowci.core.user.domain.User;
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import java.text.MessageFormat;
@@ -53,5 +55,20 @@ public class AuthConfig {
         );
         cacheManager.setCaffeineSpec(CaffeineSpec.parse(spec));
         return cacheManager;
+    }
+
+    @Bean
+    public PermissionMap actionMap() {
+        PermissionMap permissionMap = new PermissionMap();
+
+        permissionMap.add(User.Role.Developer,
+                FlowActions.GET,
+                FlowActions.LIST,
+                FlowActions.LIST_BRANCH,
+                FlowActions.GET,
+                FlowActions.GET_YML
+        );
+
+        return permissionMap;
     }
 }

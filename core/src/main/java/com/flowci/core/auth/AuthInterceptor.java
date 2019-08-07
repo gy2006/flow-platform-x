@@ -17,16 +17,19 @@
 
 package com.flowci.core.auth;
 
+import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.auth.service.AuthService;
-import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.exception.AccessException;
 import com.flowci.exception.AuthenticationException;
 import com.google.common.base.Strings;
-import java.util.Objects;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Objects;
 
 /**
  * @author yang
@@ -56,6 +59,13 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         if (!authService.set(token)) {
             throw new AuthenticationException("Invalid token");
+        }
+
+        HandlerMethod handlerMethod = (HandlerMethod) handler;
+        Action action = handlerMethod.getMethodAnnotation(Action.class);
+
+        if (!authService.hasPermission(action)) {
+            throw new AccessException("No permission");
         }
 
         return true;

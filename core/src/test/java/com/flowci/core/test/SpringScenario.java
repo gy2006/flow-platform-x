@@ -24,6 +24,7 @@ import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.test.SpringScenario.Config;
+import com.flowci.core.test.auth.AuthHelper;
 import com.flowci.core.test.flow.FlowMockHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
@@ -67,6 +68,11 @@ public abstract class SpringScenario {
         @Bean("flowMockHelper")
         public FlowMockHelper flowMockHelper() {
             return new FlowMockHelper();
+        }
+
+        @Bean
+        public AuthHelper authHelper() {
+            return new AuthHelper();
         }
     }
 

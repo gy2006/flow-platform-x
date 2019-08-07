@@ -52,4 +52,8 @@ public class User extends Mongoable {
         this.email = email;
         this.passwordOnMd5 = passwordOnMd5;
     }
+
+    public boolean isAdmin() {
+        return role == Role.Admin;
+    }
 }

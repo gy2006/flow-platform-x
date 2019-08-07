@@ -16,9 +16,11 @@
 
 package com.flowci.core.flow;
 
+import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
+import com.flowci.core.flow.domain.FlowActions;
 import com.flowci.core.flow.domain.FlowGitTest;
 import com.flowci.core.flow.domain.GitSettings;
 import com.flowci.core.flow.service.FlowService;
@@ -50,26 +52,31 @@ public class FlowController {
     private FlowService flowService;
 
     @GetMapping
+    @Action(FlowActions.LIST)
     public List<Flow> list() {
         return flowService.list(Status.CONFIRMED);
     }
 
     @GetMapping(value = "/{name}")
+    @Action(FlowActions.GET)
     public Flow get(@PathVariable String name) {
         return flowService.get(name);
     }
 
     @GetMapping(value = "/{name}/exist")
+    @Action(FlowActions.CHECK_NAME)
     public Boolean exist(@PathVariable String name) {
         return flowService.exist(name);
     }
 
     @PostMapping(value = "/{name}")
+    @Action(FlowActions.CREATE)
     public Flow create(@PathVariable String name) {
         return flowService.create(name);
     }
 
     @PostMapping("/{name}/variables")
+    @Action(FlowActions.ADD_VARS)
     public void addVariables(@PathVariable String name, @RequestBody Map<String, String> variables) {
         Flow flow = flowService.get(name);
         flow.getVariables().putAll(variables);
@@ -77,6 +84,7 @@ public class FlowController {
     }
 
     @PostMapping(value = "/{name}/confirm")
+    @Action(FlowActions.CONFIRM)
     public Flow confirm(@PathVariable String name, @RequestBody(required = false) GitSettings gitSettings) {
         if (Objects.isNull(gitSettings)) {
             gitSettings = new GitSettings();
@@ -85,6 +93,7 @@ public class FlowController {
     }
 
     @PostMapping("/{name}/yml")
+    @Action(FlowActions.SET_YML)
     public void setupYml(@PathVariable String name, @RequestBody RequestMessage<String> body) {
         Flow flow = flowService.get(name);
         byte[] yml = Base64.getDecoder().decode(body.getData());
@@ -92,6 +101,7 @@ public class FlowController {
     }
 
     @GetMapping(value = "/{name}/yml", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Action(FlowActions.GET_YML)
     public String getYml(@PathVariable String name) {
         Flow flow = flowService.get(name);
         String yml = flowService.getYml(flow).getRaw();
@@ -99,6 +109,7 @@ public class FlowController {
     }
 
     @PostMapping(value = "/{name}/git/test")
+    @Action(FlowActions.GIT_TEST)
     public void gitTest(@PathVariable String name, @Validated @RequestBody FlowGitTest body) {
         if (body.hasPrivateKey()) {
             flowService.testGitConnection(name, body.getGitUrl(), body.getPrivateKey());
@@ -114,11 +125,13 @@ public class FlowController {
     }
 
     @GetMapping(value = "/{name}/git/branches")
+    @Action(FlowActions.LIST_BRANCH)
     public List<String> listGitBranches(@PathVariable String name) {
         return flowService.listGitBranch(name);
     }
 
     @DeleteMapping("/{name}")
+    @Action(FlowActions.DELETE)
     public Flow delete(@PathVariable String name) {
         return flowService.delete(name);
     }
@@ -127,11 +140,13 @@ public class FlowController {
      * Create credential for flow only
      */
     @PostMapping("/{name}/credentials/rsa")
+    @Action(FlowActions.SETUP_CREDENTIAL)
     public String setupRSACredential(@PathVariable String name, @RequestBody RSAKeyPair keyPair) {
         return flowService.setSshRsaCredential(name, keyPair);
     }
 
     @GetMapping("/credentials/{name}")
+    @Action(FlowActions.LIST_BY_CREDENTIAL)
     public List<Flow> listFlowByCredentials(@PathVariable String name) {
         return flowService.listByCredential(name);
     }

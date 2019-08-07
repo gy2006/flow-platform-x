@@ -19,7 +19,7 @@ package com.flowci.exception;
 /**
  * @author yang
  */
-public final class ErrorCode {
+public abstract class ErrorCode {
 
     public static final Integer ERROR = 400;
 
@@ -27,7 +27,7 @@ public final class ErrorCode {
 
     public static final Integer INVALID_ARGUMENT = 402;
 
-    public static final Integer PARSE_YML_OR_JSON = 403;
+    public static final Integer NO_PERMISSION = 403;
 
     public static final Integer NOT_FOUND = 404;
 
@@ -35,11 +35,8 @@ public final class ErrorCode {
 
     public static final Integer DUPLICATE = 406;
 
-    public static final Integer ILLEGAL_ACCESS = 420;
-
     public static final Integer ILLEGAL_STATUS = 421;
 
-    private ErrorCode() {
+    public static final Integer PARSE_YML_OR_JSON = 430;
 
-    }
 }

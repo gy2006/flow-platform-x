@@ -17,7 +17,9 @@
 
 package com.flowci.core.auth.service;
 
+import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.auth.config.AuthConfig;
+import com.flowci.core.auth.domain.PermissionMap;
 import com.flowci.core.auth.helper.JwtHelper;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.user.domain.User;
@@ -45,6 +47,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private CacheManager authCacheManager;
+
+    @Autowired
+    private PermissionMap permissionMap;
 
     @Override
     public Boolean isEnabled() {
@@ -87,6 +92,22 @@ public class AuthServiceImpl implements AuthService {
     public void logout() {
         User user = get();
         getOnlineCache().evict(user.getEmail());
+    }
+
+    @Override
+    public boolean hasPermission(Action action) {
+        // everyone has permission if no action defined
+        if (Objects.isNull(action)) {
+            return true;
+        }
+
+        // admin has all permission
+        User user = get();
+        if (user.isAdmin()) {
+            return true;
+        }
+
+        return permissionMap.hasPermission(user.getRole(), action.value());
     }
 
     @Override

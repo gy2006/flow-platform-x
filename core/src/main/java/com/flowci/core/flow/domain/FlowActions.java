@@ -1,0 +1,48 @@
+/*
+ *   Copyright (c) 2019 flow.ci
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ */
+
+package com.flowci.core.flow.domain;
+
+public abstract class FlowActions {
+
+    public static final String CREATE = "create_flow";
+
+    public static final String CHECK_NAME = "check_name";
+
+    public static final String CONFIRM = "confirm_flow";
+
+    public static final String DELETE = "delete_flow";
+
+    public static final String LIST = "list_flow";
+
+    public static final String LIST_BY_CREDENTIAL = "list_flow_by_credential";
+
+    public static final String GET = "get_flow";
+
+    public static final String ADD_VARS = "add_flow_vars";
+
+    public static final String GET_YML = "get_yml";
+
+    public static final String SET_YML = "set_yml";
+
+    public static final String GIT_TEST = "git_test";
+
+    public static final String LIST_BRANCH = "list_branch";
+
+    public static final String SETUP_CREDENTIAL = "setup_credential";
+
+}
