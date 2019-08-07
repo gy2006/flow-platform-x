@@ -103,6 +103,7 @@ public class AuthControllerTest extends SpringScenario {
         String token = message.getData();
 
         // when:
+        ThreadHelper.sleep(1000);
         ResponseMessage<String> refreshed = authHelper.refresh(token);
 
         // then:

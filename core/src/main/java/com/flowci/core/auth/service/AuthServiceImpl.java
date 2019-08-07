@@ -122,7 +122,9 @@ public class AuthServiceImpl implements AuthService {
 
         boolean verify = JwtHelper.verify(token, user);
         if (verify) {
-            return JwtHelper.create(user, authProperties.getExpireSeconds());
+            String refreshed = JwtHelper.create(user, authProperties.getExpireSeconds());
+            getOnlineCache().put(email, user);
+            return refreshed;
         }
 
         throw new AuthenticationException("Invalid token");
