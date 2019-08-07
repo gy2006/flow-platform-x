@@ -27,7 +27,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class CrosInterceptor implements HandlerInterceptor {
 
     private static final String AllowedHeaders =
-        "Origin, X-Requested-With, Content-Disposition, Content-Type, Accept, Token";
+        "Origin, X-Requested-With, Content-Disposition, Content-Type, Accept, Token, Authorization";
 
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         response.setHeader("Access-Control-Allow-Origin", "*");
