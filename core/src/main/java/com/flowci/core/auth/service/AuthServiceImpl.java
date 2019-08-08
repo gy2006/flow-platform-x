@@ -24,6 +24,7 @@ import com.flowci.core.auth.helper.JwtHelper;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
+import com.flowci.exception.ArgumentException;
 import com.flowci.exception.AuthenticationException;
 import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
@@ -75,11 +76,11 @@ public class AuthServiceImpl implements AuthService {
         User user = userService.getByEmail(email);
 
         if (Objects.isNull(user)) {
-            throw new AuthenticationException("Invalid email");
+            throw new ArgumentException("Invalid email");
         }
 
         if (!Objects.equals(user.getPasswordOnMd5(), passwordOnMd5)) {
-            throw new AuthenticationException("Invalid password");
+            throw new ArgumentException("Invalid password");
         }
 
         String token = JwtHelper.create(user, authProperties.getExpireSeconds());
