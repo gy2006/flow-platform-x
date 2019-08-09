@@ -20,12 +20,14 @@ package com.flowci.core.auth.service;
 import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.auth.config.AuthConfig;
 import com.flowci.core.auth.domain.PermissionMap;
+import com.flowci.core.auth.domain.Tokens;
 import com.flowci.core.auth.helper.JwtHelper;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.AuthenticationException;
+import com.flowci.util.HashingHelper;
 import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
     private UserService userService;
 
     @Autowired
-    private CacheManager authCacheManager;
+    private CacheManager cacheManager;
 
     @Autowired
     private PermissionMap permissionMap;
@@ -72,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String login(String email, String passwordOnMd5) {
+    public Tokens login(String email, String passwordOnMd5) {
         User user = userService.getByEmail(email);
 
         if (Objects.isNull(user)) {
@@ -83,16 +85,23 @@ public class AuthServiceImpl implements AuthService {
             throw new ArgumentException("Invalid password");
         }
 
+        // create token
         String token = JwtHelper.create(user, authProperties.getExpireSeconds());
         currentUser.set(user);
-        getOnlineCache().put(email, user);
-        return token;
+        onlineUsersCache().put(email, user);
+
+        // create refresh token
+        String refreshToken = HashingHelper.md5(email + passwordOnMd5);
+        refreshTokenCache().put(email, refreshToken);
+
+        return new Tokens(token, refreshToken);
     }
 
     @Override
     public void logout() {
         User user = get();
-        getOnlineCache().evict(user.getEmail());
+        onlineUsersCache().evict(user.getEmail());
+        refreshTokenCache().evict(user.getEmail());
     }
 
     @Override
@@ -113,19 +122,29 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String refresh(String token) {
+    public Tokens refresh(Tokens tokens) {
+        String token = tokens.getToken();
+        String refreshToken = tokens.getRefreshToken();
         String email = JwtHelper.decode(token);
 
-        User user = getOnlineCache().get(email, User.class);
-        if (Objects.isNull(user)) {
-            throw new AuthenticationException("Invalid token");
+        if (!Objects.equals(refreshTokenCache().get(email, String.class), refreshToken)) {
+            throw new AuthenticationException("Invalid refresh token");
         }
 
-        boolean verify = JwtHelper.verify(token, user);
+        // find user from online cache or database
+        User user = onlineUsersCache().get(email, User.class);
+        if (Objects.isNull(user)) {
+            user = userService.getByEmail(email);
+            if (Objects.isNull(user)) {
+                throw new AuthenticationException("Invalid token");
+            }
+        }
+
+        boolean verify = JwtHelper.verify(token, user, false);
         if (verify) {
-            String refreshed = JwtHelper.create(user, authProperties.getExpireSeconds());
-            getOnlineCache().put(email, user);
-            return refreshed;
+            String newToken = JwtHelper.create(user, authProperties.getExpireSeconds());
+            onlineUsersCache().put(email, user);
+            return new Tokens(newToken, refreshToken);
         }
 
         throw new AuthenticationException("Invalid token");
@@ -135,12 +154,12 @@ public class AuthServiceImpl implements AuthService {
     public boolean set(String token) {
         String email = JwtHelper.decode(token);
 
-        User user = getOnlineCache().get(email, User.class);
+        User user = onlineUsersCache().get(email, User.class);
         if (Objects.isNull(user)) {
             return false;
         }
 
-        boolean verify = JwtHelper.verify(token, user);
+        boolean verify = JwtHelper.verify(token, user, true);
         if (verify) {
             currentUser.set(user);
             return true;
@@ -167,7 +186,11 @@ public class AuthServiceImpl implements AuthService {
         currentUser.set(null);
     }
 
-    private Cache getOnlineCache() {
-        return authCacheManager.getCache(AuthConfig.CACHE_ONLINE);
+    private Cache onlineUsersCache() {
+        return cacheManager.getCache(AuthConfig.CACHE_ONLINE);
+    }
+
+    private Cache refreshTokenCache() {
+        return cacheManager.getCache(AuthConfig.CACHE_REFRESH_TOKEN);
     }
 }

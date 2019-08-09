@@ -17,6 +17,7 @@
 
 package com.flowci.core.test.auth;
 
+import com.flowci.core.auth.domain.Tokens;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
@@ -51,8 +52,8 @@ public class FlowAuthTest extends SpringScenario {
     @Test
     public void should_get_exception_if_user_not_admin() throws Exception {
         User user = userService.create("test@flow.ci", "12345", User.Role.Developer);
-        ResponseMessage<String> login = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
-        String token = login.getData();
+        ResponseMessage<Tokens> login = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
+        String token = login.getData().getToken();
 
 
         // when: create flow

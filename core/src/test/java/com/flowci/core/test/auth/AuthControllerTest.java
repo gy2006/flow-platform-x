@@ -17,6 +17,7 @@
 
 package com.flowci.core.test.auth;
 
+import com.flowci.core.auth.domain.Tokens;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.test.SpringScenario;
@@ -24,14 +25,11 @@ import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.AuthenticationException;
 import com.flowci.exception.ErrorCode;
-import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
 
 public class AuthControllerTest extends SpringScenario {
 
@@ -40,16 +38,9 @@ public class AuthControllerTest extends SpringScenario {
     @Autowired
     private AuthHelper authHelper;
 
-    @Autowired
-    private CacheManager authCacheManager;
-
     @Before
     public void createUser() {
         authHelper.enableAuth();
-
-        CaffeineCacheManager cacheManager = (CaffeineCacheManager) this.authCacheManager;
-        cacheManager.setCaffeineSpec(CaffeineSpec.parse("expireAfterWrite=2s"));
-
         user = userService.create("test@flow.ci", "12345", User.Role.Admin);
     }
 
@@ -61,8 +52,12 @@ public class AuthControllerTest extends SpringScenario {
     @Test(expected = AuthenticationException.class)
     public void should_login_and_logout_successfully() throws Exception {
         // init: log in
-        ResponseMessage<String> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
-        String token = message.getData();
+        ResponseMessage<Tokens> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
+        String token = message.getData().getToken();
+        Assert.assertNotNull(token);
+
+        String refreshToken = message.getData().getRefreshToken();
+        Assert.assertNotNull(refreshToken);
 
         Assert.assertEquals(user, authService.get());
         Assert.assertTrue(authService.set(token));
@@ -77,38 +72,55 @@ public class AuthControllerTest extends SpringScenario {
     }
 
     @Test
-    public void should_login_and_return_401_with_invalid_password() throws Exception {
-        ResponseMessage<String> message = authHelper.login(user.getEmail(), "wrong..");
+    public void should_login_and_return_402_with_invalid_password() throws Exception {
+        ResponseMessage<Tokens> message = authHelper.login(user.getEmail(), "wrong..");
 
-        Assert.assertEquals(ErrorCode.AUTH_FAILURE, message.getCode());
+        Assert.assertEquals(ErrorCode.INVALID_ARGUMENT, message.getCode());
         Assert.assertEquals("Invalid password", message.getMessage());
     }
 
     @Test
     public void should_login_and_token_expired() throws Exception {
         // init: log in
-        ResponseMessage<String> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
-        String token = message.getData();
+        ResponseMessage<Tokens> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
+        String token = message.getData().getToken();
 
-        // when: wait for expire
-        ThreadHelper.sleep(5000);
+        // when: wait for expire > 5s from properties file
+        ThreadHelper.sleep(8000);
 
         // then: token should be expired
         Assert.assertFalse(authService.set(token));
     }
 
     @Test
-    public void should_refresh_token() throws Exception {
-        ResponseMessage<String> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
-        String token = message.getData();
+    public void should_refresh_token_while_NOT_expired() throws Exception {
+        ResponseMessage<Tokens> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
 
         // when:
         ThreadHelper.sleep(1000);
-        ResponseMessage<String> refreshed = authHelper.refresh(token);
+        ResponseMessage<Tokens> refreshed = authHelper.refresh(message.getData());
 
         // then:
-        Assert.assertNotEquals(token, refreshed.getData());
-        Assert.assertTrue(authService.set(refreshed.getData()));
+        Assert.assertNotEquals(message.getData().getToken(), refreshed.getData().getToken());
+        Assert.assertEquals(message.getData().getRefreshToken(), refreshed.getData().getRefreshToken());
+
+        Assert.assertTrue(authService.set(refreshed.getData().getToken()));
+        Assert.assertEquals(user, authService.get());
+    }
+
+    @Test
+    public void should_refresh_token_while_expired() throws Exception {
+        ResponseMessage<Tokens> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
+
+        // when:
+        ThreadHelper.sleep(8000);
+        ResponseMessage<Tokens> refreshed = authHelper.refresh(message.getData());
+
+        // then:
+        Assert.assertNotEquals(message.getData().getToken(), refreshed.getData().getToken());
+        Assert.assertEquals(message.getData().getRefreshToken(), refreshed.getData().getRefreshToken());
+
+        Assert.assertTrue(authService.set(refreshed.getData().getToken()));
         Assert.assertEquals(user, authService.get());
     }
 }

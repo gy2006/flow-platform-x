@@ -23,11 +23,10 @@ import com.flowci.core.credential.domain.CredentialAction;
 import com.flowci.core.flow.domain.FlowAction;
 import com.flowci.core.job.domain.JobAction;
 import com.flowci.core.user.domain.User;
-import com.github.benmanes.caffeine.cache.CaffeineSpec;
-import java.text.MessageFormat;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
+import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -39,6 +38,8 @@ public class AuthConfig {
 
     public static final String CACHE_ONLINE = "online_users";
 
+    public static final String CACHE_REFRESH_TOKEN = "refresh_tokens";
+
     @Autowired
     private ConfigProperties.Auth authProperties;
 
@@ -48,16 +49,21 @@ public class AuthConfig {
     }
 
     @Bean
-    public CacheManager authCacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager(CACHE_ONLINE);
+    public CaffeineCache onlineUsersCache() {
+        return new CaffeineCache(CACHE_ONLINE,
+            Caffeine.newBuilder()
+                .maximumSize(authProperties.getMaxUsers())
+                .expireAfterWrite(authProperties.getExpireSeconds(), TimeUnit.SECONDS)
+                .build());
+    }
 
-        String spec = MessageFormat.format(
-            "maximumSize={0},expireAfterWrite={1}s",
-            authProperties.getMaxUsers(),
-            authProperties.getExpireSeconds()
-        );
-        cacheManager.setCaffeineSpec(CaffeineSpec.parse(spec));
-        return cacheManager;
+    @Bean
+    public CaffeineCache refreshTokenCache() {
+        return new CaffeineCache(CACHE_REFRESH_TOKEN,
+            Caffeine.newBuilder()
+                .maximumSize(authProperties.getMaxUsers())
+                .expireAfterWrite(authProperties.getRefreshExpiredSeconds(), TimeUnit.SECONDS)
+                .build());
     }
 
     @Bean

@@ -18,6 +18,7 @@
 package com.flowci.core.auth.service;
 
 import com.flowci.core.auth.annotation.Action;
+import com.flowci.core.auth.domain.Tokens;
 import com.flowci.core.user.domain.User;
 
 /**
@@ -43,7 +44,7 @@ public interface AuthService {
     /**
      * Login and return jwt token
      */
-    String login(String email, String passwordOnMd5);
+    Tokens login(String email, String passwordOnMd5);
 
     /**
      * Logout from current user
@@ -53,7 +54,7 @@ public interface AuthService {
     /**
      * Refresh and return new token
      */
-    String refresh(String token);
+    Tokens refresh(Tokens tokens);
 
     /**
      * Check current user has access right to given action

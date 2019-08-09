@@ -17,28 +17,34 @@
 
 package com.flowci.core.test.auth;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.auth.domain.Tokens;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.test.MvcMockHelper;
 import com.flowci.domain.http.ResponseMessage;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-
 import java.util.Base64;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import net.bytebuddy.asm.Advice.Unused;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 public class AuthHelper {
 
-    private final TypeReference<ResponseMessage<String>> loginType =
-            new TypeReference<ResponseMessage<String>>() {
-            };
+    private final TypeReference<ResponseMessage<Tokens>> tokensType =
+        new TypeReference<ResponseMessage<Tokens>>() {
+        };
 
     @Autowired
     private MvcMockHelper mvcMockHelper;
 
     @Autowired
     private ConfigProperties.Auth authProperties;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public void enableAuth() {
         authProperties.setEnabled(true);
@@ -48,25 +54,27 @@ public class AuthHelper {
         authProperties.setEnabled(false);
     }
 
-    public ResponseMessage<String> login(String email, String passwordOnMd5) throws Exception {
+    public ResponseMessage<Tokens> login(String email, String passwordOnMd5) throws Exception {
         String authContent = email + ":" + passwordOnMd5;
         String base64Content = Base64.getEncoder().encodeToString(authContent.getBytes());
         MockHttpServletRequestBuilder builder = post("/auth/login").header("Authorization", "Basic " + base64Content);
 
-        return mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
+        return mvcMockHelper.expectSuccessAndReturnClass(builder, tokensType);
     }
 
-    public ResponseMessage<String> refresh(String token) throws Exception {
+    public ResponseMessage<Tokens> refresh(Tokens tokens) throws Exception {
         return mvcMockHelper.expectSuccessAndReturnClass(
-                post("/auth/refresh").header("Token", token),
-                loginType
+            post("/auth/refresh")
+                .content(objectMapper.writeValueAsString(tokens))
+                .contentType(MediaType.APPLICATION_JSON),
+            tokensType
         );
     }
 
     public ResponseMessage logout(String token) throws Exception {
         return mvcMockHelper.expectSuccessAndReturnClass(
-                post("/auth/logout").header("Token", token),
-                ResponseMessage.class
+            post("/auth/logout").header("Token", token),
+            ResponseMessage.class
         );
     }
 }

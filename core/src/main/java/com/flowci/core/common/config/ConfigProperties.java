@@ -138,6 +138,10 @@ public class ConfigProperties {
 
         private Integer maxUsers;
 
+        // expired for token
         private Integer expireSeconds;
+
+        // expired for refresh token
+        private Integer refreshExpiredSeconds;
     }
 }
