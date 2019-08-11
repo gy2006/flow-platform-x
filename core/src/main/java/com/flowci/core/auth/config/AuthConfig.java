@@ -26,6 +26,7 @@ import com.flowci.core.user.domain.User;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
 import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,9 +37,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AuthConfig {
 
-    public static final String CACHE_ONLINE = "online_users";
+    private static final String CACHE_ONLINE = "online_users";
 
-    public static final String CACHE_REFRESH_TOKEN = "refresh_tokens";
+    private static final String CACHE_REFRESH_TOKEN = "refresh_tokens";
 
     @Autowired
     private ConfigProperties.Auth authProperties;
@@ -49,7 +50,7 @@ public class AuthConfig {
     }
 
     @Bean
-    public CaffeineCache onlineUsersCache() {
+    public Cache onlineUsersCache() {
         return new CaffeineCache(CACHE_ONLINE,
             Caffeine.newBuilder()
                 .maximumSize(authProperties.getMaxUsers())
@@ -58,7 +59,7 @@ public class AuthConfig {
     }
 
     @Bean
-    public CaffeineCache refreshTokenCache() {
+    public Cache refreshTokenCache() {
         return new CaffeineCache(CACHE_REFRESH_TOKEN,
             Caffeine.newBuilder()
                 .maximumSize(authProperties.getMaxUsers())

@@ -18,7 +18,6 @@
 package com.flowci.core.auth.service;
 
 import com.flowci.core.auth.annotation.Action;
-import com.flowci.core.auth.config.AuthConfig;
 import com.flowci.core.auth.domain.PermissionMap;
 import com.flowci.core.auth.domain.Tokens;
 import com.flowci.core.auth.helper.JwtHelper;
@@ -32,7 +31,6 @@ import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 @Log4j2
@@ -49,7 +47,10 @@ public class AuthServiceImpl implements AuthService {
     private UserService userService;
 
     @Autowired
-    private CacheManager cacheManager;
+    private Cache onlineUsersCache;
+
+    @Autowired
+    private Cache refreshTokenCache;
 
     @Autowired
     private PermissionMap permissionMap;
@@ -88,11 +89,11 @@ public class AuthServiceImpl implements AuthService {
         // create token
         String token = JwtHelper.create(user, authProperties.getExpireSeconds());
         currentUser.set(user);
-        onlineUsersCache().put(email, user);
+        onlineUsersCache.put(email, user);
 
         // create refresh token
         String refreshToken = HashingHelper.md5(email + passwordOnMd5);
-        refreshTokenCache().put(email, refreshToken);
+        refreshTokenCache.put(email, refreshToken);
 
         return new Tokens(token, refreshToken);
     }
@@ -100,8 +101,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout() {
         User user = get();
-        onlineUsersCache().evict(user.getEmail());
-        refreshTokenCache().evict(user.getEmail());
+        onlineUsersCache.evict(user.getEmail());
+        refreshTokenCache.evict(user.getEmail());
     }
 
     @Override
@@ -127,12 +128,12 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = tokens.getRefreshToken();
         String email = JwtHelper.decode(token);
 
-        if (!Objects.equals(refreshTokenCache().get(email, String.class), refreshToken)) {
+        if (!Objects.equals(refreshTokenCache.get(email, String.class), refreshToken)) {
             throw new AuthenticationException("Invalid refresh token");
         }
 
         // find user from online cache or database
-        User user = onlineUsersCache().get(email, User.class);
+        User user = onlineUsersCache.get(email, User.class);
         if (Objects.isNull(user)) {
             user = userService.getByEmail(email);
             if (Objects.isNull(user)) {
@@ -143,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
         boolean verify = JwtHelper.verify(token, user, false);
         if (verify) {
             String newToken = JwtHelper.create(user, authProperties.getExpireSeconds());
-            onlineUsersCache().put(email, user);
+            onlineUsersCache.put(email, user);
             return new Tokens(newToken, refreshToken);
         }
 
@@ -154,7 +155,7 @@ public class AuthServiceImpl implements AuthService {
     public boolean set(String token) {
         String email = JwtHelper.decode(token);
 
-        User user = onlineUsersCache().get(email, User.class);
+        User user = onlineUsersCache.get(email, User.class);
         if (Objects.isNull(user)) {
             return false;
         }
@@ -184,13 +185,5 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void reset() {
         currentUser.set(null);
-    }
-
-    private Cache onlineUsersCache() {
-        return cacheManager.getCache(AuthConfig.CACHE_ONLINE);
-    }
-
-    private Cache refreshTokenCache() {
-        return cacheManager.getCache(AuthConfig.CACHE_REFRESH_TOKEN);
     }
 }
