@@ -132,6 +132,7 @@ public class AppConfig {
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(new CrosInterceptor());
                 registry.addInterceptor(authHandler())
+                        .addPathPatterns("/users/**")
                         .addPathPatterns("/flows/**")
                         .addPathPatterns("/jobs/**")
                         .addPathPatterns("/agents/**")

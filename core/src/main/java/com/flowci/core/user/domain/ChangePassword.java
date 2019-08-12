@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,23 @@
  * limitations under the License.
  */
 
-package com.flowci.core.user.service;
+package com.flowci.core.user.domain;
 
-import com.flowci.core.user.domain.User;
+import javax.validation.constraints.NotEmpty;
+import lombok.Data;
 
 /**
  * @author yang
  */
-public interface UserService {
+@Data
+public class ChangePassword {
 
-    User defaultAdmin();
+    @NotEmpty
+    private String old;
 
-    /**
-     * Create user by email and password;
-     */
-    User create(String email, String password, User.Role role);
+    @NotEmpty
+    private String newOne;
 
-    /**
-     * Get user by email
-     */
-    User getByEmail(String email);
-
-    /**
-     * Change password for current user
-     */
-    void changePassword(String old, String newOne);
+    @NotEmpty
+    private String confirm;
 }
