@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flowci.core.auth.AuthInterceptor;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.domain.JsonablePage;
+import com.flowci.core.user.domain.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
@@ -118,6 +119,11 @@ public class AppConfig {
         RestTemplate restTemplate = new RestTemplate(factory);
         restTemplate.setMessageConverters(DefaultConverters);
         return restTemplate;
+    }
+
+    @Bean
+    public ThreadLocal<User> currentUser() {
+        return new ThreadLocal<>();
     }
 
     @Bean

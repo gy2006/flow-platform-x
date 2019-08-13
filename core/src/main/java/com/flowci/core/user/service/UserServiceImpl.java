@@ -16,20 +16,20 @@
 
 package com.flowci.core.user.service;
 
-import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.util.HashingHelper;
-import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.util.Objects;
 
 /**
  * @author yang
@@ -45,7 +45,7 @@ public class UserServiceImpl implements UserService {
     private UserDao userDao;
 
     @Autowired
-    private AuthService authService;
+    private SessionManager sessionManager;
 
     @PostConstruct
     public void initAdmin() {
@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void changePassword(String oldOnMd5, String newOnMd5) {
-        User user = authService.get();
+        User user = sessionManager.get();
 
         if (Objects.equals(user.getPasswordOnMd5(), oldOnMd5)) {
             user.setPasswordOnMd5(newOnMd5);

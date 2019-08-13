@@ -18,6 +18,7 @@
 package com.flowci.core.test.auth;
 
 import com.flowci.core.auth.domain.Tokens;
+import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.test.SpringScenario;
@@ -37,6 +38,9 @@ public class AuthControllerTest extends SpringScenario {
 
     @Autowired
     private AuthHelper authHelper;
+
+    @Autowired
+    private AuthService authService;
 
     @Before
     public void createUser() {
@@ -59,7 +63,7 @@ public class AuthControllerTest extends SpringScenario {
         String refreshToken = message.getData().getRefreshToken();
         Assert.assertNotNull(refreshToken);
 
-        Assert.assertEquals(user, authService.get());
+        Assert.assertEquals(user, sessionManager.get());
         Assert.assertTrue(authService.set(token));
 
         // when: request logout
@@ -68,7 +72,7 @@ public class AuthControllerTest extends SpringScenario {
 
         // then: should throw new AuthenticationException("Not logged in") exception
         Assert.assertFalse(authService.set(token));
-        authService.get();
+        sessionManager.get();
     }
 
     @Test
@@ -105,7 +109,7 @@ public class AuthControllerTest extends SpringScenario {
         Assert.assertEquals(message.getData().getRefreshToken(), refreshed.getData().getRefreshToken());
 
         Assert.assertTrue(authService.set(refreshed.getData().getToken()));
-        Assert.assertEquals(user, authService.get());
+        Assert.assertEquals(user, sessionManager.get());
     }
 
     @Test
@@ -121,6 +125,6 @@ public class AuthControllerTest extends SpringScenario {
         Assert.assertEquals(message.getData().getRefreshToken(), refreshed.getData().getRefreshToken());
 
         Assert.assertTrue(authService.set(refreshed.getData().getToken()));
-        Assert.assertEquals(user, authService.get());
+        Assert.assertEquals(user, sessionManager.get());
     }
 }

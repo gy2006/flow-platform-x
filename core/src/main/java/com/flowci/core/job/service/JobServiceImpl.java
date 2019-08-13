@@ -23,6 +23,7 @@ import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitOperation;
@@ -92,9 +93,6 @@ public class JobServiceImpl implements JobService {
     private ConfigProperties.Job jobProperties;
 
     @Autowired
-    private AuthService authService;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -114,6 +112,9 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private YmlManager ymlManager;
+
+    @Autowired
+    private SessionManager sessionManager;
 
     @Autowired
     private SpringEventManager eventManager;
@@ -205,8 +206,8 @@ public class JobServiceImpl implements JobService {
         job.getContext().merge(defaultContext);
 
         // setup created by form login user or git event author
-        if (authService.hasLogin()) {
-            job.setCreatedBy(authService.get().getId());
+        if (sessionManager.exist()) {
+            job.setCreatedBy(sessionManager.getUserId());
         } else {
             String createdBy = job.getContext().get(GIT_AUTHOR, "Unknown");
             job.setCreatedBy(createdBy);

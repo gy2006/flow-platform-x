@@ -45,11 +45,6 @@ public class AuthConfig {
     private ConfigProperties.Auth authProperties;
 
     @Bean
-    public ThreadLocal<User> currentUser() {
-        return new ThreadLocal<>();
-    }
-
-    @Bean
     public Cache onlineUsersCache() {
         return new CaffeineCache(CACHE_ONLINE,
             Caffeine.newBuilder()

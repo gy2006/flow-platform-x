@@ -18,6 +18,7 @@ package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.auth.service.AuthService;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.core.flow.dao.FlowDao;
@@ -77,7 +78,7 @@ public abstract class SpringScenario {
     }
 
     @Autowired
-    protected AuthService authService;
+    protected SessionManager sessionManager;
 
     @Autowired
     protected UserService userService;
@@ -152,6 +153,6 @@ public abstract class SpringScenario {
         if (Objects.isNull(user)) {
             user = userService.create("test@flow.ci", "12345", User.Role.Admin);
         }
-        authService.set(user);
+        sessionManager.set(user);
     }
 }

@@ -17,6 +17,7 @@
 package com.flowci.core.credential.service;
 
 import com.flowci.core.auth.service.AuthService;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
@@ -49,21 +50,21 @@ public class CredentialServiceImpl implements CredentialService {
     private CredentialDao credentialDao;
 
     @Autowired
-    private AuthService authService;
+    private SessionManager sessionManager;
 
     @Override
     public List<Credential> list() {
-        return credentialDao.findAllByCreatedByOrderByCreatedAt(authService.getUserId());
+        return credentialDao.findAllByCreatedByOrderByCreatedAt(sessionManager.getUserId());
     }
 
     @Override
     public List<Credential> listName() {
-        return credentialDao.listNameOnly(authService.getUserId());
+        return credentialDao.listNameOnly(sessionManager.getUserId());
     }
 
     @Override
     public Credential get(String name) {
-        Credential c = credentialDao.findByNameAndCreatedBy(name, authService.getUserId());
+        Credential c = credentialDao.findByNameAndCreatedBy(name, sessionManager.getUserId());
 
         if (Objects.isNull(c)) {
             throw new NotFoundException("Credential {0} is not found", name);
@@ -90,7 +91,7 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public RSAKeyPair createRSA(String name) {
-        String email = authService.get().getEmail();
+        String email = sessionManager.get().getEmail();
         RSAKeyPair rsaKeyPair = genRSA(email);
         rsaKeyPair.setName(name);
         return save(rsaKeyPair);
@@ -110,7 +111,7 @@ public class CredentialServiceImpl implements CredentialService {
             Date now = Date.from(Instant.now());
             keyPair.setUpdatedAt(now);
             keyPair.setCreatedAt(now);
-            keyPair.setCreatedBy(authService.getUserId());
+            keyPair.setCreatedBy(sessionManager.getUserId());
             return credentialDao.insert(keyPair);
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Credential name {0} is already defined", keyPair.getName());

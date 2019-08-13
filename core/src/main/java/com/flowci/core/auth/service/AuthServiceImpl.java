@@ -22,6 +22,7 @@ import com.flowci.core.auth.domain.PermissionMap;
 import com.flowci.core.auth.domain.Tokens;
 import com.flowci.core.auth.helper.JwtHelper;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.exception.ArgumentException;
@@ -38,13 +39,13 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
     @Autowired
-    private ThreadLocal<User> currentUser;
-
-    @Autowired
     private ConfigProperties.Auth authProperties;
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private SessionManager sessionManager;
 
     @Autowired
     private Cache onlineUsersCache;
@@ -61,20 +62,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public User get() {
-        User user = currentUser.get();
-        if (!hasLogin()) {
-            throw new AuthenticationException("Not logged in");
-        }
-        return user;
-    }
-
-    @Override
-    public String getUserId() {
-        return get().getId();
-    }
-
-    @Override
     public Tokens login(String email, String passwordOnMd5) {
         User user = userService.getByEmail(email);
 
@@ -88,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
 
         // create token
         String token = JwtHelper.create(user, authProperties.getExpireSeconds());
-        currentUser.set(user);
+        sessionManager.set(user);
         onlineUsersCache.put(email, user);
 
         // create refresh token
@@ -100,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout() {
-        User user = get();
+        User user = sessionManager.remove();
         onlineUsersCache.evict(user.getEmail());
         refreshTokenCache.evict(user.getEmail());
     }
@@ -113,13 +100,8 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // admin has all permission
-        User user = get();
+        User user = sessionManager.get();
         return permissionMap.hasPermission(user.getRole(), action.value());
-    }
-
-    @Override
-    public boolean hasLogin() {
-        return currentUser.get() != null;
     }
 
     @Override
@@ -162,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
 
         boolean verify = JwtHelper.verify(token, user, true);
         if (verify) {
-            currentUser.set(user);
+            sessionManager.set(user);
             return true;
         }
 
@@ -170,20 +152,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public boolean set(User user) {
-        currentUser.set(user);
-        return true;
-    }
-
-    @Override
     public boolean setAsDefaultAdmin() {
         User defaultAdmin = userService.defaultAdmin();
-        currentUser.set(defaultAdmin);
+        sessionManager.set(defaultAdmin);
         return true;
-    }
-
-    @Override
-    public void reset() {
-        currentUser.set(null);
     }
 }

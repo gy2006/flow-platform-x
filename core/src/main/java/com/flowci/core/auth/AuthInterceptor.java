@@ -19,6 +19,7 @@ package com.flowci.core.auth;
 
 import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.auth.service.AuthService;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.exception.AccessException;
 import com.flowci.exception.AuthenticationException;
 import com.google.common.base.Strings;
@@ -45,12 +46,15 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private SessionManager sessionManager;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (!authService.isEnabled()) {
 
             // do not update existing user
-            if (authService.hasLogin()) {
+            if (sessionManager.exist()) {
                 return true;
             }
 
@@ -84,7 +88,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                            ModelAndView modelAndView) throws Exception {
 
         if (authService.isEnabled()) {
-            authService.reset();
+            sessionManager.remove();
         }
     }
 
