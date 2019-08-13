@@ -17,7 +17,6 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
-import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
@@ -62,8 +61,8 @@ public abstract class SpringScenario {
     public static class Config {
 
         @Bean("mvcMockHelper")
-        public MvcMockHelper mvcMockHelper() {
-            return new MvcMockHelper();
+        public MockMvcHelper mvcMockHelper() {
+            return new MockMvcHelper();
         }
 
         @Bean("flowMockHelper")

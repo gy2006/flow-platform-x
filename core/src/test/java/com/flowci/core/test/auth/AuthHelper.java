@@ -23,10 +23,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.auth.domain.Tokens;
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.test.MvcMockHelper;
+import com.flowci.core.test.MockMvcHelper;
 import com.flowci.domain.http.ResponseMessage;
 import java.util.Base64;
-import net.bytebuddy.asm.Advice.Unused;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -38,7 +38,7 @@ public class AuthHelper {
         };
 
     @Autowired
-    private MvcMockHelper mvcMockHelper;
+    private MockMvcHelper mockMvcHelper;
 
     @Autowired
     private ConfigProperties.Auth authProperties;
@@ -59,11 +59,11 @@ public class AuthHelper {
         String base64Content = Base64.getEncoder().encodeToString(authContent.getBytes());
         MockHttpServletRequestBuilder builder = post("/auth/login").header("Authorization", "Basic " + base64Content);
 
-        return mvcMockHelper.expectSuccessAndReturnClass(builder, tokensType);
+        return mockMvcHelper.expectSuccessAndReturnClass(builder, tokensType);
     }
 
     public ResponseMessage<Tokens> refresh(Tokens tokens) throws Exception {
-        return mvcMockHelper.expectSuccessAndReturnClass(
+        return mockMvcHelper.expectSuccessAndReturnClass(
             post("/auth/refresh")
                 .content(objectMapper.writeValueAsString(tokens))
                 .contentType(MediaType.APPLICATION_JSON),
@@ -72,7 +72,7 @@ public class AuthHelper {
     }
 
     public ResponseMessage logout(String token) throws Exception {
-        return mvcMockHelper.expectSuccessAndReturnClass(
+        return mockMvcHelper.expectSuccessAndReturnClass(
             post("/auth/logout").header("Token", token),
             ResponseMessage.class
         );

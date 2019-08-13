@@ -17,19 +17,58 @@
 
 package com.flowci.core.test.user;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.common.domain.StatusCode;
+import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.core.user.domain.ChangePassword;
+import com.flowci.core.user.domain.User;
+import com.flowci.domain.http.ResponseMessage;
+import com.flowci.exception.AuthenticationException;
+import com.flowci.util.HashingHelper;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 public class UserControllerTest extends SpringScenario {
+
+    @Autowired
+    private MockMvcHelper mockMvcHelper;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Before
     public void loginBefore() {
         mockLogin();
     }
 
-    @Test
-    public void should_change_password_for_current_user_successfully() {
+    @Test(expected = AuthenticationException.class)
+    public void should_change_password_for_current_user_successfully() throws Exception {
+        User user = sessionManager.get();
 
+        String newPwOnMd5 = HashingHelper.md5("11111");
+        ChangePassword body = new ChangePassword();
+        body.setOld(user.getPasswordOnMd5());
+        body.setNewOne(newPwOnMd5);
+        body.setConfirm(newPwOnMd5);
+
+        // when:
+        ResponseMessage message = mockMvcHelper.expectSuccessAndReturnClass(
+                post("/users/change/password")
+                        .content(objectMapper.writeValueAsBytes(body))
+                        .contentType(MediaType.APPLICATION_JSON), ResponseMessage.class);
+
+        Assert.assertEquals(StatusCode.OK, message.getCode());
+
+        // then:
+        Assert.assertEquals(newPwOnMd5, userService.getByEmail(user.getEmail()).getPasswordOnMd5());
+
+        // then: throw AuthenticationException
+        sessionManager.get();
     }
 }

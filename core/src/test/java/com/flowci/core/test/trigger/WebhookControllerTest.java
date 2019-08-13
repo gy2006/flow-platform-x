@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobCreatedEvent;
-import com.flowci.core.test.MvcMockHelper;
+import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.test.flow.FlowMockHelper;
 import com.flowci.domain.ObjectWrapper;
@@ -43,7 +43,7 @@ public class WebhookControllerTest extends SpringScenario {
     private FlowMockHelper flowMockHelper;
 
     @Autowired
-    private MvcMockHelper mvcMockHelper;
+    private MockMvcHelper mockMvcHelper;
 
     @Before
     public void login() {
@@ -63,7 +63,7 @@ public class WebhookControllerTest extends SpringScenario {
             waitForJobCreated.countDown();
         });
 
-        mvcMockHelper.expectSuccessAndReturnString(
+        mockMvcHelper.expectSuccessAndReturnString(
             post("/webhooks/github-test")
                 .header("X-GitHub-Event", "push")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -86,7 +86,7 @@ public class WebhookControllerTest extends SpringScenario {
             waitForJobCreated.countDown();
         });
 
-        mvcMockHelper.expectSuccessAndReturnString(
+        mockMvcHelper.expectSuccessAndReturnString(
             post("/webhooks/github-test")
                 .header("X-GitHub-Event", "push")
                 .contentType(MediaType.APPLICATION_JSON)

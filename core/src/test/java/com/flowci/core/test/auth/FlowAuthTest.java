@@ -18,7 +18,7 @@
 package com.flowci.core.test.auth;
 
 import com.flowci.core.auth.domain.Tokens;
-import com.flowci.core.test.MvcMockHelper;
+import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.ResponseMessage;
@@ -37,7 +37,7 @@ public class FlowAuthTest extends SpringScenario {
     private AuthHelper authHelper;
 
     @Autowired
-    private MvcMockHelper mvcMockHelper;
+    private MockMvcHelper mockMvcHelper;
 
     @Before
     public void init() {
@@ -57,7 +57,7 @@ public class FlowAuthTest extends SpringScenario {
 
 
         // when: create flow
-        ResponseMessage response = mvcMockHelper.expectSuccessAndReturnClass(
+        ResponseMessage response = mockMvcHelper.expectSuccessAndReturnClass(
                 post("/flows/test").header("Token", token), ResponseMessage.class);
 
         // then: should return 403 with no permission message

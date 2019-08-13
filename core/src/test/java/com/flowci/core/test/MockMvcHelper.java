@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
 /**
  * @author yang
  */
-public class MvcMockHelper {
+public class MockMvcHelper {
 
     @Autowired
     protected MockMvc mockMvc;

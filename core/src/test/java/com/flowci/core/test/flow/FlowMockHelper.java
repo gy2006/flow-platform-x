@@ -22,7 +22,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.test.MvcMockHelper;
+import com.flowci.core.test.MockMvcHelper;
 import com.flowci.domain.http.RequestMessage;
 import com.flowci.domain.http.ResponseMessage;
 
@@ -50,26 +50,26 @@ public class FlowMockHelper {
             };
 
     @Autowired
-    private MvcMockHelper mvcMockHelper;
+    private MockMvcHelper mockMvcHelper;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     public Flow create(String name, String yml) throws Exception {
         // create
-        ResponseMessage<Flow> response = mvcMockHelper
+        ResponseMessage<Flow> response = mockMvcHelper
             .expectSuccessAndReturnClass(post("/flows/" + name), FlowType);
 
         Assert.assertEquals(StatusCode.OK, response.getCode());
 
         // confirm
-        response = mvcMockHelper.expectSuccessAndReturnClass(post("/flows/" + name + "/confirm"), FlowType);
+        response = mockMvcHelper.expectSuccessAndReturnClass(post("/flows/" + name + "/confirm"), FlowType);
 
         // save yml
         String base64Encoded = Base64.getEncoder().encodeToString(yml.getBytes());
         RequestMessage<String> message = new RequestMessage<>(base64Encoded);
 
-        mvcMockHelper.expectSuccessAndReturnString(
+        mockMvcHelper.expectSuccessAndReturnString(
                 post("/flows/" + name + "/yml")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(message))
