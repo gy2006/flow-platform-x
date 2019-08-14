@@ -80,7 +80,7 @@ public class AuthConfig {
         permissionMap.add(User.Role.Developer, JobAction.ALL);
         permissionMap.add(User.Role.Developer, CredentialAction.LIST_NAME);
         permissionMap.add(User.Role.Developer, AgentAction.GET, AgentAction.LIST);
-        permissionMap.add(User.Role.Developer, UserAction.CHANGE_PASSWORD);
+        permissionMap.add(User.Role.Developer, UserAction.CHANGE_PASSWORD, UserAction.UPDATE_AVATAR);
 
         return permissionMap;
     }
