@@ -28,6 +28,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -49,21 +50,33 @@ public class FlowUserListDaoImpl implements FlowUserListDao {
 
     @Override
     public List<String> findAllFlowsByUserId(String userId) {
-        return null;
+        Query q = Query.query(Criteria.where("users")
+                .elemMatch(Criteria.where("userId").is(userId)));
+
+        q.fields().exclude("users");
+
+        List<FlowUserList> lists = mongoOps.find(q, FlowUserList.class);
+        List<String> ids = new LinkedList<>();
+
+        for (FlowUserList item : lists) {
+            ids.add(item.getFlowId());
+        }
+
+        return ids;
     }
 
     @Override
     public List<FlowUser> findAllUsers(String flowId) {
         Query q = Query.query(Criteria.where("_id").is(flowId));
-        FlowUserList list = mongoOps.findOne(q, FlowUserList.class);
-        if (Objects.isNull(list)) {
+        FlowUserList flowUsers = mongoOps.findOne(q, FlowUserList.class);
+        if (Objects.isNull(flowUsers)) {
             return Collections.emptyList();
         }
-        return list.getUsers();
+        return flowUsers.getUsers();
     }
 
     @Override
-    public boolean insert(String flowId, FlowUser ...users) {
+    public boolean insert(String flowId, FlowUser... users) {
         Query q = Query.query(Criteria.where("_id").is(flowId));
         Update u = new Update().addToSet("users").each(users);
 

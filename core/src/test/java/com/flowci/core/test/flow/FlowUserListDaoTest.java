@@ -31,23 +31,16 @@ import java.util.List;
 
 public class FlowUserListDaoTest extends SpringScenario {
 
-    private final Flow flow = new Flow();
-
     @Autowired
     private FlowDao flowDao;
 
     @Autowired
     private FlowUserListDao flowUserListDao;
 
-    @Before
-    public void init() {
-        flow.setName("test-flow");
-        flowDao.insert(flow);
-        flowUserListDao.create(flow.getId());
-    }
-
     @Test
     public void should_insert_unique_user_id() {
+        Flow flow = createFlow("test-flow");
+
         FlowUser user1 = new FlowUser("1");
         FlowUser user2 = new FlowUser("2");
         FlowUser userDuplicate = new FlowUser("2");
@@ -61,6 +54,8 @@ public class FlowUserListDaoTest extends SpringScenario {
 
     @Test
     public void should_remove_users() {
+        Flow flow = createFlow("test-flow");
+
         FlowUser user1 = new FlowUser("1");
         FlowUser user2 = new FlowUser("2");
         flowUserListDao.insert(flow.getId(), user1, user2);
@@ -76,5 +71,35 @@ public class FlowUserListDaoTest extends SpringScenario {
         // then: check existing
         Assert.assertFalse(flowUserListDao.exist(flow.getId(), user1.getUserId()));
         Assert.assertTrue(flowUserListDao.exist(flow.getId(), user2.getUserId()));
+    }
+
+    @Test
+    public void should_list_flow_ids_by_user() {
+        Flow flow1 = createFlow("test-flow-1");
+        Flow flow2 = createFlow("test-flow-2");
+        Flow flow3 = createFlow("test-flow-3");
+
+        FlowUser user1 = new FlowUser("1");
+        FlowUser user2 = new FlowUser("2");
+
+        // when: set user1 for flow 1,2,3, user2 for flow 1
+        flowUserListDao.insert(flow1.getId(), user1, user2);
+        flowUserListDao.insert(flow2.getId(), user1);
+        flowUserListDao.insert(flow3.getId(), user1);
+
+        // then:
+        List<String> flowsForUser1 = flowUserListDao.findAllFlowsByUserId(user1.getUserId());
+        Assert.assertEquals(3, flowsForUser1.size());
+
+        List<String> flowsForUser2 = flowUserListDao.findAllFlowsByUserId(user2.getUserId());
+        Assert.assertEquals(1, flowsForUser2.size());
+    }
+
+    private Flow createFlow(String name) {
+        Flow flow = new Flow();
+        flow.setName(name);
+        flowDao.insert(flow);
+        flowUserListDao.create(flow.getId());
+        return flow;
     }
 }

@@ -30,7 +30,7 @@ import java.util.Date;
 @EqualsAndHashCode(of = {"userId"})
 public class FlowUser {
 
-    @Indexed(unique = true, name = "user_id")
+    @Indexed(name = "user_id", sparse = true)
     private String userId;
 
     private Date createdAt;
