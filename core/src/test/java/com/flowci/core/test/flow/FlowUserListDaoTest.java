@@ -58,4 +58,23 @@ public class FlowUserListDaoTest extends SpringScenario {
         List<FlowUser> users = flowUserListDao.findAllUsers(flow.getId());
         Assert.assertEquals(2, users.size());
     }
+
+    @Test
+    public void should_remove_users() {
+        FlowUser user1 = new FlowUser("1");
+        FlowUser user2 = new FlowUser("2");
+        flowUserListDao.insert(flow.getId(), user1, user2);
+
+        List<FlowUser> users = flowUserListDao.findAllUsers(flow.getId());
+        Assert.assertEquals(2, users.size());
+
+        // when: remove user1
+        Assert.assertTrue(flowUserListDao.remove(flow.getId(), user1.getUserId()));
+        users = flowUserListDao.findAllUsers(flow.getId());
+        Assert.assertEquals(1, users.size());
+
+        // then: check existing
+        Assert.assertFalse(flowUserListDao.exist(flow.getId(), user1.getUserId()));
+        Assert.assertTrue(flowUserListDao.exist(flow.getId(), user2.getUserId()));
+    }
 }

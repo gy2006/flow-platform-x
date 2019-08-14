@@ -43,6 +43,11 @@ public class FlowUserListDaoImpl implements FlowUserListDao {
     }
 
     @Override
+    public void delete(String flowId) {
+        mongoOps.remove(new FlowUserList(flowId));
+    }
+
+    @Override
     public List<String> findAllFlowsByUserId(String userId) {
         return null;
     }
@@ -60,7 +65,6 @@ public class FlowUserListDaoImpl implements FlowUserListDao {
     @Override
     public boolean insert(String flowId, FlowUser ...users) {
         Query q = Query.query(Criteria.where("_id").is(flowId));
-
         Update u = new Update().addToSet("users").each(users);
 
         UpdateResult result = mongoOps.updateFirst(q, u, FlowUserList.class);
@@ -68,7 +72,19 @@ public class FlowUserListDaoImpl implements FlowUserListDao {
     }
 
     @Override
-    public void remove(String flowId, String... userId) {
+    public boolean remove(String flowId, String... userIds) {
+        Query q = Query.query(Criteria.where("_id").is(flowId));
+        Update u = new Update().pull("users", Query.query(Criteria.where("userId").in(userIds)));
 
+        UpdateResult result = mongoOps.updateFirst(q, u, FlowUserList.class);
+        return result.getModifiedCount() > 0;
+    }
+
+    @Override
+    public boolean exist(String flowId, String userId) {
+        Query q = new Query();
+        q.addCriteria(Criteria.where("_id").is(flowId));
+        q.addCriteria(Criteria.where("users").elemMatch(Criteria.where("userId").is(userId)));
+        return mongoOps.exists(q, FlowUserList.class);
     }
 }

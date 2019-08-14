@@ -23,13 +23,38 @@ import java.util.List;
 
 public interface FlowUserListDao {
 
+    /**
+     * Create empty flow user list
+     */
     void create(String flowId);
 
+    /**
+     * Remove flow user list
+     */
+    void delete(String flowId);
+
+    /**
+     * Find all flows by users id
+     */
     List<String> findAllFlowsByUserId(String userId);
 
+    /**
+     * Find all users by flow id
+     */
     List<FlowUser> findAllUsers(String flowId);
 
+    /**
+     * Batch insert users
+     */
     boolean insert(String flowId, FlowUser...users);
 
-    void remove(String flowId, String ...userId);
+    /**
+     * Batch remove users
+     */
+    boolean remove(String flowId, String ...userId);
+
+    /**
+     * Check user is existed
+     */
+    boolean exist(String flowId, String userId);
 }
