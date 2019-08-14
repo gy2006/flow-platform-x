@@ -16,8 +16,10 @@
 
 package com.flowci.core.user;
 
+import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.user.domain.ChangePassword;
+import com.flowci.core.user.domain.UserAction;
 import com.flowci.core.user.service.UserService;
 import com.flowci.exception.ArgumentException;
 import java.util.Objects;
@@ -42,6 +44,7 @@ public class UserController {
     private AuthService authService;
 
     @PostMapping("/change/password")
+    @Action(UserAction.CHANGE_PASSWORD)
     public void changePassword(@Validated @RequestBody ChangePassword body) {
         if (Objects.equals(body.getNewOne(), body.getConfirm())) {
             userService.changePassword(body.getOld(), body.getNewOne());

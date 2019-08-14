@@ -23,6 +23,7 @@ import com.flowci.core.credential.domain.CredentialAction;
 import com.flowci.core.flow.domain.FlowAction;
 import com.flowci.core.job.domain.JobAction;
 import com.flowci.core.user.domain.User;
+import com.flowci.core.user.domain.UserAction;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +72,7 @@ public class AuthConfig {
         permissionMap.add(User.Role.Admin, JobAction.ALL);
         permissionMap.add(User.Role.Admin, CredentialAction.ALL);
         permissionMap.add(User.Role.Admin, AgentAction.ALL);
+        permissionMap.add(User.Role.Admin, UserAction.ALL);
 
         // developer
         permissionMap.add(User.Role.Developer,
@@ -78,6 +80,7 @@ public class AuthConfig {
         permissionMap.add(User.Role.Developer, JobAction.ALL);
         permissionMap.add(User.Role.Developer, CredentialAction.LIST_NAME);
         permissionMap.add(User.Role.Developer, AgentAction.GET, AgentAction.LIST);
+        permissionMap.add(User.Role.Developer, UserAction.CHANGE_PASSWORD);
 
         return permissionMap;
     }
