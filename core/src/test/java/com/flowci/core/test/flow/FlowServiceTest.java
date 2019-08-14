@@ -18,6 +18,7 @@ package com.flowci.core.test.flow;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.common.domain.Variables;
@@ -68,6 +69,20 @@ public class FlowServiceTest extends SpringScenario {
     @Before
     public void login() {
         mockLogin();
+    }
+
+    @Test
+    public void should_list_all_flows_by_user_id() {
+        Flow first = flowService.create("test-1");
+        flowService.confirm(first.getName(), null, null);
+
+        Flow second = flowService.create("test-2");
+        flowService.confirm(second.getName(), null, null);
+
+        List<Flow> list = flowService.list(sessionManager.getUserId(), Status.CONFIRMED);
+        Assert.assertEquals(2, list.size());
+        Assert.assertEquals(first, list.get(0));
+        Assert.assertEquals(second, list.get(1));
     }
 
     @Test

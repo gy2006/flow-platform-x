@@ -167,7 +167,7 @@ public class FlowServiceImpl implements FlowService {
             return Collections.emptyList();
         }
 
-        return flowDao.findAllByIdAndStatus(flowIds, status);
+        return flowDao.findAllByIdInAndStatus(flowIds, status);
     }
 
     @Override
@@ -207,7 +207,7 @@ public class FlowServiceImpl implements FlowService {
         vars.put(Variables.Flow.Name, name);
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
-        flowDao.save(flow);
+        flowDao.insert(flow);
 
         // add creator to user list
         flowUserListDao.create(flow.getId());
