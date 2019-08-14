@@ -145,6 +145,20 @@ public class FlowController {
         return flowService.setSshRsaCredential(name, keyPair);
     }
 
+    @PostMapping("/{name}/users")
+    @Action(FlowAction.ADD_USER)
+    public void addUsers(@PathVariable String name, @RequestBody String[] userIds) {
+        Flow flow = flowService.get(name);
+        flowService.addUsers(flow, userIds);
+    }
+
+    @DeleteMapping("/{name}/users")
+    @Action(FlowAction.REMOVE_USER)
+    public void removeUsers(@PathVariable String name, @RequestBody String[] userIds) {
+        Flow flow = flowService.get(name);
+        flowService.removeUsers(flow, userIds);
+    }
+
     @GetMapping("/credentials/{name}")
     @Action(FlowAction.LIST_BY_CREDENTIAL)
     public List<Flow> listFlowByCredentials(@PathVariable String name) {

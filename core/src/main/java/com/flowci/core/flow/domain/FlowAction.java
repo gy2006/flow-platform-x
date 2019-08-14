@@ -45,6 +45,10 @@ public abstract class FlowAction {
 
     public static final String SETUP_CREDENTIAL = "setup_credential";
 
+    public static final String ADD_USER = "add_user_to_flow";
+
+    public static final String REMOVE_USER = "remove_user_from_flow";
+
     public static final String[] ALL = {
             CREATE,
             CHECK_NAME,
@@ -58,7 +62,9 @@ public abstract class FlowAction {
             SET_YML,
             GIT_TEST,
             LIST_BRANCH,
-            SETUP_CREDENTIAL
+            SETUP_CREDENTIAL,
+            ADD_USER,
+            REMOVE_USER
     };
 
 }
