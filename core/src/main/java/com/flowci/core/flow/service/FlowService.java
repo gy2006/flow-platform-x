@@ -33,14 +33,14 @@ public interface FlowService {
     List<Flow> list(Status status);
 
     /**
+     * List flows by user id and status
+     */
+    List<Flow> list(String userId, Status status);
+
+    /**
      * List flows of current user by credential name
      */
     List<Flow> listByCredential(String credentialName);
-
-    /**
-     * List flows by user id and status
-     */
-    List<Flow> listByUserId(String userId, Status status);
 
     /**
      * Check the flow name is existed

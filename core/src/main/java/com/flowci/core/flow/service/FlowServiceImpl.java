@@ -16,7 +16,6 @@
 
 package com.flowci.core.flow.service;
 
-import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.manager.SessionManager;
@@ -136,7 +135,7 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public List<Flow> list(Status status) {
         String userId = sessionManager.getUserId();
-        return listByUserId(userId, status);
+        return list(userId, status);
     }
 
     @Override
@@ -161,7 +160,7 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
-    public List<Flow> listByUserId(String userId, Status status) {
+    public List<Flow> list(String userId, Status status) {
         List<String> flowIds = flowUserListDao.findAllFlowsByUserId(userId);
 
         if (flowIds.isEmpty()) {
