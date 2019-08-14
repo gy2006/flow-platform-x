@@ -38,6 +38,11 @@ public interface FlowService {
     List<Flow> listByCredential(String credentialName);
 
     /**
+     * List flows by user id and status
+     */
+    List<Flow> listByUserId(String userId, Status status);
+
+    /**
      * Check the flow name is existed
      */
     Boolean exist(String name);
@@ -109,4 +114,14 @@ public interface FlowService {
      * @return list of branches or empty list if git config not defined
      */
     List<String> listGitBranch(String name);
+
+    /**
+     * Add users to flow
+     */
+    void addUsers(Flow flow, String ...userIds);
+
+    /**
+     * Remove users from flow
+     */
+    void removeUsers(Flow flow, String ...userIds);
 }

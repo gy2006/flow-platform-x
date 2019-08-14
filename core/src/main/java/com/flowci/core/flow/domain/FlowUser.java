@@ -45,4 +45,10 @@ public class FlowUser {
         this();
         this.userId = userId;
     }
+
+    public FlowUser(String userId, String createdBy) {
+        this();
+        this.userId = userId;
+        this.createdBy = createdBy;
+    }
 }

@@ -26,13 +26,16 @@ import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.flow.dao.FlowDao;
+import com.flowci.core.flow.dao.FlowUserListDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
+import com.flowci.core.flow.domain.FlowUser;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
+import com.flowci.core.user.domain.User;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;
@@ -96,6 +99,9 @@ public class FlowServiceImpl implements FlowService {
     private YmlDao ymlDao;
 
     @Autowired
+    private FlowUserListDao flowUserListDao;
+
+    @Autowired
     private SessionManager sessionManager;
 
     @Autowired
@@ -130,7 +136,7 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public List<Flow> list(Status status) {
         String userId = sessionManager.getUserId();
-        return flowDao.findAllByStatusAndCreatedBy(status, userId);
+        return listByUserId(userId, status);
     }
 
     @Override
@@ -152,6 +158,17 @@ public class FlowServiceImpl implements FlowService {
         }
 
         return list;
+    }
+
+    @Override
+    public List<Flow> listByUserId(String userId, Status status) {
+        List<String> flowIds = flowUserListDao.findAllFlowsByUserId(userId);
+
+        if (flowIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return flowDao.findAllByIdAndStatus(flowIds, status);
     }
 
     @Override
@@ -192,6 +209,10 @@ public class FlowServiceImpl implements FlowService {
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
         flowDao.save(flow);
+
+        // add creator to user list
+        flowUserListDao.create(flow.getId());
+        addUsers(flow, flow.getCreatedBy());
 
         createFlowJobQueue(flow);
 
@@ -246,6 +267,7 @@ public class FlowServiceImpl implements FlowService {
     public Flow delete(String name) {
         Flow flow = get(name);
         flowDao.delete(flow);
+        flowUserListDao.delete(flow.getId());
 
         try {
             Yml yml = getYml(flow);
@@ -367,6 +389,23 @@ public class FlowServiceImpl implements FlowService {
             GitBranchLoader gitTestRunner = new GitBranchLoader(flow.getId(), sshRsa.getPrivateKey(), gitUrl);
             return gitTestRunner.load();
         });
+    }
+
+    @Override
+    public void addUsers(Flow flow, String... userIds) {
+        User current = sessionManager.get();
+
+        FlowUser[] users = new FlowUser[userIds.length];
+        for (int i = 0; i < userIds.length; i++) {
+            users[i] = new FlowUser(userIds[i], current.getId());
+        }
+
+        flowUserListDao.insert(flow.getId(), users);
+    }
+
+    @Override
+    public void removeUsers(Flow flow, String... userIds) {
+        flowUserListDao.remove(flow.getId(), userIds);
     }
 
     private void createFlowJobQueue(Flow flow) {
