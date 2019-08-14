@@ -27,7 +27,9 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class FlowUserListDaoImpl implements FlowUserListDao {
@@ -46,10 +48,21 @@ public class FlowUserListDaoImpl implements FlowUserListDao {
     }
 
     @Override
+    public List<FlowUser> findAllUsers(String flowId) {
+        Query q = Query.query(Criteria.where("_id").is(flowId));
+        FlowUserList list = mongoOps.findOne(q, FlowUserList.class);
+        if (Objects.isNull(list)) {
+            return Collections.emptyList();
+        }
+        return list.getUsers();
+    }
+
+    @Override
     public boolean insert(String flowId, FlowUser ...users) {
-        Criteria c = Criteria.where("_id").is(flowId);
-        Query q = new Query().addCriteria(c);
-        Update u = new Update().push("users").each(users);
+        Query q = Query.query(Criteria.where("_id").is(flowId));
+
+        Update u = new Update().addToSet("users").each(users);
+
         UpdateResult result = mongoOps.updateFirst(q, u, FlowUserList.class);
         return result.getModifiedCount() > 0;
     }

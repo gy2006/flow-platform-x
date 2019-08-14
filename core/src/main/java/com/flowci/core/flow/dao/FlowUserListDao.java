@@ -27,6 +27,8 @@ public interface FlowUserListDao {
 
     List<String> findAllFlowsByUserId(String userId);
 
+    List<FlowUser> findAllUsers(String flowId);
+
     boolean insert(String flowId, FlowUser...users);
 
     void remove(String flowId, String ...userId);
