@@ -19,6 +19,8 @@ package com.flowci.core.user.domain;
 
 public abstract class UserAction {
 
+    public static final String LIST_ALL = "user_list_all";
+
     public static final String CHANGE_PASSWORD = "user_change_password";
 
     public static final String UPDATE_AVATAR = "user_avatar_update";
@@ -30,10 +32,11 @@ public abstract class UserAction {
     public static final String CHANGE_ROLE = "user_role_change";
 
     public static final String[] ALL = {
-            CHANGE_PASSWORD,
-            UPDATE_AVATAR,
-            CREATE_USER,
-            REMOVE_USER,
-            CHANGE_ROLE
+        LIST_ALL,
+        CHANGE_PASSWORD,
+        UPDATE_AVATAR,
+        CREATE_USER,
+        REMOVE_USER,
+        CHANGE_ROLE
     };
 }

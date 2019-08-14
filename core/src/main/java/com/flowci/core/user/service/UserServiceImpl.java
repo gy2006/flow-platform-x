@@ -23,13 +23,14 @@ import com.flowci.core.user.domain.User;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.util.HashingHelper;
+import java.util.Objects;
+import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import java.util.Objects;
 
 /**
  * @author yang
@@ -58,6 +59,11 @@ public class UserServiceImpl implements UserService {
         } catch (DuplicateException ignore) {
 
         }
+    }
+
+    @Override
+    public Page<User> list(Pageable pageable) {
+        return userDao.findAll(pageable);
     }
 
     @Override

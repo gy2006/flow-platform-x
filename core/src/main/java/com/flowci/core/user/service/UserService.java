@@ -17,12 +17,22 @@
 package com.flowci.core.user.service;
 
 import com.flowci.core.user.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * @author yang
  */
 public interface UserService {
 
+    /**
+     * List all users
+     */
+    Page<User> list(Pageable pageable);
+
+    /**
+     * Get default admin user
+     */
     User defaultAdmin();
 
     /**

@@ -16,6 +16,7 @@
 
 package com.flowci.core.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
 import lombok.Getter;
 import lombok.NonNull;
@@ -45,6 +46,7 @@ public class User extends Mongoable {
     private String email;
 
     @NonNull
+    @JsonIgnore
     private String passwordOnMd5;
 
     @NonNull
@@ -55,6 +57,7 @@ public class User extends Mongoable {
         this.passwordOnMd5 = passwordOnMd5;
     }
 
+    @JsonIgnore
     public boolean isAdmin() {
         return role == Role.Admin;
     }
