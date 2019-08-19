@@ -20,6 +20,7 @@ import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
+import com.flowci.core.user.domain.User.Role;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.util.HashingHelper;
@@ -54,9 +55,13 @@ public class UserServiceImpl implements UserService {
         String adminPassword = adminProperties.getDefaultPassword();
 
         try {
-            create(adminEmail, adminPassword, User.Role.Admin);
+            User user = new User(adminEmail, HashingHelper.md5(adminPassword));
+            user.setRole(Role.Admin);
+            user.setCreatedBy("System");
+            userDao.insert(user);
+
             log.info("Admin {} been initialized", adminEmail);
-        } catch (DuplicateException ignore) {
+        } catch (DuplicateKeyException ignore) {
 
         }
     }
@@ -73,10 +78,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User create(String email, String password, User.Role role) {
+    public User create(String email, String passwordOnMd5, User.Role role) {
         try {
-            User user = new User(email, HashingHelper.md5(password));
+            User user = new User(email, passwordOnMd5);
             user.setRole(role);
+            user.setCreatedBy(sessionManager.getUserId());
             return userDao.insert(user);
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Email {0} is already existed", email);

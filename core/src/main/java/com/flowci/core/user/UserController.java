@@ -19,6 +19,7 @@ package com.flowci.core.user;
 import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.user.domain.ChangePassword;
+import com.flowci.core.user.domain.CreateUser;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.domain.UserAction;
 import com.flowci.core.user.service.UserService;
@@ -57,6 +58,12 @@ public class UserController {
     public Page<User> listAll(@RequestParam(required = false, defaultValue = DefaultPage) int page,
                               @RequestParam(required = false, defaultValue = DefaultSize) int size) {
         return userService.list(PageRequest.of(page, size));
+    }
+
+    @PostMapping
+    @Action(UserAction.CREATE_USER)
+    public User create(@RequestBody CreateUser body) {
+        return userService.create(body.getEmail(), body.getPasswordOnMd5(), body.getRole());
     }
 
     @PostMapping("/change/password")
