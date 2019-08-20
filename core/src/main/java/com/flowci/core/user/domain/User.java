@@ -18,7 +18,11 @@ package com.flowci.core.user.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -40,15 +44,12 @@ public class User extends Mongoable {
         Developer
     }
 
-    @NonNull
     @Indexed(unique = true, name = "index_user_email")
     private String email;
 
-    @NonNull
     @JsonIgnore
     private String passwordOnMd5;
 
-    @NonNull
     private Role role;
 
     @JsonIgnore
