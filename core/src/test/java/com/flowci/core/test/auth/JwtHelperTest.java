@@ -27,7 +27,7 @@ import org.junit.Test;
 
 public class JwtHelperTest {
 
-    private final User user  = new User("test@flow.ci", "12345");
+    private final User user  = new User("test@flow.ci", "12345", User.Role.Admin);
 
     private ObjectWrapper<String> token = new ObjectWrapper<>();
 

@@ -24,6 +24,9 @@ import com.flowci.core.user.domain.User.Role;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.util.HashingHelper;
+
+import java.time.Instant;
+import java.util.Date;
 import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
@@ -40,6 +43,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserServiceImpl implements UserService {
 
+    private static final String DefaultCreator = "System";
+
     @Autowired
     private ConfigProperties.Admin adminProperties;
 
@@ -55,13 +60,9 @@ public class UserServiceImpl implements UserService {
         String adminPassword = adminProperties.getDefaultPassword();
 
         try {
-            User user = new User(adminEmail, HashingHelper.md5(adminPassword));
-            user.setRole(Role.Admin);
-            user.setCreatedBy("System");
-            userDao.insert(user);
-
+            create(adminEmail, HashingHelper.md5(adminPassword), Role.Admin);
             log.info("Admin {} been initialized", adminEmail);
-        } catch (DuplicateKeyException ignore) {
+        } catch (DuplicateException ignore) {
 
         }
     }
@@ -80,9 +81,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public User create(String email, String passwordOnMd5, User.Role role) {
         try {
-            User user = new User(email, passwordOnMd5);
-            user.setRole(role);
-            user.setCreatedBy(sessionManager.getUserId());
+            Date now = Date.from(Instant.now());
+
+            User user = new User(email, passwordOnMd5, role);
+            user.setCreatedAt(now);
+            user.setUpdatedAt(now);
+            user.setCreatedBy(sessionManager.exist() ? sessionManager.getUserId() : DefaultCreator);
             return userDao.insert(user);
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Email {0} is already existed", email);
@@ -100,6 +104,7 @@ public class UserServiceImpl implements UserService {
 
         if (Objects.equals(user.getPasswordOnMd5(), oldOnMd5)) {
             user.setPasswordOnMd5(newOnMd5);
+            user.setUpdatedAt(Date.from(Instant.now()));
             userDao.save(user);
             return;
         }

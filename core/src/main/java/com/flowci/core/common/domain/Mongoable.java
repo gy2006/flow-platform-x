@@ -16,16 +16,11 @@
 
 package com.flowci.core.common.domain;
 
+import lombok.*;
+import org.springframework.data.annotation.Id;
+
 import java.io.Serializable;
 import java.util.Date;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.ToString;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
 
 /**
  * @author yang
@@ -40,10 +35,8 @@ public abstract class Mongoable implements Serializable {
     @NonNull
     protected String id;
 
-    @CreatedDate
     protected Date createdAt;
 
-    @LastModifiedDate
     protected Date updatedAt;
 
     protected String createdBy;

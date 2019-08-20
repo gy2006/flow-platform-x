@@ -62,8 +62,9 @@ public class UserController {
 
     @PostMapping
     @Action(UserAction.CREATE_USER)
-    public User create(@RequestBody CreateUser body) {
-        return userService.create(body.getEmail(), body.getPasswordOnMd5(), body.getRole());
+    public User create(@Validated @RequestBody CreateUser body) {
+        User.Role role = User.Role.valueOf(body.getRole());
+        return userService.create(body.getEmail(), body.getPasswordOnMd5(), role);
     }
 
     @PostMapping("/change/password")

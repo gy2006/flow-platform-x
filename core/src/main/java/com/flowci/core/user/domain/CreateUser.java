@@ -16,9 +16,10 @@
 
 package com.flowci.core.user.domain;
 
-import com.flowci.core.user.domain.User.Role;
-import javax.validation.constraints.NotEmpty;
 import lombok.Data;
+
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * @author yang
@@ -27,12 +28,13 @@ import lombok.Data;
 public class CreateUser {
 
     @NotEmpty
+    @Email
     private String email;
 
     @NotEmpty
     private String passwordOnMd5;
 
     @NotEmpty
-    private Role role;
+    private String role;
     
 }
