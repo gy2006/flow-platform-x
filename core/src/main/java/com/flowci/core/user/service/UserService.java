@@ -49,4 +49,11 @@ public interface UserService {
      * Change password for current user
      */
     void changePassword(String old, String newOne);
+
+    /**
+     * Change role for target user
+     * @param email target user email
+     * @param newRole new role will be change
+     */
+    void changeRole(String email, User.Role newRole);
 }

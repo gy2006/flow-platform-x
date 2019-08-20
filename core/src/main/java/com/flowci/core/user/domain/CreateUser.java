@@ -36,5 +36,8 @@ public class CreateUser {
 
     @NotEmpty
     private String role;
-    
+
+    public User.Role getUserRole() {
+        return User.Role.valueOf(role);
+    }
 }

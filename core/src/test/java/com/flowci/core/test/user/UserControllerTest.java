@@ -23,6 +23,7 @@ import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.ChangePassword;
+import com.flowci.core.user.domain.ChangeRole;
 import com.flowci.core.user.domain.CreateUser;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.ResponseMessage;
@@ -81,16 +82,9 @@ public class UserControllerTest extends SpringScenario {
 
     @Test
     public void should_create_user_successfully() throws Exception {
-        CreateUser body = new CreateUser();
-        body.setEmail("test@flow.ci");
-        body.setPasswordOnMd5(HashingHelper.md5("111111"));
-        body.setRole(User.Role.Admin.name());
+        createUser("test@flow.ci", "111111", User.Role.Admin);
 
-        mockMvcHelper.expectSuccessAndReturnClass(post("/users")
-                .content(objectMapper.writeValueAsBytes(body))
-                .contentType(MediaType.APPLICATION_JSON), UserType);
-
-        User created = userService.getByEmail("test@flow.ci");
+        User created = userService.getByEmail("test.create@flow.ci");
         Assert.assertEquals(User.Role.Admin, created.getRole());
         Assert.assertNotNull(created.getCreatedBy());
         Assert.assertNotNull(created.getCreatedAt());
@@ -99,15 +93,38 @@ public class UserControllerTest extends SpringScenario {
 
     @Test
     public void should_fail_to_create_user_if_mail_invalid() throws Exception {
-        CreateUser body = new CreateUser();
-        body.setEmail("test.flow.ci");
-        body.setPasswordOnMd5(HashingHelper.md5("111111"));
-        body.setRole(User.Role.Admin.name());
-
-        ResponseMessage message = mockMvcHelper.expectSuccessAndReturnClass(post("/users")
-                .content(objectMapper.writeValueAsBytes(body))
-                .contentType(MediaType.APPLICATION_JSON), ResponseMessage.class);
+        ResponseMessage message = createUser("test.flow.ci", "111111", User.Role.Admin);
 
         Assert.assertEquals(ErrorCode.INVALID_ARGUMENT, message.getCode());
+    }
+
+    @Test
+    public void should_change_user_role_successfully() throws Exception {
+        ResponseMessage<User> msg = createUser("test.change.role@flow.ci", "12345", User.Role.Developer);
+        User user = msg.getData();
+
+        ChangeRole body = new ChangeRole();
+        body.setEmail(user.getEmail());
+        body.setRole(User.Role.Admin.name());
+
+        ResponseMessage message = mockMvcHelper.expectSuccessAndReturnClass(
+                post("/users/change/role")
+                        .content(objectMapper.writeValueAsBytes(body))
+                        .contentType(MediaType.APPLICATION_JSON)
+                , ResponseMessage.class);
+
+        Assert.assertEquals(StatusCode.OK, message.getCode());
+        Assert.assertEquals(User.Role.Admin, userService.getByEmail(user.getEmail()).getRole());
+    }
+
+    private ResponseMessage<User> createUser(String email, String password, User.Role role) throws Exception {
+        CreateUser body = new CreateUser();
+        body.setEmail(email);
+        body.setPasswordOnMd5(HashingHelper.md5(password));
+        body.setRole(role.name());
+
+        return mockMvcHelper.expectSuccessAndReturnClass(post("/users")
+                .content(objectMapper.writeValueAsBytes(body))
+                .contentType(MediaType.APPLICATION_JSON), UserType);
     }
 }

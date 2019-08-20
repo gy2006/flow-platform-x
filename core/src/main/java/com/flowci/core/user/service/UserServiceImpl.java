@@ -111,4 +111,17 @@ public class UserServiceImpl implements UserService {
 
         throw new ArgumentException("The password is incorrect");
     }
+
+    @Override
+    public void changeRole(String email, Role newRole) {
+        User target = getByEmail(email);
+        if (target.getRole().equals(newRole)) {
+            return;
+        }
+
+        target.setRole(newRole);
+        target.setUpdatedAt(Date.from(Instant.now()));
+        target.setUpdatedBy(sessionManager.getUserId());
+        userDao.save(target);
+    }
 }

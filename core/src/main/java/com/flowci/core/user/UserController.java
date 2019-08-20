@@ -18,10 +18,7 @@ package com.flowci.core.user;
 
 import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.auth.service.AuthService;
-import com.flowci.core.user.domain.ChangePassword;
-import com.flowci.core.user.domain.CreateUser;
-import com.flowci.core.user.domain.User;
-import com.flowci.core.user.domain.UserAction;
+import com.flowci.core.user.domain.*;
 import com.flowci.core.user.service.UserService;
 import com.flowci.exception.ArgumentException;
 import java.util.Objects;
@@ -63,8 +60,7 @@ public class UserController {
     @PostMapping
     @Action(UserAction.CREATE_USER)
     public User create(@Validated @RequestBody CreateUser body) {
-        User.Role role = User.Role.valueOf(body.getRole());
-        return userService.create(body.getEmail(), body.getPasswordOnMd5(), role);
+        return userService.create(body.getEmail(), body.getPasswordOnMd5(), body.getUserRole());
     }
 
     @PostMapping("/change/password")
@@ -77,5 +73,11 @@ public class UserController {
         }
 
         throw new ArgumentException("the confirm password is inconsistent");
+    }
+
+    @PostMapping("/change/role")
+    @Action(UserAction.CHANGE_ROLE)
+    public void changeRole(@Validated @RequestBody ChangeRole body) {
+        userService.changeRole(body.getEmail(), body.getUserRole());
     }
 }
