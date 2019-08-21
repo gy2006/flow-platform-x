@@ -26,12 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author yang
@@ -79,5 +74,11 @@ public class UserController {
     @Action(UserAction.CHANGE_ROLE)
     public void changeRole(@Validated @RequestBody ChangeRole body) {
         userService.changeRole(body.getEmail(), body.getUserRole());
+    }
+
+    @DeleteMapping
+    @Action(UserAction.DELETE_USER)
+    public User delete(@Validated @RequestBody DeleteUser body) {
+        return userService.delete(body.getEmail());
     }
 }

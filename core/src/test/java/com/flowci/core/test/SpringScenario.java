@@ -29,6 +29,7 @@ import com.flowci.core.test.flow.FlowMockHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.domain.Agent;
+import com.flowci.exception.NotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.junit.After;
 import org.junit.runner.RunWith;
@@ -148,8 +149,10 @@ public abstract class SpringScenario {
     }
 
     protected void mockLogin() {
-        User user = userService.getByEmail("test@flow.ci");
-        if (Objects.isNull(user)) {
+        User user;
+        try {
+            user = userService.getByEmail("test@flow.ci");
+        } catch (NotFoundException e) {
             user = userService.create("test@flow.ci", "12345", User.Role.Admin);
         }
         sessionManager.set(user);

@@ -65,10 +65,6 @@ public class AuthServiceImpl implements AuthService {
     public Tokens login(String email, String passwordOnMd5) {
         User user = userService.getByEmail(email);
 
-        if (Objects.isNull(user)) {
-            throw new ArgumentException("Invalid email");
-        }
-
         if (!Objects.equals(user.getPasswordOnMd5(), passwordOnMd5)) {
             throw new ArgumentException("Invalid password");
         }
@@ -118,9 +114,6 @@ public class AuthServiceImpl implements AuthService {
         User user = onlineUsersCache.get(email, User.class);
         if (Objects.isNull(user)) {
             user = userService.getByEmail(email);
-            if (Objects.isNull(user)) {
-                throw new AuthenticationException("Invalid token");
-            }
         }
 
         boolean verify = JwtHelper.verify(token, user, false);

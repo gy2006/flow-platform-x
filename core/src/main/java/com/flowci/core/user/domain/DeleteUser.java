@@ -17,26 +17,15 @@
 
 package com.flowci.core.user.domain;
 
-public abstract class UserAction {
+import lombok.Data;
 
-    public static final String LIST_ALL = "user_list_all";
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 
-    public static final String CHANGE_PASSWORD = "user_change_password";
+@Data
+public class DeleteUser {
 
-    public static final String UPDATE_AVATAR = "user_avatar_update";
-
-    public static final String CREATE_USER = "user_create";
-
-    public static final String DELETE_USER = "user_delete";
-
-    public static final String CHANGE_ROLE = "user_role_change";
-
-    public static final String[] ALL = {
-            LIST_ALL,
-            CHANGE_PASSWORD,
-            UPDATE_AVATAR,
-            CREATE_USER,
-            DELETE_USER,
-            CHANGE_ROLE
-    };
+    @NotEmpty
+    @Email
+    private String email;
 }

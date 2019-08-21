@@ -18,11 +18,14 @@ package com.flowci.core.user.service;
 
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.manager.SessionManager;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.domain.User.Role;
+import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
+import com.flowci.exception.NotFoundException;
 import com.flowci.util.HashingHelper;
 
 import java.time.Instant;
@@ -53,6 +56,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private SessionManager sessionManager;
+
+    @Autowired
+    private SpringEventManager eventManager;
 
     @PostConstruct
     public void initAdmin() {
@@ -95,7 +101,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getByEmail(String email) {
-        return userDao.findByEmail(email);
+        User user = userDao.findByEmail(email);
+        if (Objects.isNull(user)) {
+            throw new NotFoundException("User with email {0} is not existed", email);
+        }
+        return user;
     }
 
     @Override
@@ -123,5 +133,13 @@ public class UserServiceImpl implements UserService {
         target.setUpdatedAt(Date.from(Instant.now()));
         target.setUpdatedBy(sessionManager.getUserId());
         userDao.save(target);
+    }
+
+    @Override
+    public User delete(String email) {
+        User user = getByEmail(email);
+        userDao.delete(user);
+        eventManager.publish(new UserDeletedEvent(this, user));
+        return user;
     }
 }

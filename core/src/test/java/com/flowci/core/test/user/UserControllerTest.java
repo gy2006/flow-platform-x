@@ -22,20 +22,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
-import com.flowci.core.user.domain.ChangePassword;
-import com.flowci.core.user.domain.ChangeRole;
-import com.flowci.core.user.domain.CreateUser;
-import com.flowci.core.user.domain.User;
+import com.flowci.core.user.domain.*;
+import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.AuthenticationException;
 import com.flowci.exception.ErrorCode;
+import com.flowci.exception.NotFoundException;
 import com.flowci.util.HashingHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.http.MediaType;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 public class UserControllerTest extends SpringScenario {
@@ -82,7 +87,7 @@ public class UserControllerTest extends SpringScenario {
 
     @Test
     public void should_create_user_successfully() throws Exception {
-        createUser("test@flow.ci", "111111", User.Role.Admin);
+        createUser("test.create@flow.ci", "111111", User.Role.Admin);
 
         User created = userService.getByEmail("test.create@flow.ci");
         Assert.assertEquals(User.Role.Admin, created.getRole());
@@ -115,6 +120,28 @@ public class UserControllerTest extends SpringScenario {
 
         Assert.assertEquals(StatusCode.OK, message.getCode());
         Assert.assertEquals(User.Role.Admin, userService.getByEmail(user.getEmail()).getRole());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void should_delete_user_and_send_delete_event_out() throws Exception {
+        ResponseMessage<User> created = createUser("test.delete@flow.ci", "12345", User.Role.Developer);
+
+        DeleteUser body = new DeleteUser();
+        body.setEmail(created.getData().getEmail());
+
+        final CountDownLatch counter = new CountDownLatch(1);
+        addEventListener((ApplicationListener<UserDeletedEvent>) event -> counter.countDown());
+
+        ResponseMessage<User> deleted = mockMvcHelper.expectSuccessAndReturnClass(
+                delete("/users")
+                        .content(objectMapper.writeValueAsBytes(body))
+                        .contentType(MediaType.APPLICATION_JSON), UserType);
+
+        Assert.assertTrue(counter.await(5, TimeUnit.SECONDS));
+        Assert.assertEquals(created.getData(), deleted.getData());
+
+        // then: throw not found exception
+        userService.getByEmail(created.getData().getEmail());
     }
 
     private ResponseMessage<User> createUser(String email, String password, User.Role role) throws Exception {

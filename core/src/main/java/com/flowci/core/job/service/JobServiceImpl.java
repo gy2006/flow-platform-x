@@ -134,7 +134,7 @@ public class JobServiceImpl implements JobService {
     private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
 
     //====================================================================
-    //        %% Public function
+    //        %% Public functions
     //====================================================================
 
     @Override

@@ -35,6 +35,7 @@ import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.user.domain.User;
+import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;
@@ -121,16 +122,9 @@ public class FlowServiceImpl implements FlowService {
     @Autowired
     private RabbitChannelOperation jobQueueManager;
 
-    @EventListener
-    public void onInit(ContextRefreshedEvent ignore) {
-        List<Flow> all = flowDao.findAll();
-
-        for (Flow flow : all) {
-            createFlowJobQueue(flow);
-        }
-
-        eventManager.publish(new FlowInitEvent(this, all));
-    }
+    //====================================================================
+    //        %% Public function
+    //====================================================================
 
     @Override
     public List<Flow> list(Status status) {
@@ -406,6 +400,30 @@ public class FlowServiceImpl implements FlowService {
     public void removeUsers(Flow flow, String... userIds) {
         flowUserListDao.remove(flow.getId(), userIds);
     }
+
+    //====================================================================
+    //        %% Internal events
+    //====================================================================
+
+    @EventListener
+    public void initJobQueueForFlow(ContextRefreshedEvent ignore) {
+        List<Flow> all = flowDao.findAll();
+
+        for (Flow flow : all) {
+            createFlowJobQueue(flow);
+        }
+
+        eventManager.publish(new FlowInitEvent(this, all));
+    }
+
+    @EventListener
+    public void deleteUserFromFlow(UserDeletedEvent event) {
+        // TODO:
+    }
+
+    //====================================================================
+    //        %% Utils
+    //====================================================================
 
     private void createFlowJobQueue(Flow flow) {
         jobQueueManager.declare(flow.getQueueName(), true, 255);

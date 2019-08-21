@@ -56,4 +56,9 @@ public interface UserService {
      * @param newRole new role will be change
      */
     void changeRole(String email, User.Role newRole);
+
+    /**
+     * Delete user by email
+     */
+    User delete(String email);
 }
