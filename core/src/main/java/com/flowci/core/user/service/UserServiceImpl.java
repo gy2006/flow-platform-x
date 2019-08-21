@@ -29,9 +29,13 @@ import com.flowci.exception.NotFoundException;
 import com.flowci.util.HashingHelper;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.PostConstruct;
+
+import com.google.common.collect.Lists;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -76,6 +80,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public Page<User> list(Pageable pageable) {
         return userDao.findAll(pageable);
+    }
+
+    @Override
+    public List<User> list(Collection<String> ids) {
+        Iterable<User> all = userDao.findAllById(ids);
+        return Lists.newArrayList(all);
     }
 
     @Override

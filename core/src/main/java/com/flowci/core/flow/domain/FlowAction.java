@@ -49,6 +49,8 @@ public abstract class FlowAction {
 
     public static final String REMOVE_USER = "remove_user_from_flow";
 
+    public static final String LIST_USER = "list_user_of_flow";
+
     public static final String[] ALL = {
             CREATE,
             CHECK_NAME,
@@ -64,7 +66,8 @@ public abstract class FlowAction {
             LIST_BRANCH,
             SETUP_CREDENTIAL,
             ADD_USER,
-            REMOVE_USER
+            REMOVE_USER,
+            LIST_USER
     };
 
 }

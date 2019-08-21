@@ -18,18 +18,16 @@ package com.flowci.core.flow;
 
 import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.credential.domain.RSAKeyPair;
-import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.*;
 import com.flowci.core.flow.domain.Flow.Status;
-import com.flowci.core.flow.domain.FlowAction;
-import com.flowci.core.flow.domain.FlowGitTest;
-import com.flowci.core.flow.domain.GitSettings;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.user.domain.User;
+import com.flowci.core.user.service.UserService;
 import com.flowci.domain.http.RequestMessage;
 import com.flowci.exception.ArgumentException;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+
+import java.util.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -50,6 +48,9 @@ public class FlowController {
 
     @Autowired
     private FlowService flowService;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping
     @Action(FlowAction.LIST)
@@ -157,6 +158,20 @@ public class FlowController {
     public void removeUsers(@PathVariable String name, @RequestBody String[] userIds) {
         Flow flow = flowService.get(name);
         flowService.removeUsers(flow, userIds);
+    }
+
+    @GetMapping("/{name}/users")
+    @Action(FlowAction.LIST_USER)
+    public List<User> listUsers(@PathVariable String name) {
+        Flow flow = flowService.get(name);
+        List<FlowUser> list = flowService.listUsers(flow);
+
+        List<String> ids = new ArrayList<>(list.size());
+        for (FlowUser item : list) {
+            ids.add(item.getUserId());
+        }
+
+        return userService.list(ids);
     }
 
     @GetMapping("/credentials/{name}")

@@ -18,8 +18,10 @@ package com.flowci.core.test.flow;
 
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.util.StringHelper;
 import org.junit.Assert;
@@ -79,5 +81,21 @@ public class FlowControllerTest extends SpringScenario {
         Assert.assertEquals(StatusCode.OK, listFlowResponse.getCode());
         Assert.assertEquals(1, listFlowResponse.getData().size());
         Assert.assertEquals(flowName, listFlowResponse.getData().get(0).getName());
+    }
+
+    @Test
+    public void should_list_users_of_flow() throws Exception {
+        User user1 = userService.create("user.1@flow.ci", "12345", User.Role.Developer);
+        User user2 = userService.create("user.2@flow.ci", "12345", User.Role.Developer);
+        User user3 = userService.create("user.3@flow.ci", "12345", User.Role.Developer);
+
+        flowMockHelper.addUsers(flowName, user1, user2, user3);
+
+        List<User> users = flowMockHelper.listUsers(flowName);
+        Assert.assertEquals(4, users.size());
+
+        flowMockHelper.removeUsers(flowName, user1, user2);
+        users = flowMockHelper.listUsers(flowName);
+        Assert.assertEquals(2, users.size());
     }
 }

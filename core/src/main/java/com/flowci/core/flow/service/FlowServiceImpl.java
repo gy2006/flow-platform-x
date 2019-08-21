@@ -397,6 +397,11 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
+    public List<FlowUser> listUsers(Flow flow) {
+        return flowUserListDao.findAllUsers(flow.getId());
+    }
+
+    @Override
     public void removeUsers(Flow flow, String... userIds) {
         flowUserListDao.remove(flow.getId(), userIds);
     }

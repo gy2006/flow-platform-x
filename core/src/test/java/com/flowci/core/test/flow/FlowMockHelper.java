@@ -16,21 +16,25 @@
 
 package com.flowci.core.test.flow;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.test.MockMvcHelper;
+import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.RequestMessage;
 import com.flowci.domain.http.ResponseMessage;
-
-import java.util.Base64;
-import java.util.List;
 import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 /**
  * @author yang
@@ -38,15 +42,19 @@ import org.springframework.http.MediaType;
 public class FlowMockHelper {
 
     final static TypeReference<ResponseMessage<Flow>> FlowType =
-        new TypeReference<ResponseMessage<Flow>>() {
-        };
+            new TypeReference<ResponseMessage<Flow>>() {
+            };
 
     final static TypeReference<ResponseMessage<List<Flow>>> ListFlowType =
-        new TypeReference<ResponseMessage<List<Flow>>>() {
-        };
+            new TypeReference<ResponseMessage<List<Flow>>>() {
+            };
 
     final static TypeReference<ResponseMessage<String>> FlowYmlType =
             new TypeReference<ResponseMessage<String>>() {
+            };
+
+    private final static TypeReference<ResponseMessage<List<User>>> UserListType =
+            new TypeReference<ResponseMessage<List<User>>>() {
             };
 
     @Autowired
@@ -58,12 +66,13 @@ public class FlowMockHelper {
     public Flow create(String name, String yml) throws Exception {
         // create
         ResponseMessage<Flow> response = mockMvcHelper
-            .expectSuccessAndReturnClass(post("/flows/" + name), FlowType);
+                .expectSuccessAndReturnClass(post("/flows/" + name), FlowType);
 
         Assert.assertEquals(StatusCode.OK, response.getCode());
 
         // confirm
         response = mockMvcHelper.expectSuccessAndReturnClass(post("/flows/" + name + "/confirm"), FlowType);
+        Assert.assertEquals(StatusCode.OK, response.getCode());
 
         // save yml
         String base64Encoded = Base64.getEncoder().encodeToString(yml.getBytes());
@@ -71,10 +80,50 @@ public class FlowMockHelper {
 
         mockMvcHelper.expectSuccessAndReturnString(
                 post("/flows/" + name + "/yml")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsBytes(message))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(message))
         );
 
         return response.getData();
+    }
+
+    void addUsers(String name, User... users) throws Exception {
+        List<String> ids = toUserIdList(users);
+
+        ResponseMessage message = mockMvcHelper.expectSuccessAndReturnClass(
+                post("/flows/" + name + "/users")
+                        .content(objectMapper.writeValueAsBytes(ids))
+                        .contentType(MediaType.APPLICATION_JSON), ResponseMessage.class);
+
+        Assert.assertEquals(StatusCode.OK, message.getCode());
+    }
+
+    List<User> listUsers(String name) throws Exception {
+        ResponseMessage<List<User>> message = mockMvcHelper.expectSuccessAndReturnClass(
+                get("/flows/" + name + "/users"), UserListType);
+
+        Assert.assertEquals(StatusCode.OK, message.getCode());
+        return message.getData();
+    }
+
+    void removeUsers(String name, User ...users) throws Exception {
+        List<String> ids = toUserIdList(users);
+
+        ResponseMessage message = mockMvcHelper.expectSuccessAndReturnClass(
+                delete("/flows/" + name + "/users")
+                        .content(objectMapper.writeValueAsBytes(ids))
+                        .contentType(MediaType.APPLICATION_JSON), ResponseMessage.class);
+
+        Assert.assertEquals(StatusCode.OK, message.getCode());
+    }
+
+    private List<String> toUserIdList(User ...users) {
+        List<String> ids = new ArrayList<>(users.length);
+
+        for (User item : users) {
+            ids.add(item.getId());
+        }
+
+        return ids;
     }
 }
