@@ -28,6 +28,7 @@ import com.flowci.exception.ArgumentException;
 
 import java.util.*;
 
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -148,16 +149,18 @@ public class FlowController {
 
     @PostMapping("/{name}/users")
     @Action(FlowAction.ADD_USER)
-    public void addUsers(@PathVariable String name, @RequestBody String[] userIds) {
+    public List<User> addUsers(@PathVariable String name, @RequestBody String[] userIds) {
         Flow flow = flowService.get(name);
         flowService.addUsers(flow, userIds);
+        return userService.list(Lists.newArrayList(userIds));
     }
 
     @DeleteMapping("/{name}/users")
     @Action(FlowAction.REMOVE_USER)
-    public void removeUsers(@PathVariable String name, @RequestBody String[] userIds) {
+    public List<User> removeUsers(@PathVariable String name, @RequestBody String[] userIds) {
         Flow flow = flowService.get(name);
         flowService.removeUsers(flow, userIds);
+        return userService.list(Lists.newArrayList(userIds));
     }
 
     @GetMapping("/{name}/users")
