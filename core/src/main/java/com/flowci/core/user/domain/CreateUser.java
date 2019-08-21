@@ -16,6 +16,7 @@
 
 package com.flowci.core.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 
 import javax.validation.constraints.Email;
@@ -32,6 +33,7 @@ public class CreateUser {
     private String email;
 
     @NotEmpty
+    @JsonAlias("password")
     private String passwordOnMd5;
 
     @NotEmpty
