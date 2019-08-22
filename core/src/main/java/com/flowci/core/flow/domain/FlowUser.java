@@ -17,20 +17,30 @@
 
 package com.flowci.core.flow.domain;
 
+import java.time.Instant;
+import java.util.Date;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
-
-import java.time.Instant;
-import java.util.Date;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
 @Setter
 @EqualsAndHashCode(of = {"userId"})
+@Document(collection = "flow_user")
+@CompoundIndex(def = "{'flowId':1, 'userId':1}", name = "index_flow_user", unique = true, sparse = true)
 public class FlowUser {
 
-    @Indexed(name = "user_id", sparse = true)
+    @Id
+    private String id;
+
+    @Indexed(name = "index_flow_id", sparse = true)
+    private String flowId;
+
+    @Indexed(name = "index_user_id", sparse = true)
     private String userId;
 
     private Date createdAt;

@@ -20,13 +20,9 @@ package com.flowci.core.flow.dao;
 import com.flowci.core.flow.domain.FlowUser;
 
 import java.util.List;
+import java.util.Set;
 
-public interface FlowUserListDao {
-
-    /**
-     * Create empty flow user list
-     */
-    void create(String flowId);
+public interface FlowUserDao {
 
     /**
      * Remove flow user list
@@ -46,12 +42,12 @@ public interface FlowUserListDao {
     /**
      * Batch insert users
      */
-    boolean insert(String flowId, FlowUser...users);
+    void insert(String flowId, Set<String> userIds, String createdBy);
 
     /**
      * Batch remove users
      */
-    boolean remove(String flowId, String ...userId);
+    void remove(String flowId, Set<String> userIds);
 
     /**
      * Check user is existed

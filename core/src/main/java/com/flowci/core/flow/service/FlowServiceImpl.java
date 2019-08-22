@@ -25,7 +25,7 @@ import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.flow.dao.FlowDao;
-import com.flowci.core.flow.dao.FlowUserListDao;
+import com.flowci.core.flow.dao.FlowUserDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
@@ -50,6 +50,7 @@ import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -66,6 +67,7 @@ import org.eclipse.jgit.util.FS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
@@ -99,7 +101,7 @@ public class FlowServiceImpl implements FlowService {
     private YmlDao ymlDao;
 
     @Autowired
-    private FlowUserListDao flowUserListDao;
+    private FlowUserDao flowUserDao;
 
     @Autowired
     private SessionManager sessionManager;
@@ -155,7 +157,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public List<Flow> list(String userId, Status status) {
-        List<String> flowIds = flowUserListDao.findAllFlowsByUserId(userId);
+        List<String> flowIds = flowUserDao.findAllFlowsByUserId(userId);
 
         if (flowIds.isEmpty()) {
             return Collections.emptyList();
@@ -202,9 +204,6 @@ public class FlowServiceImpl implements FlowService {
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
         flowDao.insert(flow);
-
-        // add creator to user list
-        flowUserListDao.create(flow.getId());
         addUsers(flow, flow.getCreatedBy());
 
         createFlowJobQueue(flow);
@@ -260,7 +259,7 @@ public class FlowServiceImpl implements FlowService {
     public Flow delete(String name) {
         Flow flow = get(name);
         flowDao.delete(flow);
-        flowUserListDao.delete(flow.getId());
+        flowUserDao.delete(flow.getId());
 
         try {
             Yml yml = getYml(flow);
@@ -387,23 +386,21 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public void addUsers(Flow flow, String... userIds) {
         User current = sessionManager.get();
-
-        FlowUser[] users = new FlowUser[userIds.length];
-        for (int i = 0; i < userIds.length; i++) {
-            users[i] = new FlowUser(userIds[i], current.getId());
+        try {
+            flowUserDao.insert(flow.getId(), Sets.newHashSet(userIds), current.getId());
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateException("User already in the flow");
         }
-
-        flowUserListDao.insert(flow.getId(), users);
     }
 
     @Override
     public List<FlowUser> listUsers(Flow flow) {
-        return flowUserListDao.findAllUsers(flow.getId());
+        return flowUserDao.findAllUsers(flow.getId());
     }
 
     @Override
     public void removeUsers(Flow flow, String... userIds) {
-        flowUserListDao.remove(flow.getId(), userIds);
+        flowUserDao.remove(flow.getId(), Sets.newHashSet(userIds));
     }
 
     //====================================================================
