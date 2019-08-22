@@ -400,7 +400,17 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public void removeUsers(Flow flow, String... userIds) {
-        flowUserDao.remove(flow.getId(), Sets.newHashSet(userIds));
+        Set<String> idSet = Sets.newHashSet(userIds);
+
+        if (idSet.contains(flow.getCreatedBy())) {
+            throw new ArgumentException("Cannot remove user who create the flow");
+        }
+
+        if (idSet.contains(sessionManager.getUserId())) {
+            throw new ArgumentException("Cannot remove current user from flow");
+        }
+
+        flowUserDao.remove(flow.getId(), idSet);
     }
 
     //====================================================================
