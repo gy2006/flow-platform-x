@@ -76,6 +76,7 @@ public class JobItem {
 
             // git pr
             context.putIfNotEmpty(Variables.PR_TITLE);
+            context.putIfNotEmpty(Variables.PR_NUMBER);
             context.putIfNotEmpty(Variables.PR_URL);
             context.putIfNotEmpty(Variables.PR_HEAD_REPO_NAME);
             context.putIfNotEmpty(Variables.PR_HEAD_REPO_BRANCH);
