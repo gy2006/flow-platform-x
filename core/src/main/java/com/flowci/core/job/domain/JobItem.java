@@ -72,6 +72,7 @@ public class JobItem {
             // git push / tag
             context.putIfNotEmpty(Variables.GIT_BRANCH);
             context.putIfNotEmpty(Variables.GIT_COMMIT_ID);
+            context.putIfNotEmpty(Variables.GIT_COMMIT_URL);
             context.putIfNotEmpty(Variables.GIT_COMMIT_MESSAGE);
 
             // git pr
