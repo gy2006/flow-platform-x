@@ -17,48 +17,30 @@
 
 package com.flowci.core.flow.domain;
 
-import java.time.Instant;
-import java.util.Date;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.CompoundIndex;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.LinkedList;
+import java.util.List;
 
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"userId"})
-@Document(collection = "flow_user")
-@CompoundIndex(def = "{'flowId':1, 'userId':1}", name = "index_flow_user", unique = true, sparse = true)
-public class FlowUser {
+@EqualsAndHashCode(of = {"flowId"})
+@Document(collection = "flow_users")
+public class FlowUsers {
 
     @Id
-    private String id;
-
-    @Indexed(name = "index_flow_id", sparse = true)
     private String flowId;
 
-    @Indexed(name = "index_user_id", sparse = true)
-    private String userId;
+    private List<String> users = new LinkedList<>();
 
-    private Date createdAt;
-
-    private String createdBy;
-
-    public FlowUser() {
-        createdAt = Date.from(Instant.now());
+    public FlowUsers() {
     }
 
-    public FlowUser(String userId) {
-        this();
-        this.userId = userId;
-    }
-
-    public FlowUser(String userId, String createdBy) {
-        this();
-        this.userId = userId;
-        this.createdBy = createdBy;
+    public FlowUsers(String flowId) {
+        this.flowId = flowId;
     }
 }

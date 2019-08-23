@@ -17,12 +17,12 @@
 
 package com.flowci.core.flow.dao;
 
-import com.flowci.core.flow.domain.FlowUser;
-
 import java.util.List;
 import java.util.Set;
 
 public interface FlowUserDao {
+
+    void create(String flowId);
 
     /**
      * Remove flow user list
@@ -37,12 +37,12 @@ public interface FlowUserDao {
     /**
      * Find all users by flow id
      */
-    List<FlowUser> findAllUsers(String flowId);
+    List<String> findAllUsers(String flowId);
 
     /**
      * Batch insert users
      */
-    void insert(String flowId, Set<String> userIds, String createdBy);
+    void insert(String flowId, Set<String> userIds);
 
     /**
      * Batch remove users

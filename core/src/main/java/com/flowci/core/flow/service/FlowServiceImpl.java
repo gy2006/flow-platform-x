@@ -29,12 +29,10 @@ import com.flowci.core.flow.dao.FlowUserDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
-import com.flowci.core.flow.domain.FlowUser;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
-import com.flowci.core.user.domain.User;
 import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.VariableMap;
@@ -203,12 +201,17 @@ public class FlowServiceImpl implements FlowService {
         vars.put(Variables.Flow.Name, name);
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
-        flowDao.insert(flow);
-        addUsers(flow, flow.getCreatedBy());
+        try {
+            flowDao.insert(flow);
+            flowUserDao.create(flow.getId());
 
-        createFlowJobQueue(flow);
+            addUsers(flow, flow.getCreatedBy());
+            createFlowJobQueue(flow);
 
-        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATED));
+            eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATED));
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateException("Flow {0} already exists", name);
+        }
 
         return flow;
     }
@@ -385,16 +388,11 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public void addUsers(Flow flow, String... userIds) {
-        User current = sessionManager.get();
-        try {
-            flowUserDao.insert(flow.getId(), Sets.newHashSet(userIds), current.getId());
-        } catch (DuplicateKeyException e) {
-            throw new DuplicateException("User already in the flow");
-        }
+        flowUserDao.insert(flow.getId(), Sets.newHashSet(userIds));
     }
 
     @Override
-    public List<FlowUser> listUsers(Flow flow) {
+    public List<String> listUsers(Flow flow) {
         return flowUserDao.findAllUsers(flow.getId());
     }
 
@@ -482,14 +480,14 @@ public class FlowServiceImpl implements FlowService {
                 eventManager.publish(new GitTestEvent(this, flowId));
 
                 Collection<Ref> refs = Git.lsRemoteRepository()
-                    .setRemote(url)
-                    .setHeads(true)
-                    .setTransportConfigCallback(transport -> {
-                        SshTransport sshTransport = (SshTransport) transport;
-                        sshTransport.setSshSessionFactory(sessionFactory);
-                    })
-                    .setTimeout(10)
-                    .call();
+                        .setRemote(url)
+                        .setHeads(true)
+                        .setTransportConfigCallback(transport -> {
+                            SshTransport sshTransport = (SshTransport) transport;
+                            sshTransport.setSshSessionFactory(sessionFactory);
+                        })
+                        .setTimeout(10)
+                        .call();
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();

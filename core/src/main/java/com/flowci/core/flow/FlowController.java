@@ -167,13 +167,7 @@ public class FlowController {
     @Action(FlowAction.LIST_USER)
     public List<User> listUsers(@PathVariable String name) {
         Flow flow = flowService.get(name);
-        List<FlowUser> list = flowService.listUsers(flow);
-
-        List<String> ids = new ArrayList<>(list.size());
-        for (FlowUser item : list) {
-            ids.add(item.getUserId());
-        }
-
+        List<String> ids = flowService.listUsers(flow);
         return userService.list(ids);
     }
 

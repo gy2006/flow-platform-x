@@ -19,9 +19,7 @@ package com.flowci.core.flow.service;
 import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
-import com.flowci.core.flow.domain.FlowUser;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.user.domain.User;
 
 import java.util.List;
 
@@ -131,5 +129,5 @@ public interface FlowService {
     /**
      * List users by flow
      */
-    List<FlowUser> listUsers(Flow flow);
+    List<String> listUsers(Flow flow);
 }
