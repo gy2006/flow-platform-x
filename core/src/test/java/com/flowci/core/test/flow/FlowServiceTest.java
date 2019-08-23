@@ -18,8 +18,7 @@ package com.flowci.core.test.flow;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.common.helper.ThreadHelper;
-import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
@@ -27,7 +26,6 @@ import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
-import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.VariableMap;
 import com.flowci.domain.http.ResponseMessage;
@@ -139,7 +137,7 @@ public class FlowServiceTest extends SpringScenario {
     public void should_list_flow_by_credential_name() {
         String credentialName = "flow-ssh-ras-name";
 
-        RSAKeyPair mocked = new RSAKeyPair();
+        RSACredential mocked = new RSACredential();
         mocked.setName(credentialName);
 
         Mockito.when(credentialService.get(credentialName)).thenReturn(mocked);
@@ -189,11 +187,11 @@ public class FlowServiceTest extends SpringScenario {
     @Test
     public void should_test_git_connection_by_list_remote_branches() throws IOException, InterruptedException {
         // init: load private key
-        TypeReference<ResponseMessage<RSAKeyPair>> keyPairResponseType =
-            new TypeReference<ResponseMessage<RSAKeyPair>>() {
+        TypeReference<ResponseMessage<RSACredential>> keyPairResponseType =
+            new TypeReference<ResponseMessage<RSACredential>>() {
             };
 
-        ResponseMessage<RSAKeyPair> r = objectMapper.readValue(load("rsa-test.json"), keyPairResponseType);
+        ResponseMessage<RSACredential> r = objectMapper.readValue(load("rsa-test.json"), keyPairResponseType);
 
         // given:
         Flow flow = flowService.create("git-test");

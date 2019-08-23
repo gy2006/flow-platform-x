@@ -16,24 +16,19 @@
 
 package com.flowci.core.credential.service;
 
-import com.flowci.core.auth.service.AuthService;
+import com.flowci.core.common.domain.SimpleKeyPair;
+import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
-import com.flowci.exception.StatusException;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.KeyPair;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -81,32 +76,26 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public RSAKeyPair genRSA(String email) {
-        RSAKeyPair keyPair = rsaKeyGen(email);
-        if (Objects.isNull(keyPair)) {
-            throw new StatusException("Unable to generate RSA key pair");
-        }
-        return keyPair;
-    }
-
-    @Override
-    public RSAKeyPair createRSA(String name) {
+    public RSACredential createRSA(String name) {
         String email = sessionManager.get().getEmail();
-        RSAKeyPair rsaKeyPair = genRSA(email);
-        rsaKeyPair.setName(name);
-        return save(rsaKeyPair);
+        SimpleKeyPair pair = CipherHelper.genRsa(email);
+
+        RSACredential rsaCredential = new RSACredential();
+        rsaCredential.setName(name);
+        rsaCredential.setPair(pair);
+
+        return save(rsaCredential);
     }
 
     @Override
-    public RSAKeyPair createRSA(String name, String publicKey, String privateKey) {
-        RSAKeyPair rsaKeyPair = new RSAKeyPair();
-        rsaKeyPair.setName(name);
-        rsaKeyPair.setPublicKey(publicKey);
-        rsaKeyPair.setPrivateKey(privateKey);
-        return save(rsaKeyPair);
+    public RSACredential createRSA(String name, SimpleKeyPair pair) {
+        RSACredential rsaCredential = new RSACredential();
+        rsaCredential.setName(name);
+        rsaCredential.setPair(pair);
+        return save(rsaCredential);
     }
 
-    private RSAKeyPair save(RSAKeyPair keyPair) {
+    private RSACredential save(RSACredential keyPair) {
         try {
             Date now = Date.from(Instant.now());
             keyPair.setUpdatedAt(now);
@@ -115,28 +104,6 @@ public class CredentialServiceImpl implements CredentialService {
             return credentialDao.insert(keyPair);
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Credential name {0} is already defined", keyPair.getName());
-        }
-    }
-
-    private RSAKeyPair rsaKeyGen(String email) {
-        try (ByteArrayOutputStream pubKeyOS = new ByteArrayOutputStream()) {
-            try (ByteArrayOutputStream prvKeyOS = new ByteArrayOutputStream()) {
-                JSch jsch = new JSch();
-                RSAKeyPair rsa = new RSAKeyPair();
-
-                KeyPair kpair = KeyPair.genKeyPair(jsch, KeyPair.RSA, 2048);
-                kpair.writePrivateKey(prvKeyOS);
-                kpair.writePublicKey(pubKeyOS, email);
-
-                rsa.setPublicKey(pubKeyOS.toString());
-                rsa.setPrivateKey(prvKeyOS.toString());
-
-                kpair.dispose();
-                return rsa;
-            }
-        } catch (IOException | JSchException e) {
-            log.error(e);
-            return null;
         }
     }
 }

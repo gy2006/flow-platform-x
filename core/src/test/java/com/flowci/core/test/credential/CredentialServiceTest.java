@@ -17,7 +17,7 @@
 package com.flowci.core.test.credential;
 
 import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.exception.DuplicateException;
@@ -50,9 +50,9 @@ public class CredentialServiceTest extends SpringScenario {
         Assert.assertNotNull(rsa.getUpdatedAt());
 
         Credential loaded = credentialService.get("hello.rsa");
-        Assert.assertTrue(loaded instanceof RSAKeyPair);
+        Assert.assertTrue(loaded instanceof RSACredential);
 
-        RSAKeyPair keyPair = (RSAKeyPair) loaded;
+        RSACredential keyPair = (RSACredential) loaded;
         Assert.assertNotNull(keyPair.getPublicKey());
         Assert.assertNotNull(keyPair.getPrivateKey());
     }

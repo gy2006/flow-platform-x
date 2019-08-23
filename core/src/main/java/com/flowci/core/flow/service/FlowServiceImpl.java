@@ -17,12 +17,14 @@
 package com.flowci.core.flow.service;
 
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.domain.SimpleKeyPair;
 import com.flowci.core.common.domain.Variables;
+import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.FlowUserDao;
@@ -43,7 +45,6 @@ import com.flowci.exception.NotFoundException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
-import com.flowci.util.CipherHelper;
 import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.base.Function;
@@ -332,11 +333,11 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
-    public String setSshRsaCredential(String name, RSAKeyPair keyPair) {
+    public String setSshRsaCredential(String name, SimpleKeyPair pair) {
         Flow flow = get(name);
 
         String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
-        credentialService.createRSA(credentialName, keyPair.getPublicKey(), keyPair.getPrivateKey());
+        credentialService.createRSA(credentialName, pair);
 
         return credentialName;
     }
@@ -347,7 +348,7 @@ public class FlowServiceImpl implements FlowService {
         final ObjectWrapper<String> privateKeyWrapper = new ObjectWrapper<>(privateKeyOrCredentialName);
 
         if (!CipherHelper.isRsaPrivateKey(privateKeyOrCredentialName)) {
-            RSAKeyPair sshRsa = (RSAKeyPair) credentialService.get(privateKeyOrCredentialName);
+            RSACredential sshRsa = (RSACredential) credentialService.get(privateKeyOrCredentialName);
 
             if (Objects.isNull(sshRsa)) {
                 throw new ArgumentException("Invalid ssh-rsa name");
@@ -374,7 +375,7 @@ public class FlowServiceImpl implements FlowService {
             return Collections.emptyList();
         }
 
-        RSAKeyPair sshRsa = (RSAKeyPair) credentialService.get(credentialName);
+        RSACredential sshRsa = (RSACredential) credentialService.get(credentialName);
 
         if (Objects.isNull(sshRsa)) {
             throw new ArgumentException("Invalid ssh-rsa name");

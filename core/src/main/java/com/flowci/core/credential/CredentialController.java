@@ -17,16 +17,18 @@
 package com.flowci.core.credential;
 
 import com.flowci.core.auth.annotation.Action;
+import com.flowci.core.common.domain.SimpleKeyPair;
+import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.credential.domain.CreateRSA;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.CredentialAction;
 import com.flowci.core.credential.domain.GenRSA;
 import com.flowci.core.credential.service.CredentialService;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author yang
@@ -46,7 +48,7 @@ public class CredentialController {
 
     @GetMapping
     @Action(CredentialAction.LIST)
-    public List<Credential> list(){
+    public List<Credential> list() {
         return credentialService.list();
     }
 
@@ -60,7 +62,7 @@ public class CredentialController {
     @Action(CredentialAction.CREATE_RSA)
     public Credential create(@Validated @RequestBody CreateRSA body) {
         if (body.hasKeyPair()) {
-            return credentialService.createRSA(body.getName(), body.getPublicKey(), body.getPrivateKey());
+            return credentialService.createRSA(body.getName(), body.getKeyPair());
         }
 
         return credentialService.createRSA(body.getName());
@@ -68,8 +70,8 @@ public class CredentialController {
 
     @PostMapping("/rsa/gen")
     @Action(CredentialAction.GENERATE_RSA)
-    public Credential genByEmail(@Validated @RequestBody GenRSA body) {
-        return credentialService.genRSA(body.getEmail());
+    public SimpleKeyPair genByEmail(@Validated @RequestBody GenRSA body) {
+        return CipherHelper.genRsa(body.getEmail());
     }
 
     @DeleteMapping("/{name}")

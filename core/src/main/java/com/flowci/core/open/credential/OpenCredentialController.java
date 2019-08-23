@@ -17,7 +17,7 @@
 package com.flowci.core.open.credential;
 
 import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.domain.RSACredential;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,8 +36,8 @@ public class OpenCredentialController {
 
     @GetMapping("/rsa/{name}/private")
     public String getRsaPrivateKey(@PathVariable String name) {
-        Credential credential = openCredentialService.get(name, RSAKeyPair.class);
-        RSAKeyPair pair = (RSAKeyPair) credential;
+        Credential credential = openCredentialService.get(name, RSACredential.class);
+        RSACredential pair = (RSACredential) credential;
         return pair.getPrivateKey();
     }
 }

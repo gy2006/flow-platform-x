@@ -16,7 +16,7 @@
 
 package com.flowci.core.flow.service;
 
-import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.common.domain.SimpleKeyPair;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
@@ -103,7 +103,7 @@ public interface FlowService {
      *
      * @return credential name
      */
-    String setSshRsaCredential(String name, RSAKeyPair keyPair);
+    String setSshRsaCredential(String name, SimpleKeyPair keyPair);
 
     /**
      * Test git connection for flow and dispatch application event

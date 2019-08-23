@@ -15,17 +15,18 @@
  *
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.core.common.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
+import lombok.NoArgsConstructor;
 
 @Data
-public class GenRSA {
+@NoArgsConstructor
+@AllArgsConstructor(staticName = "of")
+public class SimpleKeyPair {
 
-    @NotEmpty
-    @Email
-    private String email;
+    private String publicKey;
+
+    private String privateKey;
 }

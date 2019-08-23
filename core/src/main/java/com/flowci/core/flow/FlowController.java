@@ -17,28 +17,27 @@
 package com.flowci.core.flow;
 
 import com.flowci.core.auth.annotation.Action;
-import com.flowci.core.credential.domain.RSAKeyPair;
-import com.flowci.core.flow.domain.*;
+import com.flowci.core.common.domain.SimpleKeyPair;
+import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
+import com.flowci.core.flow.domain.FlowAction;
+import com.flowci.core.flow.domain.FlowGitTest;
+import com.flowci.core.flow.domain.GitSettings;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.domain.http.RequestMessage;
 import com.flowci.exception.ArgumentException;
-
-import java.util.*;
-
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author yang
@@ -143,8 +142,8 @@ public class FlowController {
      */
     @PostMapping("/{name}/credentials/rsa")
     @Action(FlowAction.SETUP_CREDENTIAL)
-    public String setupRSACredential(@PathVariable String name, @RequestBody RSAKeyPair keyPair) {
-        return flowService.setSshRsaCredential(name, keyPair);
+    public String setupRSACredential(@PathVariable String name, @RequestBody SimpleKeyPair pair) {
+        return flowService.setSshRsaCredential(name, pair);
     }
 
     @PostMapping("/{name}/users")

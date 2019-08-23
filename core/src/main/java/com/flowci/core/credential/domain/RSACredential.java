@@ -16,6 +16,8 @@
 
 package com.flowci.core.credential.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.flowci.core.common.domain.SimpleKeyPair;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,13 +26,30 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public final class RSAKeyPair extends Credential {
+public final class RSACredential extends Credential {
 
-    private String publicKey;
+    private SimpleKeyPair pair;
 
-    private String privateKey;
-
-    public RSAKeyPair() {
+    public RSACredential() {
+        this.pair = new SimpleKeyPair();
         this.setCategory(Category.SSH_RSA);
+    }
+
+    @JsonIgnore
+    public String getPrivateKey() {
+        return pair.getPrivateKey();
+    }
+
+    @JsonIgnore
+    public String getPublicKey() {
+        return pair.getPublicKey();
+    }
+
+    public void setPrivateKey(String pk) {
+        this.pair.setPrivateKey(pk);
+    }
+
+    public void setPublicKey(String pk) {
+        this.pair.setPublicKey(pk);
     }
 }
