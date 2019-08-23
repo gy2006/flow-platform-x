@@ -38,7 +38,7 @@ import org.springframework.stereotype.Service;
  * @author yang
  */
 @Service("gitHubTriggerService")
-public class GithubTriggerService implements GitTriggerService {
+public class GithubTriggerService extends TriggerService {
 
     @Autowired
     private ObjectMapper objectMapper;

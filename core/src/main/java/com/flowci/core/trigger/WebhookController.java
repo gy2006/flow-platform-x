@@ -21,30 +21,30 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.service.JobService;
-import com.flowci.core.open.flow.OpenFlowService;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
-import com.flowci.core.trigger.service.GitTriggerService;
+import com.flowci.core.trigger.service.TriggerService;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.tree.Filter;
 import com.flowci.tree.Node;
 import com.flowci.tree.YmlParser;
 import com.google.common.base.Strings;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.Callable;
-import javax.annotation.PostConstruct;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.PostConstruct;
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.Callable;
 
 /**
  * @author yang
@@ -60,13 +60,10 @@ public class WebhookController {
     private HttpServletRequest request;
 
     @Autowired
-    private OpenFlowService openFlowService;
-
-    @Autowired
     private JobService jobService;
 
     @Autowired
-    private GitTriggerService gitHubTriggerService;
+    private TriggerService gitHubTriggerService;
 
     @PostConstruct
     public void initConsumer() {
@@ -88,8 +85,8 @@ public class WebhookController {
         }
 
         // get related flow and yml
-        Flow flow = openFlowService.get(name);
-        Yml yml = openFlowService.getYml(flow);
+        Flow flow = gitHubTriggerService.get(name);
+        Yml yml = gitHubTriggerService.getYml(flow);
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
         if (canStartJob(root, trigger)) {
