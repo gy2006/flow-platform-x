@@ -17,13 +17,13 @@
 package com.flowci.core.credential;
 
 import com.flowci.core.auth.annotation.Action;
-import com.flowci.core.common.domain.SimpleKeyPair;
 import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.credential.domain.CreateRSA;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.CredentialAction;
 import com.flowci.core.credential.domain.GenRSA;
 import com.flowci.core.credential.service.CredentialService;
+import com.flowci.domain.SimpleKeyPair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;

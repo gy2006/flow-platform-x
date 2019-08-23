@@ -17,7 +17,7 @@
 package com.flowci.core.credential.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.flowci.core.common.domain.SimpleKeyPair;
+import com.flowci.domain.SimpleKeyPair;
 import lombok.Getter;
 import lombok.Setter;
 

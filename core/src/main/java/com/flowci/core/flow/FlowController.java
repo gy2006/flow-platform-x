@@ -17,7 +17,6 @@
 package com.flowci.core.flow;
 
 import com.flowci.core.auth.annotation.Action;
-import com.flowci.core.common.domain.SimpleKeyPair;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.FlowAction;
@@ -26,6 +25,7 @@ import com.flowci.core.flow.domain.GitSettings;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
+import com.flowci.domain.SimpleKeyPair;
 import com.flowci.domain.http.RequestMessage;
 import com.flowci.exception.ArgumentException;
 import com.google.common.collect.Lists;

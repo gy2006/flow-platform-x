@@ -16,10 +16,10 @@
 
 package com.flowci.core.flow.service;
 
-import com.flowci.core.common.domain.SimpleKeyPair;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.domain.SimpleKeyPair;
 
 import java.util.List;
 

@@ -17,7 +17,7 @@
 
 package com.flowci.core.common.helper;
 
-import com.flowci.core.common.domain.SimpleKeyPair;
+import com.flowci.domain.SimpleKeyPair;
 import com.flowci.exception.StatusException;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;

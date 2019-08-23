@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.common.domain;
+package com.flowci.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

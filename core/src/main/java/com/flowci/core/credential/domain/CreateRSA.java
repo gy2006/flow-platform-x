@@ -18,7 +18,7 @@ package com.flowci.core.credential.domain;
 
 import javax.validation.constraints.NotNull;
 
-import com.flowci.core.common.domain.SimpleKeyPair;
+import com.flowci.domain.SimpleKeyPair;
 import com.google.common.base.Strings;
 import lombok.Data;
 

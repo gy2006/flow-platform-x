@@ -16,9 +16,10 @@
 
 package com.flowci.core.credential.service;
 
-import com.flowci.core.common.domain.SimpleKeyPair;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
+import com.flowci.domain.SimpleKeyPair;
+
 import java.util.List;
 
 /**

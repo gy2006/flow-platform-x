@@ -16,12 +16,12 @@
 
 package com.flowci.core.credential.service;
 
-import com.flowci.core.common.domain.SimpleKeyPair;
 import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
+import com.flowci.domain.SimpleKeyPair;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import lombok.extern.log4j.Log4j2;

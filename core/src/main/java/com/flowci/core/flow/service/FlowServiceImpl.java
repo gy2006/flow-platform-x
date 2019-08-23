@@ -17,7 +17,6 @@
 package com.flowci.core.flow.service;
 
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.common.domain.SimpleKeyPair;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.manager.SessionManager;
@@ -37,6 +36,7 @@ import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.domain.ObjectWrapper;
+import com.flowci.domain.SimpleKeyPair;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
