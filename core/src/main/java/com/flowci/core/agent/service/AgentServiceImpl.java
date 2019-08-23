@@ -23,6 +23,7 @@ import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.domain.Agent;
@@ -248,6 +249,9 @@ public class AgentServiceImpl implements AgentService {
 
         Agent agent = new Agent(name, tags);
         agent.setToken(UUID.randomUUID().toString());
+
+        String dummyEmailForAgent = "agent." + name + "@flow.ci";
+        agent.setRsa(CipherHelper.genRsa(dummyEmailForAgent));
 
         try {
             agentDao.insert(agent);
