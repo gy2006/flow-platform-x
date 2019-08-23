@@ -461,6 +461,8 @@ public class FlowServiceImpl implements FlowService {
 
     private class GitBranchLoader {
 
+        private static final String RefPrefix = "refs/heads/";
+
         private final String flowId;
 
         private final String privateKey;
@@ -492,7 +494,7 @@ public class FlowServiceImpl implements FlowService {
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();
-                    branches.add(refName.substring(refName.lastIndexOf("/") + 1));
+                    branches.add(refName.substring(RefPrefix.length()));
                 }
 
                 // publish DONE event
