@@ -17,11 +17,36 @@
 
 package com.flowci.core.api;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.credential.domain.RSACredential;
+import com.flowci.domain.Agent;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
+/**
+ * Provides API which calling from agent plugin
+ */
 @RestController
 @RequestMapping("/api")
 public class ApiController {
 
+    private static final String HeaderAgentToken = "AGENT-TOKEN";
+
+    @Autowired
+    private ApiService apiService;
+
+    @Autowired
+    private AgentService agentService;
+
+    @GetMapping("/credential/{name}")
+    public String getRsaPrivateKey(@RequestHeader(HeaderAgentToken) String token,
+                                   @PathVariable String name) {
+
+        Agent agent = agentService.getByToken(token);
+
+        Credential credential = apiService.getCredential(name, RSACredential.class);
+        RSACredential pair = (RSACredential) credential;
+        return pair.getPrivateKey();
+    }
 }

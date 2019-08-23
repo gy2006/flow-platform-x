@@ -20,20 +20,18 @@ package com.flowci.core.api;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.exception.NotFoundException;
-import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/**
- * @author yang
- */
+import java.util.Objects;
+
 @Service
-public class OpenCredentialService {
+public class ApiServiceImpl implements ApiService {
 
     @Autowired
     private CredentialDao credentialDao;
 
-    public Credential get(String name, Class<? extends Credential> target) {
+    public Credential getCredential(String name, Class<? extends Credential> target) {
         Credential credential = credentialDao.findByName(name);
 
         if (Objects.isNull(credential)) {
@@ -46,5 +44,4 @@ public class OpenCredentialService {
 
         throw new NotFoundException("Credential {0} is not found", name);
     }
-
 }
