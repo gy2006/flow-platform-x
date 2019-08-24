@@ -16,8 +16,10 @@
 
 package com.flowci.core.trigger.converter;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.trigger.domain.GitPingTrigger;
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPrTrigger.Sender;
 import com.flowci.core.trigger.domain.GitPrTrigger.Source;
@@ -33,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -66,31 +69,65 @@ public class GitHubConverter implements TriggerConverter {
         }
 
         if (event.equals(Ping)) {
-            log.info("Ping event from github.com");
-            return Optional.empty();
+            return Optional.ofNullable(onPing(body));
         }
 
         return Optional.empty();
     }
 
+    private GitPingTrigger onPing(InputStream stream) {
+        try {
+            PingObject ping = objectMapper.readValue(stream, PingObject.class);
+            return ping.toTrigger();
+        } catch (IOException e) {
+            log.warn("Unable to parse Github ping event");
+            return null;
+        }
+    }
+
     private GitPushTrigger onPushOrTag(InputStream stream) {
         try {
-            PushObject pushObject = objectMapper.readValue(stream, PushObject.class);
-            return pushObject.toTrigger();
+            PushObject push = objectMapper.readValue(stream, PushObject.class);
+            return push.toTrigger();
         } catch (IOException e) {
-            log.warn("Unable to parse Github push event data: {}", e.getMessage());
+            log.warn("Unable to parse Github push event");
             return null;
         }
     }
 
     private GitPrTrigger onPullRequest(InputStream stream) {
         try {
-            PrObject prObject = objectMapper.readValue(stream, PrObject.class);
-            return prObject.toTrigger();
+            PrObject pr = objectMapper.readValue(stream, PrObject.class);
+            return pr.toTrigger();
         } catch (IOException e) {
-            log.warn("Unable to parse Github PR event data");
+            log.warn("Unable to parse Github PR event");
             return null;
         }
+    }
+
+    private static class PingObject {
+
+        @JsonProperty("hook_id")
+        private String hookId;
+
+        private PingHook hook;
+
+        private GitPingTrigger toTrigger() {
+            GitPingTrigger trigger = new GitPingTrigger();
+            trigger.setSource(GitSource.GITHUB);
+            trigger.setEvent(GitEvent.PING);
+            trigger.setActive(hook.active);
+            trigger.setEvents(hook.events);
+            return trigger;
+        }
+    }
+
+    private static class PingHook {
+
+        private Boolean active;
+
+        private Set<String> events;
+
     }
 
     private static class PushObject {

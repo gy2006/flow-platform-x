@@ -16,7 +16,9 @@
 
 package com.flowci.core.trigger.domain;
 
+import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.domain.VariableMap;
+import com.flowci.exception.NotFoundException;
 import java.io.Serializable;
 import lombok.Getter;
 import lombok.Setter;
@@ -49,6 +51,8 @@ public abstract class GitTrigger implements Serializable {
 
     public enum GitEvent {
 
+        PING,
+
         PUSH,
 
         PR_OPEN,
@@ -63,5 +67,28 @@ public abstract class GitTrigger implements Serializable {
         map.put(Variables.GIT_SOURCE, source.name());
         map.put(Variables.GIT_EVENT, event.name());
         return map;
+    }
+
+    /**
+     * Convert git trigger to job trigger
+     */
+    public Trigger toJobTrigger() {
+        if (event == GitEvent.PUSH) {
+            return Trigger.PUSH;
+        }
+
+        if (event == GitEvent.TAG) {
+            return Trigger.TAG;
+        }
+
+        if (event == GitEvent.PR_OPEN) {
+            return Trigger.PR_OPEN;
+        }
+
+        if (event == GitEvent.PR_CLOSE) {
+            return Trigger.PR_CLOSE;
+        }
+
+        throw new NotFoundException("Cannot found related job trigger for {0}", event.name());
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 fir.im
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.core.trigger.service;
+package com.flowci.core.trigger.domain;
 
-import com.flowci.core.trigger.domain.GitTrigger;
+import java.util.Set;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author yang
  */
-public interface GitTriggerService {
+@Getter
+@Setter
+public final class GitPingTrigger extends GitTrigger {
 
-    boolean startJob(String flow, GitTrigger trigger);
+    private Boolean active;
+
+    private Set<String> events;
+
 }

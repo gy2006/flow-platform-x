@@ -16,10 +16,11 @@
 
 package com.flowci.core.trigger;
 
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.trigger.converter.GitHubConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
 import com.flowci.core.trigger.domain.GitTrigger;
-import com.flowci.core.trigger.service.TriggerService;
+import com.flowci.core.trigger.event.GitHookEvent;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Optional;
@@ -43,10 +44,10 @@ public class WebhookController {
     private HttpServletRequest request;
 
     @Autowired
-    private TriggerService triggerService;
+    private TriggerConverter githubConverter;
 
     @Autowired
-    private TriggerConverter githubConverter;
+    private SpringEventManager eventManager;
 
     @PostMapping("/{name}")
     public void gitTrigger(@PathVariable String name) throws IOException {
@@ -60,7 +61,7 @@ public class WebhookController {
             }
 
             log.info("Github trigger received: {}", optional.get());
-            triggerService.startJob(name, optional.get());
+            eventManager.publish(new GitHookEvent(this, name, optional.get()));
         }
     }
 

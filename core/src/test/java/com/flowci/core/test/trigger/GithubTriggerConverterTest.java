@@ -34,7 +34,6 @@ import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.core.trigger.domain.Variables;
-import com.flowci.core.trigger.service.GitTriggerService;
 import com.flowci.domain.VariableMap;
 import java.io.InputStream;
 import java.util.Optional;
