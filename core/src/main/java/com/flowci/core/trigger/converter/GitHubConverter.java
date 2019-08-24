@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 fir.im
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.trigger.service;
+package com.flowci.core.trigger.converter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,6 +23,7 @@ import com.flowci.core.trigger.domain.GitPrTrigger.Sender;
 import com.flowci.core.trigger.domain.GitPrTrigger.Source;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger.Author;
+import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.exception.ArgumentException;
@@ -31,35 +32,64 @@ import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import java.util.Optional;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 /**
  * @author yang
  */
-@Service("gitHubTriggerService")
-public class GithubTriggerService extends TriggerService {
+@Log4j2
+@Component
+public class GitHubConverter implements TriggerConverter {
+
+    public static final String Header = "X-GitHub-Event";
+
+    public static final String Ping = "ping";
+
+    public static final String PushOrTag = "push";
+
+    public static final String PR = "pull_request";
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Override
-    public GitPushTrigger onPushOrTag(InputStream stream) {
+    public Optional<GitTrigger> convert(String event, InputStream body) {
+        if (event.equals(PushOrTag)) {
+            return Optional.ofNullable(onPushOrTag(body));
+        }
+
+        if (event.equals(PR)) {
+            return Optional.ofNullable(onPullRequest(body));
+        }
+
+        if (event.equals(Ping)) {
+            log.info("Ping event from github.com");
+            return Optional.empty();
+        }
+
+        return Optional.empty();
+    }
+
+    private GitPushTrigger onPushOrTag(InputStream stream) {
         try {
             PushObject pushObject = objectMapper.readValue(stream, PushObject.class);
             return pushObject.toTrigger();
         } catch (IOException e) {
-            throw new ArgumentException("Unable to parse Github push event data: {0}", e.getMessage());
+            log.warn("Unable to parse Github push event data: {}", e.getMessage());
+            return null;
         }
     }
 
-    @Override
-    public GitPrTrigger onPullRequest(InputStream stream) {
+    private GitPrTrigger onPullRequest(InputStream stream) {
         try {
             PrObject prObject = objectMapper.readValue(stream, PrObject.class);
             return prObject.toTrigger();
         } catch (IOException e) {
-            throw new ArgumentException("Unable to parse Github PR event data");
+            log.warn("Unable to parse Github PR event data");
+            return null;
         }
     }
 

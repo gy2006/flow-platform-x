@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package com.flowci.core.trigger.service;
+package com.flowci.core.trigger.converter;
 
 import com.flowci.core.trigger.domain.GitTrigger;
+import java.io.InputStream;
+import java.util.Optional;
 
 /**
  * @author yang
  */
-public interface GitTriggerService {
+public interface TriggerConverter {
 
-    boolean startJob(String flow, GitTrigger trigger);
+    Optional<GitTrigger> convert(String event, InputStream body);
 }
