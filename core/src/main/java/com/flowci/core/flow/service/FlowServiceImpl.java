@@ -36,6 +36,7 @@ import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.CreateNewJobEvent;
+import com.flowci.core.trigger.domain.GitPingTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
@@ -64,6 +65,8 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Date;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -293,6 +296,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public void update(Flow flow) {
+        flow.setUpdatedAt(Date.from(Instant.now()));
         flowDao.save(flow);
     }
 
@@ -443,33 +447,35 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @EventListener
-    public void onGitPushOrPrEvent(GitHookEvent event) {
-        if (event.isPingEvent()) {
-            return;
-        }
-
+    public void onGitHookEvent(GitHookEvent event) {
         Flow flow = get(event.getFlow());
-        Yml yml = getYml(flow);
-        Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
-        if (!canStartJob(root, event.getTrigger())) {
-            log.debug("Cannot start job since filter not matched on flow {}", flow.getName());
-            return;
+        if (event.isPingEvent()) {
+            GitPingTrigger ping = (GitPingTrigger) event.getTrigger();
+
+            Flow.WebhookStatus ws = new Flow.WebhookStatus();
+            ws.setAdded(true);
+            ws.setCreatedAt(ping.getCreatedAt());
+            ws.setEvents(ping.getEvents());
+
+            flow.setWebhookStatus(ws);
+            update(flow);
         }
 
-        VariableMap gitInput = event.getTrigger().toVariableMap();
-        Trigger jobTrigger = event.getTrigger().toJobTrigger();
+        else {
+            Yml yml = getYml(flow);
+            Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
-        eventManager.publish(new CreateNewJobEvent(this, flow, yml, jobTrigger, gitInput));
-    }
+            if (!canStartJob(root, event.getTrigger())) {
+                log.debug("Cannot start job since filter not matched on flow {}", flow.getName());
+                return;
+            }
 
-    @EventListener
-    public void onGitPingEvent(GitHookEvent event) {
-        if (!event.isPingEvent()) {
-            return;
+            VariableMap gitInput = event.getTrigger().toVariableMap();
+            Trigger jobTrigger = event.getTrigger().toJobTrigger();
+
+            eventManager.publish(new CreateNewJobEvent(this, flow, yml, jobTrigger, gitInput));
         }
-
-        // TODO: should update flow wehook status
     }
 
     //====================================================================

@@ -28,6 +28,7 @@ import static com.flowci.core.trigger.domain.Variables.GIT_SOURCE;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.converter.GitHubConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
+import com.flowci.core.trigger.domain.GitPingTrigger;
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
@@ -44,10 +45,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * @author yang
  */
-public class GithubTriggerConverterTest extends SpringScenario {
+public class GithubConverterTest extends SpringScenario {
 
     @Autowired
     private TriggerConverter githubConverter;
+
+    @Test
+    public void should_parse_ping_event() {
+        InputStream stream = load("github/webhook_ping.json");
+
+        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.Ping, stream);
+        Assert.assertTrue(optional.isPresent());
+
+        GitPingTrigger trigger = (GitPingTrigger) optional.get();
+        Assert.assertNotNull(trigger);
+
+        Assert.assertTrue(trigger.getActive());
+        Assert.assertTrue(trigger.getEvents().contains("pull_request"));
+        Assert.assertTrue(trigger.getEvents().contains("push"));
+        Assert.assertEquals("2019-08-23T20:35:35Z", trigger.getCreatedAt());
+    }
 
     @Test
     public void should_parse_push_event() {

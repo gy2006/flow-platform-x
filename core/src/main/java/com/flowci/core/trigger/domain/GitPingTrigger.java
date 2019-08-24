@@ -31,4 +31,5 @@ public final class GitPingTrigger extends GitTrigger {
 
     private Set<String> events;
 
+    private String createdAt;
 }

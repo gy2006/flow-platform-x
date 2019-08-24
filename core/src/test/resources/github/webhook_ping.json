@@ -1,13 +1,3 @@
-// Headers
-
-//Request URL: https://a50b96a9.ngrok.io/webhooks/test
-//Request method: POST
-//content-type: application/json
-//Expect:
-//User-Agent: GitHub-Hookshot/6a45041
-//X-GitHub-Delivery: 8f277060-c5e5-11e9-8502-99bf2bab02ff
-//X-GitHub-Event: ping
-
 {
   "zen": "Favor focus over features.",
   "hook_id": 134230780,

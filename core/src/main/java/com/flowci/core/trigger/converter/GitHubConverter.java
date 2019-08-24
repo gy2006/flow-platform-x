@@ -16,7 +16,6 @@
 
 package com.flowci.core.trigger.converter;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.trigger.domain.GitPingTrigger;
@@ -31,11 +30,14 @@ import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.exception.ArgumentException;
 import com.flowci.util.StringHelper;
 import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -108,9 +110,9 @@ public class GitHubConverter implements TriggerConverter {
     private static class PingObject {
 
         @JsonProperty("hook_id")
-        private String hookId;
+        public String hookId;
 
-        private PingHook hook;
+        public PingHook hook;
 
         private GitPingTrigger toTrigger() {
             GitPingTrigger trigger = new GitPingTrigger();
@@ -118,15 +120,19 @@ public class GitHubConverter implements TriggerConverter {
             trigger.setEvent(GitEvent.PING);
             trigger.setActive(hook.active);
             trigger.setEvents(hook.events);
+            trigger.setCreatedAt(hook.createdAt);
             return trigger;
         }
     }
 
     private static class PingHook {
 
-        private Boolean active;
+        public boolean active;
 
-        private Set<String> events;
+        public Set<String> events;
+
+        @JsonProperty("created_at")
+        public String createdAt;
 
     }
 

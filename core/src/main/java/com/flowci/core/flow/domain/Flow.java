@@ -21,6 +21,8 @@ import com.flowci.core.common.domain.Mongoable;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.domain.VariableMap;
 import com.flowci.util.StringHelper;
+import java.util.Set;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -55,6 +57,8 @@ public final class Flow extends Mongoable {
     @NonNull
     private VariableMap variables = new VariableMap();
 
+    private WebhookStatus webhookStatus;
+
     public Flow(String name) {
         this.name = name;
     }
@@ -74,5 +78,15 @@ public final class Flow extends Mongoable {
     public boolean hasCredential() {
         String val = variables.get(Variables.Flow.SSH_RSA);
         return StringHelper.hasValue(val);
+    }
+
+    @Data
+    public static class WebhookStatus {
+
+        private boolean added;
+
+        private String createdAt;
+
+        private Set<String> events;
     }
 }
