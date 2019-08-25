@@ -19,6 +19,7 @@ package com.flowci.core.flow.service;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.CipherHelper;
+import com.flowci.core.common.manager.PathManager;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
@@ -48,6 +49,7 @@ import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
+import com.flowci.exception.StatusException;
 import com.flowci.tree.Filter;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
@@ -124,6 +126,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private SpringEventManager eventManager;
+
+    @Autowired
+    private PathManager pathManager;
 
     @Autowired
     private CronService cronService;
@@ -221,6 +226,7 @@ public class FlowServiceImpl implements FlowService {
 
         try {
             flowDao.insert(flow);
+            pathManager.create(flow);
             flowUserDao.create(flow.getId());
 
             addUsers(flow, flow.getCreatedBy());
@@ -229,6 +235,9 @@ public class FlowServiceImpl implements FlowService {
             eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATED));
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Flow {0} already exists", name);
+        } catch (IOException e) {
+            flowDao.delete(flow);
+            throw new StatusException("Cannot create flow workspace");
         }
 
         return flow;
@@ -460,9 +469,7 @@ public class FlowServiceImpl implements FlowService {
 
             flow.setWebhookStatus(ws);
             update(flow);
-        }
-
-        else {
+        } else {
             Yml yml = getYml(flow);
             Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
@@ -534,14 +541,14 @@ public class FlowServiceImpl implements FlowService {
                 eventManager.publish(new GitTestEvent(this, flowId));
 
                 Collection<Ref> refs = Git.lsRemoteRepository()
-                        .setRemote(url)
-                        .setHeads(true)
-                        .setTransportConfigCallback(transport -> {
-                            SshTransport sshTransport = (SshTransport) transport;
-                            sshTransport.setSshSessionFactory(sessionFactory);
-                        })
-                        .setTimeout(10)
-                        .call();
+                    .setRemote(url)
+                    .setHeads(true)
+                    .setTransportConfigCallback(transport -> {
+                        SshTransport sshTransport = (SshTransport) transport;
+                        sshTransport.setSshSessionFactory(sessionFactory);
+                    })
+                    .setTimeout(10)
+                    .call();
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();

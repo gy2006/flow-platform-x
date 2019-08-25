@@ -32,7 +32,7 @@ public class ConfigProperties {
 
     private Path workspace;
 
-    private Path logDir;
+    private Path flowDir;
 
     private String serverAddress;
 

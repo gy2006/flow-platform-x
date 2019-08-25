@@ -16,16 +16,13 @@
 
 package com.flowci.core.job.config;
 
-import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.tree.NodeTree;
 import com.github.benmanes.caffeine.cache.Cache;
-import java.nio.file.Path;
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -36,14 +33,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Log4j2
 @Configuration
 public class JobConfig {
-    @Autowired
-    private ConfigProperties appProperties;
-
-
-    @Bean("logDir")
-    public Path logDir() {
-        return appProperties.getLogDir();
-    }
 
     @Bean("jobDeleteExecutor")
     public ThreadPoolTaskExecutor jobDeleteExecutor() {

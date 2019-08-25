@@ -18,6 +18,7 @@ package com.flowci.core.flow.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
+import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.domain.VariableMap;
 import com.flowci.util.StringHelper;
@@ -39,7 +40,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Setter
 @NoArgsConstructor
 @ToString(of = {"name"}, callSuper = true)
-public final class Flow extends Mongoable {
+public final class Flow extends Mongoable implements Pathable {
 
     public enum Status {
         PENDING,
@@ -78,6 +79,12 @@ public final class Flow extends Mongoable {
     public boolean hasCredential() {
         String val = variables.get(Variables.Flow.SSH_RSA);
         return StringHelper.hasValue(val);
+    }
+
+    @JsonIgnore
+    @Override
+    public String pathName() {
+        return getId();
     }
 
     @Data

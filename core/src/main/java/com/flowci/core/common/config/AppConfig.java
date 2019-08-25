@@ -63,10 +63,10 @@ public class AppConfig {
     private static final ObjectMapper Mapper = Jsonable.getMapper();
 
     private static final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
-            new ByteArrayHttpMessageConverter(),
-            new MappingJackson2HttpMessageConverter(Mapper),
-            new ResourceHttpMessageConverter(),
-            new AllEncompassingFormHttpMessageConverter()
+        new ByteArrayHttpMessageConverter(),
+        new MappingJackson2HttpMessageConverter(Mapper),
+        new ResourceHttpMessageConverter(),
+        new AllEncompassingFormHttpMessageConverter()
     );
 
     static {
@@ -89,8 +89,8 @@ public class AppConfig {
     }
 
     @PostConstruct
-    private void initLogDir() throws IOException {
-        Path path = appProperties.getLogDir();
+    private void initFlowDir() throws IOException {
+        Path path = appProperties.getFlowDir();
         FileHelper.createDirectory(path);
     }
 
@@ -103,6 +103,11 @@ public class AppConfig {
     @Bean("tmpDir")
     public Path tmpDir() {
         return Paths.get(appProperties.getWorkspace().toString(), "tmp");
+    }
+
+    @Bean("flowDir")
+    public Path flowDir() {
+        return appProperties.getFlowDir();
     }
 
     @Bean("objectMapper")
@@ -138,14 +143,14 @@ public class AppConfig {
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(new CrosInterceptor());
                 registry.addInterceptor(authHandler())
-                        .addPathPatterns("/users/**")
-                        .addPathPatterns("/flows/**")
-                        .addPathPatterns("/jobs/**")
-                        .addPathPatterns("/agents/**")
-                        .addPathPatterns("/credentials/**")
-                        .addPathPatterns("/auth/logout")
-                        .excludePathPatterns("/agents/connect")
-                        .excludePathPatterns("/agents/logs/upload");
+                    .addPathPatterns("/users/**")
+                    .addPathPatterns("/flows/**")
+                    .addPathPatterns("/jobs/**")
+                    .addPathPatterns("/agents/**")
+                    .addPathPatterns("/credentials/**")
+                    .addPathPatterns("/auth/logout")
+                    .excludePathPatterns("/agents/connect")
+                    .excludePathPatterns("/agents/logs/upload");
             }
 
             @Override
