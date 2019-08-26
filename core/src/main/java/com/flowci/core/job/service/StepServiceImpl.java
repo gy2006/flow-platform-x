@@ -67,8 +67,10 @@ public class StepServiceImpl implements StepService {
         List<ExecutedCmd> steps = new LinkedList<>();
 
         for (Node node : tree.getOrdered()) {
-            CmdId id = cmdManager.createId(job, node);
-            steps.add(new ExecutedCmd(id.toString(), job.getFlowId(), node.isAllowFailure()));
+            CmdId cmdId = cmdManager.createId(job, node);
+
+            ExecutedCmd cmd = new ExecutedCmd(cmdId, job.getFlowId(), node.isAllowFailure());
+            steps.add(cmd);
         }
 
         return executedCmdDao.insert(steps);

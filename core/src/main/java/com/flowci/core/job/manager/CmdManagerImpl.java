@@ -16,6 +16,7 @@
 
 package com.flowci.core.job.manager;
 
+import com.flowci.core.common.domain.Variables;
 import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
@@ -70,6 +71,9 @@ public class CmdManagerImpl implements CmdManager {
         cmd.setEnvFilters(Sets.newHashSet(node.getExports()));
         cmd.setScripts(Lists.newArrayList(script));
         cmd.setPlugin(node.getPlugin());
+
+        // get cmd work dir with default value flow id
+        cmd.setWorkDir(inputs.get(Variables.Flow.WorkDir, job.getFlowId()));
 
         return cmd;
     }
