@@ -19,6 +19,7 @@ package com.flowci.core.common.manager;
 import com.flowci.core.common.domain.Pathable;
 import com.flowci.util.FileHelper;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,11 @@ public class PathManager {
     public Path log(Pathable... objs) throws IOException {
         Path dir = connect(flowDir, objs);
         return FileHelper.createDirectory(Paths.get(dir.toString(), "logs"));
+    }
+
+    public boolean exist(Pathable... objs) {
+        Path dir = connect(flowDir, objs);
+        return Files.exists(dir);
     }
 
     private static Path connect(Path base, Pathable... objs) {

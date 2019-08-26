@@ -98,10 +98,8 @@ public class AgentController {
     public void upload(@RequestHeader(HeaderAgentToken) String token,
                        @RequestPart("file") MultipartFile file) {
 
-        Agent agent = agentService.getByToken(token);
-        if (Objects.isNull(agent)) {
-            throw new NotFoundException("Agent not existed");
-        }
+        // verify token
+        agentService.getByToken(token);
 
         try(InputStream stream = file.getInputStream()) {
             loggingService.save(file.getOriginalFilename(), stream);

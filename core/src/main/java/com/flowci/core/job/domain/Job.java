@@ -21,11 +21,12 @@ import com.flowci.core.common.domain.Mongoable;
 import com.flowci.core.common.domain.Pathable;
 import com.flowci.domain.VariableMap;
 import com.flowci.tree.Selector;
-import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Date;
 
 /**
  * @author yang
@@ -34,6 +35,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Setter
 @Document(collection = "job")
 public class Job extends Mongoable implements Pathable {
+
+    public static Pathable path(String id) {
+        Job job = new Job();
+        job.setId(id);
+        return job;
+    }
 
     public enum Trigger {
 

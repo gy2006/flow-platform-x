@@ -18,7 +18,7 @@ package com.flowci.core.job.service;
 
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.job.dao.ExecutedCmdDao;
-import com.flowci.core.job.domain.CmdId;
+import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.StepStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;

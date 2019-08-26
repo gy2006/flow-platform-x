@@ -49,10 +49,10 @@ public interface LoggingService {
     /**
      * Get log resource
      *
-     * @param executedCmdId cmd id
+     * @param cmdId cmd id
      * @param isRaw indicated to get raw log data or not
      * @return file resource
      */
-    Resource get(String executedCmdId, boolean isRaw);
+    Resource get(String cmdId, boolean isRaw);
 
 }

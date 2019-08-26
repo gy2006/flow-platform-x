@@ -20,7 +20,7 @@ import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.service.FlowService;
-import com.flowci.core.job.domain.CmdId;
+import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;

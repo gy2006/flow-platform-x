@@ -42,6 +42,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @ToString(of = {"name"}, callSuper = true)
 public final class Flow extends Mongoable implements Pathable {
 
+    public static Pathable path(String id) {
+        Flow flow = new Flow();
+        flow.setId(id);
+        return flow;
+    }
+
     public enum Status {
         PENDING,
 

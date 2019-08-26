@@ -16,7 +16,7 @@
 
 package com.flowci.core.job.manager;
 
-import com.flowci.core.job.domain.CmdId;
+import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.service.PluginService;
@@ -29,17 +29,10 @@ import com.flowci.tree.Node;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import java.net.URI;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.UUID;
 
 /**
  * @author yang
@@ -47,15 +40,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Repository
 public class CmdManagerImpl implements CmdManager {
 
-    private static final ParameterizedTypeReference<Page<String>> LoggingPageType =
-        new ParameterizedTypeReference<Page<String>>() {
-        };
-
     @Autowired
     private PluginService pluginService;
-
-    @Autowired
-    private RestTemplate restTemplate;
 
     @Override
     public CmdId createId(Job job, Node node) {
@@ -91,18 +77,6 @@ public class CmdManagerImpl implements CmdManager {
     @Override
     public Cmd createKillCmd() {
         return new Cmd(UUID.randomUUID().toString(), CmdType.KILL);
-    }
-
-    @Override
-    public Page<String> getLogs(String agentHost, String cmdId) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(agentHost)
-            .pathSegment("cmd", cmdId)
-            .build().toUri();
-
-        ResponseEntity<Page<String>> response =
-            restTemplate.exchange(new RequestEntity<>(HttpMethod.GET, uri), LoggingPageType);
-
-        return response.getBody();
     }
 
     private void verifyPluginInput(VariableMap context, Plugin plugin) {

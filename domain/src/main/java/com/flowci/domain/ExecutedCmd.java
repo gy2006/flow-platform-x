@@ -28,6 +28,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import static com.flowci.domain.ExecutedCmd.Status.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @author yang
@@ -121,14 +122,28 @@ public class ExecutedCmd extends CmdBase {
      */
     private Long logSize = -1L;
 
+    @JsonIgnore
+    private CmdId cmdId;
+
     public ExecutedCmd(String id, String flowId, boolean allowFailure) {
         setId(id);
         setFlowId(flowId);
         setAllowFailure(allowFailure);
+
+        this.cmdId = CmdId.parse(id);
+        checkNotNull(this.cmdId);
     }
 
     public ExecutedCmd(Cmd cmd, String flowId) {
         this(cmd.getId(), flowId, cmd.getAllowFailure());
+    }
+
+    public String getJobId() {
+        return cmdId.getJobId();
+    }
+
+    public String getNodePath() {
+        return cmdId.getNodePath();
     }
 
     @JsonProperty
