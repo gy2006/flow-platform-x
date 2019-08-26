@@ -163,7 +163,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when:
         ObjectWrapper<Agent> targetAgent = new ObjectWrapper<>();
-        ObjectWrapper<Cmd> targetCmd = new ObjectWrapper<>();
+        ObjectWrapper<CmdIn> targetCmd = new ObjectWrapper<>();
         CountDownLatch counter = new CountDownLatch(1);
 
         addEventListener((ApplicationListener<CmdSentEvent>) event -> {
@@ -186,7 +186,7 @@ public class JobServiceTest extends ZookeeperScenario {
         NodeTree tree = NodeTree.create(root);
         Node first = tree.next(tree.getRoot().getPath());
 
-        Cmd cmd = targetCmd.getValue();
+        CmdIn cmd = targetCmd.getValue();
         Assert.assertEquals(cmdManager.createId(job, first).toString(), cmd.getId());
         Assert.assertEquals("echo step version", cmd.getInputs().get("FLOW_VERSION"));
         Assert.assertEquals("echo step", cmd.getInputs().get("FLOW_WORKSPACE"));

@@ -28,7 +28,7 @@ import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
-import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdIn;
 import com.flowci.domain.Settings;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
@@ -277,7 +277,7 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public void dispatch(Cmd cmd, Agent agent) {
+    public void dispatch(CmdIn cmd, Agent agent) {
         try {
             byte[] body = objectMapper.writeValueAsBytes(cmd);
             agentQueueManager.send(agent.getQueueName(), body);

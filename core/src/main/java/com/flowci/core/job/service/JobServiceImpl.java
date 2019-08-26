@@ -55,7 +55,7 @@ import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
-import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdIn;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
@@ -274,7 +274,7 @@ public class JobServiceImpl implements JobService {
         // send stop cmd when is running
         if (job.isRunning()) {
             Agent agent = agentService.get(job.getAgentId());
-            Cmd killCmd = cmdManager.createKillCmd();
+            CmdIn killCmd = cmdManager.createKillCmd();
 
             agentService.dispatch(killCmd, agent);
             logInfo(job, " cancel cmd been send to {}", agent.getName());
@@ -653,7 +653,7 @@ public class JobServiceImpl implements JobService {
                 stepService.update(job, executedCmd);
             }
 
-            Cmd cmd = cmdManager.createShellCmd(job, node);
+            CmdIn cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
             logInfo(job, "send to agent: step={}, agent={}", node.getName(), agent.getName());
         } catch (Throwable e) {

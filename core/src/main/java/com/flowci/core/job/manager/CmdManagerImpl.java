@@ -21,7 +21,7 @@ import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.service.PluginService;
-import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdIn;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.Variable;
 import com.flowci.domain.VariableMap;
@@ -50,7 +50,7 @@ public class CmdManagerImpl implements CmdManager {
     }
 
     @Override
-    public Cmd createShellCmd(Job job, Node node) {
+    public CmdIn createShellCmd(Job job, Node node) {
         // node envs has top priority;
         VariableMap inputs = VariableMap.merge(job.getContext(), node.getEnvironments());
         String script = node.getScript();
@@ -65,7 +65,7 @@ public class CmdManagerImpl implements CmdManager {
         }
 
         // create cmd based on plugin
-        Cmd cmd = new Cmd(createId(job, node).toString(), CmdType.SHELL);
+        CmdIn cmd = new CmdIn(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
         cmd.setAllowFailure(allowFailure);
         cmd.setEnvFilters(Sets.newHashSet(node.getExports()));
@@ -79,8 +79,8 @@ public class CmdManagerImpl implements CmdManager {
     }
 
     @Override
-    public Cmd createKillCmd() {
-        return new Cmd(UUID.randomUUID().toString(), CmdType.KILL);
+    public CmdIn createKillCmd() {
+        return new CmdIn(UUID.randomUUID().toString(), CmdType.KILL);
     }
 
     private void verifyPluginInput(VariableMap context, Plugin plugin) {
