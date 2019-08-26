@@ -37,7 +37,6 @@ import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobItemDao;
 import com.flowci.core.job.dao.JobNumberDao;
-import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobItem;
@@ -55,6 +54,7 @@ import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
+import com.flowci.domain.CmdId;
 import com.flowci.domain.CmdIn;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
@@ -393,8 +393,7 @@ public class JobServiceImpl implements JobService {
         List<ExecutedCmd> steps = stepService.list(job);
         for (ExecutedCmd step : steps) {
             if (step.isRunning() || step.isPending()) {
-                step.setStatus(ExecutedCmd.Status.SKIPPED);
-                stepService.update(job, step);
+                stepService.statusChange(step, ExecutedCmd.Status.SKIPPED, null);
             }
         }
 
@@ -515,7 +514,7 @@ public class JobServiceImpl implements JobService {
         }
 
         // save executed cmd
-        stepService.update(job, execCmd);
+        stepService.resultUpdate(execCmd);
         log.debug("Executed cmd {} been recorded", execCmd);
 
         // merge output to job context
@@ -649,8 +648,7 @@ public class JobServiceImpl implements JobService {
 
         try {
             if (!executedCmd.isRunning()) {
-                executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
-                stepService.update(job, executedCmd);
+                stepService.statusChange(job, node, ExecutedCmd.Status.RUNNING, null);
             }
 
             CmdIn cmd = cmdManager.createShellCmd(job, node);
@@ -660,8 +658,7 @@ public class JobServiceImpl implements JobService {
             log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
 
             // set current step to exception
-            executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
-            stepService.update(job, executedCmd);
+            stepService.statusChange(job, node, ExecutedCmd.Status.EXCEPTION, null);
 
             // set current job failure
             setJobStatusAndSave(job, Job.Status.FAILURE, e.getMessage());
@@ -696,19 +693,15 @@ public class JobServiceImpl implements JobService {
             Boolean result = runner.run();
 
             if (Objects.isNull(result) || result == Boolean.FALSE) {
-                ExecutedCmd executedCmd = stepService.get(job, node);
-                executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
-                executedCmd.setError("The 'before' condition cannot be matched");
-                stepService.update(job, executedCmd);
+                ExecutedCmd.Status newStatus = ExecutedCmd.Status.SKIPPED;
+                String errMsg = "The 'before' condition cannot be matched";
+                stepService.statusChange(job, node, newStatus, errMsg);
                 return false;
             }
 
             return true;
         } catch (ScriptException e) {
-            ExecutedCmd executedCmd = stepService.get(job, node);
-            executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
-            executedCmd.setError(e.getMessage());
-            stepService.update(job, executedCmd);
+            stepService.statusChange(job, node, ExecutedCmd.Status.SKIPPED, e.getMessage());
             return false;
         }
     }

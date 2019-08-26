@@ -20,12 +20,16 @@ package com.flowci.domain;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.Base64;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author yang
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CmdId implements Serializable {
 
     public static CmdId parse(String id) {
@@ -40,9 +44,9 @@ public class CmdId implements Serializable {
         }
     }
 
-    private final String jobId;
+    private String jobId;
 
-    private final String nodePath;
+    private String nodePath;
 
     @Override
     public String toString() {

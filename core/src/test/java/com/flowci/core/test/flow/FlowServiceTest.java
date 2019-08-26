@@ -27,6 +27,7 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.SimpleKeyPair;
 import com.flowci.domain.VariableMap;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ArgumentException;
@@ -187,11 +188,11 @@ public class FlowServiceTest extends SpringScenario {
     @Test
     public void should_test_git_connection_by_list_remote_branches() throws IOException, InterruptedException {
         // init: load private key
-        TypeReference<ResponseMessage<RSACredential>> keyPairResponseType =
-            new TypeReference<ResponseMessage<RSACredential>>() {
+        TypeReference<ResponseMessage<SimpleKeyPair>> keyPairResponseType =
+            new TypeReference<ResponseMessage<SimpleKeyPair>>() {
             };
 
-        ResponseMessage<RSACredential> r = objectMapper.readValue(load("rsa-test.json"), keyPairResponseType);
+        ResponseMessage<SimpleKeyPair> r = objectMapper.readValue(load("rsa-test.json"), keyPairResponseType);
 
         // given:
         Flow flow = flowService.create("git-test");
@@ -219,7 +220,7 @@ public class FlowServiceTest extends SpringScenario {
         flowService.testGitConnection(flow.getName(), gitUrl, privateKey);
 
         // then:
-        countDown.await(20, TimeUnit.SECONDS);
+        countDown.await(60, TimeUnit.SECONDS);
         Assert.assertTrue(branches.size() >= 1);
     }
 

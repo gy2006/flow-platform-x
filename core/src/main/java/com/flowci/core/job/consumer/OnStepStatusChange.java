@@ -18,7 +18,6 @@ package com.flowci.core.job.consumer;
 
 import com.flowci.core.common.domain.PushEvent;
 import com.flowci.core.common.manager.SocketPushManager;
-import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.StepStatusChangeEvent;
 import com.flowci.domain.ExecutedCmd;
 import lombok.extern.log4j.Log4j2;
@@ -41,10 +40,9 @@ public class OnStepStatusChange implements ApplicationListener<StepStatusChangeE
 
     @Override
     public void onApplicationEvent(StepStatusChangeEvent event) {
-        Job job = event.getJob();
         ExecutedCmd cmd = event.getExecutedCmd();
 
-        String topic = topicForSteps + "/" + job.getId();
+        String topic = topicForSteps + "/" + cmd.getJobId();
         socketPushManager.push(topic, PushEvent.STATUS_CHANGE, cmd);
 
         log.debug("Executed cmd {} with status {} been pushed to topic {}", cmd.getId(), cmd.getStatus(), topic);

@@ -45,7 +45,14 @@ public interface StepService {
     List<ExecutedCmd> list(Job job);
 
 
-    void update(Job job, ExecutedCmd cmd);
+    void statusChange(Job job, Node node, ExecutedCmd.Status status, String err);
+
+    void statusChange(ExecutedCmd entity, ExecutedCmd.Status status, String err);
+
+    /**
+     * To update properties are related with cmd executed result
+     */
+    void resultUpdate(ExecutedCmd result);
 
     /**
      * Delete steps by flow id
