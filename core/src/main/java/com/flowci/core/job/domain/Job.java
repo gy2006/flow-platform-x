@@ -36,9 +36,9 @@ import java.util.Date;
 @Document(collection = "job")
 public class Job extends Mongoable implements Pathable {
 
-    public static Pathable path(String id) {
+    public static Pathable path(Long buildNumber) {
         Job job = new Job();
-        job.setId(id);
+        job.setBuildNumber(buildNumber);
         return job;
     }
 
@@ -191,7 +191,7 @@ public class Job extends Mongoable implements Pathable {
     @JsonIgnore
     @Override
     public String pathName() {
-        return getId();
+        return getBuildNumber().toString();
     }
 
     @Override

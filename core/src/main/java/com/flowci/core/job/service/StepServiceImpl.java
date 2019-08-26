@@ -72,6 +72,7 @@ public class StepServiceImpl implements StepService {
             CmdId cmdId = cmdManager.createId(job, node);
 
             ExecutedCmd cmd = new ExecutedCmd(cmdId, job.getFlowId(), node.isAllowFailure());
+            cmd.setBuildNumber(job.getBuildNumber());
             steps.add(cmd);
         }
 

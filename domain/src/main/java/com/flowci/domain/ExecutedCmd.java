@@ -83,6 +83,11 @@ public class ExecutedCmd extends CmdBase {
     private String flowId;
 
     /**
+     * Job build number
+     */
+    private Long buildNumber;
+
+    /**
      * Process id
      */
     private Integer processId;

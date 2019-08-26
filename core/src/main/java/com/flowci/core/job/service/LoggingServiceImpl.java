@@ -195,7 +195,7 @@ public class LoggingServiceImpl implements LoggingService {
 
         Pathable[] workPath = new Pathable[]{
                 Flow.path(cmd.getFlowId()),
-                Job.path(cmd.getJobId())
+                Job.path(cmd.getBuildNumber())
         };
 
         return pathManager.log(workPath);
