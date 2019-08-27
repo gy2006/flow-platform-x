@@ -547,7 +547,7 @@ public class FlowServiceImpl implements FlowService {
                         SshTransport sshTransport = (SshTransport) transport;
                         sshTransport.setSshSessionFactory(sessionFactory);
                     })
-                    .setTimeout(10)
+                    .setTimeout(20)
                     .call();
 
                 for (Ref ref : refs) {

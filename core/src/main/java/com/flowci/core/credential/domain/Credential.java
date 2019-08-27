@@ -25,7 +25,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 /**
  * @author yang
  */
-@Document
+@Document(collection = "credential")
 @Getter
 @Setter
 public class Credential extends Mongoable {
