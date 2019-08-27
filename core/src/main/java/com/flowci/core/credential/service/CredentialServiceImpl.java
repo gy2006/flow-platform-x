@@ -78,7 +78,7 @@ public class CredentialServiceImpl implements CredentialService {
     @Override
     public RSACredential createRSA(String name) {
         String email = sessionManager.get().getEmail();
-        SimpleKeyPair pair = CipherHelper.genRsa(email);
+        SimpleKeyPair pair = CipherHelper.RSA.gen(email);
 
         RSACredential rsaCredential = new RSACredential();
         rsaCredential.setName(name);

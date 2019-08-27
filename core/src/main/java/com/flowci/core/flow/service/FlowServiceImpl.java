@@ -370,7 +370,7 @@ public class FlowServiceImpl implements FlowService {
         final Flow flow = get(name);
         final ObjectWrapper<String> privateKeyWrapper = new ObjectWrapper<>(privateKeyOrCredentialName);
 
-        if (!CipherHelper.isRsaPrivateKey(privateKeyOrCredentialName)) {
+        if (!CipherHelper.RSA.isPrivateKey(privateKeyOrCredentialName)) {
             RSACredential sshRsa = (RSACredential) credentialService.get(privateKeyOrCredentialName);
 
             if (Objects.isNull(sshRsa)) {

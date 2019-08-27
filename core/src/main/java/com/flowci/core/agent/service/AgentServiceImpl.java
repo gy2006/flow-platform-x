@@ -251,7 +251,7 @@ public class AgentServiceImpl implements AgentService {
         agent.setToken(UUID.randomUUID().toString());
 
         String dummyEmailForAgent = "agent." + name + "@flow.ci";
-        agent.setRsa(CipherHelper.genRsa(dummyEmailForAgent));
+        agent.setRsa(CipherHelper.RSA.gen(dummyEmailForAgent));
 
         try {
             agentDao.insert(agent);
