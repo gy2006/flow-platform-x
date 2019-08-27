@@ -147,15 +147,11 @@ public class AgentControllerTest extends SpringScenario {
 
         // then:
         Settings settings = settingsR.getData();
-        Assert.assertEquals(rabbitConfig.getCallbackQueueName(), settings.getCallbackQueueName());
+        Assert.assertEquals(rabbitConfig.getCallbackQueueName(), settings.getQueue().getCallback());
 
         Assert.assertEquals("/flow-agents-test", settings.getZookeeper().getRoot());
         Assert.assertEquals("127.0.0.1:2181", settings.getZookeeper().getHost());
-
-        Assert.assertEquals("127.0.0.1", settings.getQueue().getHost());
-        Assert.assertEquals(5672, settings.getQueue().getPort().intValue());
-        Assert.assertEquals("guest", settings.getQueue().getUsername());
-        Assert.assertEquals("guest", settings.getQueue().getPassword());
+        Assert.assertEquals("amqp://guest:guest@127.0.0.1:5672", settings.getQueue().getUri());
     }
 
     @Test

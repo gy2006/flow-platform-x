@@ -118,13 +118,7 @@ public class ConfigProperties {
     @Data
     public static class RabbitMQ {
 
-        private String host;
-
-        private Integer port;
-
-        private String username;
-
-        private String password;
+        private String uri;
 
         private String callbackQueueName;
 
