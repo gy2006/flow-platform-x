@@ -18,6 +18,7 @@ package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.mongo.FlowMappingContext;
+import com.flowci.core.common.mongo.SimpleKeyPairConverter;
 import com.flowci.core.common.mongo.VariableMapConverter;
 import com.flowci.core.job.domain.JobItem;
 import com.flowci.domain.ExecutedCmd;
@@ -47,6 +48,9 @@ import java.util.List;
 public class MongoConfig extends AbstractMongoConfiguration {
 
     @Autowired
+    private ConfigProperties appProperties;
+
+    @Autowired
     private MongoProperties mongoProperties;
 
     @Autowired
@@ -67,10 +71,15 @@ public class MongoConfig extends AbstractMongoConfiguration {
     @Override
     public CustomConversions customConversions() {
         VariableMapConverter variableConverter = new VariableMapConverter(objectMapper);
-
+        SimpleKeyPairConverter keyPairConverter = new SimpleKeyPairConverter(appProperties.getSecret());
         List<Converter<?, ?>> converters = new ArrayList<>();
+
         converters.add(variableConverter.getReader());
         converters.add(variableConverter.getWriter());
+
+        converters.add(keyPairConverter.getReader());
+        converters.add(keyPairConverter.getWriter());
+
         converters.add(new JobItem.ContextReader());
         return new MongoCustomConversions(converters);
     }

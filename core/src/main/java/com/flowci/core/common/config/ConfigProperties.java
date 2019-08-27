@@ -18,14 +18,20 @@ package com.flowci.core.common.config;
 
 import java.nio.file.Path;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.annotation.Validated;
+
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 
 /**
  * @author yang
  */
 @Data
+@Validated
 @Configuration
 @ConfigurationProperties(prefix = "app")
 public class ConfigProperties {
@@ -34,8 +40,11 @@ public class ConfigProperties {
 
     private Path flowDir;
 
+    @NotBlank
     private String serverAddress;
 
+    @NotBlank
+    @Length(max = 16, min = 16)
     private String secret;
 
     @Bean("adminProperties")
@@ -75,10 +84,14 @@ public class ConfigProperties {
     }
 
     @Data
+    @Validated
     public static class Admin {
 
+        @NotBlank
+        @Email
         private String defaultEmail;
 
+        @NotBlank
         private String defaultPassword;
     }
 

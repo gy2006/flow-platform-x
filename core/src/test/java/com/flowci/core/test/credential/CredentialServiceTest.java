@@ -22,6 +22,8 @@ import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.exception.DuplicateException;
 import java.util.List;
+
+import org.assertj.core.util.Strings;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,8 +55,8 @@ public class CredentialServiceTest extends SpringScenario {
         Assert.assertTrue(loaded instanceof RSACredential);
 
         RSACredential keyPair = (RSACredential) loaded;
-        Assert.assertNotNull(keyPair.getPublicKey());
-        Assert.assertNotNull(keyPair.getPrivateKey());
+        Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getPublicKey()));
+        Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getPrivateKey()));
     }
 
     @Test(expected = DuplicateException.class)
