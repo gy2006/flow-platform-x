@@ -32,6 +32,7 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -76,6 +77,9 @@ public class AppConfig {
     }
 
     @Autowired
+    private ServerProperties serverProperties;
+
+    @Autowired
     private MultipartProperties multipartProperties;
 
     @Autowired
@@ -98,6 +102,11 @@ public class AppConfig {
     public void initUploadDir() throws IOException {
         Path path = Paths.get(multipartProperties.getLocation());
         FileHelper.createDirectory(path);
+    }
+
+    @Bean("serverAddress")
+    public String serverAddress() {
+        return "http://" + serverProperties.getAddress() + ":" + serverProperties.getPort();
     }
 
     @Bean("tmpDir")
