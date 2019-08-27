@@ -31,7 +31,7 @@ public class LoggingServiceTest extends SpringScenario {
         // mock
         ExecutedCmd dummy = new ExecutedCmd();
         dummy.setFlowId("flowid");
-        dummy.setCmdId(cmdId);
+        dummy.setBuildNumber(1L);
         Mockito.when(stepService.get(cmdId.toString())).thenReturn(dummy);
 
         // when:
