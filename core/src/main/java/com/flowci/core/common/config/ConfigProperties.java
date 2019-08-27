@@ -36,6 +36,8 @@ public class ConfigProperties {
 
     private String serverAddress;
 
+    private String secret;
+
     @Bean("adminProperties")
     @ConfigurationProperties(prefix = "app.admin")
     public Admin admin() {
