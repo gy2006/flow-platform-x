@@ -27,6 +27,7 @@ import com.flowci.exception.NotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -49,17 +50,17 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public List<Credential> list() {
-        return credentialDao.findAllByCreatedByOrderByCreatedAt(sessionManager.getUserId());
+        return credentialDao.findAll(Sort.by("createdAt"));
     }
 
     @Override
     public List<Credential> listName() {
-        return credentialDao.listNameOnly(sessionManager.getUserId());
+        return credentialDao.listNameOnly();
     }
 
     @Override
     public Credential get(String name) {
-        Credential c = credentialDao.findByNameAndCreatedBy(name, sessionManager.getUserId());
+        Credential c = credentialDao.findByName(name);
 
         if (Objects.isNull(c)) {
             throw new NotFoundException("Credential {0} is not found", name);

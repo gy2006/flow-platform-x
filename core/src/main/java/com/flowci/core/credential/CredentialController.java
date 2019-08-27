@@ -49,7 +49,8 @@ public class CredentialController {
     @GetMapping
     @Action(CredentialAction.LIST)
     public List<Credential> list() {
-        return credentialService.list();
+        List<Credential> list = credentialService.list();
+        return list;
     }
 
     @GetMapping("/list/name")

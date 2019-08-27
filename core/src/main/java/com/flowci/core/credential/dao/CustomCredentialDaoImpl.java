@@ -32,11 +32,8 @@ public class CustomCredentialDaoImpl implements CustomCredentialDao {
     private MongoOperations operations;
 
     @Override
-    public List<Credential> listNameOnly(String createdBy) {
-        Criteria criteria = Criteria.where("createdBy")
-                .is(createdBy);
-
-        Query query = Query.query(criteria).with(new Sort(Sort.Direction.ASC, "createdAt"));
+    public List<Credential> listNameOnly() {
+        Query query = Query.query(new Criteria()).with(new Sort(Sort.Direction.ASC, "createdAt"));
         query.fields().include("name");
 
         return operations.find(query, Credential.class);

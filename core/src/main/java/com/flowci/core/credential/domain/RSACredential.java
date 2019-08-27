@@ -28,7 +28,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Getter
 @Setter
-@TypeAlias("rsa")
+@TypeAlias("rsa_credential")
 @Document(collection = "credential")
 public final class RSACredential extends Credential {
 
