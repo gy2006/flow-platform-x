@@ -18,13 +18,15 @@ package com.flowci.core.job.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
+import com.flowci.core.common.domain.Pathable;
 import com.flowci.domain.VariableMap;
 import com.flowci.tree.Selector;
-import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Date;
 
 /**
  * @author yang
@@ -32,7 +34,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Setter
 @Document(collection = "job")
-public class Job extends Mongoable {
+public class Job extends Mongoable implements Pathable {
+
+    public static Pathable path(Long buildNumber) {
+        Job job = new Job();
+        job.setBuildNumber(buildNumber);
+        return job;
+    }
 
     public enum Trigger {
 
@@ -120,6 +128,7 @@ public class Job extends Mongoable {
     @Indexed(name = "index_job_key", unique = true)
     private String key;
 
+    @Indexed(name = "index_flow_id", sparse = true)
     private String flowId;
 
     private Long buildNumber;
@@ -177,6 +186,12 @@ public class Job extends Mongoable {
     @JsonIgnore
     public String getQueueName() {
         return "queue.flow." + flowId + ".job";
+    }
+
+    @JsonIgnore
+    @Override
+    public String pathName() {
+        return getBuildNumber().toString();
     }
 
     @Override

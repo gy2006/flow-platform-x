@@ -17,11 +17,13 @@
 package com.flowci.core.test.credential;
 
 import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.exception.DuplicateException;
 import java.util.List;
+
+import org.assertj.core.util.Strings;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,16 +47,16 @@ public class CredentialServiceTest extends SpringScenario {
         Credential rsa = credentialService.createRSA("hello.rsa");
         Assert.assertNotNull(rsa);
         Assert.assertEquals(Credential.Category.SSH_RSA, rsa.getCategory());
-        Assert.assertEquals(authService.getUserId(), rsa.getCreatedBy());
+        Assert.assertEquals(sessionManager.getUserId(), rsa.getCreatedBy());
         Assert.assertNotNull(rsa.getCreatedAt());
         Assert.assertNotNull(rsa.getUpdatedAt());
 
         Credential loaded = credentialService.get("hello.rsa");
-        Assert.assertTrue(loaded instanceof RSAKeyPair);
+        Assert.assertTrue(loaded instanceof RSACredential);
 
-        RSAKeyPair keyPair = (RSAKeyPair) loaded;
-        Assert.assertNotNull(keyPair.getPublicKey());
-        Assert.assertNotNull(keyPair.getPrivateKey());
+        RSACredential keyPair = (RSACredential) loaded;
+        Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getPublicKey()));
+        Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getPrivateKey()));
     }
 
     @Test(expected = DuplicateException.class)

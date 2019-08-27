@@ -16,10 +16,11 @@
 
 package com.flowci.core.flow.service;
 
-import com.flowci.core.credential.domain.RSAKeyPair;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.domain.SimpleKeyPair;
+
 import java.util.List;
 
 /**
@@ -31,6 +32,11 @@ public interface FlowService {
      * List flows by current user
      */
     List<Flow> list(Status status);
+
+    /**
+     * List flows by user id and status
+     */
+    List<Flow> list(String userId, Status status);
 
     /**
      * List flows of current user by credential name
@@ -97,7 +103,7 @@ public interface FlowService {
      *
      * @return credential name
      */
-    String setSshRsaCredential(String name, RSAKeyPair keyPair);
+    String setSshRsaCredential(String name, SimpleKeyPair keyPair);
 
     /**
      * Test git connection for flow and dispatch application event
@@ -109,4 +115,19 @@ public interface FlowService {
      * @return list of branches or empty list if git config not defined
      */
     List<String> listGitBranch(String name);
+
+    /**
+     * Add users to flow
+     */
+    void addUsers(Flow flow, String ...userIds);
+
+    /**
+     * Remove users from flow
+     */
+    void removeUsers(Flow flow, String ...userIds);
+
+    /**
+     * List users by flow
+     */
+    List<String> listUsers(Flow flow);
 }

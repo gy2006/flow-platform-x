@@ -17,16 +17,31 @@
 package com.flowci.core.user.service;
 
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.manager.SessionManager;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
+import com.flowci.core.user.domain.User.Role;
+import com.flowci.core.user.event.UserDeletedEvent;
+import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
+import com.flowci.exception.NotFoundException;
 import com.flowci.util.HashingHelper;
+
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import javax.annotation.PostConstruct;
+
+import com.google.common.collect.Lists;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
 
 /**
  * @author yang
@@ -35,11 +50,19 @@ import javax.annotation.PostConstruct;
 @Service
 public class UserServiceImpl implements UserService {
 
+    private static final String DefaultCreator = "System";
+
     @Autowired
     private ConfigProperties.Admin adminProperties;
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private SessionManager sessionManager;
+
+    @Autowired
+    private SpringEventManager eventManager;
 
     @PostConstruct
     public void initAdmin() {
@@ -47,11 +70,22 @@ public class UserServiceImpl implements UserService {
         String adminPassword = adminProperties.getDefaultPassword();
 
         try {
-            create(adminEmail, adminPassword, User.Role.Admin);
+            create(adminEmail, HashingHelper.md5(adminPassword), Role.Admin);
             log.info("Admin {} been initialized", adminEmail);
         } catch (DuplicateException ignore) {
 
         }
+    }
+
+    @Override
+    public Page<User> list(Pageable pageable) {
+        return userDao.findAll(pageable);
+    }
+
+    @Override
+    public List<User> list(Collection<String> ids) {
+        Iterable<User> all = userDao.findAllById(ids);
+        return Lists.newArrayList(all);
     }
 
     @Override
@@ -61,10 +95,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User create(String email, String password, User.Role role) {
+    public User create(String email, String passwordOnMd5, User.Role role) {
         try {
-            User user = new User(email, HashingHelper.md5(password));
-            user.setRole(role);
+            Date now = Date.from(Instant.now());
+
+            User user = new User(email, passwordOnMd5, role);
+            user.setCreatedAt(now);
+            user.setUpdatedAt(now);
+            user.setCreatedBy(sessionManager.exist() ? sessionManager.getUserId() : DefaultCreator);
             return userDao.insert(user);
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Email {0} is already existed", email);
@@ -73,6 +111,45 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getByEmail(String email) {
-        return userDao.findByEmail(email);
+        User user = userDao.findByEmail(email);
+        if (Objects.isNull(user)) {
+            throw new NotFoundException("User with email {0} is not existed", email);
+        }
+        return user;
+    }
+
+    @Override
+    public void changePassword(String oldOnMd5, String newOnMd5) {
+        User user = sessionManager.get();
+
+        if (Objects.equals(user.getPasswordOnMd5(), oldOnMd5)) {
+            user.setPasswordOnMd5(newOnMd5);
+            user.setUpdatedAt(Date.from(Instant.now()));
+            userDao.save(user);
+            return;
+        }
+
+        throw new ArgumentException("The password is incorrect");
+    }
+
+    @Override
+    public void changeRole(String email, Role newRole) {
+        User target = getByEmail(email);
+        if (target.getRole().equals(newRole)) {
+            return;
+        }
+
+        target.setRole(newRole);
+        target.setUpdatedAt(Date.from(Instant.now()));
+        target.setUpdatedBy(sessionManager.getUserId());
+        userDao.save(target);
+    }
+
+    @Override
+    public User delete(String email) {
+        User user = getByEmail(email);
+        userDao.delete(user);
+        eventManager.publish(new UserDeletedEvent(this, user));
+        return user;
     }
 }

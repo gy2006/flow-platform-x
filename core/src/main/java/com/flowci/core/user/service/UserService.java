@@ -17,12 +17,30 @@
 package com.flowci.core.user.service;
 
 import com.flowci.core.user.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yang
  */
 public interface UserService {
 
+    /**
+     * List all users
+     */
+    Page<User> list(Pageable pageable);
+
+    /**
+     * List users by given ids
+     */
+    List<User> list(Collection<String> ids);
+
+    /**
+     * Get default admin user
+     */
     User defaultAdmin();
 
     /**
@@ -35,4 +53,20 @@ public interface UserService {
      */
     User getByEmail(String email);
 
+    /**
+     * Change password for current user
+     */
+    void changePassword(String old, String newOne);
+
+    /**
+     * Change role for target user
+     * @param email target user email
+     * @param newRole new role will be change
+     */
+    void changeRole(String email, User.Role newRole);
+
+    /**
+     * Delete user by email
+     */
+    User delete(String email);
 }

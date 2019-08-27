@@ -16,15 +16,18 @@
 
 package com.flowci.core.flow.service;
 
-import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
+import com.flowci.core.common.helper.CipherHelper;
+import com.flowci.core.common.manager.PathManager;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.flow.dao.FlowDao;
+import com.flowci.core.flow.dao.FlowUserDao;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
@@ -32,23 +35,50 @@ import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
+import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.event.CreateNewJobEvent;
+import com.flowci.core.trigger.domain.GitPingTrigger;
+import com.flowci.core.trigger.domain.GitPushTrigger;
+import com.flowci.core.trigger.domain.GitTrigger;
+import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
+import com.flowci.core.trigger.event.GitHookEvent;
+import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.domain.ObjectWrapper;
+import com.flowci.domain.SimpleKeyPair;
 import com.flowci.domain.VariableMap;
-import com.flowci.exception.AccessException;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
+import com.flowci.exception.StatusException;
+import com.flowci.tree.Filter;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
-import com.flowci.util.CipherHelper;
 import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Date;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -62,15 +92,9 @@ import org.eclipse.jgit.util.FS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
 
 /**
  * @author yang
@@ -89,22 +113,28 @@ public class FlowServiceImpl implements FlowService {
     private Path tmpDir;
 
     @Autowired
-    private AuthService authService;
-
-    @Autowired
     private FlowDao flowDao;
 
     @Autowired
     private YmlDao ymlDao;
 
     @Autowired
+    private FlowUserDao flowUserDao;
+
+    @Autowired
+    private SessionManager sessionManager;
+
+    @Autowired
+    private SpringEventManager eventManager;
+
+    @Autowired
+    private PathManager pathManager;
+
+    @Autowired
     private CronService cronService;
 
     @Autowired
     private CredentialService credentialService;
-
-    @Autowired
-    private SpringEventManager eventManager;
 
     @Autowired
     private Template defaultYmlTemplate;
@@ -115,21 +145,14 @@ public class FlowServiceImpl implements FlowService {
     @Autowired
     private RabbitChannelOperation jobQueueManager;
 
-    @EventListener
-    public void onInit(ContextRefreshedEvent ignore) {
-        List<Flow> all = flowDao.findAll();
-
-        for (Flow flow : all) {
-            createFlowJobQueue(flow);
-        }
-
-        eventManager.publish(new FlowInitEvent(this, all));
-    }
+    //====================================================================
+    //        %% Public function
+    //====================================================================
 
     @Override
     public List<Flow> list(Status status) {
-        String userId = authService.get().getId();
-        return flowDao.findAllByStatusAndCreatedBy(status, userId);
+        String userId = sessionManager.getUserId();
+        return list(userId, status);
     }
 
     @Override
@@ -154,6 +177,17 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
+    public List<Flow> list(String userId, Status status) {
+        List<String> flowIds = flowUserDao.findAllFlowsByUserId(userId);
+
+        if (flowIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return flowDao.findAllByIdInAndStatus(flowIds, status);
+    }
+
+    @Override
     public Boolean exist(String name) {
         try {
             Flow flow = get(name);
@@ -170,7 +204,7 @@ public class FlowServiceImpl implements FlowService {
             throw new ArgumentException(message, name);
         }
 
-        String userId = authService.getUserId();
+        String userId = sessionManager.getUserId();
 
         Flow flow = flowDao.findByName(name);
         if (flow != null && flow.getStatus() == Status.CONFIRMED) {
@@ -190,11 +224,21 @@ public class FlowServiceImpl implements FlowService {
         vars.put(Variables.Flow.Name, name);
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
-        flowDao.save(flow);
+        try {
+            flowDao.insert(flow);
+            pathManager.create(flow);
+            flowUserDao.create(flow.getId());
 
-        createFlowJobQueue(flow);
+            addUsers(flow, flow.getCreatedBy());
+            createFlowJobQueue(flow);
 
-        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATED));
+            eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATED));
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateException("Flow {0} already exists", name);
+        } catch (IOException e) {
+            flowDao.delete(flow);
+            throw new StatusException("Cannot create flow workspace");
+        }
 
         return flow;
     }
@@ -223,7 +267,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Flow get(String name) {
-        Flow flow = flowDao.findByNameAndCreatedBy(name, authService.getUserId());
+        Flow flow = flowDao.findByName(name);
         if (Objects.isNull(flow)) {
             throw new NotFoundException("Flow {0} is not found", name);
         }
@@ -245,6 +289,7 @@ public class FlowServiceImpl implements FlowService {
     public Flow delete(String name) {
         Flow flow = get(name);
         flowDao.delete(flow);
+        flowUserDao.delete(flow.getId());
 
         try {
             Yml yml = getYml(flow);
@@ -260,7 +305,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public void update(Flow flow) {
-        verifyFlowIdAndUser(flow);
+        flow.setUpdatedAt(Date.from(Instant.now()));
         flowDao.save(flow);
     }
 
@@ -281,7 +326,6 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Yml getYml(Flow flow) {
-        verifyFlowIdAndUser(flow);
         Optional<Yml> optional = ymlDao.findById(flow.getId());
         if (optional.isPresent()) {
             return optional.get();
@@ -291,15 +335,13 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Yml saveYml(Flow flow, String yml) {
-        verifyFlowIdAndUser(flow);
-
         if (Strings.isNullOrEmpty(yml)) {
             throw new ArgumentException("Yml content cannot be null or empty");
         }
 
         YmlParser.load(flow.getName(), yml);
         Yml ymlObj = new Yml(flow.getId(), yml);
-        ymlObj.setCreatedBy(authService.getUserId());
+        ymlObj.setCreatedBy(sessionManager.getUserId());
         ymlDao.save(ymlObj);
 
         Node node = YmlParser.load(flow.getName(), ymlObj.getRaw());
@@ -314,11 +356,11 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
-    public String setSshRsaCredential(String name, RSAKeyPair keyPair) {
+    public String setSshRsaCredential(String name, SimpleKeyPair pair) {
         Flow flow = get(name);
 
         String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
-        credentialService.createRSA(credentialName, keyPair.getPublicKey(), keyPair.getPrivateKey());
+        credentialService.createRSA(credentialName, pair);
 
         return credentialName;
     }
@@ -328,8 +370,8 @@ public class FlowServiceImpl implements FlowService {
         final Flow flow = get(name);
         final ObjectWrapper<String> privateKeyWrapper = new ObjectWrapper<>(privateKeyOrCredentialName);
 
-        if (!CipherHelper.isRsaPrivateKey(privateKeyOrCredentialName)) {
-            RSAKeyPair sshRsa = (RSAKeyPair) credentialService.get(privateKeyOrCredentialName);
+        if (!CipherHelper.RSA.isPrivateKey(privateKeyOrCredentialName)) {
+            RSACredential sshRsa = (RSACredential) credentialService.get(privateKeyOrCredentialName);
 
             if (Objects.isNull(sshRsa)) {
                 throw new ArgumentException("Invalid ssh-rsa name");
@@ -356,7 +398,7 @@ public class FlowServiceImpl implements FlowService {
             return Collections.emptyList();
         }
 
-        RSAKeyPair sshRsa = (RSAKeyPair) credentialService.get(credentialName);
+        RSACredential sshRsa = (RSACredential) credentialService.get(credentialName);
 
         if (Objects.isNull(sshRsa)) {
             throw new ArgumentException("Invalid ssh-rsa name");
@@ -366,6 +408,101 @@ public class FlowServiceImpl implements FlowService {
             GitBranchLoader gitTestRunner = new GitBranchLoader(flow.getId(), sshRsa.getPrivateKey(), gitUrl);
             return gitTestRunner.load();
         });
+    }
+
+    @Override
+    public void addUsers(Flow flow, String... userIds) {
+        flowUserDao.insert(flow.getId(), Sets.newHashSet(userIds));
+    }
+
+    @Override
+    public List<String> listUsers(Flow flow) {
+        return flowUserDao.findAllUsers(flow.getId());
+    }
+
+    @Override
+    public void removeUsers(Flow flow, String... userIds) {
+        Set<String> idSet = Sets.newHashSet(userIds);
+
+        if (idSet.contains(flow.getCreatedBy())) {
+            throw new ArgumentException("Cannot remove user who create the flow");
+        }
+
+        if (idSet.contains(sessionManager.getUserId())) {
+            throw new ArgumentException("Cannot remove current user from flow");
+        }
+
+        flowUserDao.remove(flow.getId(), idSet);
+    }
+
+    //====================================================================
+    //        %% Internal events
+    //====================================================================
+
+    @EventListener
+    public void initJobQueueForFlow(ContextRefreshedEvent ignore) {
+        List<Flow> all = flowDao.findAll();
+
+        for (Flow flow : all) {
+            createFlowJobQueue(flow);
+        }
+
+        eventManager.publish(new FlowInitEvent(this, all));
+    }
+
+    @EventListener
+    public void deleteUserFromFlow(UserDeletedEvent event) {
+        // TODO:
+    }
+
+    @EventListener
+    public void onGitHookEvent(GitHookEvent event) {
+        Flow flow = get(event.getFlow());
+
+        if (event.isPingEvent()) {
+            GitPingTrigger ping = (GitPingTrigger) event.getTrigger();
+
+            Flow.WebhookStatus ws = new Flow.WebhookStatus();
+            ws.setAdded(true);
+            ws.setCreatedAt(ping.getCreatedAt());
+            ws.setEvents(ping.getEvents());
+
+            flow.setWebhookStatus(ws);
+            update(flow);
+        } else {
+            Yml yml = getYml(flow);
+            Node root = YmlParser.load(flow.getName(), yml.getRaw());
+
+            if (!canStartJob(root, event.getTrigger())) {
+                log.debug("Cannot start job since filter not matched on flow {}", flow.getName());
+                return;
+            }
+
+            VariableMap gitInput = event.getTrigger().toVariableMap();
+            Trigger jobTrigger = event.getTrigger().toJobTrigger();
+
+            eventManager.publish(new CreateNewJobEvent(this, flow, yml, jobTrigger, gitInput));
+        }
+    }
+
+    //====================================================================
+    //        %% Utils
+    //====================================================================
+
+    private boolean canStartJob(Node root, GitTrigger trigger) {
+        Filter condition = root.getFilter();
+
+        if (trigger.getEvent() == GitEvent.PUSH) {
+            GitPushTrigger pushTrigger = (GitPushTrigger) trigger;
+            return condition.isMatchBranch(pushTrigger.getRef());
+        }
+
+        if (trigger.getEvent() == GitEvent.TAG) {
+            GitPushTrigger tagTrigger = (GitPushTrigger) trigger;
+            return condition.isMatchTag(tagTrigger.getRef());
+        }
+
+        return true;
     }
 
     private void createFlowJobQueue(Flow flow) {
@@ -380,18 +517,9 @@ public class FlowServiceImpl implements FlowService {
         return appProperties.getServerAddress() + "/webhooks/" + name;
     }
 
-    private void verifyFlowIdAndUser(Flow flow) {
-        String flowId = flow.getId();
-        if (Strings.isNullOrEmpty(flowId)) {
-            throw new ArgumentException("The flow id is missing");
-        }
-
-        if (!Objects.equals(flow.getCreatedBy(), authService.getUserId())) {
-            throw new AccessException("Illegal account for flow {0}", flow.getName());
-        }
-    }
-
     private class GitBranchLoader {
+
+        private static final String RefPrefix = "refs/heads/";
 
         private final String flowId;
 
@@ -424,7 +552,7 @@ public class FlowServiceImpl implements FlowService {
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();
-                    branches.add(refName.substring(refName.lastIndexOf("/") + 1));
+                    branches.add(refName.substring(RefPrefix.length()));
                 }
 
                 // publish DONE event

@@ -17,7 +17,8 @@
 
 package com.flowci.core.auth.service;
 
-import com.flowci.core.user.domain.User;
+import com.flowci.core.auth.annotation.Action;
+import com.flowci.core.auth.domain.Tokens;
 
 /**
  * 'login' ->
@@ -30,19 +31,9 @@ public interface AuthService {
     Boolean isEnabled();
 
     /**
-     * Get current logged in user
-     */
-    User get();
-
-    /**
-     * Get current logged in user id
-     */
-    String getUserId();
-
-    /**
      * Login and return jwt token
      */
-    String login(String email, String passwordOnMd5);
+    Tokens login(String email, String passwordOnMd5);
 
     /**
      * Logout from current user
@@ -52,12 +43,13 @@ public interface AuthService {
     /**
      * Refresh and return new token
      */
-    String refresh(String token);
+    Tokens refresh(Tokens tokens);
 
     /**
-     * Check is logged in
+     * Check current user has access right to given action
+     * @param action can be null which means no permission control
      */
-    boolean hasLogin();
+    boolean hasPermission(Action action);
 
     /**
      * Set current user by token
@@ -66,17 +58,7 @@ public interface AuthService {
     boolean set(String token);
 
     /**
-     * Set current user by instance
-     */
-    boolean set(User user);
-
-    /**
      * Set current user from default admin form config properties
      */
     boolean setAsDefaultAdmin();
-
-    /**
-     * Remove current logged in user
-     */
-    void reset();
 }

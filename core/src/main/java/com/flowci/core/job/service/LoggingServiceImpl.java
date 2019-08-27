@@ -16,13 +16,18 @@
 
 package com.flowci.core.job.service;
 
+import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.helper.CacheHelper;
+import com.flowci.core.common.manager.PathManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.job.domain.Job;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.flowci.exception.NotFoundException;
+import com.flowci.util.FileHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
@@ -44,7 +49,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,15 +67,15 @@ import java.util.stream.Stream;
 public class LoggingServiceImpl implements LoggingService {
 
     private static final Page<String> LogNotFound = new PageImpl<>(
-        ImmutableList.of("Log not available"),
-        PageRequest.of(0, 1),
-        1L
+            ImmutableList.of("Log not available"),
+            PageRequest.of(0, 1),
+            1L
     );
 
     private static final int FileBufferSize = 8000; // ~8k
 
     private Cache<String, BufferedReader> logReaderCache =
-        CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
+            CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
 
     @Autowired
     private String topicForLogs;
@@ -80,10 +84,13 @@ public class LoggingServiceImpl implements LoggingService {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
-    private Path logDir;
+    private PathManager pathManager;
 
     @Autowired
     private RabbitQueueOperation loggingQueueManager;
+
+    @Autowired
+    private StepService stepService;
 
     @EventListener(ContextRefreshedEvent.class)
     public void onStart() {
@@ -126,8 +133,8 @@ public class LoggingServiceImpl implements LoggingService {
             int i = pageable.getPageNumber() * pageable.getPageSize();
 
             List<String> logs = lines.skip(i)
-                .limit(pageable.getPageSize())
-                .collect(Collectors.toList());
+                    .limit(pageable.getPageSize())
+                    .collect(Collectors.toList());
 
             return new PageImpl<>(logs, pageable, cmd.getLogSize());
         } finally {
@@ -142,27 +149,30 @@ public class LoggingServiceImpl implements LoggingService {
 
     @Override
     public Path save(String fileName, InputStream stream) {
+        String cmdId = FileHelper.getName(fileName);
+
         try {
+            Path logDir = getLogDir(cmdId);
             Path target = Paths.get(logDir.toString(), fileName);
             Files.copy(stream, target, StandardCopyOption.REPLACE_EXISTING);
             return target;
         } catch (IOException e) {
-            log.debug(e);
+            log.warn("Unable to create log dir", e);
             return null;
         }
     }
 
     @Override
     public Resource get(String cmdId, boolean isRaw) {
-        Path logPath = isRaw ? getRawPath(cmdId) : getLogPath(cmdId);
         try {
+            Path logPath = isRaw ? getRawFile(cmdId) : getLogFile(cmdId);
             Resource resource = new UrlResource(logPath.toUri());
             if (resource.exists()) {
                 return resource;
             }
 
             throw new NotFoundException("Log not available");
-        } catch (MalformedURLException e) {
+        } catch (IOException e) {
             throw new NotFoundException("Log not available");
         }
     }
@@ -170,7 +180,7 @@ public class LoggingServiceImpl implements LoggingService {
     private BufferedReader getReader(String cmdId) {
         return logReaderCache.get(cmdId, key -> {
             try {
-                Path target = getRawPath(cmdId);
+                Path target = getRawFile(cmdId);
                 BufferedReader reader = new BufferedReader(new FileReader(target.toFile()), FileBufferSize);
                 reader.mark(1);
                 return reader;
@@ -180,11 +190,24 @@ public class LoggingServiceImpl implements LoggingService {
         });
     }
 
-    private Path getRawPath(String cmdId) {
+    private Path getLogDir(String cmdId) throws IOException {
+        ExecutedCmd cmd = stepService.get(cmdId);
+
+        Pathable[] workPath = new Pathable[]{
+                Flow.path(cmd.getFlowId()),
+                Job.path(cmd.getBuildNumber())
+        };
+
+        return pathManager.log(workPath);
+    }
+
+    private Path getRawFile(String cmdId) throws IOException {
+        Path logDir = getLogDir(cmdId);
         return Paths.get(logDir.toString(), cmdId + ".raw.log");
     }
 
-    private Path getLogPath(String cmdId) {
+    private Path getLogFile(String cmdId) throws IOException {
+        Path logDir = getLogDir(cmdId);
         return Paths.get(logDir.toString(), cmdId + ".log");
     }
 

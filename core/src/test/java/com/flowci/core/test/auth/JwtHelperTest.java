@@ -27,7 +27,7 @@ import org.junit.Test;
 
 public class JwtHelperTest {
 
-    private final User user  = new User("test@flow.ci", "12345");
+    private final User user  = new User("test@flow.ci", "12345", User.Role.Admin);
 
     private ObjectWrapper<String> token = new ObjectWrapper<>();
 
@@ -47,14 +47,14 @@ public class JwtHelperTest {
 
     @Test
     public void should_verify_token() {
-        boolean verify = JwtHelper.verify(token.getValue(), user);
+        boolean verify = JwtHelper.verify(token.getValue(), user, false);
         Assert.assertTrue(verify);
     }
 
     @Test
     public void should_fail_if_pw_changed() {
         user.setPasswordOnMd5("22345");
-        boolean verify = JwtHelper.verify(token.getValue(), user);
+        boolean verify = JwtHelper.verify(token.getValue(), user, false);
         Assert.assertFalse(verify);
     }
 
@@ -65,7 +65,7 @@ public class JwtHelperTest {
 
         // when:
         ThreadHelper.sleep(3000);
-        boolean verify = JwtHelper.verify(token.getValue(), user);
+        boolean verify = JwtHelper.verify(token.getValue(), user, true);
 
         // then: should be fail
         Assert.assertFalse(verify);

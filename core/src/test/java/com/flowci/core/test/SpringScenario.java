@@ -17,17 +17,19 @@
 package com.flowci.core.test;
 
 import com.flowci.core.agent.dao.AgentDao;
-import com.flowci.core.auth.service.AuthService;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.test.SpringScenario.Config;
+import com.flowci.core.test.auth.AuthHelper;
 import com.flowci.core.test.flow.FlowMockHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.domain.Agent;
+import com.flowci.exception.NotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.junit.After;
 import org.junit.runner.RunWith;
@@ -60,18 +62,23 @@ public abstract class SpringScenario {
     public static class Config {
 
         @Bean("mvcMockHelper")
-        public MvcMockHelper mvcMockHelper() {
-            return new MvcMockHelper();
+        public MockMvcHelper mvcMockHelper() {
+            return new MockMvcHelper();
         }
 
         @Bean("flowMockHelper")
         public FlowMockHelper flowMockHelper() {
             return new FlowMockHelper();
         }
+
+        @Bean
+        public AuthHelper authHelper() {
+            return new AuthHelper();
+        }
     }
 
     @Autowired
-    protected AuthService authService;
+    protected SessionManager sessionManager;
 
     @Autowired
     protected UserService userService;
@@ -142,10 +149,12 @@ public abstract class SpringScenario {
     }
 
     protected void mockLogin() {
-        User user = userService.getByEmail("test@flow.ci");
-        if (Objects.isNull(user)) {
+        User user;
+        try {
+            user = userService.getByEmail("test@flow.ci");
+        } catch (NotFoundException e) {
             user = userService.create("test@flow.ci", "12345", User.Role.Admin);
         }
-        authService.set(user);
+        sessionManager.set(user);
     }
 }

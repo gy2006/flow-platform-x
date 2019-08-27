@@ -23,11 +23,12 @@ import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
-import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdIn;
 import com.flowci.domain.Settings;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
@@ -249,6 +250,9 @@ public class AgentServiceImpl implements AgentService {
         Agent agent = new Agent(name, tags);
         agent.setToken(UUID.randomUUID().toString());
 
+        String dummyEmailForAgent = "agent." + name + "@flow.ci";
+        agent.setRsa(CipherHelper.RSA.gen(dummyEmailForAgent));
+
         try {
             agentDao.insert(agent);
             agentQueueManager.declare(agent.getQueueName(), false);
@@ -273,7 +277,7 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public void dispatch(Cmd cmd, Agent agent) {
+    public void dispatch(CmdIn cmd, Agent agent) {
         try {
             byte[] body = objectMapper.writeValueAsBytes(cmd);
             agentQueueManager.send(agent.getQueueName(), body);

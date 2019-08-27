@@ -18,7 +18,7 @@ package com.flowci.core.test.flow;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.credential.domain.RSAKeyPair;
+import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
@@ -26,8 +26,8 @@ import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
-import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.SimpleKeyPair;
 import com.flowci.domain.VariableMap;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ArgumentException;
@@ -68,6 +68,20 @@ public class FlowServiceTest extends SpringScenario {
     @Before
     public void login() {
         mockLogin();
+    }
+
+    @Test
+    public void should_list_all_flows_by_user_id() {
+        Flow first = flowService.create("test-1");
+        flowService.confirm(first.getName(), null, null);
+
+        Flow second = flowService.create("test-2");
+        flowService.confirm(second.getName(), null, null);
+
+        List<Flow> list = flowService.list(sessionManager.getUserId(), Status.CONFIRMED);
+        Assert.assertEquals(2, list.size());
+        Assert.assertEquals(first, list.get(0));
+        Assert.assertEquals(second, list.get(1));
     }
 
     @Test
@@ -124,7 +138,7 @@ public class FlowServiceTest extends SpringScenario {
     public void should_list_flow_by_credential_name() {
         String credentialName = "flow-ssh-ras-name";
 
-        RSAKeyPair mocked = new RSAKeyPair();
+        RSACredential mocked = new RSACredential();
         mocked.setName(credentialName);
 
         Mockito.when(credentialService.get(credentialName)).thenReturn(mocked);
@@ -174,11 +188,11 @@ public class FlowServiceTest extends SpringScenario {
     @Test
     public void should_test_git_connection_by_list_remote_branches() throws IOException, InterruptedException {
         // init: load private key
-        TypeReference<ResponseMessage<RSAKeyPair>> keyPairResponseType =
-            new TypeReference<ResponseMessage<RSAKeyPair>>() {
+        TypeReference<ResponseMessage<SimpleKeyPair>> keyPairResponseType =
+            new TypeReference<ResponseMessage<SimpleKeyPair>>() {
             };
 
-        ResponseMessage<RSAKeyPair> r = objectMapper.readValue(load("rsa-test.json"), keyPairResponseType);
+        ResponseMessage<SimpleKeyPair> r = objectMapper.readValue(load("rsa-test.json"), keyPairResponseType);
 
         // given:
         Flow flow = flowService.create("git-test");
@@ -206,7 +220,7 @@ public class FlowServiceTest extends SpringScenario {
         flowService.testGitConnection(flow.getName(), gitUrl, privateKey);
 
         // then:
-        countDown.await(20, TimeUnit.SECONDS);
+        countDown.await(60, TimeUnit.SECONDS);
         Assert.assertTrue(branches.size() >= 1);
     }
 

@@ -37,7 +37,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class GitPrTrigger extends GitTrigger {
+public final class GitPrTrigger extends GitTrigger {
 
     private String title;
 

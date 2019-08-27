@@ -46,16 +46,13 @@ public class AgentConfig {
         zk.setHost(zkProperties.getHost());
 
         Settings.RabbitMQ mq = new Settings.RabbitMQ();
-        mq.setHost(rabbitProperties.getHost());
-        mq.setPort(rabbitProperties.getPort());
-        mq.setPassword(rabbitProperties.getPassword());
-        mq.setUsername(rabbitProperties.getUsername());
+        mq.setUri(rabbitProperties.getUri());
+        mq.setCallback(callbackQueueManager.getQueueName());
+        mq.setLogsExchange(QueueConfig.LoggingExchange);
 
         Settings settings = new Settings();
-        settings.setCallbackQueueName(callbackQueueManager.getQueueName());
         settings.setZookeeper(zk);
         settings.setQueue(mq);
-        settings.setLogsExchangeName(QueueConfig.LoggingExchange);
 
         return settings;
     }

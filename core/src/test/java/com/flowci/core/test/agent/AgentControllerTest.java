@@ -23,7 +23,7 @@ import com.flowci.core.agent.domain.CreateOrUpdateAgent;
 import com.flowci.core.agent.domain.DeleteAgent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.StatusCode;
-import com.flowci.core.test.MvcMockHelper;
+import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Settings;
@@ -66,7 +66,7 @@ public class AgentControllerTest extends SpringScenario {
     protected MockMvc mockMvc;
 
     @Autowired
-    private MvcMockHelper mvcMockHelper;
+    private MockMvcHelper mockMvcHelper;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -91,7 +91,7 @@ public class AgentControllerTest extends SpringScenario {
         Agent second = createAgent("second.agent", null, StatusCode.OK);
 
         ResponseMessage<List<Agent>> response =
-                mvcMockHelper.expectSuccessAndReturnClass(get("/agents"), AgentListResponseType);
+                mockMvcHelper.expectSuccessAndReturnClass(get("/agents"), AgentListResponseType);
         Assert.assertEquals(StatusCode.OK, response.getCode());
 
         List<Agent> list = response.getData();
@@ -106,7 +106,7 @@ public class AgentControllerTest extends SpringScenario {
 
         DeleteAgent body = new DeleteAgent(created.getToken());
         ResponseMessage<Agent> responseOfDeleteAgent =
-                mvcMockHelper.expectSuccessAndReturnClass(
+                mockMvcHelper.expectSuccessAndReturnClass(
                         delete("/agents")
                                 .content(objectMapper.writeValueAsString(body))
                                 .contentType(MediaType.APPLICATION_JSON), AgentResponseType);
@@ -115,7 +115,7 @@ public class AgentControllerTest extends SpringScenario {
         Assert.assertEquals(created, responseOfDeleteAgent.getData());
 
         ResponseMessage<Agent> responseOfGetAgent =
-                mvcMockHelper.expectSuccessAndReturnClass(get("/agents/" + created.getToken()), AgentResponseType);
+                mockMvcHelper.expectSuccessAndReturnClass(get("/agents/" + created.getToken()), AgentResponseType);
         Assert.assertEquals(ErrorCode.NOT_FOUND, responseOfGetAgent.getCode());
     }
 
@@ -133,12 +133,12 @@ public class AgentControllerTest extends SpringScenario {
         Assert.assertTrue(agent.getTags().contains("test"));
 
         // when: request to connect agent
-        authService.reset();
+        sessionManager.remove();
 
         AgentInit connect = new AgentInit();
         connect.setPort(8080);
 
-        ResponseMessage<Settings> settingsR = mvcMockHelper.expectSuccessAndReturnClass(
+        ResponseMessage<Settings> settingsR = mockMvcHelper.expectSuccessAndReturnClass(
                 post("/agents/connect")
                         .header("AGENT-TOKEN", agent.getToken())
                         .content(objectMapper.writeValueAsBytes(connect))
@@ -147,15 +147,11 @@ public class AgentControllerTest extends SpringScenario {
 
         // then:
         Settings settings = settingsR.getData();
-        Assert.assertEquals(rabbitConfig.getCallbackQueueName(), settings.getCallbackQueueName());
+        Assert.assertEquals(rabbitConfig.getCallbackQueueName(), settings.getQueue().getCallback());
 
         Assert.assertEquals("/flow-agents-test", settings.getZookeeper().getRoot());
         Assert.assertEquals("127.0.0.1:2181", settings.getZookeeper().getHost());
-
-        Assert.assertEquals("127.0.0.1", settings.getQueue().getHost());
-        Assert.assertEquals(5672, settings.getQueue().getPort().intValue());
-        Assert.assertEquals("guest", settings.getQueue().getUsername());
-        Assert.assertEquals("guest", settings.getQueue().getPassword());
+        Assert.assertEquals("amqp://guest:guest@127.0.0.1:5672", settings.getQueue().getUri());
     }
 
     @Test
@@ -173,7 +169,7 @@ public class AgentControllerTest extends SpringScenario {
         create.setName(name);
         create.setTags(tags);
 
-        ResponseMessage<Agent> agentR = mvcMockHelper.expectSuccessAndReturnClass(post("/agents")
+        ResponseMessage<Agent> agentR = mockMvcHelper.expectSuccessAndReturnClass(post("/agents")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(create)), AgentResponseType);
 

@@ -16,10 +16,13 @@
 
 package com.flowci.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @author yang
@@ -34,4 +37,10 @@ public abstract class FileHelper {
         }
     }
 
+    public static String getName(String file) {
+        checkNotNull(file);
+        String fileName = new File(file).getName();
+        int dotIndex = fileName.indexOf('.');
+        return (dotIndex == -1) ? fileName : fileName.substring(0, dotIndex);
+    }
 }

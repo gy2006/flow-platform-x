@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flowci.core.auth.AuthInterceptor;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.domain.JsonablePage;
+import com.flowci.core.user.domain.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
@@ -62,10 +63,10 @@ public class AppConfig {
     private static final ObjectMapper Mapper = Jsonable.getMapper();
 
     private static final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
-            new ByteArrayHttpMessageConverter(),
-            new MappingJackson2HttpMessageConverter(Mapper),
-            new ResourceHttpMessageConverter(),
-            new AllEncompassingFormHttpMessageConverter()
+        new ByteArrayHttpMessageConverter(),
+        new MappingJackson2HttpMessageConverter(Mapper),
+        new ResourceHttpMessageConverter(),
+        new AllEncompassingFormHttpMessageConverter()
     );
 
     static {
@@ -88,8 +89,8 @@ public class AppConfig {
     }
 
     @PostConstruct
-    private void initLogDir() throws IOException {
-        Path path = appProperties.getLogDir();
+    private void initFlowDir() throws IOException {
+        Path path = appProperties.getFlowDir();
         FileHelper.createDirectory(path);
     }
 
@@ -102,6 +103,11 @@ public class AppConfig {
     @Bean("tmpDir")
     public Path tmpDir() {
         return Paths.get(appProperties.getWorkspace().toString(), "tmp");
+    }
+
+    @Bean("flowDir")
+    public Path flowDir() {
+        return appProperties.getFlowDir();
     }
 
     @Bean("objectMapper")
@@ -121,6 +127,11 @@ public class AppConfig {
     }
 
     @Bean
+    public ThreadLocal<User> currentUser() {
+        return new ThreadLocal<>();
+    }
+
+    @Bean
     public AuthInterceptor authHandler() {
         return new AuthInterceptor();
     }
@@ -132,13 +143,14 @@ public class AppConfig {
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(new CrosInterceptor());
                 registry.addInterceptor(authHandler())
-                        .addPathPatterns("/flows/**")
-                        .addPathPatterns("/jobs/**")
-                        .addPathPatterns("/agents/**")
-                        .addPathPatterns("/credentials/**")
-                        .addPathPatterns("/auth/logout")
-                        .excludePathPatterns("/agents/connect")
-                        .excludePathPatterns("/agents/logs/upload");
+                    .addPathPatterns("/users/**")
+                    .addPathPatterns("/flows/**")
+                    .addPathPatterns("/jobs/**")
+                    .addPathPatterns("/agents/**")
+                    .addPathPatterns("/credentials/**")
+                    .addPathPatterns("/auth/logout")
+                    .excludePathPatterns("/agents/connect")
+                    .excludePathPatterns("/agents/logs/upload");
             }
 
             @Override

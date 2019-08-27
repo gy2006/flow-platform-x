@@ -17,16 +17,20 @@
 
 package com.flowci.core.auth;
 
+import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.auth.service.AuthService;
-import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.manager.SessionManager;
+import com.flowci.exception.AccessException;
 import com.flowci.exception.AuthenticationException;
 import com.google.common.base.Strings;
-import java.util.Objects;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Objects;
 
 /**
  * @author yang
@@ -42,9 +46,18 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private SessionManager sessionManager;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (!authService.isEnabled()) {
+
+            // do not update existing user
+            if (sessionManager.exist()) {
+                return true;
+            }
+
             return authService.setAsDefaultAdmin();
         }
 
@@ -58,6 +71,13 @@ public class AuthInterceptor implements HandlerInterceptor {
             throw new AuthenticationException("Invalid token");
         }
 
+        HandlerMethod handlerMethod = (HandlerMethod) handler;
+        Action action = handlerMethod.getMethodAnnotation(Action.class);
+
+        if (!authService.hasPermission(action)) {
+            throw new AccessException("No permission");
+        }
+
         return true;
     }
 
@@ -66,7 +86,10 @@ public class AuthInterceptor implements HandlerInterceptor {
                            HttpServletResponse response,
                            Object handler,
                            ModelAndView modelAndView) throws Exception {
-        authService.reset();
+
+        if (authService.isEnabled()) {
+            sessionManager.remove();
+        }
     }
 
     private String getToken(HttpServletRequest request) {

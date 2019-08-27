@@ -16,20 +16,26 @@
 
 package com.flowci.core.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NonNull;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
  */
 
+@Document(collection = "user")
 @Getter
 @Setter
 @ToString(of = {"email"}, callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class User extends Mongoable {
 
     public enum Role {
@@ -38,18 +44,16 @@ public class User extends Mongoable {
         Developer
     }
 
-    @NonNull
     @Indexed(unique = true, name = "index_user_email")
     private String email;
 
-    @NonNull
+    @JsonIgnore
     private String passwordOnMd5;
 
-    @NonNull
     private Role role;
 
-    public User(String email, String passwordOnMd5) {
-        this.email = email;
-        this.passwordOnMd5 = passwordOnMd5;
+    @JsonIgnore
+    public boolean isAdmin() {
+        return role == Role.Admin;
     }
 }

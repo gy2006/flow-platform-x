@@ -17,7 +17,7 @@
 package com.flowci.core.agent.event;
 
 import com.flowci.domain.Agent;
-import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdIn;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
@@ -30,9 +30,9 @@ public class CmdSentEvent extends ApplicationEvent {
     private final Agent agent;
 
     @Getter
-    private final Cmd cmd;
+    private final CmdIn cmd;
 
-    public CmdSentEvent(Object source, Agent agent, Cmd cmd) {
+    public CmdSentEvent(Object source, Agent agent, CmdIn cmd) {
         super(source);
         this.agent = agent;
         this.cmd = cmd;

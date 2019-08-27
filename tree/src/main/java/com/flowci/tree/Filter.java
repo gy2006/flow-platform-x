@@ -60,7 +60,7 @@ public class Filter implements Serializable {
     }
 
     public boolean isMatchTag(String tag) {
-        if (branches.isEmpty()) {
+        if (tags.isEmpty()) {
             return true;
         }
 

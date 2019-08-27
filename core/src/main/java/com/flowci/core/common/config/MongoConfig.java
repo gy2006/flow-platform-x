@@ -17,15 +17,13 @@
 package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.common.coverter.VariableMapReader;
-import com.flowci.core.common.coverter.VariableMapWriter;
 import com.flowci.core.common.mongo.FlowMappingContext;
+import com.flowci.core.common.mongo.SimpleKeyPairConverter;
+import com.flowci.core.common.mongo.VariableMapConverter;
 import com.flowci.core.job.domain.JobItem;
 import com.flowci.domain.ExecutedCmd;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
@@ -38,6 +36,9 @@ import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.util.ClassTypeInformation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author yang
  */
@@ -45,6 +46,9 @@ import org.springframework.data.util.ClassTypeInformation;
 @Configuration
 @EnableMongoAuditing
 public class MongoConfig extends AbstractMongoConfiguration {
+
+    @Autowired
+    private ConfigProperties appProperties;
 
     @Autowired
     private MongoProperties mongoProperties;
@@ -66,9 +70,16 @@ public class MongoConfig extends AbstractMongoConfiguration {
 
     @Override
     public CustomConversions customConversions() {
+        VariableMapConverter variableConverter = new VariableMapConverter(objectMapper);
+        SimpleKeyPairConverter keyPairConverter = new SimpleKeyPairConverter(appProperties.getSecret());
         List<Converter<?, ?>> converters = new ArrayList<>();
-        converters.add(new VariableMapReader(objectMapper));
-        converters.add(new VariableMapWriter(objectMapper));
+
+        converters.add(variableConverter.getReader());
+        converters.add(variableConverter.getWriter());
+
+        converters.add(keyPairConverter.getReader());
+        converters.add(keyPairConverter.getWriter());
+
         converters.add(new JobItem.ContextReader());
         return new MongoCustomConversions(converters);
     }

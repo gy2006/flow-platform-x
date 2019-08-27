@@ -19,11 +19,13 @@ package com.flowci.core.credential.domain;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 
 @Data
 public class GenRSA {
 
-    @NotNull
+    @NotEmpty
+    @Email
     private String email;
 }

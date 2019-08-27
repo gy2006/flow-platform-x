@@ -29,7 +29,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString(callSuper = true, of = {"ref", "message"})
-public class GitPushTrigger extends GitTrigger {
+public final class GitPushTrigger extends GitTrigger {
 
     private Author author;
 

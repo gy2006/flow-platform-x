@@ -16,13 +16,16 @@
 
 package com.flowci.core.job.service;
 
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.core.common.manager.PathManager;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitOperation;
@@ -34,9 +37,16 @@ import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobItemDao;
 import com.flowci.core.job.dao.JobNumberDao;
-import com.flowci.core.job.domain.*;
+import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
-import com.flowci.core.job.event.*;
+import com.flowci.core.job.domain.JobItem;
+import com.flowci.core.job.domain.JobNumber;
+import com.flowci.core.job.domain.JobYml;
+import com.flowci.core.job.event.CreateNewJobEvent;
+import com.flowci.core.job.event.JobCreatedEvent;
+import com.flowci.core.job.event.JobDeletedEvent;
+import com.flowci.core.job.event.JobReceivedEvent;
+import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
@@ -44,13 +54,31 @@ import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
-import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdId;
+import com.flowci.domain.CmdIn;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.*;
+import com.flowci.tree.GroovyRunner;
+import com.flowci.tree.Node;
+import com.flowci.tree.NodePath;
+import com.flowci.tree.NodeTree;
+import com.flowci.tree.YmlParser;
 import groovy.util.ScriptException;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,16 +90,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 /**
  * @author yang
@@ -90,9 +108,6 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private ConfigProperties.Job jobProperties;
-
-    @Autowired
-    private AuthService authService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -116,7 +131,13 @@ public class JobServiceImpl implements JobService {
     private YmlManager ymlManager;
 
     @Autowired
+    private SessionManager sessionManager;
+
+    @Autowired
     private SpringEventManager eventManager;
+
+    @Autowired
+    private PathManager pathManager;
 
     @Autowired
     private AgentService agentService;
@@ -133,7 +154,7 @@ public class JobServiceImpl implements JobService {
     private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
 
     //====================================================================
-    //        %% Public function
+    //        %% Public functions
     //====================================================================
 
     @Override
@@ -205,8 +226,8 @@ public class JobServiceImpl implements JobService {
         job.getContext().merge(defaultContext);
 
         // setup created by form login user or git event author
-        if (authService.hasLogin()) {
-            job.setCreatedBy(authService.get().getId());
+        if (sessionManager.exist()) {
+            job.setCreatedBy(sessionManager.getUserId());
         } else {
             String createdBy = job.getContext().get(GIT_AUTHOR, "Unknown");
             job.setCreatedBy(createdBy);
@@ -216,6 +237,14 @@ public class JobServiceImpl implements JobService {
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
         jobDao.insert(job);
+
+        // create job workspace
+        try {
+            pathManager.create(flow, job);
+        } catch (IOException e) {
+            jobDao.delete(job);
+            throw new StatusException("Cannot create workspace for job");
+        }
 
         // create job yml
         ymlManager.create(flow, job, yml);
@@ -245,7 +274,7 @@ public class JobServiceImpl implements JobService {
         // send stop cmd when is running
         if (job.isRunning()) {
             Agent agent = agentService.get(job.getAgentId());
-            Cmd killCmd = cmdManager.createKillCmd();
+            CmdIn killCmd = cmdManager.createKillCmd();
 
             agentService.dispatch(killCmd, agent);
             logInfo(job, " cancel cmd been send to {}", agent.getName());
@@ -364,8 +393,7 @@ public class JobServiceImpl implements JobService {
         List<ExecutedCmd> steps = stepService.list(job);
         for (ExecutedCmd step : steps) {
             if (step.isRunning() || step.isPending()) {
-                step.setStatus(ExecutedCmd.Status.SKIPPED);
-                stepService.update(job, step);
+                stepService.statusChange(step, ExecutedCmd.Status.SKIPPED, null);
             }
         }
 
@@ -486,7 +514,7 @@ public class JobServiceImpl implements JobService {
         }
 
         // save executed cmd
-        stepService.update(job, execCmd);
+        stepService.resultUpdate(execCmd);
         log.debug("Executed cmd {} been recorded", execCmd);
 
         // merge output to job context
@@ -620,19 +648,17 @@ public class JobServiceImpl implements JobService {
 
         try {
             if (!executedCmd.isRunning()) {
-                executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
-                stepService.update(job, executedCmd);
+                stepService.statusChange(job, node, ExecutedCmd.Status.RUNNING, null);
             }
 
-            Cmd cmd = cmdManager.createShellCmd(job, node);
+            CmdIn cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
             logInfo(job, "send to agent: step={}, agent={}", node.getName(), agent.getName());
         } catch (Throwable e) {
             log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
 
             // set current step to exception
-            executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
-            stepService.update(job, executedCmd);
+            stepService.statusChange(job, node, ExecutedCmd.Status.EXCEPTION, null);
 
             // set current job failure
             setJobStatusAndSave(job, Job.Status.FAILURE, e.getMessage());
@@ -667,19 +693,15 @@ public class JobServiceImpl implements JobService {
             Boolean result = runner.run();
 
             if (Objects.isNull(result) || result == Boolean.FALSE) {
-                ExecutedCmd executedCmd = stepService.get(job, node);
-                executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
-                executedCmd.setError("The 'before' condition cannot be matched");
-                stepService.update(job, executedCmd);
+                ExecutedCmd.Status newStatus = ExecutedCmd.Status.SKIPPED;
+                String errMsg = "The 'before' condition cannot be matched";
+                stepService.statusChange(job, node, newStatus, errMsg);
                 return false;
             }
 
             return true;
         } catch (ScriptException e) {
-            ExecutedCmd executedCmd = stepService.get(job, node);
-            executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
-            executedCmd.setError(e.getMessage());
-            stepService.update(job, executedCmd);
+            stepService.statusChange(job, node, ExecutedCmd.Status.SKIPPED, e.getMessage());
             return false;
         }
     }
@@ -739,7 +761,7 @@ public class JobServiceImpl implements JobService {
         return job;
     }
 
-    private void logInfo(Job job, String message, Object ...params) {
+    private void logInfo(Job job, String message, Object... params) {
         log.info("[Job] " + job.getKey() + " " + message, params);
     }
 }

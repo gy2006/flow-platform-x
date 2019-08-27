@@ -17,18 +17,20 @@
 
 package com.flowci.core.auth;
 
+import com.flowci.core.auth.domain.Tokens;
 import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.user.domain.User;
 import com.flowci.exception.AuthenticationException;
 import com.google.common.base.Strings;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 @RestController()
 @RequestMapping("/auth")
@@ -38,14 +40,14 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/login")
-    public String login(@RequestHeader("Authorization") String authorization) {
+    public Tokens login(@RequestHeader("Authorization") String authorization) {
         User user = getFromAuthorization(authorization);
         return authService.login(user.getEmail(), user.getPasswordOnMd5());
     }
 
     @PostMapping("/refresh")
-    public String refresh(@RequestHeader("Token") String token) {
-        return authService.refresh(token);
+    public Tokens refresh(@Validated @RequestBody Tokens tokens) {
+        return authService.refresh(tokens);
     }
 
     @PostMapping("/logout")
@@ -69,6 +71,6 @@ public class AuthController {
         String email = values[0];
         String passwordOnMd5 = values[1];
 
-        return new User(email, passwordOnMd5);
+        return new User(email, passwordOnMd5, null);
     }
 }

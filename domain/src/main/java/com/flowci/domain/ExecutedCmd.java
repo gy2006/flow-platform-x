@@ -17,17 +17,18 @@
 package com.flowci.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+import java.util.Objects;
+import java.util.Set;
+
 import static com.flowci.domain.ExecutedCmd.Status.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @author yang
@@ -82,6 +83,11 @@ public class ExecutedCmd extends CmdBase {
     private String flowId;
 
     /**
+     * Job build number
+     */
+    private Long buildNumber;
+
+    /**
      * Process id
      */
     private Integer processId;
@@ -121,29 +127,21 @@ public class ExecutedCmd extends CmdBase {
      */
     private Long logSize = -1L;
 
-    public ExecutedCmd(String id, String flowId, boolean allowFailure) {
-        setId(id);
+    private CmdId cmdId;
+
+    public ExecutedCmd(CmdId cmdId, String flowId, boolean allowFailure) {
+        checkNotNull(cmdId);
+
+        setId(cmdId.toString());
         setFlowId(flowId);
         setAllowFailure(allowFailure);
+
+        this.cmdId = cmdId;
     }
 
-    public ExecutedCmd(Cmd cmd, String flowId) {
-        this(cmd.getId(), flowId, cmd.getAllowFailure());
-    }
-
-    @JsonProperty
-    public void setStatusByCode() {
-        if (this.code.equals(CODE_SUCCESS)) {
-            this.status = SUCCESS;
-        }
-
-        if (this.code > CODE_SUCCESS) {
-            this.status = EXCEPTION;
-        }
-
-        if (this.code.equals(CODE_TIMEOUT)) {
-            this.status = TIMEOUT;
-        }
+    @JsonIgnore
+    public String getJobId() {
+        return cmdId.getJobId();
     }
 
     @JsonIgnore

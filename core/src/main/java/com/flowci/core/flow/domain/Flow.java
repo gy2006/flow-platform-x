@@ -18,9 +18,12 @@ package com.flowci.core.flow.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
+import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.domain.VariableMap;
 import com.flowci.util.StringHelper;
+import java.util.Set;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -37,7 +40,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Setter
 @NoArgsConstructor
 @ToString(of = {"name"}, callSuper = true)
-public final class Flow extends Mongoable {
+public final class Flow extends Mongoable implements Pathable {
+
+    public static Pathable path(String id) {
+        Flow flow = new Flow();
+        flow.setId(id);
+        return flow;
+    }
 
     public enum Status {
         PENDING,
@@ -54,6 +63,8 @@ public final class Flow extends Mongoable {
 
     @NonNull
     private VariableMap variables = new VariableMap();
+
+    private WebhookStatus webhookStatus;
 
     public Flow(String name) {
         this.name = name;
@@ -74,5 +85,21 @@ public final class Flow extends Mongoable {
     public boolean hasCredential() {
         String val = variables.get(Variables.Flow.SSH_RSA);
         return StringHelper.hasValue(val);
+    }
+
+    @JsonIgnore
+    @Override
+    public String pathName() {
+        return getId();
+    }
+
+    @Data
+    public static class WebhookStatus {
+
+        private boolean added;
+
+        private String createdAt;
+
+        private Set<String> events;
     }
 }
