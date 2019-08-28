@@ -1,4 +1,4 @@
-From openjdk:8
+FROM openjdk:8
 
 ENV WORKER=/flow.ci
 ENV JAR=flow-ci-core.jar
