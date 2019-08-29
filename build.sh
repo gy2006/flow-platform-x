@@ -2,4 +2,4 @@
 
 mvn clean package -Dmaven.test.skip=true
 
-docker build -f ./Dockerfile -t flowci/core:latest .
+docker build -f ./core/Dockerfile -t flowci/core:latest ./core
