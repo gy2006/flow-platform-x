@@ -24,6 +24,13 @@ public class Variables {
     public static class App {
 
         public static final String Url = "FLOWCI_SERVER_URL";
+
+        public static final String ServerDomain = "FLOWCI_SERVER_DOMAIN";
+
+        public static final String RabbitDomain = "FLOWCI_RABBIT_DOMAIN";
+
+        public static final String ZookeeperDomain = "FLOWCI_ZK_DOMAIN";
+
     }
 
     public static class Flow {

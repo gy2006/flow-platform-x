@@ -18,17 +18,24 @@ package com.flowci.core.agent.config;
 
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.config.QueueConfig;
+import com.flowci.core.common.domain.Variables;
+import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.domain.Settings;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * @author yang
  */
 @Configuration
 public class AgentConfig {
+
+    @Autowired
+    private Environment env;
 
     @Autowired
     private ConfigProperties.Zookeeper zkProperties;
@@ -43,10 +50,10 @@ public class AgentConfig {
     public Settings baseSettings() {
         Settings.Zookeeper zk = new Settings.Zookeeper();
         zk.setRoot(zkProperties.getAgentRoot());
-        zk.setHost(zkProperties.getHost());
+        zk.setHost(getZkHost());
 
         Settings.RabbitMQ mq = new Settings.RabbitMQ();
-        mq.setUri(rabbitProperties.getUri());
+        mq.setUri(getRabbitUri());
         mq.setCallback(callbackQueueManager.getQueueName());
         mq.setLogsExchange(QueueConfig.LoggingExchange);
 
@@ -55,5 +62,20 @@ public class AgentConfig {
         settings.setQueue(mq);
 
         return settings;
+    }
+
+    private String getZkHost() {
+        return env.getProperty(App.ZookeeperDomain, zkProperties.getHost());
+    }
+
+    private String getRabbitUri() {
+        String uri = rabbitProperties.getUri().toString();
+        String domain = env.getProperty(App.RabbitDomain);
+
+        if (Objects.isNull(domain)) {
+            return uri;
+        }
+
+        return uri.replace(rabbitProperties.getUri().getHost(), domain);
     }
 }
