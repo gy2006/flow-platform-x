@@ -42,6 +42,8 @@ public class AuthConfig {
 
     private static final String CACHE_REFRESH_TOKEN = "refresh_tokens";
 
+    private static final long MaxCacheSize = 500;
+
     @Autowired
     private ConfigProperties.Auth authProperties;
 
@@ -49,7 +51,7 @@ public class AuthConfig {
     public Cache onlineUsersCache() {
         return new CaffeineCache(CACHE_ONLINE,
             Caffeine.newBuilder()
-                .maximumSize(authProperties.getMaxUsers())
+                .maximumSize(MaxCacheSize)
                 .expireAfterWrite(authProperties.getExpireSeconds(), TimeUnit.SECONDS)
                 .build());
     }
@@ -58,7 +60,7 @@ public class AuthConfig {
     public Cache refreshTokenCache() {
         return new CaffeineCache(CACHE_REFRESH_TOKEN,
             Caffeine.newBuilder()
-                .maximumSize(authProperties.getMaxUsers())
+                .maximumSize(MaxCacheSize)
                 .expireAfterWrite(authProperties.getRefreshExpiredSeconds(), TimeUnit.SECONDS)
                 .build());
     }

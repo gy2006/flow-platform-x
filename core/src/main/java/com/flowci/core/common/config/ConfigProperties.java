@@ -145,8 +145,6 @@ public class ConfigProperties {
 
         private Boolean enabled;
 
-        private Integer maxUsers;
-
         // expired for token
         private Integer expireSeconds;
 
