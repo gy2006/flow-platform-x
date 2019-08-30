@@ -58,6 +58,8 @@ public class QueueConfig {
 
     @Bean
     public Connection rabbitConnection(ThreadPoolTaskExecutor rabbitConsumerExecutor) throws Throwable {
+        log.info("Rabbit URI: {}", rabbitProperties.getUri());
+
         ConnectionFactory factory = new ConnectionFactory();
         factory.setUri(URI.create(rabbitProperties.getUri()));
         factory.setRequestedHeartbeat(1800);
