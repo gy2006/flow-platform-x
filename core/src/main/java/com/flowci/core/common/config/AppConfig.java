@@ -21,18 +21,19 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flowci.core.auth.AuthInterceptor;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.domain.JsonablePage;
-import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
+import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
@@ -111,9 +112,12 @@ public class AppConfig {
     }
 
     @Bean("serverAddress")
-    public String serverAddress() {
-        String domain = env.getProperty(App.ServerDomain, serverProperties.getAddress().toString());
-        return "http://" + domain + ":" + serverProperties.getPort();
+    public String serverAddress() throws URISyntaxException {
+        String host = env.getProperty(App.Host, serverProperties.getAddress().toString());
+        return new URIBuilder().setScheme("http")
+            .setHost(host).setPort(serverProperties.getPort())
+            .build()
+            .toString();
     }
 
     @Bean("tmpDir")

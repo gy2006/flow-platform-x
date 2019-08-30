@@ -18,7 +18,6 @@ package com.flowci.core.agent.config;
 
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.config.QueueConfig;
-import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.domain.Settings;
@@ -65,12 +64,12 @@ public class AgentConfig {
     }
 
     private String getZkHost() {
-        return env.getProperty(App.ZookeeperDomain, zkProperties.getHost());
+        return env.getProperty(App.ZookeeperHost, zkProperties.getHost());
     }
 
     private String getRabbitUri() {
         String uri = rabbitProperties.getUri().toString();
-        String domain = env.getProperty(App.RabbitDomain);
+        String domain = env.getProperty(App.RabbitHost);
 
         if (Objects.isNull(domain)) {
             return uri;
