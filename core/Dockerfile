@@ -5,5 +5,7 @@ ENV JAR=flow-ci-core.jar
 
 WORKDIR $WORKER
 
-COPY target/$JAR .
+COPY target/$JAR $WORKER
+COPY wait_for_it.sh $WORKER
+
 CMD java $JVM_OPS -jar $JAR
