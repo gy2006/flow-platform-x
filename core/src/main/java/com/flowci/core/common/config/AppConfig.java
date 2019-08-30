@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flowci.core.auth.AuthInterceptor;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.domain.JsonablePage;
+import com.flowci.core.common.domain.Variables;
+import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;
@@ -39,6 +41,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
+import org.springframework.core.env.Environment;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -77,6 +80,9 @@ public class AppConfig {
     }
 
     @Autowired
+    private Environment env;
+
+    @Autowired
     private ServerProperties serverProperties;
 
     @Autowired
@@ -106,7 +112,8 @@ public class AppConfig {
 
     @Bean("serverAddress")
     public String serverAddress() {
-        return "http://" + serverProperties.getAddress() + ":" + serverProperties.getPort();
+        String domain = env.getProperty(App.ServerDomain, serverProperties.getAddress().toString());
+        return "http://" + domain + ":" + serverProperties.getPort();
     }
 
     @Bean("tmpDir")
