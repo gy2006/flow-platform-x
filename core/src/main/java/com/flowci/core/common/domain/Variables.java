@@ -29,7 +29,7 @@ public class Variables {
 
         public static final String RabbitHost = "FLOWCI_RABBIT_HOST";
 
-        public static final String ZookeeperHost = "FLOWCI_ZK_HOST";
+        public static final String ZookeeperHost = "FLOWCI_ZOOKEEPER_HOST";
 
     }
 
