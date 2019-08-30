@@ -8,4 +8,4 @@ WORKDIR $WORKER
 COPY target/$JAR $WORKER
 COPY wait_for_it.sh $WORKER
 
-CMD java $JVM_OPS -jar $JAR
+CMD java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap $JVM_OPS -jar $JAR
