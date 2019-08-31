@@ -22,6 +22,7 @@ import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.domain.Settings;
 import java.util.Objects;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +31,7 @@ import org.springframework.core.env.Environment;
 /**
  * @author yang
  */
+@Log4j2
 @Configuration
 public class AgentConfig {
 
@@ -60,6 +62,7 @@ public class AgentConfig {
         settings.setZookeeper(zk);
         settings.setQueue(mq);
 
+        log.info(settings);
         return settings;
     }
 
