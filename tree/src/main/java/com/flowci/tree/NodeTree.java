@@ -58,6 +58,16 @@ public class NodeTree {
         buildCacheWithIndex();
     }
 
+    public boolean isFirst(NodePath path) {
+        Node node = ordered.get(0);
+        return node.getPath().equals(path);
+    }
+
+    public boolean isLast(NodePath path) {
+        Node node = ordered.get(ordered.size() - 1);
+        return node.getPath().equals(path);
+    }
+
     /**
      * Get previous Node instance from path
      */

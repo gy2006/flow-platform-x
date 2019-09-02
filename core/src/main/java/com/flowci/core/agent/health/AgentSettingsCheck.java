@@ -15,27 +15,22 @@
  *
  */
 
-package com.flowci.core.credential.dao;
+package com.flowci.core.agent.health;
 
-import com.flowci.core.credential.domain.Credential;
+import com.flowci.domain.Settings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.boot.actuate.health.AbstractHealthIndicator;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.stereotype.Component;
 
-import java.util.List;
-
-public class CustomCredentialDaoImpl implements CustomCredentialDao {
+@Component
+public class AgentSettingsCheck extends AbstractHealthIndicator {
 
     @Autowired
-    private MongoOperations operations;
+    private Settings baseSettings;
 
     @Override
-    public List<Credential> listNameOnly() {
-        Query query = Query.query(new Criteria()).with(new Sort(Sort.Direction.ASC, "createdAt"));
-        query.fields().include("name");
-
-        return operations.find(query, Credential.class);
+    protected void doHealthCheck(Health.Builder builder) throws Exception {
+        builder.withDetail("settings", baseSettings);
     }
 }

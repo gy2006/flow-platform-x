@@ -40,10 +40,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -185,6 +183,7 @@ public class FlowServiceTest extends SpringScenario {
         flowService.saveYml(flow, "hello-...");
     }
 
+    @Ignore
     @Test
     public void should_test_git_connection_by_list_remote_branches() throws IOException, InterruptedException {
         // init: load private key

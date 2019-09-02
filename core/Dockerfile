@@ -1,9 +1,11 @@
-From openjdk:8
+FROM openjdk:8
 
 ENV WORKER=/flow.ci
 ENV JAR=flow-ci-core.jar
 
 WORKDIR $WORKER
 
-COPY target/$JAR .
-CMD java $JVM_OPS -jar $JAR
+COPY target/$JAR $WORKER
+COPY wait_for_it.sh $WORKER
+
+CMD java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap $JVM_OPS -jar $JAR

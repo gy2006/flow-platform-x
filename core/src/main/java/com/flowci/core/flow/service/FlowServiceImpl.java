@@ -16,7 +16,6 @@
 
 package com.flowci.core.flow.service;
 
-import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.manager.PathManager;
@@ -90,6 +89,7 @@ import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.util.FS;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
@@ -104,7 +104,7 @@ import org.springframework.stereotype.Service;
 public class FlowServiceImpl implements FlowService {
 
     @Autowired
-    private ConfigProperties appProperties;
+    private String serverAddress;
 
     @Autowired
     private ThreadPoolTaskExecutor gitTestExecutor;
@@ -220,7 +220,6 @@ public class FlowServiceImpl implements FlowService {
         flow.setCreatedBy(userId);
 
         VariableMap vars = flow.getVariables();
-        vars.put(Variables.App.Url, appProperties.getServerAddress());
         vars.put(Variables.Flow.Name, name);
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
@@ -514,7 +513,7 @@ public class FlowServiceImpl implements FlowService {
     }
 
     private String getWebhook(String name) {
-        return appProperties.getServerAddress() + "/webhooks/" + name;
+        return serverAddress + "/webhooks/" + name;
     }
 
     private class GitBranchLoader {
@@ -547,7 +546,7 @@ public class FlowServiceImpl implements FlowService {
                         SshTransport sshTransport = (SshTransport) transport;
                         sshTransport.setSshSessionFactory(sessionFactory);
                     })
-                    .setTimeout(10)
+                    .setTimeout(20)
                     .call();
 
                 for (Ref ref : refs) {

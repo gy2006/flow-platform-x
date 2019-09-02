@@ -16,6 +16,7 @@
 
 package com.flowci.core.common.config;
 
+import java.net.URI;
 import java.nio.file.Path;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
@@ -133,7 +134,7 @@ public class ConfigProperties {
     @Data
     public static class RabbitMQ {
 
-        private String uri;
+        private URI uri;
 
         private String callbackQueueName;
 
@@ -144,8 +145,6 @@ public class ConfigProperties {
     public static class Auth {
 
         private Boolean enabled;
-
-        private Integer maxUsers;
 
         // expired for token
         private Integer expireSeconds;

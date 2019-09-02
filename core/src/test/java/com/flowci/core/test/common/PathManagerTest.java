@@ -38,7 +38,7 @@ public class PathManagerTest extends SpringScenario {
         flow.setId("flow");
 
         Job job = new Job();
-        job.setId("job");
+        job.setBuildNumber(1L);
 
         pathManager.create(flow, job);
         Assert.assertTrue(pathManager.exist(flow, job));

@@ -20,12 +20,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.domain.SimpleKeyPair;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.TypeAlias;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
  */
 @Getter
 @Setter
+@Document(collection = "credential")
 public final class RSACredential extends Credential {
 
     private SimpleKeyPair pair;

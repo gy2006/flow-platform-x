@@ -16,8 +16,6 @@
 
 package com.flowci.core.job.service;
 
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
@@ -42,43 +40,18 @@ import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
-import com.flowci.core.job.event.CreateNewJobEvent;
-import com.flowci.core.job.event.JobCreatedEvent;
-import com.flowci.core.job.event.JobDeletedEvent;
-import com.flowci.core.job.event.JobReceivedEvent;
-import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.job.event.*;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
-import com.flowci.domain.Agent;
+import com.flowci.domain.*;
 import com.flowci.domain.Agent.Status;
-import com.flowci.domain.CmdId;
-import com.flowci.domain.CmdIn;
-import com.flowci.domain.ExecutedCmd;
-import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.GroovyRunner;
-import com.flowci.tree.Node;
-import com.flowci.tree.NodePath;
-import com.flowci.tree.NodeTree;
-import com.flowci.tree.YmlParser;
+import com.flowci.tree.*;
 import groovy.util.ScriptException;
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,6 +63,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 /**
  * @author yang
@@ -105,6 +88,9 @@ public class JobServiceImpl implements JobService {
     //====================================================================
     //        %% Spring injection
     //====================================================================
+
+    @Autowired
+    private String serverAddress;
 
     @Autowired
     private ConfigProperties.Job jobProperties;
@@ -175,7 +161,7 @@ public class JobServiceImpl implements JobService {
 
         if (Objects.isNull(job)) {
             throw new NotFoundException(
-                "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
+                    "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
         }
 
         return job;
@@ -224,6 +210,8 @@ public class JobServiceImpl implements JobService {
         // init job context
         VariableMap defaultContext = initJobContext(flow, job, root.getEnvironments(), input);
         job.getContext().merge(defaultContext);
+        job.getContext().put(Variables.App.Url, serverAddress);
+
 
         // setup created by form login user or git event author
         if (sessionManager.exist()) {
@@ -496,13 +484,10 @@ public class JobServiceImpl implements JobService {
 
         // get cmd related job
         Job job = get(cmdId.getJobId());
-        NodePath currentFromCmd = NodePath.create(cmdId.getNodePath());
-
-        NodeTree tree = ymlManager.getTree(job);
-        Node node = tree.get(currentFromCmd);
+        NodePath currentPath = NodePath.create(cmdId.getNodePath());
 
         // verify job node path is match cmd node path
-        if (!currentFromCmd.equals(currentNodePath(job))) {
+        if (!currentPath.equals(currentNodePath(job))) {
             log.error("Invalid executed cmd callback: does not match job current node path");
             return;
         }
@@ -513,20 +498,16 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
+        NodeTree tree = ymlManager.getTree(job);
+        Node node = tree.get(currentPath);
+
         // save executed cmd
         stepService.resultUpdate(execCmd);
         log.debug("Executed cmd {} been recorded", execCmd);
 
-        // merge output to job context
-        VariableMap context = job.getContext();
-        context.merge(execCmd.getOutput());
+        setJobStartAndFinishTime(job, tree, node, execCmd);
 
-        // setup current job status if not tail node
-        if (!node.isTail()) {
-            context.put(Variables.Job.Status, StatusHelper.convert(execCmd).name());
-        }
-
-        jobDao.save(job);
+        setJobContext(job, node, execCmd);
 
         // find next node
         Node next = findNext(job, tree, node, execCmd.isSuccess());
@@ -553,6 +534,27 @@ public class JobServiceImpl implements JobService {
     //====================================================================
     //        %% Utils
     //====================================================================
+
+    private void setJobStartAndFinishTime(Job job, NodeTree tree, Node node, ExecutedCmd cmd) {
+        if (tree.isFirst(node.getPath())) {
+            job.setStartAt(cmd.getStartAt());
+        }
+
+        if (tree.isLast(node.getPath())) {
+            job.setFinishAt(cmd.getFinishAt());
+        }
+    }
+
+    private void setJobContext(Job job, Node node, ExecutedCmd cmd) {
+        // merge output to job context
+        VariableMap context = job.getContext();
+        context.merge(cmd.getOutput());
+
+        // setup current job status if not tail node
+        if (!node.isTail()) {
+            context.put(Variables.Job.Status, StatusHelper.convert(cmd).name());
+        }
+    }
 
     private void startJobConsumer(Flow flow) {
         String queueName = flow.getQueueName();

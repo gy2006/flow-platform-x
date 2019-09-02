@@ -20,12 +20,10 @@ import com.flowci.core.common.domain.Mongoable;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
  */
-@Document
 @Getter
 @Setter
 public class Credential extends Mongoable {

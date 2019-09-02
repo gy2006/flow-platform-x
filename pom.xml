@@ -24,7 +24,7 @@
     <junit.version>4.12</junit.version>
     <spring.version>2.0.3.RELEASE</spring.version>
     <snakeyaml.version>1.21</snakeyaml.version>
-    <jackson.version>2.9.8</jackson.version>
+    <jackson.version>2.9.9</jackson.version>
     <curator.version>2.12.0</curator.version>
     <caffeine.version>2.6.2</caffeine.version>
     <h2.version>1.4.197</h2.version>
@@ -40,6 +40,8 @@
   </properties>
 
   <build>
+    <sourceDirectory>src/main/java</sourceDirectory>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -55,30 +57,19 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.1</version>
+        <version>0.8.2</version>
         <executions>
           <execution>
-            <id>default-prepare-agent</id>
             <goals>
               <goal>prepare-agent</goal>
             </goals>
           </execution>
           <execution>
-            <id>default-report</id>
-            <goals>
-              <goal>report</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>post-unit-test</id>
+            <id>report</id>
             <phase>test</phase>
             <goals>
               <goal>report</goal>
             </goals>
-            <configuration>
-              <dataFile>target/jacoco.exec</dataFile>
-              <outputDirectory>target/jacoco-ut</outputDirectory>
-            </configuration>
           </execution>
         </executions>
       </plugin>

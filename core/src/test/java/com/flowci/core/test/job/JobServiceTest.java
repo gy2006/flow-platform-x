@@ -213,6 +213,7 @@ public class JobServiceTest extends ZookeeperScenario {
         );
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
+        executedCmd.setBuildNumber(1L);
 
         jobService.handleCallback(executedCmd);
 
@@ -240,6 +241,7 @@ public class JobServiceTest extends ZookeeperScenario {
         );
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
+        executedCmd.setBuildNumber(1L);
 
         jobService.handleCallback(executedCmd);
 
