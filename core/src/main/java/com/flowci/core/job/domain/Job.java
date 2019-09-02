@@ -151,6 +151,16 @@ public class Job extends Mongoable implements Pathable {
 
     private Integer priority = MinPriority;
 
+    /**
+     * Real execution start at
+     */
+    private Date startAt;
+
+    /**
+     * Real execution finish at
+     */
+    private Date finishAt;
+
     @JsonIgnore
     public boolean isRunning() {
         return status == Status.RUNNING;

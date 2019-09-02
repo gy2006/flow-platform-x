@@ -27,6 +27,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -34,28 +35,32 @@ import org.junit.Test;
  */
 public class NodeTreeTest {
 
-    @Test
-    public void should_move_all_final_nodes_to_the_tail() throws IOException {
+    private NodeTree tree;
+
+    @Before
+    public void init() throws Exception {
         URL resource = getClass().getClassLoader().getResource("flow-with-final.yml");
         String content = Files.toString(new File(resource.getFile()), Charset.forName("UTF-8"));
         Node root = YmlParser.load("default", content);
+        tree = NodeTree.create(root);
+    }
 
-        NodeTree tree = NodeTree.create(root);
+    @Test
+    public void should_check_first_or_last_node() {
+        Assert.assertTrue(tree.isFirst(NodePath.create("root/step-1")));
+        Assert.assertTrue(tree.isLast(NodePath.create("root/step3")));
+    }
 
+    @Test
+    public void should_move_all_final_nodes_to_the_tail() {
         List<Node> ordered = tree.getOrdered();
         Assert.assertEquals("step3", ordered.get(ordered.size() - 1).getName());
     }
 
     @Test
-    public void should_get_next_final_node() throws IOException {
-        URL resource = getClass().getClassLoader().getResource("flow-with-final.yml");
-        String content = Files.toString(new File(resource.getFile()), Charset.forName("UTF-8"));
-        Node root = YmlParser.load("default", content);
-
-        NodeTree tree = NodeTree.create(root);
-
+    public void should_get_next_final_node() {
         // then: should get next final from root
-        Node nextFinalNode = tree.nextFinal(root.getPath());
+        Node nextFinalNode = tree.nextFinal(tree.getRoot().getPath());
         Assert.assertNotNull(nextFinalNode);
         Assert.assertEquals("step3", nextFinalNode.getName());
 
