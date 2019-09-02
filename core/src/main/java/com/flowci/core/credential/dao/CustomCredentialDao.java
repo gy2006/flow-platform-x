@@ -23,5 +23,5 @@ import java.util.List;
 
 public interface CustomCredentialDao {
 
-    List<Credential> listNameOnly(String createdBy);
+    List<Credential> listNameOnly();
 }

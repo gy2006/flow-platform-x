@@ -43,7 +43,16 @@ public class JobItem {
     @Setter
     public static class Context extends HashMap<String, String> {
 
-        public void putIfNotEmpty(String key, String value) {
+        @JsonIgnore
+        private org.bson.Document source;
+
+        Context(org.bson.Document source) {
+            this.source = source;
+        }
+
+        void putIfNotEmpty(String key) {
+            String value = source.getString(key);
+
             if (Strings.isNullOrEmpty(value)) {
                 return;
             }
@@ -57,16 +66,27 @@ public class JobItem {
 
         @Override
         public Context convert(org.bson.Document source) {
-            String branch = source.getString(Variables.GIT_BRANCH);
-            String commitId = source.getString(Variables.GIT_COMMIT_ID);
-            String commitMessage = source.getString(Variables.GIT_COMMIT_MESSAGE);
+            Context context = new Context(source);
+            context.putIfNotEmpty(Variables.GIT_EVENT);
 
-            Context itemContext = new Context();
-            itemContext.putIfNotEmpty(Variables.GIT_BRANCH, branch);
-            itemContext.putIfNotEmpty(Variables.GIT_COMMIT_ID, commitId);
-            itemContext.putIfNotEmpty(Variables.GIT_COMMIT_MESSAGE, commitMessage);
-            return itemContext;
+            // git push / tag
+            context.putIfNotEmpty(Variables.GIT_BRANCH);
+            context.putIfNotEmpty(Variables.GIT_COMMIT_ID);
+            context.putIfNotEmpty(Variables.GIT_COMMIT_URL);
+            context.putIfNotEmpty(Variables.GIT_COMMIT_MESSAGE);
+
+            // git pr
+            context.putIfNotEmpty(Variables.PR_TITLE);
+            context.putIfNotEmpty(Variables.PR_NUMBER);
+            context.putIfNotEmpty(Variables.PR_URL);
+            context.putIfNotEmpty(Variables.PR_HEAD_REPO_NAME);
+            context.putIfNotEmpty(Variables.PR_HEAD_REPO_BRANCH);
+            context.putIfNotEmpty(Variables.PR_BASE_REPO_NAME);
+            context.putIfNotEmpty(Variables.PR_BASE_REPO_BRANCH);
+
+            return context;
         }
+
     }
 
     @Id

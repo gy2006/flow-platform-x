@@ -16,26 +16,28 @@
 
 package com.flowci.core.job.service;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.job.dao.ExecutedCmdDao;
-import com.flowci.core.job.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.StepStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
+import com.flowci.domain.CmdId;
 import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.ExecutedCmd.Status;
 import com.flowci.exception.NotFoundException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodeTree;
 import com.github.benmanes.caffeine.cache.Cache;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  * ExecutedCmd == Step
@@ -67,8 +69,11 @@ public class StepServiceImpl implements StepService {
         List<ExecutedCmd> steps = new LinkedList<>();
 
         for (Node node : tree.getOrdered()) {
-            CmdId id = cmdManager.createId(job, node);
-            steps.add(new ExecutedCmd(id.toString(), job.getFlowId(), node.isAllowFailure()));
+            CmdId cmdId = cmdManager.createId(job, node);
+
+            ExecutedCmd cmd = new ExecutedCmd(cmdId, job.getFlowId(), node.isAllowFailure());
+            cmd.setBuildNumber(job.getBuildNumber());
+            steps.add(cmd);
         }
 
         return executedCmdDao.insert(steps);
@@ -110,10 +115,40 @@ public class StepServiceImpl implements StepService {
     }
 
     @Override
-    public void update(Job job, ExecutedCmd cmd) {
-        executedCmdDao.save(cmd);
-        jobStepCache.invalidate(job.getId());
-        eventManager.publish(new StepStatusChangeEvent(this, job, cmd));
+    public void statusChange(Job job, Node node, ExecutedCmd.Status status, String err) {
+        ExecutedCmd entity = get(job, node);
+        statusChange(entity, status, err);
+    }
+
+    @Override
+    public void statusChange(ExecutedCmd entity, Status status, String err) {
+        if (entity.getStatus() == status) {
+            return;
+        }
+
+        entity.setStatus(status);
+        entity.setError(err);
+        executedCmdDao.save(entity);
+
+        jobStepCache.invalidate(entity.getJobId());
+        eventManager.publish(new StepStatusChangeEvent(this, entity));
+    }
+
+    @Override
+    public void resultUpdate(ExecutedCmd cmd) {
+        checkNotNull(cmd.getId());
+        ExecutedCmd entity = get(cmd.getId());
+
+        // only update properties should from agent
+        entity.setProcessId(cmd.getProcessId());
+        entity.setCode(cmd.getCode());
+        entity.setStartAt(cmd.getStartAt());
+        entity.setFinishAt(cmd.getFinishAt());
+        entity.setLogSize(cmd.getLogSize());
+        entity.setOutput(cmd.getOutput());
+
+        // change status and save
+        statusChange(entity, cmd.getStatus(), cmd.getError());
     }
 
     @Override

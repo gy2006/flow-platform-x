@@ -33,6 +33,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -53,19 +57,14 @@ public class QueueConfig {
     }
 
     @Bean
-    public Connection rabbitConnection(ThreadPoolTaskExecutor rabbitConsumerExecutor)
-        throws IOException, TimeoutException {
+    public Connection rabbitConnection(ThreadPoolTaskExecutor rabbitConsumerExecutor) throws Throwable {
+        log.info("Rabbit URI: {}", rabbitProperties.getUri());
+
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setUsername(rabbitProperties.getUsername());
-        factory.setPassword(rabbitProperties.getPassword());
-        factory.setVirtualHost("/");
-        factory.setHost(rabbitProperties.getHost());
-        factory.setPort(rabbitProperties.getPort());
+        factory.setUri(rabbitProperties.getUri());
         factory.setRequestedHeartbeat(1800);
 
-        Connection connection = factory.newConnection(rabbitConsumerExecutor.getThreadPoolExecutor());
-        connection.addShutdownListener(cause -> log.error(cause));
-        return connection;
+        return factory.newConnection(rabbitConsumerExecutor.getThreadPoolExecutor());
     }
 
     @Bean

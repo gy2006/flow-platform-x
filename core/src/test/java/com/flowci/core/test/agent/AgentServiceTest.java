@@ -23,7 +23,7 @@ import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
-import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdIn;
 import com.flowci.domain.CmdType;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.google.common.collect.ImmutableSet;
@@ -136,7 +136,7 @@ public class AgentServiceTest extends ZookeeperScenario {
     @Test
     public void should_dispatch_cmd_to_agent() throws InterruptedException {
         // init:
-        Cmd cmd = new Cmd(UUID.randomUUID().toString(), CmdType.SHELL);
+        CmdIn cmd = new CmdIn(UUID.randomUUID().toString(), CmdType.SHELL);
         Agent agent = agentService.create("hello.agent", null);
 
         // when:

@@ -31,6 +31,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
  */
 @ControllerAdvice({
     "com.flowci.core.auth",
+    "com.flowci.core.user",
     "com.flowci.core.flow",
     "com.flowci.core.job",
     "com.flowci.core.agent",

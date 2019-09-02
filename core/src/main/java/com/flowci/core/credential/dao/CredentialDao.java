@@ -28,10 +28,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CredentialDao extends MongoRepository<Credential, String>, CustomCredentialDao {
 
-    List<Credential> findAllByCreatedByOrderByCreatedAt(String createdBy);
+    List<Credential> findAllAndOrderByCreatedAt();
 
     Credential findByName(String name);
-
-    Credential findByNameAndCreatedBy(String name, String createdBy);
 
 }

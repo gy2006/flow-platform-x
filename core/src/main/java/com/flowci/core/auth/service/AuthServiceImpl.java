@@ -17,25 +17,26 @@
 
 package com.flowci.core.auth.service;
 
-import com.flowci.core.auth.config.AuthConfig;
+import com.flowci.core.auth.annotation.Action;
+import com.flowci.core.auth.domain.PermissionMap;
+import com.flowci.core.auth.domain.Tokens;
 import com.flowci.core.auth.helper.JwtHelper;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
+import com.flowci.exception.ArgumentException;
 import com.flowci.exception.AuthenticationException;
+import com.flowci.util.HashingHelper;
 import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 @Log4j2
 @Service
 public class AuthServiceImpl implements AuthService {
-
-    @Autowired
-    private ThreadLocal<User> currentUser;
 
     @Autowired
     private ConfigProperties.Auth authProperties;
@@ -44,7 +45,16 @@ public class AuthServiceImpl implements AuthService {
     private UserService userService;
 
     @Autowired
-    private CacheManager authCacheManager;
+    private SessionManager sessionManager;
+
+    @Autowired
+    private Cache onlineUsersCache;
+
+    @Autowired
+    private Cache refreshTokenCache;
+
+    @Autowired
+    private PermissionMap permissionMap;
 
     @Override
     public Boolean isEnabled() {
@@ -52,60 +62,65 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public User get() {
-        User user = currentUser.get();
-        if (!hasLogin()) {
-            throw new AuthenticationException("Not logged in");
-        }
-        return user;
-    }
-
-    @Override
-    public String getUserId() {
-        return get().getId();
-    }
-
-    @Override
-    public String login(String email, String passwordOnMd5) {
+    public Tokens login(String email, String passwordOnMd5) {
         User user = userService.getByEmail(email);
 
-        if (Objects.isNull(user)) {
-            throw new AuthenticationException("Invalid email");
-        }
-
         if (!Objects.equals(user.getPasswordOnMd5(), passwordOnMd5)) {
-            throw new AuthenticationException("Invalid password");
+            throw new ArgumentException("Invalid password");
         }
 
+        // create token
         String token = JwtHelper.create(user, authProperties.getExpireSeconds());
-        currentUser.set(user);
-        getOnlineCache().put(email, user);
-        return token;
+        sessionManager.set(user);
+        onlineUsersCache.put(email, user);
+
+        // create refresh token
+        String refreshToken = HashingHelper.md5(email + passwordOnMd5);
+        refreshTokenCache.put(email, refreshToken);
+
+        return new Tokens(token, refreshToken);
     }
 
     @Override
     public void logout() {
-        User user = get();
-        getOnlineCache().evict(user.getEmail());
+        User user = sessionManager.remove();
+        onlineUsersCache.evict(user.getEmail());
+        refreshTokenCache.evict(user.getEmail());
     }
 
     @Override
-    public boolean hasLogin() {
-        return currentUser.get() != null;
-    }
-
-    @Override
-    public String refresh(String token) {
-        String email = JwtHelper.decode(token);
-
-        User user = getOnlineCache().get(email, User.class);
-        if (Objects.isNull(user)) {
-            throw new AuthenticationException("Invalid token");
+    public boolean hasPermission(Action action) {
+        // everyone has permission if no action defined
+        if (Objects.isNull(action)) {
+            return true;
         }
 
-        boolean verify = JwtHelper.verify(token, user);
+        // admin has all permission
+        User user = sessionManager.get();
+        return permissionMap.hasPermission(user.getRole(), action.value());
+    }
+
+    @Override
+    public Tokens refresh(Tokens tokens) {
+        String token = tokens.getToken();
+        String refreshToken = tokens.getRefreshToken();
+        String email = JwtHelper.decode(token);
+
+        if (!Objects.equals(refreshTokenCache.get(email, String.class), refreshToken)) {
+            throw new AuthenticationException("Invalid refresh token");
+        }
+
+        // find user from online cache or database
+        User user = onlineUsersCache.get(email, User.class);
+        if (Objects.isNull(user)) {
+            user = userService.getByEmail(email);
+        }
+
+        boolean verify = JwtHelper.verify(token, user, false);
         if (verify) {
-            return JwtHelper.create(user, authProperties.getExpireSeconds());
+            String newToken = JwtHelper.create(user, authProperties.getExpireSeconds());
+            onlineUsersCache.put(email, user);
+            return new Tokens(newToken, refreshToken);
         }
 
         throw new AuthenticationException("Invalid token");
@@ -115,14 +130,14 @@ public class AuthServiceImpl implements AuthService {
     public boolean set(String token) {
         String email = JwtHelper.decode(token);
 
-        User user = getOnlineCache().get(email, User.class);
+        User user = onlineUsersCache.get(email, User.class);
         if (Objects.isNull(user)) {
             return false;
         }
 
-        boolean verify = JwtHelper.verify(token, user);
+        boolean verify = JwtHelper.verify(token, user, true);
         if (verify) {
-            currentUser.set(user);
+            sessionManager.set(user);
             return true;
         }
 
@@ -130,24 +145,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public boolean set(User user) {
-        currentUser.set(user);
-        return true;
-    }
-
-    @Override
     public boolean setAsDefaultAdmin() {
         User defaultAdmin = userService.defaultAdmin();
-        currentUser.set(defaultAdmin);
+        sessionManager.set(defaultAdmin);
         return true;
-    }
-
-    @Override
-    public void reset() {
-        currentUser.set(null);
-    }
-
-    private Cache getOnlineCache() {
-        return authCacheManager.getCache(AuthConfig.CACHE_ONLINE);
     }
 }

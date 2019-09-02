@@ -22,6 +22,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.flowci.core.user.domain.User;
 import com.flowci.util.StringHelper;
@@ -64,14 +65,17 @@ public class JwtHelper {
         }
     }
 
-    public static boolean verify(String token, User user) {
+    public static boolean verify(String token, User user, boolean checkExpire) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(user.getPasswordOnMd5());
             JWTVerifier verifier = JWT.require(algorithm).withIssuer(issuer).build();
 
-            DecodedJWT decoded = verifier.verify(token);
-            return decoded.getExpiresAt().after(Date.from(Instant.now()));
+            verifier.verify(token);
+            return true;
         } catch (JWTVerificationException e) {
+            if (e instanceof TokenExpiredException) {
+                return !checkExpire;
+            }
             return false;
         }
     }

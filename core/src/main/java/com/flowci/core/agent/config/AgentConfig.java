@@ -18,17 +18,25 @@ package com.flowci.core.agent.config;
 
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.config.QueueConfig;
+import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.domain.Settings;
+import java.util.Objects;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * @author yang
  */
+@Log4j2
 @Configuration
 public class AgentConfig {
+
+    @Autowired
+    private Environment env;
 
     @Autowired
     private ConfigProperties.Zookeeper zkProperties;
@@ -43,20 +51,33 @@ public class AgentConfig {
     public Settings baseSettings() {
         Settings.Zookeeper zk = new Settings.Zookeeper();
         zk.setRoot(zkProperties.getAgentRoot());
-        zk.setHost(zkProperties.getHost());
+        zk.setHost(getZkHost());
 
         Settings.RabbitMQ mq = new Settings.RabbitMQ();
-        mq.setHost(rabbitProperties.getHost());
-        mq.setPort(rabbitProperties.getPort());
-        mq.setPassword(rabbitProperties.getPassword());
-        mq.setUsername(rabbitProperties.getUsername());
+        mq.setUri(getRabbitUri());
+        mq.setCallback(callbackQueueManager.getQueueName());
+        mq.setLogsExchange(QueueConfig.LoggingExchange);
 
         Settings settings = new Settings();
-        settings.setCallbackQueueName(callbackQueueManager.getQueueName());
         settings.setZookeeper(zk);
         settings.setQueue(mq);
-        settings.setLogsExchangeName(QueueConfig.LoggingExchange);
 
+        log.info(settings);
         return settings;
+    }
+
+    private String getZkHost() {
+        return env.getProperty(App.ZookeeperHost, zkProperties.getHost());
+    }
+
+    private String getRabbitUri() {
+        String uri = rabbitProperties.getUri().toString();
+        String domain = env.getProperty(App.RabbitHost);
+
+        if (Objects.isNull(domain)) {
+            return uri;
+        }
+
+        return uri.replace(rabbitProperties.getUri().getHost(), domain);
     }
 }

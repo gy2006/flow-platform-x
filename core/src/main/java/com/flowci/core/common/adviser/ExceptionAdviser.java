@@ -35,10 +35,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ControllerAdvice({
     "com.flowci.core.auth.AuthInterceptor",
     "com.flowci.core.auth",
+    "com.flowci.core.user",
     "com.flowci.core.flow",
     "com.flowci.core.job",
     "com.flowci.core.agent",
-    "com.flowci.core.credentials"
+    "com.flowci.core.credential"
 })
 public class ExceptionAdviser {
 

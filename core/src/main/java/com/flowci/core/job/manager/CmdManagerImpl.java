@@ -16,11 +16,12 @@
 
 package com.flowci.core.job.manager;
 
-import com.flowci.core.job.domain.CmdId;
+import com.flowci.core.common.domain.Variables;
+import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.service.PluginService;
-import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdIn;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.Variable;
 import com.flowci.domain.VariableMap;
@@ -29,17 +30,10 @@ import com.flowci.tree.Node;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import java.net.URI;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.UUID;
 
 /**
  * @author yang
@@ -47,15 +41,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Repository
 public class CmdManagerImpl implements CmdManager {
 
-    private static final ParameterizedTypeReference<Page<String>> LoggingPageType =
-        new ParameterizedTypeReference<Page<String>>() {
-        };
-
     @Autowired
     private PluginService pluginService;
-
-    @Autowired
-    private RestTemplate restTemplate;
 
     @Override
     public CmdId createId(Job job, Node node) {
@@ -63,7 +50,7 @@ public class CmdManagerImpl implements CmdManager {
     }
 
     @Override
-    public Cmd createShellCmd(Job job, Node node) {
+    public CmdIn createShellCmd(Job job, Node node) {
         // node envs has top priority;
         VariableMap inputs = VariableMap.merge(job.getContext(), node.getEnvironments());
         String script = node.getScript();
@@ -78,31 +65,22 @@ public class CmdManagerImpl implements CmdManager {
         }
 
         // create cmd based on plugin
-        Cmd cmd = new Cmd(createId(job, node).toString(), CmdType.SHELL);
+        CmdIn cmd = new CmdIn(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
         cmd.setAllowFailure(allowFailure);
         cmd.setEnvFilters(Sets.newHashSet(node.getExports()));
         cmd.setScripts(Lists.newArrayList(script));
         cmd.setPlugin(node.getPlugin());
 
+        // get cmd work dir with default value flow id
+        cmd.setWorkDir(inputs.get(Variables.Flow.WorkDir, job.getFlowId()));
+
         return cmd;
     }
 
     @Override
-    public Cmd createKillCmd() {
-        return new Cmd(UUID.randomUUID().toString(), CmdType.KILL);
-    }
-
-    @Override
-    public Page<String> getLogs(String agentHost, String cmdId) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(agentHost)
-            .pathSegment("cmd", cmdId)
-            .build().toUri();
-
-        ResponseEntity<Page<String>> response =
-            restTemplate.exchange(new RequestEntity<>(HttpMethod.GET, uri), LoggingPageType);
-
-        return response.getBody();
+    public CmdIn createKillCmd() {
+        return new CmdIn(UUID.randomUUID().toString(), CmdType.KILL);
     }
 
     private void verifyPluginInput(VariableMap context, Plugin plugin) {

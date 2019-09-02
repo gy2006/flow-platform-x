@@ -18,8 +18,10 @@ package com.flowci.core.test.flow;
 
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.test.MvcMockHelper;
+import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.util.StringHelper;
 import org.junit.Assert;
@@ -42,46 +44,58 @@ public class FlowControllerTest extends SpringScenario {
     private FlowMockHelper flowMockHelper;
 
     @Autowired
-    private MvcMockHelper mvcMockHelper;
+    private MockMvcHelper mockMvcHelper;
 
     private final String flowName = "hello_world";
 
     @Before
-    public void login() {
-        mockLogin();
-    }
-
-    @Before
     public void createFlowWithYml() throws Exception {
+        mockLogin();
         String yml = StringHelper.toString(load("flow.yml"));
         flowMockHelper.create(flowName, yml);
     }
 
     @Test
     public void should_get_flow_and_yml_then_delete() throws Exception {
-        ResponseMessage<Flow> getFlowResponse = mvcMockHelper
-            .expectSuccessAndReturnClass(get("/flows/" + flowName), FlowMockHelper.FlowType);
+        ResponseMessage<Flow> getFlowResponse = mockMvcHelper
+                .expectSuccessAndReturnClass(get("/flows/" + flowName), FlowMockHelper.FlowType);
 
         Assert.assertEquals(StatusCode.OK, getFlowResponse.getCode());
         Assert.assertEquals(flowName, getFlowResponse.getData().getName());
 
-        ResponseMessage<String> responseMessage = mvcMockHelper
+        ResponseMessage<String> responseMessage = mockMvcHelper
                 .expectSuccessAndReturnClass(get("/flows/" + flowName + "/yml"), FlowMockHelper.FlowYmlType);
         String ymlResponse = new String(Base64.getDecoder().decode(responseMessage.getData()));
         Assert.assertEquals(StringHelper.toString(load("flow.yml")), ymlResponse);
 
-        ResponseMessage<Flow> deleted = mvcMockHelper
-            .expectSuccessAndReturnClass(delete("/flows/" + flowName), FlowMockHelper.FlowType);
+        ResponseMessage<Flow> deleted = mockMvcHelper
+                .expectSuccessAndReturnClass(delete("/flows/" + flowName), FlowMockHelper.FlowType);
         Assert.assertEquals(StatusCode.OK, deleted.getCode());
     }
 
     @Test
     public void should_list_flows() throws Exception {
-        ResponseMessage<List<Flow>> listFlowResponse = mvcMockHelper
-            .expectSuccessAndReturnClass(get("/flows"), FlowMockHelper.ListFlowType);
+        ResponseMessage<List<Flow>> listFlowResponse = mockMvcHelper
+                .expectSuccessAndReturnClass(get("/flows"), FlowMockHelper.ListFlowType);
 
         Assert.assertEquals(StatusCode.OK, listFlowResponse.getCode());
         Assert.assertEquals(1, listFlowResponse.getData().size());
         Assert.assertEquals(flowName, listFlowResponse.getData().get(0).getName());
+    }
+
+    @Test
+    public void should_list_users_of_flow() throws Exception {
+        User user1 = userService.create("user.1@flow.ci", "12345", User.Role.Developer);
+        User user2 = userService.create("user.2@flow.ci", "12345", User.Role.Developer);
+        User user3 = userService.create("user.3@flow.ci", "12345", User.Role.Developer);
+
+        flowMockHelper.addUsers(flowName, user1, user2, user3);
+
+        List<User> users = flowMockHelper.listUsers(flowName);
+        Assert.assertEquals(4, users.size());
+
+        flowMockHelper.removeUsers(flowName, user1, user2);
+        users = flowMockHelper.listUsers(flowName);
+        Assert.assertEquals(2, users.size());
     }
 }

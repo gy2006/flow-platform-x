@@ -68,6 +68,9 @@ public class Agent implements Serializable {
 
     private String jobId;
 
+    @JsonIgnore
+    private SimpleKeyPair rsa;
+
     public Agent(String name) {
         this.name = name;
     }

@@ -19,10 +19,11 @@ package com.flowci.core.job.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentService;
-import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.core.common.manager.PathManager;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitOperation;
@@ -34,19 +35,19 @@ import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobItemDao;
 import com.flowci.core.job.dao.JobNumberDao;
-import com.flowci.core.job.domain.*;
+import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobItem;
+import com.flowci.core.job.domain.JobNumber;
+import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.event.*;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.job.util.StatusHelper;
-import com.flowci.domain.Agent;
+import com.flowci.domain.*;
 import com.flowci.domain.Agent.Status;
-import com.flowci.domain.Cmd;
-import com.flowci.domain.ExecutedCmd;
-import com.flowci.domain.VariableMap;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
 import com.flowci.tree.*;
@@ -89,10 +90,10 @@ public class JobServiceImpl implements JobService {
     //====================================================================
 
     @Autowired
-    private ConfigProperties.Job jobProperties;
+    private String serverAddress;
 
     @Autowired
-    private AuthService authService;
+    private ConfigProperties.Job jobProperties;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -116,7 +117,13 @@ public class JobServiceImpl implements JobService {
     private YmlManager ymlManager;
 
     @Autowired
+    private SessionManager sessionManager;
+
+    @Autowired
     private SpringEventManager eventManager;
+
+    @Autowired
+    private PathManager pathManager;
 
     @Autowired
     private AgentService agentService;
@@ -133,7 +140,7 @@ public class JobServiceImpl implements JobService {
     private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
 
     //====================================================================
-    //        %% Public function
+    //        %% Public functions
     //====================================================================
 
     @Override
@@ -154,7 +161,7 @@ public class JobServiceImpl implements JobService {
 
         if (Objects.isNull(job)) {
             throw new NotFoundException(
-                "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
+                    "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
         }
 
         return job;
@@ -203,10 +210,12 @@ public class JobServiceImpl implements JobService {
         // init job context
         VariableMap defaultContext = initJobContext(flow, job, root.getEnvironments(), input);
         job.getContext().merge(defaultContext);
+        job.getContext().put(Variables.App.Url, serverAddress);
+
 
         // setup created by form login user or git event author
-        if (authService.hasLogin()) {
-            job.setCreatedBy(authService.get().getId());
+        if (sessionManager.exist()) {
+            job.setCreatedBy(sessionManager.getUserId());
         } else {
             String createdBy = job.getContext().get(GIT_AUTHOR, "Unknown");
             job.setCreatedBy(createdBy);
@@ -216,6 +225,14 @@ public class JobServiceImpl implements JobService {
         Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
         jobDao.insert(job);
+
+        // create job workspace
+        try {
+            pathManager.create(flow, job);
+        } catch (IOException e) {
+            jobDao.delete(job);
+            throw new StatusException("Cannot create workspace for job");
+        }
 
         // create job yml
         ymlManager.create(flow, job, yml);
@@ -245,7 +262,7 @@ public class JobServiceImpl implements JobService {
         // send stop cmd when is running
         if (job.isRunning()) {
             Agent agent = agentService.get(job.getAgentId());
-            Cmd killCmd = cmdManager.createKillCmd();
+            CmdIn killCmd = cmdManager.createKillCmd();
 
             agentService.dispatch(killCmd, agent);
             logInfo(job, " cancel cmd been send to {}", agent.getName());
@@ -364,8 +381,7 @@ public class JobServiceImpl implements JobService {
         List<ExecutedCmd> steps = stepService.list(job);
         for (ExecutedCmd step : steps) {
             if (step.isRunning() || step.isPending()) {
-                step.setStatus(ExecutedCmd.Status.SKIPPED);
-                stepService.update(job, step);
+                stepService.statusChange(step, ExecutedCmd.Status.SKIPPED, null);
             }
         }
 
@@ -468,13 +484,10 @@ public class JobServiceImpl implements JobService {
 
         // get cmd related job
         Job job = get(cmdId.getJobId());
-        NodePath currentFromCmd = NodePath.create(cmdId.getNodePath());
-
-        NodeTree tree = ymlManager.getTree(job);
-        Node node = tree.get(currentFromCmd);
+        NodePath currentPath = NodePath.create(cmdId.getNodePath());
 
         // verify job node path is match cmd node path
-        if (!currentFromCmd.equals(currentNodePath(job))) {
+        if (!currentPath.equals(currentNodePath(job))) {
             log.error("Invalid executed cmd callback: does not match job current node path");
             return;
         }
@@ -485,20 +498,16 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
+        NodeTree tree = ymlManager.getTree(job);
+        Node node = tree.get(currentPath);
+
         // save executed cmd
-        stepService.update(job, execCmd);
+        stepService.resultUpdate(execCmd);
         log.debug("Executed cmd {} been recorded", execCmd);
 
-        // merge output to job context
-        VariableMap context = job.getContext();
-        context.merge(execCmd.getOutput());
+        setJobStartAndFinishTime(job, tree, node, execCmd);
 
-        // setup current job status if not tail node
-        if (!node.isTail()) {
-            context.put(Variables.Job.Status, StatusHelper.convert(execCmd).name());
-        }
-
-        jobDao.save(job);
+        setJobContext(job, node, execCmd);
 
         // find next node
         Node next = findNext(job, tree, node, execCmd.isSuccess());
@@ -525,6 +534,27 @@ public class JobServiceImpl implements JobService {
     //====================================================================
     //        %% Utils
     //====================================================================
+
+    private void setJobStartAndFinishTime(Job job, NodeTree tree, Node node, ExecutedCmd cmd) {
+        if (tree.isFirst(node.getPath())) {
+            job.setStartAt(cmd.getStartAt());
+        }
+
+        if (tree.isLast(node.getPath())) {
+            job.setFinishAt(cmd.getFinishAt());
+        }
+    }
+
+    private void setJobContext(Job job, Node node, ExecutedCmd cmd) {
+        // merge output to job context
+        VariableMap context = job.getContext();
+        context.merge(cmd.getOutput());
+
+        // setup current job status if not tail node
+        if (!node.isTail()) {
+            context.put(Variables.Job.Status, StatusHelper.convert(cmd).name());
+        }
+    }
 
     private void startJobConsumer(Flow flow) {
         String queueName = flow.getQueueName();
@@ -620,19 +650,17 @@ public class JobServiceImpl implements JobService {
 
         try {
             if (!executedCmd.isRunning()) {
-                executedCmd.setStatus(ExecutedCmd.Status.RUNNING);
-                stepService.update(job, executedCmd);
+                stepService.statusChange(job, node, ExecutedCmd.Status.RUNNING, null);
             }
 
-            Cmd cmd = cmdManager.createShellCmd(job, node);
+            CmdIn cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);
             logInfo(job, "send to agent: step={}, agent={}", node.getName(), agent.getName());
         } catch (Throwable e) {
             log.debug("Fail to dispatch job {} to agent {}", job.getId(), agent.getId(), e);
 
             // set current step to exception
-            executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
-            stepService.update(job, executedCmd);
+            stepService.statusChange(job, node, ExecutedCmd.Status.EXCEPTION, null);
 
             // set current job failure
             setJobStatusAndSave(job, Job.Status.FAILURE, e.getMessage());
@@ -667,19 +695,15 @@ public class JobServiceImpl implements JobService {
             Boolean result = runner.run();
 
             if (Objects.isNull(result) || result == Boolean.FALSE) {
-                ExecutedCmd executedCmd = stepService.get(job, node);
-                executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
-                executedCmd.setError("The 'before' condition cannot be matched");
-                stepService.update(job, executedCmd);
+                ExecutedCmd.Status newStatus = ExecutedCmd.Status.SKIPPED;
+                String errMsg = "The 'before' condition cannot be matched";
+                stepService.statusChange(job, node, newStatus, errMsg);
                 return false;
             }
 
             return true;
         } catch (ScriptException e) {
-            ExecutedCmd executedCmd = stepService.get(job, node);
-            executedCmd.setStatus(ExecutedCmd.Status.SKIPPED);
-            executedCmd.setError(e.getMessage());
-            stepService.update(job, executedCmd);
+            stepService.statusChange(job, node, ExecutedCmd.Status.SKIPPED, e.getMessage());
             return false;
         }
     }
@@ -739,7 +763,7 @@ public class JobServiceImpl implements JobService {
         return job;
     }
 
-    private void logInfo(Job job, String message, Object ...params) {
+    private void logInfo(Job job, String message, Object... params) {
         log.info("[Job] " + job.getKey() + " " + message, params);
     }
 }

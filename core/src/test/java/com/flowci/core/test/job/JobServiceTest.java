@@ -104,6 +104,20 @@ public class JobServiceTest extends ZookeeperScenario {
     }
 
     @Test
+    public void should_init_steps_cmd_after_job_created() {
+        Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
+
+        List<ExecutedCmd> steps = stepService.list(job);
+        Assert.assertNotNull(steps);
+        Assert.assertEquals(2, steps.size());
+
+        for (ExecutedCmd step : steps) {
+            Assert.assertNotNull(step.getFlowId());
+            Assert.assertNotNull(step.getCmdId());
+        }
+    }
+
+    @Test
     public void should_start_new_job() throws Throwable {
         ObjectWrapper<Job> receivedJob = new ObjectWrapper<>();
 
@@ -149,7 +163,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when:
         ObjectWrapper<Agent> targetAgent = new ObjectWrapper<>();
-        ObjectWrapper<Cmd> targetCmd = new ObjectWrapper<>();
+        ObjectWrapper<CmdIn> targetCmd = new ObjectWrapper<>();
         CountDownLatch counter = new CountDownLatch(1);
 
         addEventListener((ApplicationListener<CmdSentEvent>) event -> {
@@ -172,7 +186,7 @@ public class JobServiceTest extends ZookeeperScenario {
         NodeTree tree = NodeTree.create(root);
         Node first = tree.next(tree.getRoot().getPath());
 
-        Cmd cmd = targetCmd.getValue();
+        CmdIn cmd = targetCmd.getValue();
         Assert.assertEquals(cmdManager.createId(job, first).toString(), cmd.getId());
         Assert.assertEquals("echo step version", cmd.getInputs().get("FLOW_VERSION"));
         Assert.assertEquals("echo step", cmd.getInputs().get("FLOW_WORKSPACE"));
@@ -193,12 +207,13 @@ public class JobServiceTest extends ZookeeperScenario {
         output.put("HELLO_WORLD", "hello.world");
 
         ExecutedCmd executedCmd = new ExecutedCmd(
-            cmdManager.createId(job, firstNode).toString(),
+            cmdManager.createId(job, firstNode),
             job.getFlowId(),
             firstNode.isAllowFailure()
         );
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
+        executedCmd.setBuildNumber(1L);
 
         jobService.handleCallback(executedCmd);
 
@@ -220,12 +235,13 @@ public class JobServiceTest extends ZookeeperScenario {
         output.put("HELLO_JAVA", "hello.java");
 
         executedCmd = new ExecutedCmd(
-            cmdManager.createId(job, secondNode).toString(),
+            cmdManager.createId(job, secondNode),
             job.getFlowId(),
             secondNode.isAllowFailure()
         );
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
+        executedCmd.setBuildNumber(1L);
 
         jobService.handleCallback(executedCmd);
 
@@ -256,7 +272,7 @@ public class JobServiceTest extends ZookeeperScenario {
         output.put("HELLO_WORLD", "hello.world");
 
         ExecutedCmd executedCmd = new ExecutedCmd(
-            cmdManager.createId(job, firstNode).toString(),
+            cmdManager.createId(job, firstNode),
             job.getFlowId(),
             firstNode.isAllowFailure()
         );
@@ -281,7 +297,7 @@ public class JobServiceTest extends ZookeeperScenario {
         output.put("HELLO_TIMEOUT", "hello.timeout");
 
         executedCmd = new ExecutedCmd(
-            cmdManager.createId(job, secondNode).toString(),
+            cmdManager.createId(job, secondNode),
             job.getFlowId(),
             secondNode.isAllowFailure()
         );
@@ -309,14 +325,14 @@ public class JobServiceTest extends ZookeeperScenario {
         Node firstNode = tree.next(tree.getRoot().getPath());
 
         // when: set first step as failure status
-        String cmdId = cmdManager.createId(job, firstNode).toString();
+        CmdId cmdId = cmdManager.createId(job, firstNode);
         ExecutedCmd executedCmd = new ExecutedCmd(cmdId, job.getFlowId(), firstNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
         jobService.handleCallback(executedCmd);
 
         // when: set final node as success status
         Node secondNode = tree.next(firstNode.getPath());
-        cmdId = cmdManager.createId(job, secondNode).toString();
+        cmdId = cmdManager.createId(job, secondNode);
         executedCmd = new ExecutedCmd(cmdId, job.getFlowId(), secondNode.isAllowFailure());
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         jobService.handleCallback(executedCmd);

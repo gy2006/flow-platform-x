@@ -17,119 +17,114 @@
 
 package com.flowci.core.test.auth;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.auth.domain.Tokens;
+import com.flowci.core.auth.service.AuthService;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.common.helper.ThreadHelper;
-import com.flowci.core.test.MvcMockHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.AuthenticationException;
 import com.flowci.exception.ErrorCode;
-import com.github.benmanes.caffeine.cache.CaffeineSpec;
-import java.util.Base64;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 public class AuthControllerTest extends SpringScenario {
-
-    private final TypeReference<ResponseMessage<String>> loginType =
-        new TypeReference<ResponseMessage<String>>() {
-        };
 
     private User user;
 
     @Autowired
-    private MvcMockHelper mvcMockHelper;
+    private AuthHelper authHelper;
 
     @Autowired
-    private ConfigProperties.Auth authProperties;
-
-    @Autowired
-    private CacheManager authCacheManager;
+    private AuthService authService;
 
     @Before
     public void createUser() {
-        authProperties.setEnabled(true);
-
-        CaffeineCacheManager cacheManager = (CaffeineCacheManager) this.authCacheManager;
-        cacheManager.setCaffeineSpec(CaffeineSpec.parse("expireAfterWrite=2s"));
-
+        authHelper.enableAuth();
         user = userService.create("test@flow.ci", "12345", User.Role.Admin);
+    }
+
+    @After
+    public void reset() {
+        authHelper.disableAuth();
     }
 
     @Test(expected = AuthenticationException.class)
     public void should_login_and_logout_successfully() throws Exception {
         // init: log in
-        ResponseMessage<String> message = sendLoginRequest(user.getEmail(), user.getPasswordOnMd5());
-        String token = message.getData();
+        ResponseMessage<Tokens> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
+        String token = message.getData().getToken();
+        Assert.assertNotNull(token);
 
-        Assert.assertEquals(user, authService.get());
+        String refreshToken = message.getData().getRefreshToken();
+        Assert.assertNotNull(refreshToken);
+
+        Assert.assertEquals(user, sessionManager.get());
         Assert.assertTrue(authService.set(token));
 
         // when: request logout
-        ResponseMessage logoutMsg = mvcMockHelper.expectSuccessAndReturnClass(
-            post("/auth/logout").header("Token", token),
-            ResponseMessage.class
-        );
+        ResponseMessage logoutMsg = authHelper.logout(token);
         Assert.assertEquals(StatusCode.OK, logoutMsg.getCode());
 
         // then: should throw new AuthenticationException("Not logged in") exception
         Assert.assertFalse(authService.set(token));
-        authService.get();
+        sessionManager.get();
     }
 
     @Test
-    public void should_login_and_return_401_with_invalid_password() throws Exception {
-        ResponseMessage<String> message = sendLoginRequest(user.getEmail(), "wrong..");
+    public void should_login_and_return_402_with_invalid_password() throws Exception {
+        ResponseMessage<Tokens> message = authHelper.login(user.getEmail(), "wrong..");
 
-        Assert.assertEquals(ErrorCode.AUTH_FAILURE, message.getCode());
+        Assert.assertEquals(ErrorCode.INVALID_ARGUMENT, message.getCode());
         Assert.assertEquals("Invalid password", message.getMessage());
     }
 
     @Test
     public void should_login_and_token_expired() throws Exception {
         // init: log in
-        ResponseMessage<String> message = sendLoginRequest(user.getEmail(), user.getPasswordOnMd5());
-        String token = message.getData();
+        ResponseMessage<Tokens> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
+        String token = message.getData().getToken();
 
-        // when: wait for expire
-        ThreadHelper.sleep(5000);
+        // when: wait for expire > 5s from properties file
+        ThreadHelper.sleep(8000);
 
         // then: token should be expired
         Assert.assertFalse(authService.set(token));
     }
 
     @Test
-    public void should_refresh_token() throws Exception {
-        ResponseMessage<String> message = sendLoginRequest(user.getEmail(), user.getPasswordOnMd5());
-        String token = message.getData();
+    public void should_refresh_token_while_NOT_expired() throws Exception {
+        ResponseMessage<Tokens> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
 
         // when:
-        ResponseMessage<String> refreshed = mvcMockHelper.expectSuccessAndReturnClass(
-            post("/auth/refresh").header("Token", token),
-            loginType
-        );
+        ThreadHelper.sleep(1000);
+        ResponseMessage<Tokens> refreshed = authHelper.refresh(message.getData());
 
         // then:
-        Assert.assertNotEquals(token, refreshed.getData());
-        Assert.assertTrue(authService.set(refreshed.getData()));
-        Assert.assertEquals(user, authService.get());
+        Assert.assertNotEquals(message.getData().getToken(), refreshed.getData().getToken());
+        Assert.assertEquals(message.getData().getRefreshToken(), refreshed.getData().getRefreshToken());
+
+        Assert.assertTrue(authService.set(refreshed.getData().getToken()));
+        Assert.assertEquals(user, sessionManager.get());
     }
 
-    private ResponseMessage<String> sendLoginRequest(String email, String passwordOnMd5) throws Exception {
-        String authContent = email + ":" + passwordOnMd5;
-        String base64Content = Base64.getEncoder().encodeToString(authContent.getBytes());
-        MockHttpServletRequestBuilder builder = post("/auth/login").header("Authorization", "Basic " + base64Content);
+    @Test
+    public void should_refresh_token_while_expired() throws Exception {
+        ResponseMessage<Tokens> message = authHelper.login(user.getEmail(), user.getPasswordOnMd5());
 
-        return mvcMockHelper.expectSuccessAndReturnClass(builder, loginType);
+        // when:
+        ThreadHelper.sleep(8000);
+        ResponseMessage<Tokens> refreshed = authHelper.refresh(message.getData());
+
+        // then:
+        Assert.assertNotEquals(message.getData().getToken(), refreshed.getData().getToken());
+        Assert.assertEquals(message.getData().getRefreshToken(), refreshed.getData().getRefreshToken());
+
+        Assert.assertTrue(authService.set(refreshed.getData().getToken()));
+        Assert.assertEquals(user, sessionManager.get());
     }
 }

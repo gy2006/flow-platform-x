@@ -16,13 +16,15 @@
 
 package com.flowci.core.job;
 
+import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.service.FlowService;
-import com.flowci.core.job.domain.CmdId;
+import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
+import com.flowci.core.job.domain.JobAction;
 import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.service.JobService;
@@ -76,6 +78,7 @@ public class JobController {
     private LoggingService loggingService;
 
     @GetMapping("/{flow}")
+    @Action(JobAction.LIST)
     public Page<JobItem> list(@PathVariable("flow") String name,
                               @RequestParam(required = false, defaultValue = DefaultPage) int page,
                               @RequestParam(required = false, defaultValue = DefaultSize) int size) {
@@ -85,6 +88,7 @@ public class JobController {
     }
 
     @GetMapping("/{flow}/{buildNumberOrLatest}")
+    @Action(JobAction.GET)
     public Job get(@PathVariable("flow") String name, @PathVariable String buildNumberOrLatest) {
         Flow flow = flowService.get(name);
 
@@ -101,6 +105,7 @@ public class JobController {
     }
 
     @GetMapping(value = "/{flow}/{buildNumber}/yml", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Action(JobAction.GET_YML)
     public String getYml(@PathVariable String flow, @PathVariable String buildNumber) {
         Job job = get(flow, buildNumber);
         JobYml yml = jobService.getYml(job);
@@ -108,13 +113,15 @@ public class JobController {
     }
 
     @GetMapping("/{flow}/{buildNumberOrLatest}/steps")
-    public List<ExecutedCmd> getSteps(@PathVariable String flow,
-                                      @PathVariable String buildNumberOrLatest) {
+    @Action(JobAction.LIST_STEPS)
+    public List<ExecutedCmd> listSteps(@PathVariable String flow,
+                                       @PathVariable String buildNumberOrLatest) {
         Job job = get(flow, buildNumberOrLatest);
         return stepService.list(job);
     }
 
     @GetMapping("/logs/{executedCmdId}")
+    @Action(JobAction.GET_STEP_LOG)
     public Page<String> getStepLog(@PathVariable String executedCmdId,
                                    @RequestParam(required = false, defaultValue = "0") int page,
                                    @RequestParam(required = false, defaultValue = "50") int size) {
@@ -123,6 +130,7 @@ public class JobController {
     }
 
     @GetMapping("/logs/{executedCmdId}/download")
+    @Action(JobAction.DOWNLOAD_STEP_LOG)
     public ResponseEntity<Resource> downloadStepLog(@PathVariable String executedCmdId,
                                                     @RequestParam(required = false) boolean raw) {
         CmdId cmdId = CmdId.parse(executedCmdId);
@@ -146,6 +154,7 @@ public class JobController {
     }
 
     @PostMapping
+    @Action(JobAction.CREATE)
     public Job create(@Validated @RequestBody CreateJob data) {
         Flow flow = flowService.get(data.getFlow());
         Yml yml = flowService.getYml(flow);
@@ -153,12 +162,14 @@ public class JobController {
     }
 
     @PostMapping("/run")
+    @Action(JobAction.RUN)
     public Job createAndRun(@Validated @RequestBody CreateJob data) {
         Job job = create(data);
         return jobService.start(job);
     }
 
     @PostMapping("/{flow}/{buildNumber}/cancel")
+    @Action(JobAction.CANCEL)
     public Job cancel(@PathVariable String flow, @PathVariable String buildNumber) {
         Job job = get(flow, buildNumber);
         return jobService.cancel(job);

@@ -24,6 +24,13 @@ public class Variables {
     public static class App {
 
         public static final String Url = "FLOWCI_SERVER_URL";
+
+        public static final String Host = "FLOWCI_SERVER_HOST";
+
+        public static final String RabbitHost = "FLOWCI_RABBIT_HOST";
+
+        public static final String ZookeeperHost = "FLOWCI_ZOOKEEPER_HOST";
+
     }
 
     public static class Flow {
@@ -37,6 +44,9 @@ public class Variables {
         public static final String GitBranch = "FLOWCI_GIT_BRANCH";
 
         public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA";
+
+        // which define the flow work dir which under the agent defaut workspace
+        public static final String WorkDir = "FLOWCI_FLOW_WORKDIR";
     }
 
     public static class Job {
@@ -46,11 +56,6 @@ public class Variables {
         public static final String Status = "FLOWCI_JOB_STATUS";
 
         public static final String Trigger = "FLOWCI_JOB_TRIGGER";
-    }
-
-    public static class Agent {
-
-        public static final String WORKSPACE = "FLOWCI_AGENT_WORKSPACE";
 
     }
 

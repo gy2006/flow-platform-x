@@ -18,7 +18,7 @@ package com.flowci.core.agent.service;
 
 import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.domain.Agent;
-import com.flowci.domain.Cmd;
+import com.flowci.domain.CmdIn;
 import com.flowci.domain.Settings;
 import java.util.List;
 import java.util.Set;
@@ -97,6 +97,6 @@ public interface AgentService {
     /**
      * Dispatch cmd to agent
      */
-    void dispatch(Cmd cmd, Agent agent);
+    void dispatch(CmdIn cmd, Agent agent);
 
 }

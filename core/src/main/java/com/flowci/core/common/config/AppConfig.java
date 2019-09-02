@@ -21,22 +21,28 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flowci.core.auth.AuthInterceptor;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.domain.JsonablePage;
+import com.flowci.core.common.domain.Variables.App;
+import com.flowci.core.user.domain.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
+import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
+import org.springframework.core.env.Environment;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -62,10 +68,10 @@ public class AppConfig {
     private static final ObjectMapper Mapper = Jsonable.getMapper();
 
     private static final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
-            new ByteArrayHttpMessageConverter(),
-            new MappingJackson2HttpMessageConverter(Mapper),
-            new ResourceHttpMessageConverter(),
-            new AllEncompassingFormHttpMessageConverter()
+        new ByteArrayHttpMessageConverter(),
+        new MappingJackson2HttpMessageConverter(Mapper),
+        new ResourceHttpMessageConverter(),
+        new AllEncompassingFormHttpMessageConverter()
     );
 
     static {
@@ -73,6 +79,12 @@ public class AppConfig {
         module.addDeserializer(Pageable.class, new JsonablePage.PageableDeserializer());
         Mapper.registerModule(module);
     }
+
+    @Autowired
+    private Environment env;
+
+    @Autowired
+    private ServerProperties serverProperties;
 
     @Autowired
     private MultipartProperties multipartProperties;
@@ -88,8 +100,8 @@ public class AppConfig {
     }
 
     @PostConstruct
-    private void initLogDir() throws IOException {
-        Path path = appProperties.getLogDir();
+    private void initFlowDir() throws IOException {
+        Path path = appProperties.getFlowDir();
         FileHelper.createDirectory(path);
     }
 
@@ -99,9 +111,23 @@ public class AppConfig {
         FileHelper.createDirectory(path);
     }
 
+    @Bean("serverAddress")
+    public String serverAddress() throws URISyntaxException {
+        String host = env.getProperty(App.Host, serverProperties.getAddress().toString());
+        return new URIBuilder().setScheme("http")
+            .setHost(host).setPort(serverProperties.getPort())
+            .build()
+            .toString();
+    }
+
     @Bean("tmpDir")
     public Path tmpDir() {
         return Paths.get(appProperties.getWorkspace().toString(), "tmp");
+    }
+
+    @Bean("flowDir")
+    public Path flowDir() {
+        return appProperties.getFlowDir();
     }
 
     @Bean("objectMapper")
@@ -121,6 +147,11 @@ public class AppConfig {
     }
 
     @Bean
+    public ThreadLocal<User> currentUser() {
+        return new ThreadLocal<>();
+    }
+
+    @Bean
     public AuthInterceptor authHandler() {
         return new AuthInterceptor();
     }
@@ -132,13 +163,14 @@ public class AppConfig {
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(new CrosInterceptor());
                 registry.addInterceptor(authHandler())
-                        .addPathPatterns("/flows/**")
-                        .addPathPatterns("/jobs/**")
-                        .addPathPatterns("/agents/**")
-                        .addPathPatterns("/credentials/**")
-                        .addPathPatterns("/auth/logout")
-                        .excludePathPatterns("/agents/connect")
-                        .excludePathPatterns("/agents/logs/upload");
+                    .addPathPatterns("/users/**")
+                    .addPathPatterns("/flows/**")
+                    .addPathPatterns("/jobs/**")
+                    .addPathPatterns("/agents/**")
+                    .addPathPatterns("/credentials/**")
+                    .addPathPatterns("/auth/logout")
+                    .excludePathPatterns("/agents/connect")
+                    .excludePathPatterns("/agents/logs/upload");
             }
 
             @Override

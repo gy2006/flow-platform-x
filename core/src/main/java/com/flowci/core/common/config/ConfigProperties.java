@@ -16,25 +16,37 @@
 
 package com.flowci.core.common.config;
 
+import java.net.URI;
 import java.nio.file.Path;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.annotation.Validated;
+
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 
 /**
  * @author yang
  */
 @Data
+@Validated
 @Configuration
 @ConfigurationProperties(prefix = "app")
 public class ConfigProperties {
 
     private Path workspace;
 
-    private Path logDir;
+    private Path flowDir;
 
+    @NotBlank
     private String serverAddress;
+
+    @NotBlank
+    @Length(max = 16, min = 16)
+    private String secret;
 
     @Bean("adminProperties")
     @ConfigurationProperties(prefix = "app.admin")
@@ -73,10 +85,14 @@ public class ConfigProperties {
     }
 
     @Data
+    @Validated
     public static class Admin {
 
+        @NotBlank
+        @Email
         private String defaultEmail;
 
+        @NotBlank
         private String defaultPassword;
     }
 
@@ -118,13 +134,7 @@ public class ConfigProperties {
     @Data
     public static class RabbitMQ {
 
-        private String host;
-
-        private Integer port;
-
-        private String username;
-
-        private String password;
+        private URI uri;
 
         private String callbackQueueName;
 
@@ -136,8 +146,10 @@ public class ConfigProperties {
 
         private Boolean enabled;
 
-        private Integer maxUsers;
-
+        // expired for token
         private Integer expireSeconds;
+
+        // expired for refresh token
+        private Integer refreshExpiredSeconds;
     }
 }

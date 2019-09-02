@@ -35,17 +35,10 @@ public class Settings implements Serializable {
 
     private Zookeeper zookeeper;
 
-    private String callbackQueueName;
-
-    private String logsExchangeName;
-
-    public Settings(Agent agent, RabbitMQ queue, Zookeeper zookeeper, String callbackQueueName,
-                    String logsExchangeName) {
+    public Settings(Agent agent, RabbitMQ queue, Zookeeper zookeeper) {
         this.agent = agent;
         this.queue = queue;
         this.zookeeper = zookeeper;
-        this.callbackQueueName = callbackQueueName;
-        this.logsExchangeName = logsExchangeName;
     }
 
     @Data
@@ -59,13 +52,13 @@ public class Settings implements Serializable {
     @Data
     public static class RabbitMQ implements Serializable {
 
-        private String host;
+        private String uri;
 
-        private Integer port;
+        // queue name for step callback
+        private String callback;
 
-        private String username;
-
-        private String password;
+        // exchange name for logs
+        private String logsExchange;
     }
 
 }

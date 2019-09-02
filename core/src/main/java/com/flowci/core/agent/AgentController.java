@@ -16,10 +16,12 @@
 
 package com.flowci.core.agent;
 
+import com.flowci.core.agent.domain.AgentAction;
 import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.domain.CreateOrUpdateAgent;
 import com.flowci.core.agent.domain.DeleteAgent;
 import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Settings;
@@ -52,16 +54,19 @@ public class AgentController {
     private LoggingService loggingService;
 
     @GetMapping("/{name}")
+    @Action(AgentAction.GET)
     public Agent getByName(@PathVariable String name) {
         return agentService.getByName(name);
     }
 
     @GetMapping
+    @Action(AgentAction.LIST)
     public List<Agent> list() {
         return agentService.list();
     }
 
     @PostMapping()
+    @Action(AgentAction.CREATE_UPDATE)
     public Agent createOrUpdate(@Validated @RequestBody CreateOrUpdateAgent body) {
         if (body.hasToken()) {
             return agentService.update(body.getToken(), body.getName(), body.getTags());
@@ -71,6 +76,7 @@ public class AgentController {
     }
 
     @DeleteMapping()
+    @Action(AgentAction.DELETE)
     public Agent delete(@Validated @RequestBody DeleteAgent body) {
         return agentService.delete(body.getToken());
     }
@@ -92,10 +98,8 @@ public class AgentController {
     public void upload(@RequestHeader(HeaderAgentToken) String token,
                        @RequestPart("file") MultipartFile file) {
 
-        Agent agent = agentService.getByToken(token);
-        if (Objects.isNull(agent)) {
-            throw new NotFoundException("Agent not existed");
-        }
+        // verify token
+        agentService.getByToken(token);
 
         try(InputStream stream = file.getInputStream()) {
             loggingService.save(file.getOriginalFilename(), stream);
