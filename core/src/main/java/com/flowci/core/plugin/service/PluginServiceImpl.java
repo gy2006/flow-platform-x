@@ -16,6 +16,8 @@
 
 package com.flowci.core.plugin.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginParser;
@@ -30,7 +32,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -38,12 +39,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,13 +58,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class PluginServiceImpl implements PluginService {
 
-    private static final ParameterizedTypeReference<List<PluginRepo>> RepoListType =
-            new ParameterizedTypeReference<List<PluginRepo>>() {};
+    private static final TypeReference<List<PluginRepo>> RepoListType = new TypeReference<List<PluginRepo>>() {};
 
     private static final String PluginFileName = "plugin.yml";
 
     @Autowired
-    private RestTemplate restTemplate;
+    private ObjectMapper objectMapper;
 
     @Autowired
     private Path pluginDir;
@@ -103,10 +103,8 @@ public class PluginServiceImpl implements PluginService {
     @Override
     public List<PluginRepo> load(String repoUrl) {
         try {
-            RequestEntity<Object> request = new RequestEntity<>(HttpMethod.GET, URI.create(repoUrl));
-            ResponseEntity<List<PluginRepo>> response = restTemplate.exchange(request, RepoListType);
-            return response.getBody();
-        } catch (RestClientException e) {
+            return objectMapper.readValue(new URL(repoUrl), RepoListType);
+        } catch (Throwable e) {
             log.warn("Unable to load plugin repo '{}' : {}", repoUrl, e.getMessage());
             return Collections.emptyList();
         }

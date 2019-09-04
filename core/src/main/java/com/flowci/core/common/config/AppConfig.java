@@ -26,12 +26,6 @@ import com.flowci.core.user.domain.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,16 +39,21 @@ import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * @author yang
@@ -68,10 +67,10 @@ public class AppConfig {
     private static final ObjectMapper Mapper = Jsonable.getMapper();
 
     private static final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
-        new ByteArrayHttpMessageConverter(),
-        new MappingJackson2HttpMessageConverter(Mapper),
-        new ResourceHttpMessageConverter(),
-        new AllEncompassingFormHttpMessageConverter()
+            new ByteArrayHttpMessageConverter(),
+            new MappingJackson2HttpMessageConverter(Mapper),
+            new ResourceHttpMessageConverter(),
+            new AllEncompassingFormHttpMessageConverter()
     );
 
     static {
@@ -115,9 +114,9 @@ public class AppConfig {
     public String serverAddress() throws URISyntaxException {
         String host = env.getProperty(App.Host, serverProperties.getAddress().toString());
         return new URIBuilder().setScheme("http")
-            .setHost(host).setPort(serverProperties.getPort())
-            .build()
-            .toString();
+                .setHost(host).setPort(serverProperties.getPort())
+                .build()
+                .toString();
     }
 
     @Bean("tmpDir")
@@ -133,17 +132,6 @@ public class AppConfig {
     @Bean("objectMapper")
     public ObjectMapper objectMapper() {
         return Mapper;
-    }
-
-    @Bean("restTemplate")
-    public RestTemplate restTemplate() {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setReadTimeout(1000 * 15);
-        factory.setConnectTimeout(1000 * 15);
-
-        RestTemplate restTemplate = new RestTemplate(factory);
-        restTemplate.setMessageConverters(DefaultConverters);
-        return restTemplate;
     }
 
     @Bean
@@ -163,14 +151,14 @@ public class AppConfig {
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(new CrosInterceptor());
                 registry.addInterceptor(authHandler())
-                    .addPathPatterns("/users/**")
-                    .addPathPatterns("/flows/**")
-                    .addPathPatterns("/jobs/**")
-                    .addPathPatterns("/agents/**")
-                    .addPathPatterns("/credentials/**")
-                    .addPathPatterns("/auth/logout")
-                    .excludePathPatterns("/agents/connect")
-                    .excludePathPatterns("/agents/logs/upload");
+                        .addPathPatterns("/users/**")
+                        .addPathPatterns("/flows/**")
+                        .addPathPatterns("/jobs/**")
+                        .addPathPatterns("/agents/**")
+                        .addPathPatterns("/credentials/**")
+                        .addPathPatterns("/auth/logout")
+                        .excludePathPatterns("/agents/connect")
+                        .excludePathPatterns("/agents/logs/upload");
             }
 
             @Override
