@@ -12,6 +12,4 @@ execute on agent from binary, inside docker or k8s.
 
 - For more detail, please refer [doc](https://github.com/flowci/docs)
 
-## Sample YAML Configuration
-
-<script src="https://gist.github.com/gy2006/f8e4e0372e12099aca1f48797b653ea8.js"></script>
+- [Sample YAML configuration](https://gist.github.com/gy2006/f8e4e0372e12099aca1f48797b653ea8)
