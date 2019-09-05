@@ -45,7 +45,7 @@ public class Variables {
 
         public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA";
 
-        // which define the flow work dir which under the agent defaut workspace
+        // which define the flow work dir which under the agent default workspace
         public static final String WorkDir = "FLOWCI_FLOW_WORKDIR";
     }
 

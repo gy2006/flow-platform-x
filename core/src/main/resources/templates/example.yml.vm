@@ -14,9 +14,6 @@
 # FLOWCI_JOB_TRIGGER:
 
 envs:
-  # Agent default workspace
-  # FLOWCI_AGENT_WORKSPACE: "${HOME}/.flow.ci.agent"
-
   # Git Config
   #if( $FLOWCI_GIT_URL )
   FLOWCI_GIT_URL: "$FLOWCI_GIT_URL"
