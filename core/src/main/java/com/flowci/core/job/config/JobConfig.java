@@ -34,19 +34,17 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Configuration
 public class JobConfig {
 
+    /**
+     * Consume http request
+     */
+    @Bean("jobRunExecutor")
+    public ThreadPoolTaskExecutor jobRunExecutor() {
+        return ThreadHelper.createTaskExecutor(1, 1, 50, "job-run-");
+    }
+
     @Bean("jobDeleteExecutor")
     public ThreadPoolTaskExecutor jobDeleteExecutor() {
         return ThreadHelper.createTaskExecutor(1, 1, 10, "job-delete-");
-    }
-
-    @Bean("jobLogExecutor")
-    public ThreadPoolTaskExecutor jobLogExecutor() {
-        return ThreadHelper.createTaskExecutor(1, 1, 1, "job-logging-");
-    }
-
-    @Bean("jobConsumerExecutor")
-    public ThreadPoolTaskExecutor jobConsumerExecutor() {
-        return ThreadHelper.createTaskExecutor(100, 100, 0, "job-consumer-");
     }
 
     @Bean("jobTreeCache")
