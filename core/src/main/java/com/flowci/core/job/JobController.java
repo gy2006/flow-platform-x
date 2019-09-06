@@ -43,6 +43,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -76,6 +77,9 @@ public class JobController {
 
     @Autowired
     private LoggingService loggingService;
+
+    @Autowired
+    private ThreadPoolTaskExecutor jobRunExecutor;
 
     @GetMapping("/{flow}")
     @Action(JobAction.LIST)
@@ -163,9 +167,11 @@ public class JobController {
 
     @PostMapping("/run")
     @Action(JobAction.RUN)
-    public Job createAndRun(@Validated @RequestBody CreateJob data) {
-        Job job = create(data);
-        return jobService.start(job);
+    public void createAndRun(@Validated @RequestBody CreateJob data) {
+        jobRunExecutor.execute(() -> {
+            Job job = create(data);
+            jobService.start(job);
+        });
     }
 
     @PostMapping("/{flow}/{buildNumber}/cancel")
