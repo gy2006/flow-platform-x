@@ -576,7 +576,7 @@ public class FlowServiceImpl implements FlowService {
 
         @Override
         protected void configure(Host host, Session session) {
-            // do nothing
+            session.setConfig("StrictHostKeyChecking", "no");
         }
 
         @Override
