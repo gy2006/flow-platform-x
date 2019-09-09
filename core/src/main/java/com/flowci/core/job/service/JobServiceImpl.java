@@ -210,8 +210,6 @@ public class JobServiceImpl implements JobService {
         // init job context
         VariableMap defaultContext = initJobContext(flow, job, root.getEnvironments(), input);
         job.getContext().merge(defaultContext);
-        job.getContext().put(Variables.App.Url, serverAddress);
-
 
         // setup created by form login user or git event author
         if (sessionManager.exist()) {
