@@ -12,4 +12,7 @@ execute on agent from binary, inside docker or k8s.
 
 - For more detail, please refer [doc](https://github.com/flowci/docs)
 
-- [Sample YAML configuration](https://gist.github.com/gy2006/f8e4e0372e12099aca1f48797b653ea8)
+- [Sample YAML configuration](https://github.com/FlowCI/templates/blob/master/demo.yaml)
+
+
+![](https://github.com/FlowCI/files/blob/master/imgs/trigger_from_github.gif)
