@@ -57,7 +57,7 @@ public abstract class RabbitOperation implements AutoCloseable {
         this.name = name;
         this.channel = conn.createChannel();
         this.channel.basicQos(0, concurrency, false);
-        this.executor = ThreadHelper.createTaskExecutor(concurrency, concurrency, 10, name + "-");
+        this.executor = ThreadHelper.createTaskExecutor(concurrency, concurrency, 1000, name + "-");
     }
 
     public String declare(String queue, boolean durable) {
