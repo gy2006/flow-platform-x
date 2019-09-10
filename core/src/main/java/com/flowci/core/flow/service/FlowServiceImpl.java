@@ -224,7 +224,7 @@ public class FlowServiceImpl implements FlowService {
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
         try {
-            flowDao.insert(flow);
+            flowDao.save(flow);
             pathManager.create(flow);
             flowUserDao.create(flow.getId());
 
