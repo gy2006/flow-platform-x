@@ -35,7 +35,7 @@ public class FlowUserDaoImpl implements FlowUserDao {
 
     @Override
     public void create(String flowId) {
-        mongoOps.insert(new FlowUsers(flowId));
+        mongoOps.save(new FlowUsers(flowId));
     }
 
     @Override
