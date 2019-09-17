@@ -39,7 +39,7 @@ public class YmlParser {
     private final static Map<String, Integer> FieldsOrder = ImmutableMap.<String, Integer>builder()
         .put("name", 1)
         .put("envs", 2)
-        .put("filter", 3)
+        .put("trigger", 3)
         .put("selector", 4)
         .put("allow_failure", 5)
         .put("tail", 6)

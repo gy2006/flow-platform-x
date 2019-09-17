@@ -16,7 +16,7 @@
 
 package com.flowci.tree.yml;
 
-import com.flowci.tree.Filter;
+import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.Node;
 import com.flowci.tree.Selector;
 import java.util.LinkedList;
@@ -40,7 +40,7 @@ public class FlowNode extends YmlNode {
     private Selector selector = new Selector();
 
     @NonNull
-    private Filter filter = new Filter();
+    private TriggerFilter trigger = new TriggerFilter();
 
     @NonNull
     private List<StepNode> steps = new LinkedList<>();
@@ -59,7 +59,7 @@ public class FlowNode extends YmlNode {
         Node node = new Node(getName());
         node.setCron(cron);
         node.setSelector(selector);
-        node.setFilter(filter);
+        node.setTrigger(trigger);
         node.setEnvironments(getVariableMap());
         setupChildren(node);
         return node;

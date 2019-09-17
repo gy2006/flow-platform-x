@@ -2,9 +2,9 @@ envs:
   FLOW_WORKSPACE: "echo hello"
   FLOW_VERSION: "echo version"
 
-filter:
+trigger:
   branches:
-    - develop
+  - develop
 
 steps:
 - envs:
