@@ -49,7 +49,7 @@ import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.Filter;
+import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.YmlParser;
@@ -89,7 +89,6 @@ import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.util.FS;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
@@ -489,7 +488,7 @@ public class FlowServiceImpl implements FlowService {
     //====================================================================
 
     private boolean canStartJob(Node root, GitTrigger trigger) {
-        Filter condition = root.getFilter();
+        TriggerFilter condition = root.getTrigger();
 
         if (trigger.getEvent() == GitEvent.PUSH) {
             GitPushTrigger pushTrigger = (GitPushTrigger) trigger;

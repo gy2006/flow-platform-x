@@ -5,7 +5,7 @@ envs:
 
 cron: "* * * * *"
 
-filter:
+trigger:
   branches:
     - "develop"
     - "master"

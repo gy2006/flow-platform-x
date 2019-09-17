@@ -29,7 +29,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class Filter implements Serializable {
+public class TriggerFilter implements Serializable {
 
     /**
      * Condition on branches

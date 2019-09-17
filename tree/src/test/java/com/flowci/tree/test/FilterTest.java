@@ -16,7 +16,7 @@
 
 package com.flowci.tree.test;
 
-import com.flowci.tree.Filter;
+import com.flowci.tree.TriggerFilter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,7 +27,7 @@ public class FilterTest {
 
     @Test
     public void should_match_branches_regular_expression() {
-        Filter condition = new Filter();
+        TriggerFilter condition = new TriggerFilter();
         condition.getBranches().add("feature/.+");
 
         Assert.assertTrue(condition.isMatchBranch("feature/fb_123"));
@@ -35,14 +35,14 @@ public class FilterTest {
 
     @Test
     public void should_available_if_condition_defined() {
-        Filter condition = new Filter();
+        TriggerFilter condition = new TriggerFilter();
         condition.getBranches().add("feature/.+");
         Assert.assertTrue(condition.available());
     }
 
     @Test
     public void should_not_available_if_no_condition_defined() {
-        Filter condition = new Filter();
+        TriggerFilter condition = new TriggerFilter();
         Assert.assertFalse(condition.available());
     }
 }

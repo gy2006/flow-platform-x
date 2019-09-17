@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -43,13 +42,10 @@ public class Node implements Serializable {
 
     public final static boolean IS_TAIL_DEFAULT = false;
 
-    @NonNull
     private String name;
 
-    @NonNull
     private NodePath path;
 
-    @NonNull
     private VariableMap environments = new VariableMap();
 
     /**
@@ -58,9 +54,9 @@ public class Node implements Serializable {
     private Selector selector;
 
     /**
-     * Node start filter
+     * Node start trigger
      */
-    private Filter filter = new Filter();
+    private TriggerFilter trigger = new TriggerFilter();
 
     /**
      * Unix cron expression
@@ -85,7 +81,6 @@ public class Node implements Serializable {
     /**
      * Variables name to export to context
      */
-    @NonNull
     private Set<String> exports = new HashSet<>(0);
 
     /**
@@ -95,12 +90,10 @@ public class Node implements Serializable {
 
     private boolean tail = IS_TAIL_DEFAULT;
 
-    @NonNull
     private Integer order = 0;
 
     private Node parent;
 
-    @NonNull
     private List<Node> children = new LinkedList<>();
 
     public Node(String name) {
