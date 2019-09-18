@@ -51,6 +51,8 @@ public class TriggerFilter implements Serializable {
         }
 
         for (String re : branches) {
+            re = replaceStar(re);
+
             if (branch.matches(re)) {
                 return true;
             }
@@ -65,11 +67,20 @@ public class TriggerFilter implements Serializable {
         }
 
         for (String re : tags) {
+            re = replaceStar(re);
+
             if (tag.matches(re)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Replace * in the given string to .+
+     */
+    private static String replaceStar(String str) {
+        return str.replace("*", ".+");
     }
 }
