@@ -16,12 +16,36 @@
 
 package com.flowci.core.common.domain;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.flowci.domain.Jsonable;
+import com.flowci.domain.Variable;
+import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+
 /**
  * @author yang
  */
-public class Variables {
+public abstract class Variables {
 
-    public static class App {
+    public static ImmutableList<Variable> RULES;
+
+    static {
+        InputStream stream = Variables.class.getClassLoader().getResourceAsStream("vars.json");
+
+        TypeReference<List<Variable>> varsType = new TypeReference<List<Variable>>() {
+        };
+
+        try {
+            List<Variable> rules = Jsonable.getMapper().readValue(stream, varsType);
+            RULES = ImmutableList.<Variable>builder().addAll(rules).build();
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to parse default vars rules");
+        }
+    }
+
+    public abstract static class App {
 
         public static final String Url = "FLOWCI_SERVER_URL";
 
@@ -33,23 +57,23 @@ public class Variables {
 
     }
 
-    public static class Flow {
+    public abstract static class Flow {
 
         public static final String Name = "FLOWCI_FLOW_NAME";
 
         public static final String Webhook = "FLOWCI_FLOW_WEBHOOK";
 
-        public static final String GitUrl = "FLOWCI_GIT_URL";
+        public static final String GitUrl = "FLOWCI_GIT_URL"; // set
 
-        public static final String GitBranch = "FLOWCI_GIT_BRANCH";
+        public static final String GitBranch = "FLOWCI_GIT_BRANCH"; // set
 
-        public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA";
+        public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA"; // set
 
         // which define the flow work dir which under the agent default workspace
         public static final String WorkDir = "FLOWCI_FLOW_WORKDIR";
     }
 
-    public static class Job {
+    public abstract static class Job {
 
         public static final String BuildNumber = "FLOWCI_JOB_BUILD_NUM";
 
@@ -57,8 +81,5 @@ public class Variables {
 
         public static final String Trigger = "FLOWCI_JOB_TRIGGER";
 
-    }
-
-    private Variables() {
     }
 }

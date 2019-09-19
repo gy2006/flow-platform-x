@@ -16,7 +16,9 @@
 
 package com.flowci.domain;
 
+import com.google.common.collect.Lists;
 import java.io.Serializable;
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,7 +30,7 @@ import lombok.ToString;
  */
 @Getter
 @Setter
-@ToString(of = {"name", "valueType"})
+@ToString(of = {"name"})
 @EqualsAndHashCode(of = {"name"})
 @NoArgsConstructor
 public class Variable implements Serializable {
@@ -37,14 +39,22 @@ public class Variable implements Serializable {
 
         STRING,
 
-        INT
+        INTEGER,
+
+        HTTP_URL,
+
+        SSH_URL,
+
+        EMAIL,
+
+        ENCRYPTED
     }
 
     private String name;
 
     private String alias;
 
-    private ValueType valueType = ValueType.STRING;
+    private List<ValueType> types = Lists.newArrayList(ValueType.STRING);
 
     private boolean required = true;
 
@@ -52,8 +62,8 @@ public class Variable implements Serializable {
         this.name = name;
     }
 
-    public Variable(String name, ValueType valueType) {
+    public Variable(String name, ValueType... types) {
         this.name = name;
-        this.valueType = valueType;
+        this.types = Lists.newArrayList(types);
     }
 }
