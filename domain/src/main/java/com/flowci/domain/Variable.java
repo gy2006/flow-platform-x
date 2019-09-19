@@ -16,14 +16,16 @@
 
 package com.flowci.domain;
 
-import com.google.common.collect.Lists;
+import com.flowci.util.ObjectsHelper;
+import com.flowci.util.PatternHelper;
+import com.google.common.base.Strings;
 import java.io.Serializable;
-import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.Accessors;
 
 /**
  * @author yang
@@ -33,6 +35,7 @@ import lombok.ToString;
 @ToString(of = {"name"})
 @EqualsAndHashCode(of = {"name"})
 @NoArgsConstructor
+@Accessors(chain = true)
 public class Variable implements Serializable {
 
     public enum ValueType {
@@ -43,18 +46,16 @@ public class Variable implements Serializable {
 
         HTTP_URL,
 
-        SSH_URL,
+        GIT_URL,
 
-        EMAIL,
-
-        ENCRYPTED
+        EMAIL
     }
 
     private String name;
 
     private String alias;
 
-    private List<ValueType> types = Lists.newArrayList(ValueType.STRING);
+    private ValueType type = ValueType.STRING;
 
     private boolean required = true;
 
@@ -62,8 +63,38 @@ public class Variable implements Serializable {
         this.name = name;
     }
 
-    public Variable(String name, ValueType... types) {
+    public Variable(String name, ValueType type) {
         this.name = name;
-        this.types = Lists.newArrayList(types);
+        this.type = type;
+    }
+
+    public boolean verify(String value) {
+        if (required && Strings.isNullOrEmpty(value)) {
+            return false;
+        }
+
+        if (!required && Strings.isNullOrEmpty(value)) {
+            return true;
+        }
+
+        return isTypeMatch(type, value);
+    }
+
+    private static boolean isTypeMatch(ValueType type, String value) {
+        switch (type) {
+            case INTEGER:
+                return ObjectsHelper.tryParseInt(value);
+
+            case HTTP_URL:
+                return PatternHelper.WEB_URL.matcher(value).find();
+
+            case GIT_URL:
+                return PatternHelper.GIT_URL.matcher(value).find();
+
+            case EMAIL:
+                return PatternHelper.EMAIL_ADDRESS.matcher(value).find();
+        }
+
+        return true;
     }
 }
