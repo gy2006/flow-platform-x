@@ -17,23 +17,21 @@
 package com.flowci.core.job.manager;
 
 import com.flowci.core.common.domain.Variables;
-import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.service.PluginService;
+import com.flowci.domain.CmdId;
 import com.flowci.domain.CmdIn;
 import com.flowci.domain.CmdType;
 import com.flowci.domain.Variable;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.Node;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-
-import java.util.UUID;
 
 /**
  * @author yang
@@ -86,9 +84,10 @@ public class CmdManagerImpl implements CmdManager {
     private void verifyPluginInput(VariableMap context, Plugin plugin) {
         for (Variable variable : plugin.getInputs()) {
             String value = context.get(variable.getName());
-            if (Strings.isNullOrEmpty(value) && variable.isRequired()) {
+
+            if (!variable.verify(value)) {
                 throw new ArgumentException(
-                    "The input {0} is required for plugin {1}", variable.getName(), plugin.getName());
+                    "The illegal input {0} for plugin {1}", variable.getName(), plugin.getName());
             }
         }
     }
