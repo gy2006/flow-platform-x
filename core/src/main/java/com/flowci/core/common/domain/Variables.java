@@ -16,34 +16,10 @@
 
 package com.flowci.core.common.domain;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.flowci.domain.Jsonable;
-import com.flowci.domain.Variable;
-import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-
 /**
  * @author yang
  */
 public abstract class Variables {
-
-    public static ImmutableList<Variable> RULES;
-
-    static {
-        InputStream stream = Variables.class.getClassLoader().getResourceAsStream("vars.json");
-
-        TypeReference<List<Variable>> varsType = new TypeReference<List<Variable>>() {
-        };
-
-        try {
-            List<Variable> rules = Jsonable.getMapper().readValue(stream, varsType);
-            RULES = ImmutableList.<Variable>builder().addAll(rules).build();
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to parse default vars rules");
-        }
-    }
 
     public abstract static class App {
 

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.domain.VariableValue;
 import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.RequestMessage;
@@ -31,10 +32,9 @@ import org.springframework.http.MediaType;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 /**
  * @author yang
@@ -106,7 +106,7 @@ public class FlowMockHelper {
         return message.getData();
     }
 
-    void removeUsers(String name, User ...users) throws Exception {
+    void removeUsers(String name, User... users) throws Exception {
         List<String> ids = toUserIdList(users);
 
         ResponseMessage message = mockMvcHelper.expectSuccessAndReturnClass(
@@ -117,7 +117,21 @@ public class FlowMockHelper {
         Assert.assertEquals(StatusCode.OK, message.getCode());
     }
 
-    private List<String> toUserIdList(User ...users) {
+    ResponseMessage addVars(String name, Map<String, VariableValue> vars) throws Exception {
+        return mockMvcHelper.expectSuccessAndReturnClass(
+                post("/flows/" + name + "/variables")
+                        .content(objectMapper.writeValueAsBytes(vars))
+                        .contentType(MediaType.APPLICATION_JSON), ResponseMessage.class);
+    }
+
+    ResponseMessage removeVars(String name, List<String> vars) throws Exception {
+        return mockMvcHelper.expectSuccessAndReturnClass(
+                delete("/flows/" + name + "/variables")
+                        .content(objectMapper.writeValueAsBytes(vars))
+                        .contentType(MediaType.APPLICATION_JSON), ResponseMessage.class);
+    }
+
+    private List<String> toUserIdList(User... users) {
         List<String> ids = new ArrayList<>(users.length);
 
         for (User item : users) {

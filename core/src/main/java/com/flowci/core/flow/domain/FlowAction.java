@@ -35,6 +35,8 @@ public abstract class FlowAction {
 
     public static final String ADD_VARS = "add_flow_vars";
 
+    public static final String REMOVE_VARS = "remove_flow_vars";
+
     public static final String GET_YML = "get_yml";
 
     public static final String SET_YML = "set_yml";

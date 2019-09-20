@@ -18,19 +18,23 @@ package com.flowci.core.test.flow;
 
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.service.FlowService;
+import com.flowci.domain.VariableValue;
 import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
+import com.flowci.domain.Variable;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.util.StringHelper;
+import org.assertj.core.util.Lists;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -97,5 +101,20 @@ public class FlowControllerTest extends SpringScenario {
         flowMockHelper.removeUsers(flowName, user1, user2);
         users = flowMockHelper.listUsers(flowName);
         Assert.assertEquals(2, users.size());
+    }
+
+    @Test
+    public void should_operate_vars_to_flow() throws Exception {
+        // init:
+        Map<String, VariableValue> vars = new HashMap<>();
+        vars.put("FLOWCI_GIT_URL", VariableValue.of("git@github.com:flowci/docs.git", Variable.ValueType.GIT_URL));
+
+        // to test add vars
+        ResponseMessage msg = flowMockHelper.addVars(flowName, vars);
+        Assert.assertEquals(StatusCode.OK, msg.getCode());
+
+        // to test remove vars
+        msg = flowMockHelper.removeVars(flowName, Lists.newArrayList("FLOWCI_GIT_URL"));
+        Assert.assertEquals(StatusCode.OK, msg.getCode());
     }
 }

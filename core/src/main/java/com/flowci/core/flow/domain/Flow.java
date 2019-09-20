@@ -61,8 +61,13 @@ public final class Flow extends Mongoable implements Pathable {
     @NonNull
     private Status status = Status.PENDING;
 
+    // variables from yml
     @NonNull
     private VariableMap variables = new VariableMap();
+
+    // variables for flow obj only
+    @NonNull
+    private VariableMap locally = new VariableMap();
 
     private WebhookStatus webhookStatus;
 

@@ -38,6 +38,24 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class Variable implements Serializable {
 
+    public static boolean verify(ValueType type, String value) {
+        switch (type) {
+            case INTEGER:
+                return ObjectsHelper.tryParseInt(value);
+
+            case HTTP_URL:
+                return PatternHelper.WEB_URL.matcher(value).find();
+
+            case GIT_URL:
+                return PatternHelper.GIT_URL.matcher(value).find();
+
+            case EMAIL:
+                return PatternHelper.EMAIL_ADDRESS.matcher(value).find();
+        }
+
+        return true;
+    }
+
     public enum ValueType {
 
         STRING,
@@ -77,24 +95,6 @@ public class Variable implements Serializable {
             return true;
         }
 
-        return isTypeMatch(type, value);
-    }
-
-    private static boolean isTypeMatch(ValueType type, String value) {
-        switch (type) {
-            case INTEGER:
-                return ObjectsHelper.tryParseInt(value);
-
-            case HTTP_URL:
-                return PatternHelper.WEB_URL.matcher(value).find();
-
-            case GIT_URL:
-                return PatternHelper.GIT_URL.matcher(value).find();
-
-            case EMAIL:
-                return PatternHelper.EMAIL_ADDRESS.matcher(value).find();
-        }
-
-        return true;
+        return verify(type, value);
     }
 }

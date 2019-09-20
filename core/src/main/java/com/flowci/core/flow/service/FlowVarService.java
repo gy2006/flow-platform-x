@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test.common;
+package com.flowci.core.flow.service;
 
-import com.flowci.core.common.domain.Variables;
-import com.flowci.domain.Variable;
-import com.google.common.collect.ImmutableList;
-import org.junit.Assert;
-import org.junit.Test;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.domain.VariableValue;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yang
  */
-public class VariablesTest {
+public interface FlowVarService {
 
-    @Test
-    public void should_load_var_rules_from_resource() {
-        ImmutableList<Variable> rules = Variables.RULES;
+    /**
+     * Add vars to flow locally
+     */
+    void add(Flow flow, Map<String, VariableValue> vars);
 
-        Assert.assertNotNull(rules);
-        Assert.assertTrue(rules.size() > 0);
-    }
+    /**
+     * Remove vars from flow locally
+     */
+    void remove(Flow flow, List<String> vars);
 
 }
