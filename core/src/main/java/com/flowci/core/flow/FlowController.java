@@ -78,21 +78,6 @@ public class FlowController {
         return flowService.create(name);
     }
 
-    @PostMapping("/{name}/variables")
-    @Action(FlowAction.ADD_VARS)
-    public void addVariables(@PathVariable String name,
-                             @Validated @RequestBody Map<String, VariableValue> variables) {
-        Flow flow = flowService.get(name);
-        flowVarService.add(flow, variables);
-    }
-
-    @DeleteMapping("/{name}/variables")
-    @Action(FlowAction.REMOVE_VARS)
-    public void removeVariables(@PathVariable String name, @RequestBody List<String> vars) {
-        Flow flow = flowService.get(name);
-        flowVarService.remove(flow, vars);
-    }
-
     @PostMapping(value = "/{name}/confirm")
     @Action(FlowAction.CONFIRM)
     public Flow confirm(@PathVariable String name, @RequestBody(required = false) GitSettings gitSettings) {
@@ -177,6 +162,21 @@ public class FlowController {
         Flow flow = flowService.get(name);
         List<String> ids = flowService.listUsers(flow);
         return userService.list(ids);
+    }
+
+    @PostMapping("/{name}/variables")
+    @Action(FlowAction.ADD_VARS)
+    public void addVariables(@PathVariable String name,
+                             @Validated @RequestBody Map<String, VariableValue> variables) {
+        Flow flow = flowService.get(name);
+        flowVarService.add(flow, variables);
+    }
+
+    @DeleteMapping("/{name}/variables")
+    @Action(FlowAction.REMOVE_VARS)
+    public void removeVariables(@PathVariable String name, @RequestBody List<String> vars) {
+        Flow flow = flowService.get(name);
+        flowVarService.remove(flow, vars);
     }
 
     @GetMapping("/credentials/{name}")
