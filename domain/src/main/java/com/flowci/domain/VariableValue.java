@@ -16,27 +16,22 @@
 
 package com.flowci.domain;
 
+import java.io.Serializable;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.io.Serializable;
 
 @Setter
 @Getter
 public class VariableValue implements Serializable {
 
-    public static VariableValue of(String value, Variable.ValueType type) {
+    public static VariableValue of(String value, VariableType type) {
         VariableValue v = new VariableValue();
         v.setData(value);
-        v.setType(type.name());
+        v.setType(type);
         return v;
     }
 
     private String data;
 
-    private String type;
-
-    public Variable.ValueType getValueType() {
-        return Variable.ValueType.valueOf(type);
-    }
+    private VariableType type;
 }

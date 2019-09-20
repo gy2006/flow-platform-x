@@ -23,7 +23,7 @@ import com.flowci.core.plugin.service.PluginService;
 import com.flowci.domain.CmdId;
 import com.flowci.domain.CmdIn;
 import com.flowci.domain.CmdType;
-import com.flowci.domain.Variable;
+import com.flowci.core.plugin.domain.Variable;
 import com.flowci.domain.VariableMap;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.Node;

@@ -16,7 +16,6 @@
 
 package com.flowci.core.plugin.domain;
 
-import com.flowci.domain.Variable;
 import com.flowci.domain.Version;
 import java.io.Serializable;
 import java.util.List;

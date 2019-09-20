@@ -18,14 +18,13 @@ package com.flowci.core.flow.service;
 
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.domain.VariableType;
 import com.flowci.domain.VariableValue;
-import com.flowci.domain.Variable;
 import com.flowci.exception.ArgumentException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  * @author yang
@@ -42,7 +41,7 @@ public class FlowVarServiceImpl implements FlowVarService {
             String name = entry.getKey();
             VariableValue value = entry.getValue();
 
-            boolean isVerified = Variable.verify(value.getValueType(), value.getData());
+            boolean isVerified = VariableType.verify(value.getType(), value.getData());
             if (isVerified) {
                 flow.getLocally().put(name, value.getData());
                 continue;

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.flowci.domain.test;
+package com.flowci.core.test.plugin;
 
-import com.flowci.domain.Variable;
-import com.flowci.domain.Variable.ValueType;
+import com.flowci.core.plugin.domain.Variable;
+import com.flowci.domain.VariableType;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ public class VariableTest {
             .setName("test")
             .setAlias("test")
             .setRequired(true)
-            .setType(ValueType.INTEGER);
+            .setType(VariableType.INTEGER);
 
         Assert.assertTrue(v.verify("123"));
 
@@ -46,7 +46,7 @@ public class VariableTest {
             .setName("test")
             .setAlias("test")
             .setRequired(false)
-            .setType(ValueType.EMAIL);
+            .setType(VariableType.EMAIL);
 
 
         Assert.assertTrue(v.verify("hi@flow.ci"));
@@ -61,7 +61,7 @@ public class VariableTest {
             .setName("test")
             .setAlias("test")
             .setRequired(false)
-            .setType(ValueType.GIT_URL);
+            .setType(VariableType.GIT_URL);
 
 
         Assert.assertTrue(v.verify("git@github.com:FlowCI/flow-platform-x.git"));
@@ -79,7 +79,7 @@ public class VariableTest {
             .setName("test")
             .setAlias("test")
             .setRequired(false)
-            .setType(ValueType.HTTP_URL);
+            .setType(VariableType.HTTP_URL);
 
 
         Assert.assertTrue(v.verify("http://www.google.com"));
