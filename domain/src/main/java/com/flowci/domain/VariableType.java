@@ -26,7 +26,7 @@ public enum VariableType {
 
     STRING,
 
-    INTEGER,
+    INT,
 
     HTTP_URL,
 
@@ -36,7 +36,7 @@ public enum VariableType {
 
     public static boolean verify(VariableType type, String value) {
         switch (type) {
-            case INTEGER:
+            case INT:
                 return ObjectsHelper.tryParseInt(value);
 
             case HTTP_URL:

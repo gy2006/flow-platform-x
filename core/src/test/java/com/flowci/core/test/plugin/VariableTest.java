@@ -32,7 +32,7 @@ public class VariableTest {
             .setName("test")
             .setAlias("test")
             .setRequired(true)
-            .setType(VariableType.INTEGER);
+            .setType(VariableType.INT);
 
         Assert.assertTrue(v.verify("123"));
 
