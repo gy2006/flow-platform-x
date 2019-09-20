@@ -24,6 +24,7 @@ import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.ResponseMessage;
+import com.flowci.exception.ErrorCode;
 import com.flowci.util.StringHelper;
 import org.assertj.core.util.Lists;
 import org.junit.Assert;
@@ -116,5 +117,15 @@ public class FlowControllerTest extends SpringScenario {
         // to test remove vars
         msg = flowMockHelper.removeVars(flowName, Lists.newArrayList("FLOWCI_GIT_URL"));
         Assert.assertEquals(StatusCode.OK, msg.getCode());
+    }
+
+    @Test
+    public void should_get_argument_error_if_invalid_var_format() throws Exception {
+        // init:
+        Map<String, VariableValue> vars = new HashMap<>();
+        vars.put("FLOWCI_GIT_URL", VariableValue.of("git@github.com", VariableType.GIT_URL));
+
+        ResponseMessage msg = flowMockHelper.addVars(flowName, vars);
+        Assert.assertEquals(ErrorCode.INVALID_ARGUMENT, msg.getCode());
     }
 }

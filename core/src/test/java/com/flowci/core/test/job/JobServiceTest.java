@@ -104,6 +104,24 @@ public class JobServiceTest extends ZookeeperScenario {
     }
 
     @Test
+    public void should_create_job_with_expected_context() {
+        // init:
+        flow.getLocally().put("LOCAL_VAR", "local");
+
+        VariableMap input = new VariableMap();
+        input.put("INPUT_VAR", "input");
+
+        // when: create job
+        Job job = jobService.create(flow, yml, Trigger.MANUAL, input);
+
+        // then: vars should be included in job context
+        Assert.assertTrue(job.getContext().containsKey("LOCAL_VAR"));
+        Assert.assertTrue(job.getContext().containsKey("INPUT_VAR"));
+        Assert.assertTrue(job.getContext().containsKey("FLOW_WORKSPACE"));
+        Assert.assertTrue(job.getContext().containsKey("FLOW_VERSION"));
+    }
+
+    @Test
     public void should_init_steps_cmd_after_job_created() {
         Job job = jobService.create(flow, yml, Trigger.MANUAL, VariableMap.EMPTY);
 
