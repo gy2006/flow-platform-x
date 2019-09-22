@@ -21,6 +21,8 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.domain.VariableType;
 import com.flowci.domain.VariableValue;
 import com.flowci.exception.ArgumentException;
+import com.flowci.util.StringHelper;
+import com.google.common.base.Strings;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +43,16 @@ public class FlowVarServiceImpl implements FlowVarService {
             String name = entry.getKey();
             VariableValue value = entry.getValue();
 
+            if (!StringHelper.hasValue(name)) {
+                throw new ArgumentException("Var name cannot be empty");
+            }
+
+            if (!StringHelper.hasValue(value.getData())) {
+                throw new ArgumentException("Var value of {0} cannot be empty", name);
+            }
+
             boolean isVerified = VariableType.verify(value.getType(), value.getData());
+
             if (isVerified) {
                 flow.getLocally().put(name, value.getData());
                 continue;
