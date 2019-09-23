@@ -44,14 +44,15 @@ import com.flowci.core.trigger.event.GitHookEvent;
 import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.Vars;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
+import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -61,23 +62,6 @@ import com.google.common.collect.Sets;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Date;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -94,6 +78,15 @@ import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Date;
+import java.time.Instant;
+import java.util.*;
 
 /**
  * @author yang
@@ -218,7 +211,7 @@ public class FlowServiceImpl implements FlowService {
         flow.setName(name);
         flow.setCreatedBy(userId);
 
-        VariableMap vars = flow.getVariables();
+        Vars<String> vars = flow.getVariables();
         vars.put(Variables.Flow.Name, name);
         vars.put(Variables.Flow.Webhook, getWebhook(name));
 
@@ -249,9 +242,9 @@ public class FlowServiceImpl implements FlowService {
             throw new DuplicateException("Flow {0} has created", name);
         }
 
-        VariableMap variables = flow.getVariables();
-        variables.putIfNotEmpty(Variables.Flow.GitUrl, gitUrl);
-        variables.putIfNotEmpty(Variables.Flow.SSH_RSA, credential);
+        flow.getVariables()
+                .putIfNotEmpty(Variables.Flow.GitUrl, gitUrl)
+                .putIfNotEmpty(Variables.Flow.SSH_RSA, credential);
 
         flow.setStatus(Status.CONFIRMED);
         flowDao.save(flow);
@@ -476,7 +469,7 @@ public class FlowServiceImpl implements FlowService {
                 return;
             }
 
-            VariableMap gitInput = event.getTrigger().toVariableMap();
+            StringVars gitInput = event.getTrigger().toVariableMap();
             Trigger jobTrigger = event.getTrigger().toJobTrigger();
 
             eventManager.publish(new CreateNewJobEvent(this, flow, yml, jobTrigger, gitInput));
@@ -539,14 +532,14 @@ public class FlowServiceImpl implements FlowService {
                 eventManager.publish(new GitTestEvent(this, flowId));
 
                 Collection<Ref> refs = Git.lsRemoteRepository()
-                    .setRemote(url)
-                    .setHeads(true)
-                    .setTransportConfigCallback(transport -> {
-                        SshTransport sshTransport = (SshTransport) transport;
-                        sshTransport.setSshSessionFactory(sessionFactory);
-                    })
-                    .setTimeout(20)
-                    .call();
+                        .setRemote(url)
+                        .setHeads(true)
+                        .setTransportConfigCallback(transport -> {
+                            SshTransport sshTransport = (SshTransport) transport;
+                            sshTransport.setSshSessionFactory(sessionFactory);
+                        })
+                        .setTimeout(20)
+                        .call();
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();

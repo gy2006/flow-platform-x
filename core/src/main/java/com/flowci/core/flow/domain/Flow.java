@@ -20,17 +20,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
 import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.Vars;
 import com.flowci.util.StringHelper;
-import java.util.Set;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Set;
 
 /**
  * @author yang
@@ -63,11 +60,11 @@ public final class Flow extends Mongoable implements Pathable {
 
     // variables from yml
     @NonNull
-    private VariableMap variables = new VariableMap();
+    private Vars<String> variables = new StringVars();
 
     // variables for flow obj only
     @NonNull
-    private VariableMap locally = new VariableMap();
+    private Vars<String> locally = new StringVars();
 
     private WebhookStatus webhookStatus;
 

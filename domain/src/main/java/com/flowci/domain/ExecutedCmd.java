@@ -105,7 +105,7 @@ public class ExecutedCmd extends CmdBase {
     /**
      * Cmd output
      */
-    private VariableMap output = new VariableMap();
+    private StringVars output = new StringVars();
 
     /**
      * Cmd start at timestamp

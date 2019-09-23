@@ -28,7 +28,8 @@ import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.Vars;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.YmlException;
@@ -147,7 +148,7 @@ public class FlowServiceTest extends SpringScenario {
         flowService.update(flow);
         flowService.confirm(flow.getName(), null, null);
 
-        VariableMap variables = flowService.get(flow.getName()).getVariables();
+        Vars<String> variables = flowService.get(flow.getName()).getVariables();
         Assert.assertEquals(credentialName, variables.get(Variables.Flow.SSH_RSA));
 
         // when:

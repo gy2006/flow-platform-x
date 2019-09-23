@@ -18,7 +18,7 @@ package com.flowci.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
-import java.io.Serializable;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -51,7 +51,7 @@ public class CmdIn extends CmdBase {
     private Long timeout = 1800L;
 
     @NonNull
-    private VariableMap inputs = new VariableMap();
+    private StringVars inputs = new StringVars();
 
     /**
      * Output env filters

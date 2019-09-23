@@ -19,7 +19,8 @@ package com.flowci.core.common.mongo;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.Vars;
 import com.flowci.exception.ArgumentException;
 import lombok.Getter;
 import org.bson.Document;
@@ -42,21 +43,21 @@ public class VariableMapConverter {
         this.writer = new Writer();
     }
 
-    public class Reader implements Converter<Document, VariableMap> {
+    public class Reader implements Converter<Document, Vars<String>> {
 
         @Override
-        public VariableMap convert(Document source) {
+        public Vars<String> convert(Document source) {
             try {
-                return objectMapper.readValue(source.toJson(), VariableMap.class);
+                return objectMapper.readValue(source.toJson(), StringVars.class);
             } catch (IOException e) {
                 throw new ArgumentException("Cannot parse mongo doc {0} to VariableMap", source.toJson());
             }
         }
     }
 
-    public class Writer implements Converter<VariableMap, Document> {
+    public class Writer implements Converter<Vars<String>, Document> {
         @Override
-        public Document convert(VariableMap source) {
+        public Document convert(Vars<String> source) {
             try {
                 String json = objectMapper.writeValueAsString(source);
                 return Document.parse(json);

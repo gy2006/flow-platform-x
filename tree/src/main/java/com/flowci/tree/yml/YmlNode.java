@@ -16,7 +16,7 @@
 
 package com.flowci.tree.yml;
 
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import com.flowci.tree.Node;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
@@ -39,15 +39,15 @@ public abstract class YmlNode implements Serializable {
 
     public abstract Node toNode(int index);
 
-    VariableMap getVariableMap() {
-        VariableMap variables = new VariableMap(envs.size());
+    StringVars getVariableMap() {
+        StringVars variables = new StringVars(envs.size());
         for (Map.Entry<String, String> entry : envs.entrySet()) {
             variables.put(entry.getKey(), entry.getValue());
         }
         return variables;
     }
 
-    void setEnvs(VariableMap variables) {
+    void setEnvs(StringVars variables) {
         for (Map.Entry<String, String> entry : variables.entrySet()) {
             this.envs.put(entry.getKey(), entry.getValue());
         }

@@ -24,7 +24,7 @@ import com.flowci.domain.CmdId;
 import com.flowci.domain.CmdIn;
 import com.flowci.domain.CmdType;
 import com.flowci.core.plugin.domain.Variable;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.Node;
 import com.google.common.collect.Lists;
@@ -50,7 +50,7 @@ public class CmdManagerImpl implements CmdManager {
     @Override
     public CmdIn createShellCmd(Job job, Node node) {
         // node envs has top priority;
-        VariableMap inputs = VariableMap.merge(job.getContext(), node.getEnvironments());
+        StringVars inputs = StringVars.merge(job.getContext(), node.getEnvironments());
         String script = node.getScript();
         boolean allowFailure = node.isAllowFailure();
 
@@ -81,7 +81,7 @@ public class CmdManagerImpl implements CmdManager {
         return new CmdIn(UUID.randomUUID().toString(), CmdType.KILL);
     }
 
-    private void verifyPluginInput(VariableMap context, Plugin plugin) {
+    private void verifyPluginInput(StringVars context, Plugin plugin) {
         for (Variable variable : plugin.getInputs()) {
             String value = context.get(variable.getName());
 

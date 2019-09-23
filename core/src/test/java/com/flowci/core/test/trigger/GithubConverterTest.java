@@ -35,7 +35,7 @@ import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.core.trigger.domain.Variables;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import java.io.InputStream;
 import java.util.Optional;
 import org.junit.Assert;
@@ -98,7 +98,7 @@ public class GithubConverterTest extends SpringScenario {
         Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PushOrTag, stream);
         GitPushTrigger trigger = (GitPushTrigger) optional.get();
 
-        VariableMap variables = trigger.toVariableMap();
+        StringVars variables = trigger.toVariableMap();
         Assert.assertNotNull(variables);
 
         Assert.assertEquals("PUSH", variables.get(GIT_EVENT));

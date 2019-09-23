@@ -17,7 +17,7 @@
 package com.flowci.domain.test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,12 +31,12 @@ public class JsonableTest {
 
     @Test
     public void should_parse_variable_map_to_json() throws IOException {
-        VariableMap vm = new VariableMap();
+        StringVars vm = new StringVars();
         vm.put("hello", "world");
         String json = mapper.writeValueAsString(vm);
         Assert.assertNotNull(json);
 
-        VariableMap value = mapper.readValue(json, VariableMap.class);
+        StringVars value = mapper.readValue(json, StringVars.class);
         Assert.assertNotNull(value);
         Assert.assertEquals("world", value.get("hello"));
     }

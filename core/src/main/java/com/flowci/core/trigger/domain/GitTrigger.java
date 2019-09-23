@@ -17,7 +17,7 @@
 package com.flowci.core.trigger.domain;
 
 import com.flowci.core.job.domain.Job.Trigger;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import com.flowci.exception.NotFoundException;
 import java.io.Serializable;
 import lombok.Getter;
@@ -62,8 +62,8 @@ public abstract class GitTrigger implements Serializable {
         TAG
     }
 
-    public VariableMap toVariableMap() {
-        VariableMap map = new VariableMap(15);
+    public StringVars toVariableMap() {
+        StringVars map = new StringVars(15);
         map.put(Variables.GIT_SOURCE, source.name());
         map.put(Variables.GIT_EVENT, event.name());
         return map;

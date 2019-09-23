@@ -19,7 +19,7 @@ package com.flowci.core.job.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
 import com.flowci.core.common.domain.Pathable;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import com.flowci.tree.Selector;
 import lombok.Getter;
 import lombok.Setter;
@@ -145,7 +145,7 @@ public class Job extends Mongoable implements Pathable {
 
     private String currentPath;
 
-    private VariableMap context = new VariableMap();
+    private StringVars context = new StringVars();
 
     private String message;
 

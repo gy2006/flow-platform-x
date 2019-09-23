@@ -16,68 +16,70 @@
 
 package com.flowci.domain;
 
-import com.flowci.util.StringHelper;
-import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import com.flowci.util.StringHelper;
 
 /**
  * @author yang
  */
-public class VariableMap extends LinkedHashMap<String, String> implements Serializable {
+public class StringVars extends LinkedHashMap<String, String> implements Vars<String> {
 
-    public static final VariableMap EMPTY = new VariableMap(0);
+    public static final StringVars EMPTY = new StringVars(0);
 
-    public static VariableMap merge(VariableMap... variables) {
-        VariableMap merged = new VariableMap();
+    public static StringVars merge(Vars<String>... vars) {
+        StringVars merged = new StringVars();
 
-        for (VariableMap item : variables) {
+        for (Vars<String> item : vars) {
             if (item != null) {
-                merged.putAll(item);
+                merged.merge(item);
             }
         }
 
         return merged;
     }
 
-    public VariableMap() {
+    public StringVars() {
         super();
     }
 
-    public VariableMap(int size) {
+    public StringVars(int size) {
         super(size);
     }
 
-    public VariableMap(Map<String, String> data) {
+    public StringVars(Map<String, String> data) {
         super(data.size() + 10);
-        load(data);
+        merge(data);
     }
 
-    public void putIfNotEmpty(String key, String value) {
+    public StringVars(Vars<String> data) {
+        super(data.size() + 10);
+        merge(data);
+    }
+
+    @Override
+    public Vars<String> putIfNotEmpty(String key, String value) {
         if (StringHelper.hasValue(value)) {
             put(key, value);
-        }
-    }
-
-    public VariableMap merge(VariableMap other) {
-        for (Map.Entry<String, String> entry : other.entrySet()) {
-            put(entry.getKey(), entry.getValue());
         }
         return this;
     }
 
+    @Override
     public String get(String key, String defaultValue) {
         String value = get(key);
         return Objects.isNull(value) ? defaultValue : value;
     }
 
-    public void reset(Map<String, String> vars) {
-        clear();
-        load(vars);
+    @Override
+    public void merge(Vars<String> other) {
+        for (Map.Entry<String, String> entry : other.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
     }
 
-    public void load(Map<String, String> vars) {
+    private void merge(Map<String, String> vars) {
         for (Map.Entry<String, String> entry : vars.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }

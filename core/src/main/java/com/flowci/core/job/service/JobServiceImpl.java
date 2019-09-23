@@ -57,7 +57,7 @@ import com.flowci.domain.Agent.Status;
 import com.flowci.domain.CmdId;
 import com.flowci.domain.CmdIn;
 import com.flowci.domain.ExecutedCmd;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
 import com.flowci.tree.GroovyRunner;
@@ -208,7 +208,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job create(Flow flow, Yml yml, Trigger trigger, VariableMap input) {
+    public Job create(Flow flow, Yml yml, Trigger trigger, StringVars input) {
         // verify yml and parse to Node
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
@@ -561,7 +561,7 @@ public class JobServiceImpl implements JobService {
 
     private void setJobContext(Job job, Node node, ExecutedCmd cmd) {
         // merge output to job context
-        VariableMap context = job.getContext();
+        StringVars context = job.getContext();
         context.merge(cmd.getOutput());
 
         // setup current job status if not tail node
@@ -702,7 +702,7 @@ public class JobServiceImpl implements JobService {
             return true;
         }
 
-        VariableMap map = VariableMap.merge(job.getContext(), node.getEnvironments());
+        StringVars map = StringVars.merge(job.getContext(), node.getEnvironments());
 
         try {
             GroovyRunner<Boolean> runner = GroovyRunner.create(DefaultBeforeTimeout, node.getBefore(), map);
@@ -722,8 +722,8 @@ public class JobServiceImpl implements JobService {
         }
     }
 
-    private void initJobContext(Job job, Flow flow, VariableMap... inputs) {
-        VariableMap context = new VariableMap(flow.getVariables());
+    private void initJobContext(Job job, Flow flow, StringVars... inputs) {
+        StringVars context = new StringVars(flow.getVariables());
         context.merge(flow.getLocally());
 
         context.put(Variables.Job.Trigger, job.getTrigger().toString());
@@ -734,7 +734,7 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
-        context.merge(VariableMap.merge(inputs));
+        context.merge(StringVars.merge(inputs));
 
         job.setContext(context);
     }

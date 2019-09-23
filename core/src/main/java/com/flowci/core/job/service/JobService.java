@@ -23,7 +23,7 @@ import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobYml;
 import com.flowci.domain.ExecutedCmd;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import org.springframework.data.domain.Page;
 
 /**
@@ -59,7 +59,7 @@ public interface JobService {
     /**
      * Create job by flow and yml
      */
-    Job create(Flow flow, Yml yml, Trigger trigger, VariableMap input);
+    Job create(Flow flow, Yml yml, Trigger trigger, StringVars input);
 
     /**
      * Send to job queue

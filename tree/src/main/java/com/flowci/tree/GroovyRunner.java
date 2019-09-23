@@ -16,7 +16,7 @@
 
 package com.flowci.tree;
 
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
@@ -36,7 +36,7 @@ import org.codehaus.groovy.control.CompilationFailedException;
  */
 public class GroovyRunner<T> {
 
-    public static <T> GroovyRunner<T> create(int timeout, String script, VariableMap vars) throws ScriptException {
+    public static <T> GroovyRunner<T> create(int timeout, String script, StringVars vars) throws ScriptException {
         return new GroovyRunner<T>(timeout)
             .setScript(script)
             .putVariables(vars);

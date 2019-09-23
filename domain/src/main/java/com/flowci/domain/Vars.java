@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.domain;
+package com.flowci.domain;
 
-import com.flowci.domain.StringVars;
-import javax.validation.constraints.NotNull;
-import lombok.Data;
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author yang
- */
-@Data
-public class CreateJob {
+public interface Vars<V> extends Serializable {
 
-    @NotNull
-    private String flow;
+    Vars<V> putIfNotEmpty(String key, V value);
 
-    private StringVars inputs = StringVars.EMPTY;
+    V put(String key, V value);
 
-    public CreateJob() {
-    }
+    V get(String key, V defaultValue);
 
-    public CreateJob(@NotNull String flow) {
-        this.flow = flow;
-    }
+    V get(Object key);
+
+    V remove(Object key);
+
+    Set<Map.Entry<String, V>> entrySet();
+
+    void merge(Vars<V> other);
+
+    int size();
 }
