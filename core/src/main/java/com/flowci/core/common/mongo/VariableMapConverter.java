@@ -21,83 +21,84 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.domain.StringVars;
 import com.flowci.domain.TypedVars;
-import com.flowci.domain.VarValue;
 import com.flowci.domain.Vars;
 import com.flowci.exception.ArgumentException;
+import java.io.IOException;
 import lombok.Getter;
 import org.bson.Document;
 import org.springframework.core.convert.converter.Converter;
 
-import java.io.IOException;
-
 @Getter
 public class VariableMapConverter {
 
+    private static final String typeSignField = "_VARS_TYPE_";
+
+    private static final int codeForStringVars = 1;
+
+    private static final int codeForTypedVars = 2;
+
     private final ObjectMapper objectMapper;
 
-    private final StringVarsReader strReader;
+    private final Reader reader;
 
-    private final StringVarsWriter strWriter;
-
-    private final TypedVarsReader typedReader;
-
-    private final TypedVarsWriter typedWriter;
+    private final Writer writer;
 
     public VariableMapConverter(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        this.strReader = new StringVarsReader();
-        this.strWriter = new StringVarsWriter();
-        this.typedReader = new TypedVarsReader();
-        this.typedWriter = new TypedVarsWriter();
+        this.reader = new Reader();
+        this.writer = new Writer();
     }
 
-    public class StringVarsReader implements Converter<Document, Vars<String>> {
+    public class Reader implements Converter<Document, Vars<?>> {
 
         @Override
-        public Vars<String> convert(Document source) {
+        public Vars<?> convert(Document source) {
             try {
-                return objectMapper.readValue(source.toJson(), StringVars.class);
+                Integer code = source.getInteger(typeSignField);
+                source.remove(typeSignField);
+
+                if (code == codeForStringVars) {
+                    return objectMapper.readValue(source.toJson(), StringVars.class);
+                }
+
+                if (code == codeForTypedVars) {
+                    return objectMapper.readValue(source.toJson(), TypedVars.class);
+                }
+
+                throw new ArgumentException("Missing type code for vars");
+
             } catch (IOException e) {
                 throw new ArgumentException("Cannot parse mongo doc {0} to StringVars", source.toJson());
             }
         }
     }
 
-    public class StringVarsWriter implements Converter<Vars<String>, Document> {
+    public class Writer implements Converter<Vars<?>, Document> {
 
         @Override
-        public Document convert(Vars<String> source) {
+        public Document convert(Vars<?> source) {
             try {
                 String json = objectMapper.writeValueAsString(source);
-                return Document.parse(json);
+
+                Document document = Document.parse(json);
+                document.put(typeSignField, getTypeCode(source));
+
+                return document;
             } catch (JsonProcessingException e) {
                 throw new ArgumentException("Cannot parse StringVars to json");
             }
         }
     }
 
-    public class TypedVarsReader implements Converter<Document, Vars<VarValue>> {
-
-        @Override
-        public Vars<VarValue> convert(Document source) {
-            try {
-                return objectMapper.readValue(source.toJson(), TypedVars.class);
-            } catch (IOException e) {
-                throw new ArgumentException("Cannot parse mongo doc {0} to TypedVars", source.toJson());
-            }
+    private static int getTypeCode(Vars<?> vars) {
+        if (vars instanceof StringVars) {
+            return codeForStringVars;
         }
-    }
 
-    public class TypedVarsWriter implements Converter<Vars<VarValue>, Document> {
-
-        @Override
-        public Document convert(Vars<VarValue> source) {
-            try {
-                String json = objectMapper.writeValueAsString(source);
-                return Document.parse(json);
-            } catch (JsonProcessingException e) {
-                throw new ArgumentException("Cannot parse TypedVars to json");
-            }
+        if (vars instanceof TypedVars) {
+            return codeForTypedVars;
         }
+
+        return -1;
     }
 }

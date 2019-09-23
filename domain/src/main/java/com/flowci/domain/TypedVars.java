@@ -18,4 +18,11 @@ package com.flowci.domain;
 
 public class TypedVars extends Vars<VarValue> {
 
+    public TypedVars() {
+        super();
+    }
+
+    public TypedVars(int size) {
+        super(size);
+    }
 }
