@@ -42,4 +42,10 @@ public class StringVars extends Vars<String> {
         super(data.size() + 10);
         merge(data);
     }
+
+    public void mergeFromTypedVars(Vars<VarValue> typedVars) {
+        for (Map.Entry<String, VarValue> entry : typedVars.entrySet()) {
+            put(entry.getKey(), entry.getValue().getData());
+        }
+    }
 }

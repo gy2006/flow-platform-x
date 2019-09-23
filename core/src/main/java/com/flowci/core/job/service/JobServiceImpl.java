@@ -709,7 +709,7 @@ public class JobServiceImpl implements JobService {
 
     private void initJobContext(Job job, Flow flow, StringVars... inputs) {
         StringVars context = new StringVars(flow.getVariables());
-        context.merge(flow.getLocally());
+        context.mergeFromTypedVars(flow.getLocally());
 
         context.put(Variables.Job.Trigger, job.getTrigger().toString());
         context.put(Variables.Job.BuildNumber, job.getBuildNumber().toString());

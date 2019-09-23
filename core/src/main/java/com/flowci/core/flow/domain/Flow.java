@@ -21,6 +21,8 @@ import com.flowci.core.common.domain.Mongoable;
 import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.domain.StringVars;
+import com.flowci.domain.TypedVars;
+import com.flowci.domain.VarValue;
 import com.flowci.domain.Vars;
 import com.flowci.util.StringHelper;
 import lombok.*;
@@ -64,7 +66,7 @@ public final class Flow extends Mongoable implements Pathable {
 
     // variables for flow obj only
     @NonNull
-    private Vars<String> locally = new StringVars();
+    private Vars<VarValue> locally = new TypedVars();
 
     private WebhookStatus webhookStatus;
 

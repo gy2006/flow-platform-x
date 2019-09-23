@@ -54,7 +54,7 @@ public class FlowVarServiceImpl implements FlowVarService {
             boolean isVerified = VarType.verify(value.getType(), value.getData());
 
             if (isVerified) {
-                flow.getLocally().put(name, value.getData());
+                flow.getLocally().put(name, value);
                 continue;
             }
 
