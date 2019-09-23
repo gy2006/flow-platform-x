@@ -24,6 +24,7 @@ import com.flowci.domain.TypedVars;
 import com.flowci.domain.Vars;
 import com.flowci.exception.ArgumentException;
 import java.io.IOException;
+import java.util.Objects;
 import lombok.Getter;
 import org.bson.Document;
 import org.springframework.core.convert.converter.Converter;
@@ -57,7 +58,7 @@ public class VariableMapConverter {
                 Integer code = source.getInteger(typeSignField);
                 source.remove(typeSignField);
 
-                if (code == codeForStringVars) {
+                if (Objects.isNull(code) || code == codeForStringVars) {
                     return objectMapper.readValue(source.toJson(), StringVars.class);
                 }
 
