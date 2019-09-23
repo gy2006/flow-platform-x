@@ -17,7 +17,7 @@
 package com.flowci.core.test.plugin;
 
 import com.flowci.core.plugin.domain.Variable;
-import com.flowci.domain.VariableType;
+import com.flowci.domain.VarType;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ public class VariableTest {
             .setName("test")
             .setAlias("test")
             .setRequired(true)
-            .setType(VariableType.INT);
+            .setType(VarType.INT);
 
         Assert.assertTrue(v.verify("123"));
 
@@ -46,7 +46,7 @@ public class VariableTest {
             .setName("test")
             .setAlias("test")
             .setRequired(false)
-            .setType(VariableType.EMAIL);
+            .setType(VarType.EMAIL);
 
 
         Assert.assertTrue(v.verify("hi@flow.ci"));
@@ -61,7 +61,7 @@ public class VariableTest {
             .setName("test")
             .setAlias("test")
             .setRequired(false)
-            .setType(VariableType.GIT_URL);
+            .setType(VarType.GIT_URL);
 
 
         Assert.assertTrue(v.verify("git@github.com:FlowCI/flow-platform-x.git"));
@@ -79,7 +79,7 @@ public class VariableTest {
             .setName("test")
             .setAlias("test")
             .setRequired(false)
-            .setType(VariableType.HTTP_URL);
+            .setType(VarType.HTTP_URL);
 
 
         Assert.assertTrue(v.verify("http://www.google.com"));

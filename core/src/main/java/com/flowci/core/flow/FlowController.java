@@ -24,7 +24,7 @@ import com.flowci.core.flow.service.FlowVarService;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.VariableValue;
+import com.flowci.domain.VarValue;
 import com.flowci.domain.http.RequestMessage;
 import com.flowci.exception.ArgumentException;
 import com.google.common.collect.Lists;
@@ -167,7 +167,7 @@ public class FlowController {
     @PostMapping("/{name}/variables")
     @Action(FlowAction.ADD_VARS)
     public void addVariables(@PathVariable String name,
-                             @Validated @RequestBody Map<String, VariableValue> variables) {
+                             @Validated @RequestBody Map<String, VarValue> variables) {
         Flow flow = flowService.get(name);
         flowVarService.add(flow, variables);
     }

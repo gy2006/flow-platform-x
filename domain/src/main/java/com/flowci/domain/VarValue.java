@@ -22,10 +22,10 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class VariableValue implements Serializable {
+public class VarValue implements Serializable {
 
-    public static VariableValue of(String value, VariableType type) {
-        VariableValue v = new VariableValue();
+    public static VarValue of(String value, VarType type) {
+        VarValue v = new VarValue();
         v.setData(value);
         v.setType(type);
         return v;
@@ -33,5 +33,5 @@ public class VariableValue implements Serializable {
 
     private String data;
 
-    private VariableType type;
+    private VarType type;
 }

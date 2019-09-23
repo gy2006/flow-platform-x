@@ -18,8 +18,8 @@ package com.flowci.core.test.flow;
 
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.domain.VariableType;
-import com.flowci.domain.VariableValue;
+import com.flowci.domain.VarType;
+import com.flowci.domain.VarValue;
 import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
@@ -107,8 +107,8 @@ public class FlowControllerTest extends SpringScenario {
     @Test
     public void should_operate_vars_to_flow() throws Exception {
         // init:
-        Map<String, VariableValue> vars = new HashMap<>();
-        vars.put("FLOWCI_GIT_URL", VariableValue.of("git@github.com:flowci/docs.git", VariableType.GIT_URL));
+        Map<String, VarValue> vars = new HashMap<>();
+        vars.put("FLOWCI_GIT_URL", VarValue.of("git@github.com:flowci/docs.git", VarType.GIT_URL));
 
         // to test add vars
         ResponseMessage msg = flowMockHelper.addVars(flowName, vars);
@@ -122,8 +122,8 @@ public class FlowControllerTest extends SpringScenario {
     @Test
     public void should_get_argument_error_if_invalid_var_format() throws Exception {
         // init:
-        Map<String, VariableValue> vars = new HashMap<>();
-        vars.put("FLOWCI_GIT_URL", VariableValue.of("git@github.com", VariableType.GIT_URL));
+        Map<String, VarValue> vars = new HashMap<>();
+        vars.put("FLOWCI_GIT_URL", VarValue.of("git@github.com", VarType.GIT_URL));
 
         ResponseMessage msg = flowMockHelper.addVars(flowName, vars);
         Assert.assertEquals(ErrorCode.INVALID_ARGUMENT, msg.getCode());

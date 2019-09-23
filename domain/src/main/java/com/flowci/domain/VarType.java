@@ -22,7 +22,7 @@ import com.flowci.util.PatternHelper;
 /**
  * @author yang
  */
-public enum VariableType {
+public enum VarType {
 
     STRING,
 
@@ -34,7 +34,7 @@ public enum VariableType {
 
     EMAIL;
 
-    public static boolean verify(VariableType type, String value) {
+    public static boolean verify(VarType type, String value) {
         switch (type) {
             case INT:
                 return ObjectsHelper.tryParseInt(value);

@@ -18,11 +18,11 @@ package com.flowci.core.flow.service;
 
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.domain.VariableType;
-import com.flowci.domain.VariableValue;
+import com.flowci.domain.VarType;
+import com.flowci.domain.VarValue;
 import com.flowci.exception.ArgumentException;
 import com.flowci.util.StringHelper;
-import com.google.common.base.Strings;
+
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,10 +38,10 @@ public class FlowVarServiceImpl implements FlowVarService {
     private FlowDao flowDao;
 
     @Override
-    public void add(Flow flow, Map<String, VariableValue> vars) {
-        for (Map.Entry<String, VariableValue> entry : vars.entrySet()) {
+    public void add(Flow flow, Map<String, VarValue> vars) {
+        for (Map.Entry<String, VarValue> entry : vars.entrySet()) {
             String name = entry.getKey();
-            VariableValue value = entry.getValue();
+            VarValue value = entry.getValue();
 
             if (!StringHelper.hasValue(name)) {
                 throw new ArgumentException("Var name cannot be empty");
@@ -51,7 +51,7 @@ public class FlowVarServiceImpl implements FlowVarService {
                 throw new ArgumentException("Var value of {0} cannot be empty", name);
             }
 
-            boolean isVerified = VariableType.verify(value.getType(), value.getData());
+            boolean isVerified = VarType.verify(value.getType(), value.getData());
 
             if (isVerified) {
                 flow.getLocally().put(name, value.getData());

@@ -17,7 +17,7 @@
 package com.flowci.core.flow.service;
 
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.domain.VariableValue;
+import com.flowci.domain.VarValue;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ public interface FlowVarService {
     /**
      * Add vars to flow locally
      */
-    void add(Flow flow, Map<String, VariableValue> vars);
+    void add(Flow flow, Map<String, VarValue> vars);
 
     /**
      * Remove vars from flow locally

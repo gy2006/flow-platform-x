@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,6 @@
 
 package com.flowci.domain;
 
-import java.util.Map;
+public class TypedVars extends Vars<VarValue> {
 
-/**
- * @author yang
- */
-public class StringVars extends Vars<String> {
-
-    public static final StringVars EMPTY = new StringVars(0);
-
-    public StringVars() {
-        super();
-    }
-
-    public StringVars(int size) {
-        super(size);
-    }
-
-    public StringVars(Map<String, String> data) {
-        super(data.size() + 10);
-        merge(data);
-    }
-
-    public StringVars(Vars<String> data) {
-        super(data.size() + 10);
-        merge(data);
-    }
 }

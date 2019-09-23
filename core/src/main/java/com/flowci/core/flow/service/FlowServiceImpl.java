@@ -243,8 +243,8 @@ public class FlowServiceImpl implements FlowService {
         }
 
         flow.getVariables()
-                .putIfNotEmpty(Variables.Flow.GitUrl, gitUrl)
-                .putIfNotEmpty(Variables.Flow.SSH_RSA, credential);
+                .putIfNotNull(Variables.Flow.GitUrl, gitUrl)
+                .putIfNotNull(Variables.Flow.SSH_RSA, credential);
 
         flow.setStatus(Status.CONFIRMED);
         flowDao.save(flow);

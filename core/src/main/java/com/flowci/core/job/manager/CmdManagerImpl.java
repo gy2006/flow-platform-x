@@ -19,19 +19,17 @@ package com.flowci.core.job.manager;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.service.PluginService;
-import com.flowci.domain.CmdId;
-import com.flowci.domain.CmdIn;
-import com.flowci.domain.CmdType;
 import com.flowci.core.plugin.domain.Variable;
-import com.flowci.domain.StringVars;
+import com.flowci.core.plugin.service.PluginService;
+import com.flowci.domain.*;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.Node;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
+import java.util.UUID;
 
 /**
  * @author yang
@@ -50,7 +48,10 @@ public class CmdManagerImpl implements CmdManager {
     @Override
     public CmdIn createShellCmd(Job job, Node node) {
         // node envs has top priority;
-        StringVars inputs = StringVars.merge(job.getContext(), node.getEnvironments());
+        Vars<String> inputs = new StringVars()
+                .merge(job.getContext())
+                .merge(node.getEnvironments());
+
         String script = node.getScript();
         boolean allowFailure = node.isAllowFailure();
 
@@ -81,13 +82,13 @@ public class CmdManagerImpl implements CmdManager {
         return new CmdIn(UUID.randomUUID().toString(), CmdType.KILL);
     }
 
-    private void verifyPluginInput(StringVars context, Plugin plugin) {
+    private void verifyPluginInput(Vars<String> context, Plugin plugin) {
         for (Variable variable : plugin.getInputs()) {
             String value = context.get(variable.getName());
 
             if (!variable.verify(value)) {
                 throw new ArgumentException(
-                    "The illegal input {0} for plugin {1}", variable.getName(), plugin.getName());
+                        "The illegal input {0} for plugin {1}", variable.getName(), plugin.getName());
             }
         }
     }

@@ -16,7 +16,7 @@
 
 package com.flowci.core.plugin.domain;
 
-import com.flowci.domain.VariableType;
+import com.flowci.domain.VarType;
 import com.google.common.base.Strings;
 import java.io.Serializable;
 import lombok.EqualsAndHashCode;
@@ -41,7 +41,7 @@ public class Variable implements Serializable {
 
     private String alias;
 
-    private VariableType type = VariableType.STRING;
+    private VarType type = VarType.STRING;
 
     private boolean required = true;
 
@@ -49,7 +49,7 @@ public class Variable implements Serializable {
         this.name = name;
     }
 
-    public Variable(String name, VariableType type) {
+    public Variable(String name, VarType type) {
         this.name = name;
         this.type = type;
     }
@@ -63,6 +63,6 @@ public class Variable implements Serializable {
             return true;
         }
 
-        return VariableType.verify(type, value);
+        return VarType.verify(type, value);
     }
 }

@@ -16,27 +16,23 @@
 
 package com.flowci.tree;
 
-import com.flowci.domain.StringVars;
+import com.flowci.domain.Vars;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import groovy.util.ScriptException;
+import org.codehaus.groovy.control.CompilationFailedException;
+
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import org.codehaus.groovy.control.CompilationFailedException;
+import java.util.concurrent.*;
 
 /**
  * @author yang
  */
 public class GroovyRunner<T> {
 
-    public static <T> GroovyRunner<T> create(int timeout, String script, StringVars vars) throws ScriptException {
+    public static <T> GroovyRunner<T> create(int timeout, String script, Vars<String> vars) throws ScriptException {
         return new GroovyRunner<T>(timeout)
             .setScript(script)
             .putVariables(vars);

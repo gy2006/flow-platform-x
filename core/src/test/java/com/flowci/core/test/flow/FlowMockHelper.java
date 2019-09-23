@@ -20,7 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.domain.VariableValue;
+import com.flowci.domain.VarValue;
 import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.http.RequestMessage;
@@ -117,7 +117,7 @@ public class FlowMockHelper {
         Assert.assertEquals(StatusCode.OK, message.getCode());
     }
 
-    ResponseMessage addVars(String name, Map<String, VariableValue> vars) throws Exception {
+    ResponseMessage addVars(String name, Map<String, VarValue> vars) throws Exception {
         return mockMvcHelper.expectSuccessAndReturnClass(
                 post("/flows/" + name + "/variables")
                         .content(objectMapper.writeValueAsBytes(vars))

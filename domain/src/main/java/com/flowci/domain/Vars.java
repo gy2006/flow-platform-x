@@ -17,24 +17,42 @@
 package com.flowci.domain;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 
-public interface Vars<V> extends Serializable {
+public abstract class Vars<V> extends LinkedHashMap<String, V> implements Serializable {
 
-    Vars<V> putIfNotEmpty(String key, V value);
+    Vars() {
+        super();
+    }
 
-    V put(String key, V value);
+    Vars(int size) {
+        super(size);
+    }
 
-    V get(String key, V defaultValue);
+    public Vars<V> putIfNotNull(String key, V value) {
+        if (!Objects.isNull(value)) {
+            put(key, value);
+        }
+        return this;
+    }
 
-    V get(Object key);
+    public V get(String key, V defaultValue) {
+        V value = get(key);
+        return Objects.isNull(value) ? defaultValue : value;
+    }
 
-    V remove(Object key);
+    public Vars<V> merge(Vars<V> other) {
+        for (Map.Entry<String, V> entry : other.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
+        return this;
+    }
 
-    Set<Map.Entry<String, V>> entrySet();
-
-    void merge(Vars<V> other);
-
-    int size();
+    void merge(Map<String, V> vars) {
+        for (Map.Entry<String, V> entry : vars.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
+    }
 }

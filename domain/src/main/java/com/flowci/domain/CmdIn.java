@@ -51,7 +51,7 @@ public class CmdIn extends CmdBase {
     private Long timeout = 1800L;
 
     @NonNull
-    private StringVars inputs = new StringVars();
+    private Vars<String> inputs = new StringVars();
 
     /**
      * Output env filters

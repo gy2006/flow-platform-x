@@ -16,7 +16,7 @@
 
 package com.flowci.core.plugin.domain;
 
-import com.flowci.domain.VariableType;
+import com.flowci.domain.VarType;
 import com.flowci.domain.Version;
 import com.flowci.util.YamlHelper;
 import java.io.InputStream;
@@ -90,7 +90,7 @@ public class PluginParser {
         public Boolean required;
 
         public Variable toVariable() {
-            Variable var = new Variable(name, VariableType.valueOf(type.toUpperCase()));
+            Variable var = new Variable(name, VarType.valueOf(type.toUpperCase()));
             var.setRequired(required);
             var.setAlias(alias);
             return var;
