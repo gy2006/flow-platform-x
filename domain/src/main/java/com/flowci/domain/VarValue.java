@@ -31,7 +31,15 @@ public class VarValue implements Serializable {
         return v;
     }
 
+    public static VarValue of(String value, VarType type, boolean editable) {
+        VarValue v = VarValue.of(value, type);
+        v.setEditable(editable);
+        return v;
+    }
+
     private String data;
 
     private VarType type;
+
+    private boolean editable = true;
 }

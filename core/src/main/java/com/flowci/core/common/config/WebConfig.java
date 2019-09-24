@@ -20,12 +20,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.auth.AuthInterceptor;
 import com.flowci.core.common.adviser.CrosInterceptor;
+import com.flowci.core.common.helper.JacksonHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.Vars;
-import com.flowci.util.ObjectsHelper;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
@@ -38,9 +37,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig {
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Bean
     public ThreadLocal<User> currentUser() {
@@ -78,7 +74,7 @@ public class WebConfig {
             public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
                 converters.clear();
 
-                ObjectMapper mapperForHttp = ObjectsHelper.copy(objectMapper);
+                ObjectMapper mapperForHttp = JacksonHelper.create();
                 mapperForHttp.addMixIn(Vars.class, httpJacksonMixin());
 
                 final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(

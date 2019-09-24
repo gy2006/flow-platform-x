@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.common.helper;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.flowci.core.common.domain.JsonablePage;
+import org.springframework.data.domain.Pageable;
 
 /**
  * @author yang
  */
-public final class Jsonable {
+public abstract class JacksonHelper {
 
-    private final static ObjectMapper Mapper = new ObjectMapper();
+    public static ObjectMapper create() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(Include.NON_NULL);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    static {
-        Mapper.setSerializationInclusion(Include.NON_NULL);
-        Mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Pageable.class, new JsonablePage.PageableDeserializer());
+        mapper.registerModule(module);
 
-    public static ObjectMapper getMapper() {
-        return Mapper;
-    }
-
-    private Jsonable() {
-
+        return mapper;
     }
 
 }

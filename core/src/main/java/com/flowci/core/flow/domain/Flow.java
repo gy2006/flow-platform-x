@@ -25,11 +25,16 @@ import com.flowci.domain.TypedVars;
 import com.flowci.domain.VarValue;
 import com.flowci.domain.Vars;
 import com.flowci.util.StringHelper;
-import lombok.*;
+import java.util.Objects;
+import java.util.Set;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.Set;
 
 /**
  * @author yang
@@ -80,21 +85,38 @@ public final class Flow extends Mongoable implements Pathable {
     }
 
     @JsonIgnore
-    public boolean hasGitUrl() {
-        String val = variables.get(Variables.Flow.GitUrl);
-        return StringHelper.hasValue(val);
-    }
-
-    @JsonIgnore
-    public boolean hasCredential() {
-        String val = variables.get(Variables.Flow.SSH_RSA);
-        return StringHelper.hasValue(val);
-    }
-
-    @JsonIgnore
     @Override
     public String pathName() {
         return getId();
+    }
+
+    public String getCredentialName() {
+        return findVar(Variables.Flow.SSH_RSA);
+    }
+
+    public String getGitUrl() {
+        return findVar(Variables.Flow.GitUrl);
+    }
+
+    public String getWebhook() {
+        return findVar(Variables.Flow.Webhook);
+    }
+
+    /**
+     * Get credential name from vars, local var has top priority
+     */
+    private String findVar(String name) {
+        VarValue cnVal = locally.get(name);
+        if (!Objects.isNull(cnVal)) {
+            return cnVal.getData();
+        }
+
+        String cn = variables.get(name);
+        if (StringHelper.hasValue(cn)) {
+            return cn;
+        }
+
+        return StringHelper.EMPTY;
     }
 
     @Data

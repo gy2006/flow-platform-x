@@ -17,11 +17,14 @@
 package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.flowci.core.common.domain.JsonablePage;
 import com.flowci.core.common.domain.Variables.App;
-import com.flowci.domain.Jsonable;
+import com.flowci.core.common.helper.JacksonHelper;
 import com.flowci.util.FileHelper;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,14 +37,7 @@ import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * @author yang
@@ -104,13 +100,7 @@ public class AppConfig {
 
     @Bean("objectMapper")
     public ObjectMapper objectMapper() {
-        ObjectMapper mapper = Jsonable.getMapper();
-
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(Pageable.class, new JsonablePage.PageableDeserializer());
-        mapper.registerModule(module);
-
-        return mapper;
+        return JacksonHelper.create();
     }
 
     @Bean(name = "applicationEventMulticaster")

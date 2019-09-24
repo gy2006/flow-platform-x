@@ -45,6 +45,8 @@ import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.domain.StringVars;
+import com.flowci.domain.VarType;
+import com.flowci.domain.VarValue;
 import com.flowci.domain.Vars;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
@@ -62,6 +64,22 @@ import com.google.common.collect.Sets;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Date;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -78,15 +96,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Date;
-import java.time.Instant;
-import java.util.*;
 
 /**
  * @author yang
@@ -156,9 +165,7 @@ public class FlowServiceImpl implements FlowService {
 
         for (; iter.hasNext(); ) {
             Flow flow = iter.next();
-            String value = flow.getVariables().get(Variables.Flow.SSH_RSA);
-
-            if (Objects.equals(value, credential.getName())) {
+            if (Objects.equals(flow.getCredentialName(), credential.getName())) {
                 continue;
             }
 
@@ -211,9 +218,10 @@ public class FlowServiceImpl implements FlowService {
         flow.setName(name);
         flow.setCreatedBy(userId);
 
-        Vars<String> vars = flow.getVariables();
-        vars.put(Variables.Flow.Name, name);
-        vars.put(Variables.Flow.Webhook, getWebhook(name));
+        // set default vars
+        Vars<VarValue> localVars = flow.getLocally();
+        localVars.put(Variables.Flow.Name, VarValue.of(flow.getName(), VarType.STRING, false));
+        localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.STRING, false));
 
         try {
             flowDao.save(flow);
@@ -242,9 +250,13 @@ public class FlowServiceImpl implements FlowService {
             throw new DuplicateException("Flow {0} has created", name);
         }
 
-        flow.getVariables()
-                .putIfNotNull(Variables.Flow.GitUrl, gitUrl)
-                .putIfNotNull(Variables.Flow.SSH_RSA, credential);
+        if (!Strings.isNullOrEmpty(gitUrl)) {
+            flow.getLocally().put(Variables.Flow.GitUrl, VarValue.of(gitUrl, VarType.GIT_URL, true));
+        }
+
+        if (!Strings.isNullOrEmpty(credential)) {
+            flow.getLocally().put(Variables.Flow.SSH_RSA, VarValue.of(credential, VarType.STRING, true));
+        }
 
         flow.setStatus(Status.CONFIRMED);
         flowDao.save(flow);
@@ -303,9 +315,6 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public String getTemplateYml(Flow flow) {
         VelocityContext context = new VelocityContext();
-        for (Map.Entry<String, String> entry : flow.getVariables().entrySet()) {
-            context.put(entry.getKey(), entry.getValue());
-        }
 
         try (StringWriter sw = new StringWriter()) {
             defaultYmlTemplate.merge(context, sw);
@@ -384,8 +393,8 @@ public class FlowServiceImpl implements FlowService {
     public List<String> listGitBranch(String name) {
         final Flow flow = get(name);
 
-        String gitUrl = flow.getVariables().get(Variables.Flow.GitUrl);
-        String credentialName = flow.getVariables().get(Variables.Flow.SSH_RSA);
+        String gitUrl = flow.getGitUrl();
+        String credentialName = flow.getCredentialName();
 
         if (Strings.isNullOrEmpty(gitUrl) || Strings.isNullOrEmpty(credentialName)) {
             return Collections.emptyList();
@@ -534,14 +543,14 @@ public class FlowServiceImpl implements FlowService {
                 eventManager.publish(new GitTestEvent(this, flowId));
 
                 Collection<Ref> refs = Git.lsRemoteRepository()
-                        .setRemote(url)
-                        .setHeads(true)
-                        .setTransportConfigCallback(transport -> {
-                            SshTransport sshTransport = (SshTransport) transport;
-                            sshTransport.setSshSessionFactory(sessionFactory);
-                        })
-                        .setTimeout(20)
-                        .call();
+                    .setRemote(url)
+                    .setHeads(true)
+                    .setTransportConfigCallback(transport -> {
+                        SshTransport sshTransport = (SshTransport) transport;
+                        sshTransport.setSshSessionFactory(sessionFactory);
+                    })
+                    .setTimeout(20)
+                    .call();
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();
