@@ -24,6 +24,7 @@ import com.flowci.core.user.domain.User;
 import com.flowci.domain.Vars;
 import com.flowci.util.ObjectsHelper;
 import com.google.common.collect.ImmutableList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,8 +35,6 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.util.List;
 
 @Configuration
 public class WebConfig {
@@ -54,20 +53,25 @@ public class WebConfig {
     }
 
     @Bean
+    public Class<?> httpJacksonMixin() {
+        return VarsMixin.class;
+    }
+
+    @Bean
     public WebMvcConfigurer webMvcConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(new CrosInterceptor());
                 registry.addInterceptor(authHandler())
-                        .addPathPatterns("/users/**")
-                        .addPathPatterns("/flows/**")
-                        .addPathPatterns("/jobs/**")
-                        .addPathPatterns("/agents/**")
-                        .addPathPatterns("/credentials/**")
-                        .addPathPatterns("/auth/logout")
-                        .excludePathPatterns("/agents/connect")
-                        .excludePathPatterns("/agents/logs/upload");
+                    .addPathPatterns("/users/**")
+                    .addPathPatterns("/flows/**")
+                    .addPathPatterns("/jobs/**")
+                    .addPathPatterns("/agents/**")
+                    .addPathPatterns("/credentials/**")
+                    .addPathPatterns("/auth/logout")
+                    .excludePathPatterns("/agents/connect")
+                    .excludePathPatterns("/agents/logs/upload");
             }
 
             @Override
@@ -75,13 +79,13 @@ public class WebConfig {
                 converters.clear();
 
                 ObjectMapper mapperForHttp = ObjectsHelper.copy(objectMapper);
-                mapperForHttp.addMixIn(Vars.class, VarsMixin.class);
+                mapperForHttp.addMixIn(Vars.class, httpJacksonMixin());
 
                 final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
-                        new ByteArrayHttpMessageConverter(),
-                        new MappingJackson2HttpMessageConverter(mapperForHttp),
-                        new ResourceHttpMessageConverter(),
-                        new AllEncompassingFormHttpMessageConverter()
+                    new ByteArrayHttpMessageConverter(),
+                    new MappingJackson2HttpMessageConverter(mapperForHttp),
+                    new ResourceHttpMessageConverter(),
+                    new AllEncompassingFormHttpMessageConverter()
                 );
 
                 converters.addAll(DefaultConverters);

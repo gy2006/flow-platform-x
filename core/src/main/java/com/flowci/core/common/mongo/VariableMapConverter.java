@@ -51,7 +51,12 @@ public class VariableMapConverter {
             try {
                 String type = source.getString(Vars.JSON_TYPE_FIELD);
 
-                if (Objects.isNull(type) || type.equals(Vars.JSON_STRING_TYPE)) {
+                if (Objects.isNull(type)) {
+                    source.put(Vars.JSON_TYPE_FIELD, Vars.JSON_STRING_TYPE);
+                    type = Vars.JSON_STRING_TYPE;
+                }
+
+                if (type.equals(Vars.JSON_STRING_TYPE)) {
                     return objectMapper.readValue(source.toJson(), StringVars.class);
                 }
 
