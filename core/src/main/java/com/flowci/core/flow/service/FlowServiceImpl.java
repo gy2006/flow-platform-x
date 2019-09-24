@@ -338,7 +338,9 @@ public class FlowServiceImpl implements FlowService {
         Node node = YmlParser.load(flow.getName(), ymlObj.getRaw());
 
         // sync flow envs from yml root envs
-        flow.getVariables().merge(node.getEnvironments());
+        Vars<String> vars = flow.getVariables();
+        vars.clear();
+        vars.merge(node.getEnvironments());
         flowDao.save(flow);
 
         // update cron task
