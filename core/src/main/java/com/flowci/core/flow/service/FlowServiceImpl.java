@@ -221,7 +221,7 @@ public class FlowServiceImpl implements FlowService {
         // set default vars
         Vars<VarValue> localVars = flow.getLocally();
         localVars.put(Variables.Flow.Name, VarValue.of(flow.getName(), VarType.STRING, false));
-        localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.STRING, false));
+        localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.HTTP_URL, false));
 
         try {
             flowDao.save(flow);
