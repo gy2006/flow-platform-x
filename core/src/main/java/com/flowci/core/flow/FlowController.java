@@ -17,15 +17,14 @@
 package com.flowci.core.flow;
 
 import com.flowci.core.auth.annotation.Action;
-import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.*;
 import com.flowci.core.flow.domain.Flow.Status;
-import com.flowci.core.flow.domain.FlowAction;
-import com.flowci.core.flow.domain.FlowGitTest;
-import com.flowci.core.flow.domain.GitSettings;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.flow.service.FlowVarService;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.domain.SimpleKeyPair;
+import com.flowci.domain.VarValue;
 import com.flowci.domain.http.RequestMessage;
 import com.flowci.exception.ArgumentException;
 import com.google.common.collect.Lists;
@@ -47,10 +46,13 @@ import java.util.Objects;
 public class FlowController {
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private FlowService flowService;
 
     @Autowired
-    private UserService userService;
+    private FlowVarService flowVarService;
 
     @GetMapping
     @Action(FlowAction.LIST)
@@ -74,14 +76,6 @@ public class FlowController {
     @Action(FlowAction.CREATE)
     public Flow create(@PathVariable String name) {
         return flowService.create(name);
-    }
-
-    @PostMapping("/{name}/variables")
-    @Action(FlowAction.ADD_VARS)
-    public void addVariables(@PathVariable String name, @RequestBody Map<String, String> variables) {
-        Flow flow = flowService.get(name);
-        flow.getVariables().putAll(variables);
-        flowService.update(flow);
     }
 
     @PostMapping(value = "/{name}/confirm")
@@ -168,6 +162,21 @@ public class FlowController {
         Flow flow = flowService.get(name);
         List<String> ids = flowService.listUsers(flow);
         return userService.list(ids);
+    }
+
+    @PostMapping("/{name}/variables")
+    @Action(FlowAction.ADD_VARS)
+    public void addVariables(@PathVariable String name,
+                             @Validated @RequestBody Map<String, VarValue> variables) {
+        Flow flow = flowService.get(name);
+        flowVarService.add(flow, variables);
+    }
+
+    @DeleteMapping("/{name}/variables")
+    @Action(FlowAction.REMOVE_VARS)
+    public void removeVariables(@PathVariable String name, @RequestBody List<String> vars) {
+        Flow flow = flowService.get(name);
+        flowVarService.remove(flow, vars);
     }
 
     @GetMapping("/credentials/{name}")

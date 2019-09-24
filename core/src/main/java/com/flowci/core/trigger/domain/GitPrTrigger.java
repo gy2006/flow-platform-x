@@ -28,7 +28,7 @@ import static com.flowci.core.trigger.domain.Variables.PR_TIME;
 import static com.flowci.core.trigger.domain.Variables.PR_TITLE;
 import static com.flowci.core.trigger.domain.Variables.PR_URL;
 
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -62,8 +62,8 @@ public final class GitPrTrigger extends GitTrigger {
     private Source base;
 
     @Override
-    public VariableMap toVariableMap() {
-        VariableMap map = super.toVariableMap();
+    public StringVars toVariableMap() {
+        StringVars map = super.toVariableMap();
         map.put(Variables.GIT_AUTHOR, sender.username);
 
         map.put(PR_TITLE, title);

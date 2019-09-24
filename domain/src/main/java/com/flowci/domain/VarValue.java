@@ -16,19 +16,30 @@
 
 package com.flowci.domain;
 
-/**
- * @author yang
- */
-public abstract class Common {
+import java.io.Serializable;
+import lombok.Getter;
+import lombok.Setter;
 
-    public enum OS {
-        LINUX,
+@Setter
+@Getter
+public class VarValue implements Serializable {
 
-        MAC,
-
-        WIN,
-
-        UNKNOWN
+    public static VarValue of(String value, VarType type) {
+        VarValue v = new VarValue();
+        v.setData(value);
+        v.setType(type);
+        return v;
     }
 
+    public static VarValue of(String value, VarType type, boolean editable) {
+        VarValue v = VarValue.of(value, type);
+        v.setEditable(editable);
+        return v;
+    }
+
+    private String data;
+
+    private VarType type;
+
+    private boolean editable = true;
 }

@@ -16,19 +16,24 @@
 
 package com.flowci.domain;
 
+import static com.flowci.domain.ExecutedCmd.Status.EXCEPTION;
+import static com.flowci.domain.ExecutedCmd.Status.KILLED;
+import static com.flowci.domain.ExecutedCmd.Status.PENDING;
+import static com.flowci.domain.ExecutedCmd.Status.RUNNING;
+import static com.flowci.domain.ExecutedCmd.Status.SKIPPED;
+import static com.flowci.domain.ExecutedCmd.Status.SUCCESS;
+import static com.flowci.domain.ExecutedCmd.Status.TIMEOUT;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableSet;
+import java.util.Date;
+import java.util.Objects;
+import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
-import java.util.Objects;
-import java.util.Set;
-
-import static com.flowci.domain.ExecutedCmd.Status.*;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @author yang
@@ -105,7 +110,7 @@ public class ExecutedCmd extends CmdBase {
     /**
      * Cmd output
      */
-    private VariableMap output = new VariableMap();
+    private Vars<String> output = new StringVars();
 
     /**
      * Cmd start at timestamp

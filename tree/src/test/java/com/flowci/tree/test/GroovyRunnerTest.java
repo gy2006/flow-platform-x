@@ -16,7 +16,7 @@
 
 package com.flowci.tree.test;
 
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import com.flowci.tree.GroovyRunner;
 import groovy.util.ScriptException;
 import org.junit.Assert;
@@ -29,7 +29,7 @@ public class GroovyRunnerTest {
 
     @Test
     public void should_run_script_with_variables() throws ScriptException {
-        VariableMap variables = new VariableMap();
+        StringVars variables = new StringVars();
         variables.put("FLOWCI_TEST", "123");
 
         String script = "println \"$FLOWCI_TEST\"; "

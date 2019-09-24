@@ -17,7 +17,7 @@
 package com.flowci.tree;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -46,7 +46,7 @@ public class Node implements Serializable {
 
     private NodePath path;
 
-    private VariableMap environments = new VariableMap();
+    private StringVars environments = new StringVars();
 
     /**
      * Agent tags to set node running on which agent

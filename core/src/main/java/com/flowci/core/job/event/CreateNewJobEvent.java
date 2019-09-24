@@ -19,7 +19,7 @@ package com.flowci.core.job.event;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job.Trigger;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
@@ -35,9 +35,9 @@ public class CreateNewJobEvent extends ApplicationEvent {
 
     private final Trigger trigger;
 
-    private final VariableMap input;
+    private final StringVars input;
 
-    public CreateNewJobEvent(Object source, Flow flow, Yml yml, Trigger trigger, VariableMap input) {
+    public CreateNewJobEvent(Object source, Flow flow, Yml yml, Trigger trigger, StringVars input) {
         super(source);
         this.flow = flow;
         this.yml = yml;

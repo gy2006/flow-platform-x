@@ -16,28 +16,36 @@
 
 package com.flowci.domain;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 
 /**
  * @author yang
  */
-public final class Jsonable {
+public class StringVars extends Vars<String> {
 
-    private final static ObjectMapper Mapper = new ObjectMapper();
+    public static final StringVars EMPTY = new StringVars(0);
 
-    static {
-        Mapper.setSerializationInclusion(Include.NON_NULL);
-        Mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    public StringVars() {
+        super();
     }
 
-    public static ObjectMapper getMapper() {
-        return Mapper;
+    public StringVars(int size) {
+        super(size);
     }
 
-    private Jsonable() {
-
+    public StringVars(Map<String, String> data) {
+        super(data.size() + 10);
+        merge(data);
     }
 
+    public StringVars(Vars<String> data) {
+        super(data.size() + 10);
+        merge(data);
+    }
+
+    public void mergeFromTypedVars(Vars<VarValue> typedVars) {
+        for (Map.Entry<String, VarValue> entry : typedVars.entrySet()) {
+            put(entry.getKey(), entry.getValue().getData());
+        }
+    }
 }

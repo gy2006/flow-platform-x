@@ -16,7 +16,7 @@
 
 package com.flowci.core.trigger.domain;
 
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.Getter;
@@ -46,8 +46,8 @@ public final class GitPushTrigger extends GitTrigger {
     private String commitUrl;
 
     @Override
-    public VariableMap toVariableMap() {
-        VariableMap map = super.toVariableMap();
+    public StringVars toVariableMap() {
+        StringVars map = super.toVariableMap();
 
         map.put(Variables.GIT_BRANCH, ref);
         map.put(Variables.GIT_COMPARE_URL, compareUrl);

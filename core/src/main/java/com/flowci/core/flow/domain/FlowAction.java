@@ -35,6 +35,8 @@ public abstract class FlowAction {
 
     public static final String ADD_VARS = "add_flow_vars";
 
+    public static final String REMOVE_VARS = "remove_flow_vars";
+
     public static final String GET_YML = "get_yml";
 
     public static final String SET_YML = "set_yml";
@@ -52,22 +54,23 @@ public abstract class FlowAction {
     public static final String LIST_USER = "list_user_of_flow";
 
     public static final String[] ALL = {
-            CREATE,
-            CHECK_NAME,
-            CONFIRM,
-            DELETE,
-            LIST,
-            LIST_BY_CREDENTIAL,
-            GET,
-            ADD_VARS,
-            GET_YML,
-            SET_YML,
-            GIT_TEST,
-            LIST_BRANCH,
-            SETUP_CREDENTIAL,
-            ADD_USER,
-            REMOVE_USER,
-            LIST_USER
+        CREATE,
+        CHECK_NAME,
+        CONFIRM,
+        DELETE,
+        LIST,
+        LIST_BY_CREDENTIAL,
+        GET,
+        ADD_VARS,
+        REMOVE_VARS,
+        GET_YML,
+        SET_YML,
+        GIT_TEST,
+        LIST_BRANCH,
+        SETUP_CREDENTIAL,
+        ADD_USER,
+        REMOVE_USER,
+        LIST_USER
     };
 
 }

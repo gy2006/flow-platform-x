@@ -191,7 +191,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job create(Flow flow, Yml yml, Trigger trigger, VariableMap input) {
+    public Job create(Flow flow, Yml yml, Trigger trigger, StringVars input) {
         // verify yml and parse to Node
         Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
@@ -208,8 +208,7 @@ public class JobServiceImpl implements JobService {
         job.setAgentSelector(root.getSelector());
 
         // init job context
-        VariableMap defaultContext = initJobContext(flow, job, root.getEnvironments(), input);
-        job.getContext().merge(defaultContext);
+        initJobContext(job, flow, input);
 
         // setup created by form login user or git event author
         if (sessionManager.exist()) {
@@ -545,7 +544,7 @@ public class JobServiceImpl implements JobService {
 
     private void setJobContext(Job job, Node node, ExecutedCmd cmd) {
         // merge output to job context
-        VariableMap context = job.getContext();
+        Vars<String> context = job.getContext();
         context.merge(cmd.getOutput());
 
         // setup current job status if not tail node
@@ -686,7 +685,9 @@ public class JobServiceImpl implements JobService {
             return true;
         }
 
-        VariableMap map = VariableMap.merge(job.getContext(), node.getEnvironments());
+        Vars<String> map = new StringVars()
+                .merge(job.getContext())
+                .merge(node.getEnvironments());
 
         try {
             GroovyRunner<Boolean> runner = GroovyRunner.create(DefaultBeforeTimeout, node.getBefore(), map);
@@ -706,24 +707,23 @@ public class JobServiceImpl implements JobService {
         }
     }
 
-    private VariableMap initJobContext(Flow flow, Job job, VariableMap... inputs) {
-        VariableMap context = new VariableMap(flow.getVariables());
+    private void initJobContext(Job job, Flow flow, StringVars... inputs) {
+        StringVars context = new StringVars(flow.getVariables());
+        context.mergeFromTypedVars(flow.getLocally());
+
         context.put(Variables.Job.Trigger, job.getTrigger().toString());
         context.put(Variables.Job.BuildNumber, job.getBuildNumber().toString());
         context.put(Variables.Job.Status, Job.Status.PENDING.name());
 
         if (Objects.isNull(inputs)) {
-            return context;
+            return;
         }
 
-        for (VariableMap input : inputs) {
-            if (Objects.isNull(input)) {
-                continue;
-            }
-            context.merge(input);
+        for (StringVars vars : inputs) {
+            context.merge(vars);
         }
 
-        return context;
+        job.setContext(context);
     }
 
     private NodePath currentNodePath(Job job) {

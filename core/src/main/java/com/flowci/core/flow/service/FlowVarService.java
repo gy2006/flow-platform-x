@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.flow.service;
+
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.domain.VarValue;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yang
  */
-public abstract class Common {
+public interface FlowVarService {
 
-    public enum OS {
-        LINUX,
+    /**
+     * Add vars to flow locally
+     */
+    void add(Flow flow, Map<String, VarValue> vars);
 
-        MAC,
-
-        WIN,
-
-        UNKNOWN
-    }
+    /**
+     * Remove vars from flow locally
+     */
+    void remove(Flow flow, List<String> vars);
 
 }

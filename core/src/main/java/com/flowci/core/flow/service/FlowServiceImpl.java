@@ -44,14 +44,17 @@ import com.flowci.core.trigger.event.GitHookEvent;
 import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.VarType;
+import com.flowci.domain.VarValue;
+import com.flowci.domain.Vars;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
+import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -73,7 +76,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -163,9 +165,7 @@ public class FlowServiceImpl implements FlowService {
 
         for (; iter.hasNext(); ) {
             Flow flow = iter.next();
-            String value = flow.getVariables().get(Variables.Flow.SSH_RSA);
-
-            if (Objects.equals(value, credential.getName())) {
+            if (Objects.equals(flow.getCredentialName(), credential.getName())) {
                 continue;
             }
 
@@ -218,9 +218,10 @@ public class FlowServiceImpl implements FlowService {
         flow.setName(name);
         flow.setCreatedBy(userId);
 
-        VariableMap vars = flow.getVariables();
-        vars.put(Variables.Flow.Name, name);
-        vars.put(Variables.Flow.Webhook, getWebhook(name));
+        // set default vars
+        Vars<VarValue> localVars = flow.getLocally();
+        localVars.put(Variables.Flow.Name, VarValue.of(flow.getName(), VarType.STRING, false));
+        localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.HTTP_URL, false));
 
         try {
             flowDao.save(flow);
@@ -249,9 +250,13 @@ public class FlowServiceImpl implements FlowService {
             throw new DuplicateException("Flow {0} has created", name);
         }
 
-        VariableMap variables = flow.getVariables();
-        variables.putIfNotEmpty(Variables.Flow.GitUrl, gitUrl);
-        variables.putIfNotEmpty(Variables.Flow.SSH_RSA, credential);
+        if (!Strings.isNullOrEmpty(gitUrl)) {
+            flow.getLocally().put(Variables.Flow.GitUrl, VarValue.of(gitUrl, VarType.GIT_URL, true));
+        }
+
+        if (!Strings.isNullOrEmpty(credential)) {
+            flow.getLocally().put(Variables.Flow.SSH_RSA, VarValue.of(credential, VarType.STRING, true));
+        }
 
         flow.setStatus(Status.CONFIRMED);
         flowDao.save(flow);
@@ -310,9 +315,6 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public String getTemplateYml(Flow flow) {
         VelocityContext context = new VelocityContext();
-        for (Map.Entry<String, String> entry : flow.getVariables().entrySet()) {
-            context.put(entry.getKey(), entry.getValue());
-        }
 
         try (StringWriter sw = new StringWriter()) {
             defaultYmlTemplate.merge(context, sw);
@@ -345,7 +347,9 @@ public class FlowServiceImpl implements FlowService {
         Node node = YmlParser.load(flow.getName(), ymlObj.getRaw());
 
         // sync flow envs from yml root envs
-        flow.getVariables().merge(node.getEnvironments());
+        Vars<String> vars = flow.getVariables();
+        vars.clear();
+        vars.merge(node.getEnvironments());
         flowDao.save(flow);
 
         // update cron task
@@ -389,8 +393,8 @@ public class FlowServiceImpl implements FlowService {
     public List<String> listGitBranch(String name) {
         final Flow flow = get(name);
 
-        String gitUrl = flow.getVariables().get(Variables.Flow.GitUrl);
-        String credentialName = flow.getVariables().get(Variables.Flow.SSH_RSA);
+        String gitUrl = flow.getGitUrl();
+        String credentialName = flow.getCredentialName();
 
         if (Strings.isNullOrEmpty(gitUrl) || Strings.isNullOrEmpty(credentialName)) {
             return Collections.emptyList();
@@ -476,7 +480,7 @@ public class FlowServiceImpl implements FlowService {
                 return;
             }
 
-            VariableMap gitInput = event.getTrigger().toVariableMap();
+            StringVars gitInput = event.getTrigger().toVariableMap();
             Trigger jobTrigger = event.getTrigger().toJobTrigger();
 
             eventManager.publish(new CreateNewJobEvent(this, flow, yml, jobTrigger, gitInput));

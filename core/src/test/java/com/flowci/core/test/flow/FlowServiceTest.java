@@ -28,7 +28,9 @@ import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.VarValue;
+import com.flowci.domain.Vars;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.YmlException;
@@ -63,9 +65,26 @@ public class FlowServiceTest extends SpringScenario {
     @MockBean
     private CredentialService credentialService;
 
+    @Autowired
+    private String serverAddress;
+
     @Before
     public void login() {
         mockLogin();
+    }
+
+    @Test
+    public void should_have_default_vars() {
+        Flow flow = flowService.create("vars-test");
+        Assert.assertEquals(2, flow.getLocally().size());
+
+        VarValue nameVar = flow.getLocally().get(Variables.Flow.Name);
+        Assert.assertEquals(flow.getName(), nameVar.getData());
+        Assert.assertFalse(nameVar.isEditable());
+
+        VarValue webhookVar = flow.getLocally().get(Variables.Flow.Webhook);
+        Assert.assertEquals(serverAddress + "/webhooks/" + flow.getName(), webhookVar.getData());
+        Assert.assertFalse(webhookVar.isEditable());
     }
 
     @Test
@@ -108,8 +127,7 @@ public class FlowServiceTest extends SpringScenario {
         Assert.assertNotNull(yml);
 
         Node root = YmlParser.load("test", yml.getRaw());
-        Assert.assertEquals(gitUrl, root.getEnv(Variables.Flow.GitUrl));
-        Assert.assertEquals(credential, root.getEnv(Variables.Flow.SSH_RSA));
+        Assert.assertEquals(1, root.getChildren().size());
 
         // then:
         List<Flow> flows = flowService.list(Status.CONFIRMED);
@@ -142,13 +160,10 @@ public class FlowServiceTest extends SpringScenario {
         Mockito.when(credentialService.get(credentialName)).thenReturn(mocked);
 
         Flow flow = flowService.create("hello");
-        flow.getVariables().put("FLOW_NAME", "hello.world");
-        flow.getVariables().put(Variables.Flow.SSH_RSA, credentialName);
-        flowService.update(flow);
-        flowService.confirm(flow.getName(), null, null);
+        flowService.confirm(flow.getName(), null, credentialName);
 
-        VariableMap variables = flowService.get(flow.getName()).getVariables();
-        Assert.assertEquals(credentialName, variables.get(Variables.Flow.SSH_RSA));
+        Vars<VarValue> variables = flowService.get(flow.getName()).getLocally();
+        Assert.assertEquals(credentialName, variables.get(Variables.Flow.SSH_RSA).getData());
 
         // when:
         List<Flow> flows = flowService.listByCredential(credentialName);

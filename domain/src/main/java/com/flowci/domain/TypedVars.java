@@ -16,19 +16,13 @@
 
 package com.flowci.domain;
 
-/**
- * @author yang
- */
-public abstract class Common {
+public class TypedVars extends Vars<VarValue> {
 
-    public enum OS {
-        LINUX,
-
-        MAC,
-
-        WIN,
-
-        UNKNOWN
+    public TypedVars() {
+        super();
     }
 
+    public TypedVars(int size) {
+        super(size);
+    }
 }

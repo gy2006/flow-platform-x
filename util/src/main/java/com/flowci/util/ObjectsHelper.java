@@ -43,4 +43,13 @@ public abstract class ObjectsHelper {
             throw new RuntimeException(e.getMessage());
         }
     }
+
+    public static boolean tryParseInt(String val) {
+        try {
+            Integer.parseInt(val);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 }

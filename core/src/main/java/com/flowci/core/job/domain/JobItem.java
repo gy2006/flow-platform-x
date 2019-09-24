@@ -30,7 +30,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
- * As job list item to remove the data which are not used in the list view
+ * As job list item, remove the data which is not used in the list view
  *
  * @author yang
  */
@@ -46,8 +46,12 @@ public class JobItem {
         @JsonIgnore
         private org.bson.Document source;
 
-        Context(org.bson.Document source) {
+        public Context(org.bson.Document source) {
             this.source = source;
+        }
+
+        public Context() {
+            super();
         }
 
         void putIfNotEmpty(String key) {
@@ -86,7 +90,6 @@ public class JobItem {
 
             return context;
         }
-
     }
 
     @Id

@@ -14,37 +14,34 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.plugin.domain;
 
+import com.flowci.domain.VarType;
+import com.google.common.base.Strings;
 import java.io.Serializable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.Accessors;
 
 /**
  * @author yang
  */
 @Getter
 @Setter
-@ToString(of = {"name", "valueType"})
+@ToString(of = {"name"})
 @EqualsAndHashCode(of = {"name"})
 @NoArgsConstructor
+@Accessors(chain = true)
 public class Variable implements Serializable {
-
-    public enum ValueType {
-
-        STRING,
-
-        INT
-    }
 
     private String name;
 
     private String alias;
 
-    private ValueType valueType = ValueType.STRING;
+    private VarType type = VarType.STRING;
 
     private boolean required = true;
 
@@ -52,8 +49,20 @@ public class Variable implements Serializable {
         this.name = name;
     }
 
-    public Variable(String name, ValueType valueType) {
+    public Variable(String name, VarType type) {
         this.name = name;
-        this.valueType = valueType;
+        this.type = type;
+    }
+
+    public boolean verify(String value) {
+        if (required && Strings.isNullOrEmpty(value)) {
+            return false;
+        }
+
+        if (!required && Strings.isNullOrEmpty(value)) {
+            return true;
+        }
+
+        return VarType.verify(type, value);
     }
 }

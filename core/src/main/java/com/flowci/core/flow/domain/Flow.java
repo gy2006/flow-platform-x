@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright (c) 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
 import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.TypedVars;
+import com.flowci.domain.VarValue;
+import com.flowci.domain.Vars;
 import com.flowci.util.StringHelper;
+import java.util.Objects;
 import java.util.Set;
 import lombok.Data;
 import lombok.Getter;
@@ -61,8 +65,13 @@ public final class Flow extends Mongoable implements Pathable {
     @NonNull
     private Status status = Status.PENDING;
 
+    // variables from yml
     @NonNull
-    private VariableMap variables = new VariableMap();
+    private Vars<String> variables = new StringVars();
+
+    // variables for flow obj only
+    @NonNull
+    private Vars<VarValue> locally = new TypedVars();
 
     private WebhookStatus webhookStatus;
 
@@ -76,21 +85,38 @@ public final class Flow extends Mongoable implements Pathable {
     }
 
     @JsonIgnore
-    public boolean hasGitUrl() {
-        String val = variables.get(Variables.Flow.GitUrl);
-        return StringHelper.hasValue(val);
-    }
-
-    @JsonIgnore
-    public boolean hasCredential() {
-        String val = variables.get(Variables.Flow.SSH_RSA);
-        return StringHelper.hasValue(val);
-    }
-
-    @JsonIgnore
     @Override
     public String pathName() {
         return getId();
+    }
+
+    public String getCredentialName() {
+        return findVar(Variables.Flow.SSH_RSA);
+    }
+
+    public String getGitUrl() {
+        return findVar(Variables.Flow.GitUrl);
+    }
+
+    public String getWebhook() {
+        return findVar(Variables.Flow.Webhook);
+    }
+
+    /**
+     * Get credential name from vars, local var has top priority
+     */
+    private String findVar(String name) {
+        VarValue cnVal = locally.get(name);
+        if (!Objects.isNull(cnVal)) {
+            return cnVal.getData();
+        }
+
+        String cn = variables.get(name);
+        if (StringHelper.hasValue(cn)) {
+            return cn;
+        }
+
+        return StringHelper.EMPTY;
     }
 
     @Data

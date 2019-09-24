@@ -14,20 +14,6 @@
 # FLOWCI_JOB_TRIGGER:
 
 envs:
-  # Git Config
-  #if( $FLOWCI_GIT_URL )
-  FLOWCI_GIT_URL: "$FLOWCI_GIT_URL"
-  #else
-  # FLOWCI_GIT_URL: "git ssh url, ex: git@github.com:FlowCI/docs.git"
-  #end
-
-  # Credential name
-  #if( $FLOWCI_CREDENTIAL_SSH_RSA )
-  FLOWCI_CREDENTIAL_SSH_RSA: "$FLOWCI_CREDENTIAL_SSH_RSA"
-  #else
-  # FLOWCI_CREDENTIAL_SSH_RSA: "the credentail name your created"
-  #end
-
   # Define Flow level variables
   EXAMPLE_VAR: "Hi, I'am an example YAML"
 
