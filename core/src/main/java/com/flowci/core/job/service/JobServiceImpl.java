@@ -544,7 +544,7 @@ public class JobServiceImpl implements JobService {
 
     private void setJobContext(Job job, Node node, ExecutedCmd cmd) {
         // merge output to job context
-        StringVars context = job.getContext();
+        Vars<String> context = job.getContext();
         context.merge(cmd.getOutput());
 
         // setup current job status if not tail node

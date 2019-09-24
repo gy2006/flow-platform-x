@@ -16,8 +16,6 @@
 
 package com.flowci.core.common.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.auth.AuthInterceptor;
