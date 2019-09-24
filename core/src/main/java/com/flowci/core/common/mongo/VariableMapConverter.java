@@ -32,12 +32,6 @@ import org.springframework.core.convert.converter.Converter;
 @Getter
 public class VariableMapConverter {
 
-    private static final String typeSignField = "_VARS_TYPE_";
-
-    private static final int codeForStringVars = 1;
-
-    private static final int codeForTypedVars = 2;
-
     private final ObjectMapper objectMapper;
 
     private final Reader reader;
@@ -55,14 +49,13 @@ public class VariableMapConverter {
         @Override
         public Vars<?> convert(Document source) {
             try {
-                Integer code = source.getInteger(typeSignField);
-                source.remove(typeSignField);
+                String type = source.getString(Vars.JSON_TYPE_FIELD);
 
-                if (Objects.isNull(code) || code == codeForStringVars) {
+                if (Objects.isNull(type) || type.equals(Vars.JSON_STRING_TYPE)) {
                     return objectMapper.readValue(source.toJson(), StringVars.class);
                 }
 
-                if (code == codeForTypedVars) {
+                if (type.equals(Vars.JSON_TYPED_TYPE)) {
                     return objectMapper.readValue(source.toJson(), TypedVars.class);
                 }
 
@@ -80,26 +73,10 @@ public class VariableMapConverter {
         public Document convert(Vars<?> source) {
             try {
                 String json = objectMapper.writeValueAsString(source);
-
-                Document document = Document.parse(json);
-                document.put(typeSignField, getTypeCode(source));
-
-                return document;
+                return Document.parse(json);
             } catch (JsonProcessingException e) {
                 throw new ArgumentException("Cannot parse StringVars to json");
             }
         }
-    }
-
-    private static int getTypeCode(Vars<?> vars) {
-        if (vars instanceof StringVars) {
-            return codeForStringVars;
-        }
-
-        if (vars instanceof TypedVars) {
-            return codeForTypedVars;
-        }
-
-        return -1;
     }
 }

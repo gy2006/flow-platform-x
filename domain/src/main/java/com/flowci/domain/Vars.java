@@ -16,12 +16,29 @@
 
 package com.flowci.domain;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = Vars.JSON_TYPE_FIELD)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = StringVars.class, name = Vars.JSON_STRING_TYPE),
+        @JsonSubTypes.Type(value = TypedVars.class, name = Vars.JSON_TYPED_TYPE)
+})
 public abstract class Vars<V> extends LinkedHashMap<String, V> implements Serializable {
+
+    public static final String JSON_TYPE_FIELD = "_TYPE_";
+
+    public static final String JSON_STRING_TYPE = "_string_";
+
+    public static final String JSON_TYPED_TYPE = "_typed_";
 
     Vars() {
         super();

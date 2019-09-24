@@ -18,14 +18,10 @@ package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.flowci.core.auth.AuthInterceptor;
-import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.domain.JsonablePage;
 import com.flowci.core.common.domain.Variables.App;
-import com.flowci.core.user.domain.User;
 import com.flowci.domain.Jsonable;
 import com.flowci.util.FileHelper;
-import com.google.common.collect.ImmutableList;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,21 +35,13 @@ import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.converter.ByteArrayHttpMessageConverter;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.ResourceHttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
 /**
  * @author yang
@@ -63,21 +51,6 @@ import java.util.List;
 @EnableScheduling
 @EnableCaching
 public class AppConfig {
-
-    private static final ObjectMapper Mapper = Jsonable.getMapper();
-
-    private static final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
-            new ByteArrayHttpMessageConverter(),
-            new MappingJackson2HttpMessageConverter(Mapper),
-            new ResourceHttpMessageConverter(),
-            new AllEncompassingFormHttpMessageConverter()
-    );
-
-    static {
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(Pageable.class, new JsonablePage.PageableDeserializer());
-        Mapper.registerModule(module);
-    }
 
     @Autowired
     private Environment env;
@@ -131,42 +104,13 @@ public class AppConfig {
 
     @Bean("objectMapper")
     public ObjectMapper objectMapper() {
-        return Mapper;
-    }
+        ObjectMapper mapper = Jsonable.getMapper();
 
-    @Bean
-    public ThreadLocal<User> currentUser() {
-        return new ThreadLocal<>();
-    }
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Pageable.class, new JsonablePage.PageableDeserializer());
+        mapper.registerModule(module);
 
-    @Bean
-    public AuthInterceptor authHandler() {
-        return new AuthInterceptor();
-    }
-
-    @Bean
-    public WebMvcConfigurer webMvcConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addInterceptors(InterceptorRegistry registry) {
-                registry.addInterceptor(new CrosInterceptor());
-                registry.addInterceptor(authHandler())
-                        .addPathPatterns("/users/**")
-                        .addPathPatterns("/flows/**")
-                        .addPathPatterns("/jobs/**")
-                        .addPathPatterns("/agents/**")
-                        .addPathPatterns("/credentials/**")
-                        .addPathPatterns("/auth/logout")
-                        .excludePathPatterns("/agents/connect")
-                        .excludePathPatterns("/agents/logs/upload");
-            }
-
-            @Override
-            public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-                converters.clear();
-                converters.addAll(DefaultConverters);
-            }
-        };
+        return mapper;
     }
 
     @Bean(name = "applicationEventMulticaster")

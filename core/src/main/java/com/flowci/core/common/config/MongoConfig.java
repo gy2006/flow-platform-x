@@ -70,13 +70,13 @@ public class MongoConfig extends AbstractMongoConfiguration {
 
     @Override
     public CustomConversions customConversions() {
-        VariableMapConverter variableConverter = new VariableMapConverter(objectMapper);
-        SimpleKeyPairConverter keyPairConverter = new SimpleKeyPairConverter(appProperties.getSecret());
         List<Converter<?, ?>> converters = new ArrayList<>();
 
+        VariableMapConverter variableConverter = new VariableMapConverter(objectMapper);
         converters.add(variableConverter.getReader());
         converters.add(variableConverter.getWriter());
 
+        SimpleKeyPairConverter keyPairConverter = new SimpleKeyPairConverter(appProperties.getSecret());
         converters.add(keyPairConverter.getReader());
         converters.add(keyPairConverter.getWriter());
 
