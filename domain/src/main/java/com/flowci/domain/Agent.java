@@ -62,6 +62,12 @@ public class Agent implements Serializable {
 
     private Common.OS os;
 
+    // num of core
+    private Integer cpu;
+
+    // free / total
+    private String memory;
+
     private Set<String> tags = Collections.emptySet();
 
     private Status status = Status.OFFLINE;

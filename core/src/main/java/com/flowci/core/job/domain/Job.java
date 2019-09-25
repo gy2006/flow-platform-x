@@ -19,15 +19,15 @@ package com.flowci.core.job.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
 import com.flowci.core.common.domain.Pathable;
+import com.flowci.domain.Agent;
 import com.flowci.domain.StringVars;
 import com.flowci.domain.Vars;
 import com.flowci.tree.Selector;
+import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.Date;
 
 /**
  * @author yang
@@ -119,6 +119,22 @@ public class Job extends Mongoable implements Pathable {
         TIMEOUT
     }
 
+    /**
+     * Agent snapshot
+     */
+    @Getter
+    @Setter
+    public static class AgentInfo {
+
+        private String name;
+
+        private String os;
+
+        private Integer cpu;
+
+        private String memory;
+    }
+
     private final static Integer MinPriority = 1;
 
     private final static Integer MaxPriority = 255;
@@ -144,7 +160,7 @@ public class Job extends Mongoable implements Pathable {
 
     private String agentId;
 
-    private String agentName;
+    private AgentInfo agentInfo = new AgentInfo();
 
     private String currentPath;
 
@@ -182,9 +198,9 @@ public class Job extends Mongoable implements Pathable {
     @JsonIgnore
     public boolean isDone() {
         return status == Status.TIMEOUT
-                || status == Status.CANCELLED
-                || status == Status.FAILURE
-                || status == Status.SUCCESS;
+            || status == Status.CANCELLED
+            || status == Status.FAILURE
+            || status == Status.SUCCESS;
     }
 
     @JsonIgnore
@@ -205,6 +221,13 @@ public class Job extends Mongoable implements Pathable {
     @Override
     public String pathName() {
         return getBuildNumber().toString();
+    }
+
+    public void setAgentSnapshot(Agent agent) {
+        agentInfo.setName(agent.getName());
+        agentInfo.setOs(agent.getOs().name());
+        agentInfo.setCpu(agent.getCpu());
+        agentInfo.setMemory(agent.getMemory());
     }
 
     @Override

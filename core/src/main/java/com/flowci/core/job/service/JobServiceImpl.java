@@ -599,7 +599,7 @@ public class JobServiceImpl implements JobService {
         // set path, agent id, agent name and status to job
         job.setCurrentPath(next.getPathAsString());
         job.setAgentId(available.getId());
-        job.setAgentName(available.getName());
+        job.setAgentSnapshot(available);
         setJobStatusAndSave(job, Job.Status.RUNNING, null);
 
         // execute condition script
