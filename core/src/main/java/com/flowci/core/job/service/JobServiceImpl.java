@@ -596,9 +596,10 @@ public class JobServiceImpl implements JobService {
 
         log.debug("Next step of job {} is {}", job.getId(), next.getName());
 
-        // set path, agent id, and status to job
+        // set path, agent id, agent name and status to job
         job.setCurrentPath(next.getPathAsString());
         job.setAgentId(available.getId());
+        job.setAgentName(available.getName());
         setJobStatusAndSave(job, Job.Status.RUNNING, null);
 
         // execute condition script

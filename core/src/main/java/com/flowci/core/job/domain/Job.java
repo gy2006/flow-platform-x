@@ -144,6 +144,8 @@ public class Job extends Mongoable implements Pathable {
 
     private String agentId;
 
+    private String agentName;
+
     private String currentPath;
 
     private Vars<String> context = new StringVars();
