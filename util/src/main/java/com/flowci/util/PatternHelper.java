@@ -92,10 +92,21 @@ public abstract class PatternHelper {
         "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
         ")+";
 
-    public static final Pattern GIT_URL = Pattern.compile(GIT_URL_RE);
+    private static final Pattern GIT_URL = Pattern.compile(GIT_URL_RE);
 
-    public static final Pattern WEB_URL = Pattern.compile(WEB_URL_RE);
+    private static final Pattern WEB_URL = Pattern.compile(WEB_URL_RE);
 
-    public static final Pattern EMAIL_ADDRESS = Pattern.compile(EMAIL_RE);
+    private static final Pattern EMAIL_ADDRESS = Pattern.compile(EMAIL_RE);
 
+    public static boolean isGitURL(String str) {
+        return GIT_URL.matcher(str).find();
+    }
+
+    public static boolean isWebURL(String str) {
+        return WEB_URL.matcher(str).find();
+    }
+
+    public static boolean isEmail(String str) {
+        return EMAIL_ADDRESS.matcher(str).find();
+    }
 }

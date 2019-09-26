@@ -28,38 +28,23 @@ public class PatternHelperTest {
 
     @Test
     public void should_match_web_url() {
-        Matcher matcher = PatternHelper.WEB_URL.matcher("http://flow.ci");
-        Assert.assertTrue(matcher.find());
-
-        matcher = PatternHelper.WEB_URL.matcher("https://192.168.0.1:8080/");
-        Assert.assertTrue(matcher.find());
-
-        matcher = PatternHelper.WEB_URL.matcher("ttp://flow.ci");
-        Assert.assertFalse(matcher.find());
+        Assert.assertTrue(PatternHelper.isWebURL("http://flow.ci"));
+        Assert.assertTrue(PatternHelper.isWebURL("https://192.168.0.1:8080/"));
+        Assert.assertFalse(PatternHelper.isWebURL("ttp://flow.ci"));
     }
 
     @Test
     public void should_match_git_url() {
-        Matcher matcher = PatternHelper.GIT_URL.matcher("user@host.com:path/to/repo.git");
-        Assert.assertTrue(matcher.find());
-
-        matcher = PatternHelper.GIT_URL.matcher("ssh://user@server/project.git");
-        Assert.assertTrue(matcher.find());
-
-        matcher = PatternHelper.GIT_URL.matcher("git@server:project.git");
-        Assert.assertTrue(matcher.find());
-
-        matcher = PatternHelper.GIT_URL.matcher("git@server:project");
-        Assert.assertFalse(matcher.find());
+        Assert.assertTrue(PatternHelper.isGitURL("user@host.com:path/to/repo.git"));
+        Assert.assertTrue(PatternHelper.isGitURL("ssh://user@server/project.git"));
+        Assert.assertTrue(PatternHelper.isGitURL("git@server:project.git"));
+        Assert.assertFalse(PatternHelper.isGitURL("git@server:project"));
     }
 
     @Test
     public void should_match_email() {
-        Matcher matcher = PatternHelper.EMAIL_ADDRESS.matcher("user@host.com");
-        Assert.assertTrue(matcher.find());
-
-        matcher = PatternHelper.EMAIL_ADDRESS.matcher("user@hostcom");
-        Assert.assertFalse(matcher.find());
+        Assert.assertTrue(PatternHelper.isEmail("user@host.com"));
+        Assert.assertFalse(PatternHelper.isEmail("user@hostcom"));
     }
 
 }
