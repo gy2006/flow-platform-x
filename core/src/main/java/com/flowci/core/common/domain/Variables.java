@@ -57,5 +57,6 @@ public abstract class Variables {
 
         public static final String Trigger = "FLOWCI_JOB_TRIGGER";
 
+        public static final String TriggerBy = "FLOWCI_JOB_TRIGGER_BY"; // == user email of job.createdBy
     }
 }

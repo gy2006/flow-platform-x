@@ -17,7 +17,6 @@
 package com.flowci.util.test;
 
 import com.flowci.util.PatternHelper;
-import java.util.regex.Matcher;
 import org.junit.Assert;
 import org.junit.Test;
 
