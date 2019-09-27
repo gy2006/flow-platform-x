@@ -130,15 +130,15 @@ public class Job extends Mongoable implements Pathable {
 
         private String os;
 
-        private Integer cpu;
+        private int cpu;
 
-        private Long totalMemory;
+        private int totalMemory;
 
-        private Long freeMemory;
+        private int freeMemory;
 
-        private Long totalDisk;
+        private int totalDisk;
 
-        private Long freeDisk;
+        private int freeDisk;
     }
 
     private final static Integer MinPriority = 1;

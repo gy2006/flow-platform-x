@@ -18,12 +18,15 @@ package com.flowci.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
-import lombok.*;
-import lombok.experimental.Accessors;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
  * @author yang
@@ -59,13 +62,13 @@ public class Agent implements Serializable {
 
         private int cpu;
 
-        private long totalMemory;
+        private int totalMemory; // in MB
 
-        private long freeMemory;
+        private int freeMemory; // in MB
 
-        private long totalDisk;
+        private int totalDisk; // in MB
 
-        private long freeDisk;
+        private int freeDisk; // in MB
     }
 
     private String id;
