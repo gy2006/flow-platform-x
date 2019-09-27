@@ -167,6 +167,11 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
+    public boolean isExisted(String token) {
+        return agentDao.existsAgentByToken(token);
+    }
+
+    @Override
     public List<Agent> list() {
         return agentDao.findAll();
     }
@@ -266,7 +271,6 @@ public class AgentServiceImpl implements AgentService {
     @Override
     public Agent update(String token, String name, Set<String> tags) {
         Agent agent = getByToken(token);
-
         agent.setName(name);
         agent.setTags(tags);
 
@@ -275,6 +279,14 @@ public class AgentServiceImpl implements AgentService {
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Agent name {0} is already defined", name);
         }
+    }
+
+    @Override
+    public Agent update(String token, Agent.Resource resource) {
+        Agent agent = getByToken(token);
+        agent.setResource(resource);
+        agentDao.save(agent);
+        return agent;
     }
 
     @Override

@@ -18,11 +18,12 @@ package com.flowci.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
+import lombok.*;
+import lombok.experimental.Accessors;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
-
-import lombok.*;
 
 /**
  * @author yang
@@ -53,6 +54,7 @@ public class Agent implements Serializable {
 
     @Getter
     @Setter
+    @Accessors(chain = true)
     public static class Resource {
 
         private int cpu;

@@ -34,4 +34,6 @@ public interface AgentDao extends MongoRepository<Agent, String> {
     Agent findByToken(String token);
 
     Agent findByName(String name);
+
+    boolean existsAgentByToken(String token);
 }

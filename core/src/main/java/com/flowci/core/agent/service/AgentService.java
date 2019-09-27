@@ -51,6 +51,11 @@ public interface AgentService {
     String getPath(Agent agent);
 
     /**
+     * Check agent token is existed
+     */
+    boolean isExisted(String token);
+
+    /**
      * List agents
      */
     List<Agent> list();
@@ -93,6 +98,11 @@ public interface AgentService {
      * Update agent name or and tags
      */
     Agent update(String token, String name, Set<String> tags);
+
+    /**
+     * Update agent resource
+     */
+    Agent update(String token, Agent.Resource resource);
 
     /**
      * Dispatch cmd to agent

@@ -18,6 +18,7 @@ package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.agent.AgentInterceptor;
 import com.flowci.core.auth.AuthInterceptor;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.helper.JacksonHelper;
@@ -49,6 +50,11 @@ public class WebConfig {
     }
 
     @Bean
+    public AgentInterceptor agentInterceptor() {
+        return new AgentInterceptor();
+    }
+
+    @Bean
     public Class<?> httpJacksonMixin() {
         return VarsMixin.class;
     }
@@ -59,6 +65,7 @@ public class WebConfig {
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(new CrosInterceptor());
+
                 registry.addInterceptor(authHandler())
                     .addPathPatterns("/users/**")
                     .addPathPatterns("/flows/**")
@@ -67,7 +74,13 @@ public class WebConfig {
                     .addPathPatterns("/credentials/**")
                     .addPathPatterns("/auth/logout")
                     .excludePathPatterns("/agents/connect")
+                    .excludePathPatterns("/agents/resource")
                     .excludePathPatterns("/agents/logs/upload");
+
+                registry.addInterceptor(agentInterceptor())
+                        .addPathPatterns("/agents/connect")
+                        .addPathPatterns("/agents/resource")
+                        .addPathPatterns("/agents/logs/upload");
             }
 
             @Override
