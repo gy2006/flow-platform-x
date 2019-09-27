@@ -132,7 +132,13 @@ public class Job extends Mongoable implements Pathable {
 
         private Integer cpu;
 
-        private String memory;
+        private Long totalMemory;
+
+        private Long freeMemory;
+
+        private Long totalDisk;
+
+        private Long freeDisk;
     }
 
     private final static Integer MinPriority = 1;
@@ -226,8 +232,11 @@ public class Job extends Mongoable implements Pathable {
     public void setAgentSnapshot(Agent agent) {
         agentInfo.setName(agent.getName());
         agentInfo.setOs(agent.getOs().name());
-        agentInfo.setCpu(agent.getCpu());
-        agentInfo.setMemory(agent.getMemory());
+        agentInfo.setCpu(agent.getResource().getCpu());
+        agentInfo.setTotalMemory(agent.getResource().getTotalMemory());
+        agentInfo.setFreeMemory(agent.getResource().getFreeMemory());
+        agentInfo.setTotalDisk(agent.getResource().getTotalDisk());
+        agentInfo.setFreeDisk(agent.getResource().getFreeDisk());
     }
 
     @Override

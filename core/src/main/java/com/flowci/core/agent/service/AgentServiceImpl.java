@@ -131,6 +131,7 @@ public class AgentServiceImpl implements AgentService {
         Agent target = getByToken(init.getToken());
         target.setHost("http://" + init.getIp() + ":" + init.getPort());
         target.setOs(init.getOs());
+        target.setResource(init.getResource());
         agentDao.save(target);
 
         Settings settings = ObjectsHelper.copy(baseSettings);

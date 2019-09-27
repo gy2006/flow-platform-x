@@ -21,9 +21,8 @@ import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+
+import lombok.*;
 
 /**
  * @author yang
@@ -52,6 +51,21 @@ public class Agent implements Serializable {
         }
     }
 
+    @Getter
+    @Setter
+    public static class Resource {
+
+        private int cpu;
+
+        private long totalMemory;
+
+        private long freeMemory;
+
+        private long totalDisk;
+
+        private long freeDisk;
+    }
+
     private String id;
 
     private String name;
@@ -62,11 +76,7 @@ public class Agent implements Serializable {
 
     private Common.OS os;
 
-    // num of core
-    private Integer cpu;
-
-    // free / total
-    private String memory;
+    private Resource resource = new Resource();
 
     private Set<String> tags = Collections.emptySet();
 
