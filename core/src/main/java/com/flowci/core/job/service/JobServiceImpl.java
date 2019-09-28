@@ -213,9 +213,11 @@ public class JobServiceImpl implements JobService {
         // setup created by form login user or git event author
         if (sessionManager.exist()) {
             job.setCreatedBy(sessionManager.getUserId());
+            job.getContext().put(Variables.Job.TriggerBy, sessionManager.get().getEmail());
         } else {
             String createdBy = job.getContext().get(GIT_AUTHOR, "Unknown");
             job.setCreatedBy(createdBy);
+            job.getContext().put(Variables.Job.TriggerBy, createdBy);
         }
 
         // set expire at
@@ -596,9 +598,10 @@ public class JobServiceImpl implements JobService {
 
         log.debug("Next step of job {} is {}", job.getId(), next.getName());
 
-        // set path, agent id, and status to job
+        // set path, agent id, agent name and status to job
         job.setCurrentPath(next.getPathAsString());
         job.setAgentId(available.getId());
+        job.setAgentSnapshot(available);
         setJobStatusAndSave(job, Job.Status.RUNNING, null);
 
         // execute condition script
@@ -711,19 +714,18 @@ public class JobServiceImpl implements JobService {
         StringVars context = new StringVars(flow.getVariables());
         context.mergeFromTypedVars(flow.getLocally());
 
+        context.put(Variables.App.Url, serverAddress);
         context.put(Variables.Job.Trigger, job.getTrigger().toString());
         context.put(Variables.Job.BuildNumber, job.getBuildNumber().toString());
         context.put(Variables.Job.Status, Job.Status.PENDING.name());
 
-        if (Objects.isNull(inputs)) {
-            return;
+        if (!Objects.isNull(inputs)) {
+            for (StringVars vars : inputs) {
+                context.merge(vars);
+            }
         }
 
-        for (StringVars vars : inputs) {
-            context.merge(vars);
-        }
-
-        job.setContext(context);
+        job.getContext().merge(context);
     }
 
     private NodePath currentNodePath(Job job) {

@@ -16,6 +16,7 @@
 
 package com.flowci.core.agent.domain;
 
+import com.flowci.domain.Agent;
 import com.flowci.domain.Common;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,4 +35,6 @@ public class AgentInit {
     private Integer port;
 
     private Common.OS os;
+
+    private Agent.Resource resource = new Agent.Resource();
 }

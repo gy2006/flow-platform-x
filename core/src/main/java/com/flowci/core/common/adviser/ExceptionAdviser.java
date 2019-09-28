@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  */
 @Log4j2
 @ControllerAdvice({
-    "com.flowci.core.auth.AuthInterceptor",
     "com.flowci.core.auth",
     "com.flowci.core.user",
     "com.flowci.core.flow",

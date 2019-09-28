@@ -40,13 +40,13 @@ public enum VarType {
                 return ObjectsHelper.tryParseInt(value);
 
             case HTTP_URL:
-                return PatternHelper.WEB_URL.matcher(value).find();
+                return PatternHelper.isWebURL(value);
 
             case GIT_URL:
-                return PatternHelper.GIT_URL.matcher(value).find();
+                return PatternHelper.isGitURL(value);
 
             case EMAIL:
-                return PatternHelper.EMAIL_ADDRESS.matcher(value).find();
+                return PatternHelper.isEmail(value);
         }
 
         return true;
