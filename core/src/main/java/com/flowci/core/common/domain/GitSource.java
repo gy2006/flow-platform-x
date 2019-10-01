@@ -18,9 +18,13 @@ package com.flowci.core.common.domain;
 
 public enum GitSource {
 
+    UNKNOWN,
+
     GITLAB,
 
     GITHUB,
+
+    GOGS,
 
     CODING,
 

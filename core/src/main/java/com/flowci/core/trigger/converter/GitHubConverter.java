@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 fir.im
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import java.util.Set;
  * @author yang
  */
 @Log4j2
-@Component
+@Component("gitHubConverter")
 public class GitHubConverter implements TriggerConverter {
 
     public static final String Header = "X-GitHub-Event";

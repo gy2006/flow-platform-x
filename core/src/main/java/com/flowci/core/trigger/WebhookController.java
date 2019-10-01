@@ -16,14 +16,20 @@
 
 package com.flowci.core.trigger;
 
+import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.trigger.converter.GitHubConverter;
+import com.flowci.core.trigger.converter.GitLabConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.event.GitHookEvent;
-import com.google.common.base.Strings;
+import com.flowci.util.StringHelper;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,29 +50,67 @@ public class WebhookController {
     private HttpServletRequest request;
 
     @Autowired
-    private TriggerConverter githubConverter;
+    private TriggerConverter gitHubConverter;
+
+    @Autowired
+    private TriggerConverter gitLabConverter;
 
     @Autowired
     private SpringEventManager eventManager;
 
-    @PostMapping("/{name}")
-    public void gitTrigger(@PathVariable String name) throws IOException {
-        if (isGitHub()) {
-            String event = request.getHeader(GitHubConverter.Header);
+    private final Map<GitSource, TriggerConverter> converterMap = new HashMap<>(2);
 
-            Optional<GitTrigger> optional = githubConverter.convert(event, request.getInputStream());
-
-            if (!optional.isPresent()) {
-                return;
-            }
-
-            log.info("Github trigger received: {}", optional.get());
-            eventManager.publish(new GitHookEvent(this, name, optional.get()));
-        }
+    @PostConstruct
+    public void createMapping() {
+        converterMap.put(GitSource.GITHUB, gitHubConverter);
+        converterMap.put(GitSource.GITLAB, gitLabConverter);
     }
 
-    private boolean isGitHub() {
+    @PostMapping("/{name}")
+    public void gitTrigger(@PathVariable String name) throws IOException {
+        GitSourceWithEvent data = findGitSourceByHeader(request);
+
+        if (Objects.isNull(data)) {
+            return;
+        }
+
+        Optional<GitTrigger> trigger = converterMap.get(data.source).convert(data.event, request.getInputStream());
+
+        if (!trigger.isPresent()) {
+            return;
+        }
+
+        log.info("{} trigger received: {}", data.source, trigger.get());
+        eventManager.publish(new GitHookEvent(this, name, trigger.get()));
+    }
+
+    private GitSourceWithEvent findGitSourceByHeader(HttpServletRequest request) {
+        GitSourceWithEvent obj = new GitSourceWithEvent();
+
+        // github
         String event = request.getHeader(GitHubConverter.Header);
-        return !Strings.isNullOrEmpty(event);
+        if (StringHelper.hasValue(event)) {
+            obj.source = GitSource.GITHUB;
+            obj.event = event;
+            return obj;
+        }
+
+        // gitlab
+        event = request.getHeader(GitLabConverter.Header);
+        if (StringHelper.hasValue(event)) {
+            obj.source = GitSource.GITLAB;
+            obj.event = event;
+            return obj;
+        }
+
+        return null;
+    }
+
+    private class GitSourceWithEvent {
+
+        private GitSource source;
+
+        private String event;
+
     }
 }
