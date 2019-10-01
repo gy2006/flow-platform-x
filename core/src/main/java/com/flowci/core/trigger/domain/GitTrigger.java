@@ -16,13 +16,15 @@
 
 package com.flowci.core.trigger.domain;
 
+import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.domain.StringVars;
 import com.flowci.exception.NotFoundException;
-import java.io.Serializable;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.io.Serializable;
 
 /**
  * @author yang
@@ -35,19 +37,6 @@ public abstract class GitTrigger implements Serializable {
     private GitSource source;
 
     private GitEvent event;
-
-    public enum GitSource {
-
-        GITLAB,
-
-        GITHUB,
-
-        CODING,
-
-        OSCHINA,
-
-        BITBUCKET
-    }
 
     public enum GitEvent {
 

@@ -31,7 +31,7 @@ import lombok.ToString;
 @ToString(callSuper = true, of = {"ref", "message"})
 public final class GitPushTrigger extends GitTrigger {
 
-    private Author author;
+    private GitUser author;
 
     private String commitId;
 
@@ -51,22 +51,12 @@ public final class GitPushTrigger extends GitTrigger {
 
         map.put(Variables.GIT_BRANCH, ref);
         map.put(Variables.GIT_COMPARE_URL, compareUrl);
-        map.put(Variables.GIT_AUTHOR, author.email);
+        map.put(Variables.GIT_AUTHOR, author.getEmail());
 
         map.put(Variables.GIT_COMMIT_ID, commitId);
         map.put(Variables.GIT_COMMIT_MESSAGE, message);
         map.put(Variables.GIT_COMMIT_TIME, time);
         map.put(Variables.GIT_COMMIT_URL, commitUrl);
         return map;
-    }
-
-    @Data
-    public static class Author implements Serializable {
-
-        private String name;
-
-        private String username;
-
-        private String email;
     }
 }

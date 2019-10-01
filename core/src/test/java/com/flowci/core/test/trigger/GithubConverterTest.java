@@ -25,6 +25,7 @@ import static com.flowci.core.trigger.domain.Variables.GIT_COMPARE_URL;
 import static com.flowci.core.trigger.domain.Variables.GIT_EVENT;
 import static com.flowci.core.trigger.domain.Variables.GIT_SOURCE;
 
+import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.converter.GitHubConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
@@ -33,7 +34,6 @@ import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
-import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.core.trigger.domain.Variables;
 import com.flowci.domain.StringVars;
 import java.io.InputStream;

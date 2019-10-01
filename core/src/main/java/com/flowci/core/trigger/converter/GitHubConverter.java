@@ -18,29 +18,22 @@ package com.flowci.core.trigger.converter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.trigger.domain.GitPingTrigger;
-import com.flowci.core.trigger.domain.GitPrTrigger;
-import com.flowci.core.trigger.domain.GitPrTrigger.Sender;
+import com.flowci.core.common.domain.GitSource;
+import com.flowci.core.trigger.domain.*;
 import com.flowci.core.trigger.domain.GitPrTrigger.Source;
-import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitPushTrigger.Author;
-import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
-import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.exception.ArgumentException;
 import com.flowci.util.StringHelper;
 import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author yang
@@ -243,9 +236,9 @@ public class GitHubConverter implements TriggerConverter {
             base.setRepoUrl(prBody.base.repo.url);
             trigger.setBase(base);
 
-            Sender sender = new Sender();
-            sender.setId(prSender.id);
-            sender.setUsername(prSender.username);
+            GitUser sender = new GitUser()
+                    .setId(prSender.id)
+                    .setUsername(prSender.username);
             trigger.setSender(sender);
 
             return trigger;
@@ -324,12 +317,11 @@ public class GitHubConverter implements TriggerConverter {
 
         public String username;
 
-        public Author toAuthor() {
-            Author author = new Author();
-            author.setEmail(email);
-            author.setName(name);
-            author.setUsername(username);
-            return author;
+        public GitUser toAuthor() {
+            return new GitUser()
+                    .setEmail(email)
+                    .setName(name)
+                    .setUsername(username);
         }
 
     }
