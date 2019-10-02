@@ -44,9 +44,9 @@ public abstract class GitTrigger implements Serializable {
 
         PUSH,
 
-        PR_OPEN,
+        PR_OPEN, // pr opened
 
-        PR_CLOSE,
+        PR_CLOSE, // pr closed
 
         TAG
     }

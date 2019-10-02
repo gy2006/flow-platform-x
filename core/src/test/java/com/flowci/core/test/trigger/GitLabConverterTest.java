@@ -20,6 +20,7 @@ import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.converter.GitLabConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
+import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitUser;
@@ -46,6 +47,7 @@ public class GitLabConverterTest extends SpringScenario {
         GitPushTrigger push = (GitPushTrigger) optional.get();
         Assert.assertEquals(GitTrigger.GitEvent.PUSH, push.getEvent());
         Assert.assertEquals(GitSource.GITLAB, push.getSource());
+
         Assert.assertEquals("d8e7334543d437c1a889a9187e66d1968280d7d4", push.getCommitId());
         Assert.assertEquals("master", push.getRef());
         Assert.assertEquals("Update .flow.yml test", push.getMessage());
@@ -55,10 +57,47 @@ public class GitLabConverterTest extends SpringScenario {
                 push.getCommitUrl());
 
         GitUser author = push.getAuthor();
-        Assert.assertEquals("yang.guo", author.getUsername());
+        Assert.assertEquals("yang-guo-2016", author.getUsername());
         Assert.assertEquals("benqyang_2006@hotmail.com", author.getEmail());
         Assert.assertEquals(
                 "https://secure.gravatar.com/avatar/25fc63da4f632d2a2c10724cba3b9efc?s=80\u0026d=identicon",
                 author.getAvatarLink());
+    }
+
+    @Test
+    public void should_get_pr_open_trigger_from_gitlab_event() {
+        InputStream stream = load("gitlab/webhook_mr_opened.json");
+
+        Optional<GitTrigger> optional = gitLabConverter.convert(GitLabConverter.PR, stream);
+        Assert.assertTrue(optional.isPresent());
+        Assert.assertTrue(optional.get() instanceof GitPrTrigger);
+
+        GitPrTrigger pr = (GitPrTrigger) optional.get();
+        Assert.assertEquals(GitTrigger.GitEvent.PR_OPEN, pr.getEvent());
+        Assert.assertEquals(GitSource.GITLAB, pr.getSource());
+        Assert.assertFalse(pr.getMerged());
+        Assert.assertEquals("Update package.json title", pr.getTitle());
+        Assert.assertEquals("pr message", pr.getBody());
+        Assert.assertEquals("2017-08-08T08:44:54.622Z", pr.getTime());
+        Assert.assertEquals("https://gitlab.com/yang-guo-2016/kai-web/merge_requests/1", pr.getUrl());
+
+        GitPrTrigger.Source from = pr.getHead();
+        Assert.assertEquals("kai-web", from.getRepoName());
+        Assert.assertEquals("https://gitlab.com/yang-guo-2016/kai-web", from.getRepoUrl());
+        Assert.assertEquals("developer", from.getRef());
+        Assert.assertEquals("9e81037427cc1c50641c5ffc7b6c70a487886ed8", from.getCommit());
+
+        GitPrTrigger.Source to = pr.getBase();
+        Assert.assertEquals("kai-web", to.getRepoName());
+        Assert.assertEquals("https://gitlab.com/yang-guo-2016/kai-web", to.getRepoUrl());
+        Assert.assertEquals("master", to.getRef());
+        Assert.assertEquals("", to.getCommit());
+
+        GitUser sender = pr.getSender();
+        Assert.assertNull(sender.getEmail());
+        Assert.assertEquals("yang-guo-2016", sender.getUsername());
+        Assert.assertEquals(
+                "https://secure.gravatar.com/avatar/25fc63da4f632d2a2c10724cba3b9efc?s=80\u0026d=identicon",
+                sender.getAvatarLink());
     }
 }

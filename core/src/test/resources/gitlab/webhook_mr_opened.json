@@ -27,30 +27,30 @@
   "object_attributes": {
     "assignee_id": null,
     "author_id": 859190,
-    "created_at": "2017-08-08 08:44:54 UTC",
+    "created_at": "2017-08-08T08:44:54.622Z",
     "description": "pr message",
     "head_pipeline_id": null,
     "id": 4593698,
     "iid": 1,
     "last_edited_at": null,
     "last_edited_by_id": null,
-    "merge_commit_sha": "1b4d99d54c29a31a92e990e6bac301eea0c1fc94",
+    "merge_commit_sha": null,
     "merge_error": null,
     "merge_params": {
       "force_remove_source_branch": "0"
     },
-    "merge_status": "can_be_merged",
+    "merge_status": "unchecked",
     "merge_user_id": null,
     "merge_when_pipeline_succeeds": false,
     "milestone_id": null,
     "source_branch": "developer",
     "source_project_id": 2048650,
-    "state": "merged",
+    "state": "opened",
     "target_branch": "master",
     "target_project_id": 2048650,
     "time_estimate": 0,
     "title": "Update package.json title",
-    "updated_at": "2019-10-01 21:57:25 UTC",
+    "updated_at": "2017-08-08T08:44:54.622Z",
     "updated_by_id": null,
     "url": "https://gitlab.com/yang-guo-2016/kai-web/merge_requests/1",
     "source": {
@@ -103,19 +103,10 @@
     "total_time_spent": 0,
     "human_total_time_spent": null,
     "human_time_estimate": null,
-    "assignee_ids": [],
-    "action": "merge"
+    "assignee_ids": []
   },
   "labels": [],
   "changes": {
-    "state": {
-      "previous": "locked",
-      "current": "merged"
-    },
-    "updated_at": {
-      "previous": "2019-10-01 21:57:25 UTC",
-      "current": "2019-10-01 21:57:25 UTC"
-    },
     "total_time_spent": {
       "previous": null,
       "current": 0

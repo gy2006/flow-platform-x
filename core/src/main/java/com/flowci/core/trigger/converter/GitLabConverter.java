@@ -20,11 +20,13 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.GitSource;
+import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitUser;
 import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
+import com.flowci.util.StringHelper;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +60,7 @@ public class GitLabConverter implements TriggerConverter {
     private final Map<String, Function<InputStream, GitTrigger>> mapping =
             ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
                     .put(Push, new OnPushEvent())
+                    .put(PR, new OnPrEvent())
                     .build();
 
     @Autowired
@@ -87,6 +90,28 @@ public class GitLabConverter implements TriggerConverter {
         }
     }
 
+    private class OnTagEvent implements Function<InputStream, GitTrigger> {
+
+        @Override
+        public GitTrigger apply(InputStream stream) {
+            return null;
+        }
+    }
+
+    private class OnPrEvent implements Function<InputStream, GitTrigger> {
+
+        @Override
+        public GitTrigger apply(InputStream stream) {
+            try {
+                PrEvent event = objectMapper.readValue(stream, PrEvent.class);
+                return event.toTrigger();
+            } catch (IOException e) {
+                log.warn("Unable to parse Gitlab push event");
+                return null;
+            }
+        }
+    }
+
     // ======================================================
     //      Objects for GitLab
     // ======================================================
@@ -94,7 +119,7 @@ public class GitLabConverter implements TriggerConverter {
     private abstract static class Event {
 
         @JsonProperty("event_name")
-        private String name;
+        public String name;
 
         abstract GitTrigger toTrigger();
     }
@@ -145,10 +170,10 @@ public class GitLabConverter implements TriggerConverter {
 
             // set commit author info
             GitUser gitUser = new GitUser()
-                    .setUsername(topCommit.author.name)
                     .setEmail(topCommit.author.email);
 
             if (Objects.equals(topCommit.author.name, nameOfUser)) {
+                gitUser.setUsername(username);
                 gitUser.setAvatarLink(avatar);
             }
 
@@ -157,21 +182,115 @@ public class GitLabConverter implements TriggerConverter {
         }
     }
 
+    private static class PrEvent extends Event {
+
+        public final static String PR_OPENED = "opened";
+
+        public final static String PR_MERGED = "merged";
+
+        public GitLabUser user;
+
+        @JsonAlias("object_attributes")
+        public PrAttributes attributes;
+
+        @Override
+        GitTrigger toTrigger() {
+            GitPrTrigger trigger = new GitPrTrigger();
+
+            trigger.setEvent(attributes.state.equals(PR_OPENED) ?
+                    GitTrigger.GitEvent.PR_OPEN :
+                    GitTrigger.GitEvent.PR_CLOSE);
+
+            trigger.setSource(GitSource.GITLAB);
+
+            trigger.setNumber(attributes.number);
+            trigger.setBody(attributes.description);
+            trigger.setTitle(attributes.title);
+            trigger.setUrl(attributes.url);
+            trigger.setTime(attributes.createdAt);
+            trigger.setNumOfCommits("0");
+            trigger.setNumOfFileChanges("0");
+            trigger.setMerged(attributes.state.equals(PR_MERGED));
+
+            GitPrTrigger.Source head = new GitPrTrigger.Source();
+            head.setCommit(attributes.lastCommit.id);
+            head.setRef(attributes.sourceBranch);
+            head.setRepoName(attributes.source.name);
+            head.setRepoUrl(attributes.source.webUrl);
+            trigger.setHead(head);
+
+            GitPrTrigger.Source base = new GitPrTrigger.Source();
+            base.setCommit(StringHelper.EMPTY);
+            base.setRef(attributes.targetBranch);
+            base.setRepoName(attributes.target.name);
+            base.setRepoUrl(attributes.target.webUrl);
+            trigger.setBase(base);
+
+            GitUser sender = new GitUser()
+                    .setUsername(user.username)
+                    .setAvatarLink(user.avatar);
+            trigger.setSender(sender);
+
+            return trigger;
+        }
+    }
+
+    private static class PrAttributes {
+
+        public String title;
+
+        @JsonAlias("created_at")
+        public String createdAt;
+
+        public String description;
+
+        public String state;
+
+        public String url;
+
+        @JsonAlias("iid")
+        public String number;
+
+        @JsonAlias("source_branch")
+        public String sourceBranch;
+
+        public Project source;
+
+        @JsonAlias("target_branch")
+        public String targetBranch;
+
+        public Project target;
+
+        @JsonAlias("last_commit")
+        public Commit lastCommit;
+
+    }
+
+    private static class Project {
+
+        public String id;
+
+        public String name;
+
+        @JsonAlias("web_url")
+        public String webUrl;
+    }
+
     private static class GitLabUser {
 
         @JsonAlias("user_id")
         public String id;
 
-        @JsonAlias("user_name")
+        @JsonAlias({"user_name", "name"})
         public String name;
 
-        @JsonAlias("user_username")
+        @JsonAlias({"user_username", "username"})
         public String username;
 
         @JsonAlias("user_email")
         public String email;
 
-        @JsonAlias("user_avatar")
+        @JsonAlias({"user_avatar", "avatar_url"})
         public String avatar;
     }
 

@@ -54,9 +54,9 @@ public class GitHubConverter implements TriggerConverter {
 
     private final Map<String, Function<InputStream, GitTrigger>> mapping =
             ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
-                    .put(Ping, new OnPing())
-                    .put(PushOrTag, new OnPushOrTag())
-                    .put(PR, new OnPr())
+                    .put(Ping, new OnPingEvent())
+                    .put(PushOrTag, new OnPushOrTagEvent())
+                    .put(PR, new OnPrEvent())
                     .build();
 
     @Autowired
@@ -72,7 +72,7 @@ public class GitHubConverter implements TriggerConverter {
     //      Converters
     // ======================================================
 
-    private class OnPing implements Function<InputStream, GitTrigger> {
+    private class OnPingEvent implements Function<InputStream, GitTrigger> {
 
         @Override
         public GitTrigger apply(InputStream stream) {
@@ -86,7 +86,8 @@ public class GitHubConverter implements TriggerConverter {
         }
     }
 
-    private class OnPushOrTag implements Function<InputStream, GitTrigger> {
+    private class OnPushOrTagEvent implements Function<InputStream, GitTrigger> {
+
         @Override
         public GitTrigger apply(InputStream stream) {
             try {
@@ -99,7 +100,8 @@ public class GitHubConverter implements TriggerConverter {
         }
     }
 
-    private class OnPr implements Function<InputStream, GitTrigger> {
+    private class OnPrEvent implements Function<InputStream, GitTrigger> {
+
         @Override
         public GitTrigger apply(InputStream stream) {
             try {

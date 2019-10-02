@@ -57,9 +57,9 @@ public final class GitPrTrigger extends GitTrigger {
 
     private Boolean merged;
 
-    private Source head;
+    private Source head; // from
 
-    private Source base;
+    private Source base; // to
 
     @Override
     public StringVars toVariableMap() {
