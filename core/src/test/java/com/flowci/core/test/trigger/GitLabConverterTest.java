@@ -127,6 +127,15 @@ public class GitLabConverterTest extends SpringScenario {
 
     @Test
     public void should_get_pr_close_trigger_from_gitlab_event() {
+        InputStream stream = load("gitlab/webhook_mr_merged.json");
 
+        Optional<GitTrigger> optional = gitLabConverter.convert(GitLabConverter.PR, stream);
+        Assert.assertTrue(optional.isPresent());
+        Assert.assertTrue(optional.get() instanceof GitPrTrigger);
+
+        GitPrTrigger pr = (GitPrTrigger) optional.get();
+        Assert.assertEquals(GitEvent.PR_MERGED, pr.getEvent());
+        Assert.assertEquals(GitSource.GITLAB, pr.getSource());
+        Assert.assertTrue(pr.getMerged());
     }
 }
