@@ -45,7 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * @author yang
  */
-public class GithubConverterTest extends SpringScenario {
+public class GitHubConverterTest extends SpringScenario {
 
     @Autowired
     private TriggerConverter gitHubConverter;

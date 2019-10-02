@@ -55,9 +55,9 @@ public class GitLabConverter implements TriggerConverter {
 
     public static final String PR = "Merge Request Hook";
 
-    private final Map<String, Function<InputStream, Optional<GitTrigger>>> mapping =
-            ImmutableMap.<String, Function<InputStream, Optional<GitTrigger>>>builder()
-                    .put(Push, new PushEventConverter())
+    private final Map<String, Function<InputStream, GitTrigger>> mapping =
+            ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
+                    .put(Push, new OnPushEvent())
                     .build();
 
     @Autowired
@@ -65,23 +65,24 @@ public class GitLabConverter implements TriggerConverter {
 
     @Override
     public Optional<GitTrigger> convert(String event, InputStream body) {
-        return mapping.get(event).apply(body);
+        GitTrigger trigger = mapping.get(event).apply(body);
+        return Optional.ofNullable(trigger);
     }
 
     // ======================================================
     //      Converters
     // ======================================================
 
-    private class PushEventConverter implements Function<InputStream, Optional<GitTrigger>> {
+    private class OnPushEvent implements Function<InputStream, GitTrigger> {
 
         @Override
-        public Optional<GitTrigger> apply(InputStream stream) {
+        public GitTrigger apply(InputStream stream) {
             try {
                 PushEvent event = objectMapper.readValue(stream, PushEvent.class);
                 return event.toTrigger();
             } catch (IOException e) {
                 log.warn("Unable to parse Gitlab push event");
-                return Optional.empty();
+                return null;
             }
         }
     }
@@ -95,7 +96,7 @@ public class GitLabConverter implements TriggerConverter {
         @JsonProperty("event_name")
         private String name;
 
-        abstract Optional<GitTrigger> toTrigger();
+        abstract GitTrigger toTrigger();
     }
 
     private static class PushEvent extends Event {
@@ -124,7 +125,7 @@ public class GitLabConverter implements TriggerConverter {
         public List<Commit> commits;
 
         @Override
-        Optional<GitTrigger> toTrigger() {
+        GitTrigger toTrigger() {
             GitPushTrigger trigger = new GitPushTrigger();
             trigger.setSource(GitSource.GITLAB);
             trigger.setEvent(GitTrigger.GitEvent.PUSH);
@@ -152,7 +153,7 @@ public class GitLabConverter implements TriggerConverter {
             }
 
             trigger.setAuthor(gitUser);
-            return Optional.of(trigger);
+            return trigger;
         }
     }
 

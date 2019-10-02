@@ -24,14 +24,15 @@ import com.flowci.core.trigger.domain.GitPrTrigger.Source;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
-import com.flowci.util.StringHelper;
-import com.google.common.base.Strings;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -51,55 +52,69 @@ public class GitHubConverter implements TriggerConverter {
 
     public static final String PR = "pull_request";
 
+    private final Map<String, Function<InputStream, GitTrigger>> mapping =
+            ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
+                    .put(Ping, new OnPing())
+                    .put(PushOrTag, new OnPushOrTag())
+                    .put(PR, new OnPr())
+                    .build();
+
     @Autowired
     private ObjectMapper objectMapper;
 
     @Override
     public Optional<GitTrigger> convert(String event, InputStream body) {
-        if (event.equals(PushOrTag)) {
-            return Optional.ofNullable(onPushOrTag(body));
-        }
-
-        if (event.equals(PR)) {
-            return Optional.ofNullable(onPullRequest(body));
-        }
-
-        if (event.equals(Ping)) {
-            return Optional.ofNullable(onPing(body));
-        }
-
-        return Optional.empty();
+        GitTrigger trigger = mapping.get(event).apply(body);
+        return Optional.ofNullable(trigger);
     }
 
-    private GitPingTrigger onPing(InputStream stream) {
-        try {
-            PingObject ping = objectMapper.readValue(stream, PingObject.class);
-            return ping.toTrigger();
-        } catch (IOException e) {
-            log.warn("Unable to parse Github ping event");
-            return null;
+    // ======================================================
+    //      Converters
+    // ======================================================
+
+    private class OnPing implements Function<InputStream, GitTrigger> {
+
+        @Override
+        public GitTrigger apply(InputStream stream) {
+            try {
+                PingObject ping = objectMapper.readValue(stream, PingObject.class);
+                return ping.toTrigger();
+            } catch (IOException e) {
+                log.warn("Unable to parse Github ping event");
+                return null;
+            }
         }
     }
 
-    private GitPushTrigger onPushOrTag(InputStream stream) {
-        try {
-            PushObject push = objectMapper.readValue(stream, PushObject.class);
-            return push.toTrigger();
-        } catch (IOException e) {
-            log.warn("Unable to parse Github push event");
-            return null;
+    private class OnPushOrTag implements Function<InputStream, GitTrigger> {
+        @Override
+        public GitTrigger apply(InputStream stream) {
+            try {
+                PushObject push = objectMapper.readValue(stream, PushObject.class);
+                return push.toTrigger();
+            } catch (IOException e) {
+                log.warn("Unable to parse Github push event");
+                return null;
+            }
         }
     }
 
-    private GitPrTrigger onPullRequest(InputStream stream) {
-        try {
-            PrObject pr = objectMapper.readValue(stream, PrObject.class);
-            return pr.toTrigger();
-        } catch (IOException e) {
-            log.warn("Unable to parse Github PR event");
-            return null;
+    private class OnPr implements Function<InputStream, GitTrigger> {
+        @Override
+        public GitTrigger apply(InputStream stream) {
+            try {
+                PrObject pr = objectMapper.readValue(stream, PrObject.class);
+                return pr.toTrigger();
+            } catch (IOException e) {
+                log.warn("Unable to parse Github PR event");
+                return null;
+            }
         }
     }
+
+    // ======================================================
+    //      Objects for GitHub
+    // ======================================================
 
     private static class PingObject {
 
