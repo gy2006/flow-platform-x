@@ -40,13 +40,15 @@ public abstract class GitTrigger implements Serializable {
 
     public enum GitEvent {
 
+        UNKNOWN,
+
         PING,
 
         PUSH,
 
-        PR_OPEN, // pr opened
+        PR_OPENED, // pr opened
 
-        PR_CLOSE, // pr closed
+        PR_MERGED, // pr merged
 
         TAG
     }
@@ -70,12 +72,12 @@ public abstract class GitTrigger implements Serializable {
             return Trigger.TAG;
         }
 
-        if (event == GitEvent.PR_OPEN) {
-            return Trigger.PR_OPEN;
+        if (event == GitEvent.PR_OPENED) {
+            return Trigger.PR_OPENED;
         }
 
-        if (event == GitEvent.PR_CLOSE) {
-            return Trigger.PR_CLOSE;
+        if (event == GitEvent.PR_MERGED) {
+            return Trigger.PR_MERGED;
         }
 
         throw new NotFoundException("Cannot found related job trigger for {0}", event.name());

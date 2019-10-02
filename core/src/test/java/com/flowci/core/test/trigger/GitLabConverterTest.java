@@ -73,7 +73,7 @@ public class GitLabConverterTest extends SpringScenario {
         Assert.assertTrue(optional.get() instanceof GitPrTrigger);
 
         GitPrTrigger pr = (GitPrTrigger) optional.get();
-        Assert.assertEquals(GitTrigger.GitEvent.PR_OPEN, pr.getEvent());
+        Assert.assertEquals(GitTrigger.GitEvent.PR_OPENED, pr.getEvent());
         Assert.assertEquals(GitSource.GITLAB, pr.getSource());
         Assert.assertFalse(pr.getMerged());
         Assert.assertEquals("Update package.json title", pr.getTitle());
@@ -99,5 +99,10 @@ public class GitLabConverterTest extends SpringScenario {
         Assert.assertEquals(
                 "https://secure.gravatar.com/avatar/25fc63da4f632d2a2c10724cba3b9efc?s=80\u0026d=identicon",
                 sender.getAvatarLink());
+    }
+
+    @Test
+    public void should_get_pr_close_trigger_from_gitlab_event () {
+
     }
 }

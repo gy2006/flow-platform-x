@@ -106,7 +106,7 @@ public class WebhookController {
         return null;
     }
 
-    private class GitSourceWithEvent {
+    private static class GitSourceWithEvent {
 
         private GitSource source;
 

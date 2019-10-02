@@ -184,9 +184,9 @@ public class GitLabConverter implements TriggerConverter {
 
     private static class PrEvent extends Event {
 
-        public final static String PR_OPENED = "opened";
+        final static String PR_OPENED = "opened";
 
-        public final static String PR_MERGED = "merged";
+        final static String PR_MERGED = "merged";
 
         public GitLabUser user;
 
@@ -196,13 +196,9 @@ public class GitLabConverter implements TriggerConverter {
         @Override
         GitTrigger toTrigger() {
             GitPrTrigger trigger = new GitPrTrigger();
-
-            trigger.setEvent(attributes.state.equals(PR_OPENED) ?
-                    GitTrigger.GitEvent.PR_OPEN :
-                    GitTrigger.GitEvent.PR_CLOSE);
+            setTriggerEvent(trigger);
 
             trigger.setSource(GitSource.GITLAB);
-
             trigger.setNumber(attributes.number);
             trigger.setBody(attributes.description);
             trigger.setTitle(attributes.title);
@@ -232,6 +228,20 @@ public class GitLabConverter implements TriggerConverter {
             trigger.setSender(sender);
 
             return trigger;
+        }
+
+        private void setTriggerEvent(GitPrTrigger trigger) {
+            if (attributes.state.equals(PR_OPENED)) {
+                trigger.setEvent(GitTrigger.GitEvent.PR_OPENED);
+                return;
+            }
+
+            if (attributes.state.equals(PR_MERGED)) {
+                trigger.setEvent(GitTrigger.GitEvent.PR_MERGED);
+                return;
+            }
+
+            throw new ArgumentException("Cannot handle action {0} from pull request", attributes.state);
         }
     }
 

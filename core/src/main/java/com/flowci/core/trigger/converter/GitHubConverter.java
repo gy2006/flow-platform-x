@@ -207,9 +207,9 @@ public class GitHubConverter implements TriggerConverter {
 
         public GitPrTrigger toTrigger() {
             GitPrTrigger trigger = new GitPrTrigger();
-            trigger.setEvent(action.equals(PrOpen) ? GitEvent.PR_OPEN : GitEvent.PR_CLOSE);
-            trigger.setSource(GitSource.GITHUB);
+            setTriggerEvent(trigger);
 
+            trigger.setSource(GitSource.GITHUB);
             trigger.setNumber(number);
             trigger.setBody(prBody.body);
             trigger.setTitle(prBody.title);
@@ -239,6 +239,20 @@ public class GitHubConverter implements TriggerConverter {
             trigger.setSender(sender);
 
             return trigger;
+        }
+
+        private void setTriggerEvent(GitPrTrigger trigger) {
+            if (action.equals(PrOpen)) {
+                trigger.setEvent(GitEvent.PR_OPENED);
+                return;
+            }
+
+            if (action.equals(PrClosed)) {
+                trigger.setEvent(GitEvent.PR_MERGED);
+                return;
+            }
+
+            throw new ArgumentException("Cannot handle action {0} from pull request", action);
         }
     }
 

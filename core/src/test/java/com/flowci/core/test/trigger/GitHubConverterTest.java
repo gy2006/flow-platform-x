@@ -149,7 +149,7 @@ public class GitHubConverterTest extends SpringScenario {
         GitPrTrigger trigger = (GitPrTrigger) optional.get();
         Assert.assertNotNull(trigger);
 
-        Assert.assertEquals(GitEvent.PR_OPEN, trigger.getEvent());
+        Assert.assertEquals(GitEvent.PR_OPENED, trigger.getEvent());
         Assert.assertEquals(GitSource.GITHUB, trigger.getSource());
 
         Assert.assertEquals("2", trigger.getNumber());
@@ -184,7 +184,7 @@ public class GitHubConverterTest extends SpringScenario {
         Assert.assertNotNull(trigger);
 
         Assert.assertNotNull(trigger);
-        Assert.assertEquals(GitEvent.PR_CLOSE, trigger.getEvent());
+        Assert.assertEquals(GitEvent.PR_MERGED, trigger.getEvent());
         Assert.assertEquals(GitSource.GITHUB, trigger.getSource());
 
         Assert.assertEquals("7", trigger.getNumber());
