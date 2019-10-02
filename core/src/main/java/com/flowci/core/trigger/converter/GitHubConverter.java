@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 fir.im
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,35 +18,30 @@ package com.flowci.core.trigger.converter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.trigger.domain.GitPingTrigger;
-import com.flowci.core.trigger.domain.GitPrTrigger;
-import com.flowci.core.trigger.domain.GitPrTrigger.Sender;
+import com.flowci.core.common.domain.GitSource;
+import com.flowci.core.trigger.domain.*;
 import com.flowci.core.trigger.domain.GitPrTrigger.Source;
-import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitPushTrigger.Author;
-import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
-import com.flowci.core.trigger.domain.GitTrigger.GitSource;
+import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
-import com.flowci.util.StringHelper;
-import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import lombok.Data;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author yang
  */
 @Log4j2
-@Component
+@Component("gitHubConverter")
 public class GitHubConverter implements TriggerConverter {
 
     public static final String Header = "X-GitHub-Event";
@@ -57,55 +52,71 @@ public class GitHubConverter implements TriggerConverter {
 
     public static final String PR = "pull_request";
 
+    private final Map<String, Function<InputStream, GitTrigger>> mapping =
+            ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
+                    .put(Ping, new OnPingEvent())
+                    .put(PushOrTag, new OnPushOrTagEvent())
+                    .put(PR, new OnPrEvent())
+                    .build();
+
     @Autowired
     private ObjectMapper objectMapper;
 
     @Override
     public Optional<GitTrigger> convert(String event, InputStream body) {
-        if (event.equals(PushOrTag)) {
-            return Optional.ofNullable(onPushOrTag(body));
-        }
-
-        if (event.equals(PR)) {
-            return Optional.ofNullable(onPullRequest(body));
-        }
-
-        if (event.equals(Ping)) {
-            return Optional.ofNullable(onPing(body));
-        }
-
-        return Optional.empty();
+        GitTrigger trigger = mapping.get(event).apply(body);
+        return Optional.ofNullable(trigger);
     }
 
-    private GitPingTrigger onPing(InputStream stream) {
-        try {
-            PingObject ping = objectMapper.readValue(stream, PingObject.class);
-            return ping.toTrigger();
-        } catch (IOException e) {
-            log.warn("Unable to parse Github ping event");
-            return null;
+    // ======================================================
+    //      Converters
+    // ======================================================
+
+    private class OnPingEvent implements Function<InputStream, GitTrigger> {
+
+        @Override
+        public GitTrigger apply(InputStream stream) {
+            try {
+                PingObject ping = objectMapper.readValue(stream, PingObject.class);
+                return ping.toTrigger();
+            } catch (IOException e) {
+                log.warn("Unable to parse Github ping event");
+                return null;
+            }
         }
     }
 
-    private GitPushTrigger onPushOrTag(InputStream stream) {
-        try {
-            PushObject push = objectMapper.readValue(stream, PushObject.class);
-            return push.toTrigger();
-        } catch (IOException e) {
-            log.warn("Unable to parse Github push event");
-            return null;
+    private class OnPushOrTagEvent implements Function<InputStream, GitTrigger> {
+
+        @Override
+        public GitTrigger apply(InputStream stream) {
+            try {
+                PushObject push = objectMapper.readValue(stream, PushObject.class);
+                return push.toTrigger();
+            } catch (IOException e) {
+                log.warn("Unable to parse Github push event");
+                return null;
+            }
         }
     }
 
-    private GitPrTrigger onPullRequest(InputStream stream) {
-        try {
-            PrObject pr = objectMapper.readValue(stream, PrObject.class);
-            return pr.toTrigger();
-        } catch (IOException e) {
-            log.warn("Unable to parse Github PR event");
-            return null;
+    private class OnPrEvent implements Function<InputStream, GitTrigger> {
+
+        @Override
+        public GitTrigger apply(InputStream stream) {
+            try {
+                PrObject pr = objectMapper.readValue(stream, PrObject.class);
+                return pr.toTrigger();
+            } catch (IOException e) {
+                log.warn("Unable to parse Github PR event");
+                return null;
+            }
         }
     }
+
+    // ======================================================
+    //      Objects for GitHub
+    // ======================================================
 
     private static class PingObject {
 
@@ -157,7 +168,7 @@ public class GitHubConverter implements TriggerConverter {
 
         public GitPushTrigger toTrigger() {
             if (Objects.isNull(commit)) {
-                throw new ArgumentException("On commits data on Github push event");
+                throw new ArgumentException("No commits data on Github push event");
             }
 
             GitPushTrigger trigger = new GitPushTrigger();
@@ -168,34 +179,13 @@ public class GitHubConverter implements TriggerConverter {
             trigger.setMessage(commit.message);
             trigger.setCommitUrl(commit.url);
             trigger.setCompareUrl(compare);
-            trigger.setRef(getBranchName(ref));
+            trigger.setRef(BranchHelper.getBranchName(ref));
             trigger.setTime(commit.timestamp);
 
             // set commit author info
             trigger.setAuthor(pusher.toAuthor());
 
             return trigger;
-        }
-
-        private static String getBranchName(String ref) {
-            if (Strings.isNullOrEmpty(ref)) {
-                return StringHelper.EMPTY;
-            }
-
-            // find first '/'
-            int index = ref.indexOf('/');
-            if (index == -1) {
-                return StringHelper.EMPTY;
-            }
-
-            // find second '/'
-            ref = ref.substring(index + 1);
-            index = ref.indexOf('/');
-            if (index == -1) {
-                return StringHelper.EMPTY;
-            }
-
-            return ref.substring(index + 1);
         }
     }
 
@@ -217,9 +207,9 @@ public class GitHubConverter implements TriggerConverter {
 
         public GitPrTrigger toTrigger() {
             GitPrTrigger trigger = new GitPrTrigger();
-            trigger.setEvent(action.equals(PrOpen) ? GitEvent.PR_OPEN : GitEvent.PR_CLOSE);
-            trigger.setSource(GitSource.GITHUB);
+            setTriggerEvent(trigger);
 
+            trigger.setSource(GitSource.GITHUB);
             trigger.setNumber(number);
             trigger.setBody(prBody.body);
             trigger.setTitle(prBody.title);
@@ -243,12 +233,26 @@ public class GitHubConverter implements TriggerConverter {
             base.setRepoUrl(prBody.base.repo.url);
             trigger.setBase(base);
 
-            Sender sender = new Sender();
-            sender.setId(prSender.id);
-            sender.setUsername(prSender.username);
+            GitUser sender = new GitUser()
+                    .setId(prSender.id)
+                    .setUsername(prSender.username);
             trigger.setSender(sender);
 
             return trigger;
+        }
+
+        private void setTriggerEvent(GitPrTrigger trigger) {
+            if (action.equals(PrOpen)) {
+                trigger.setEvent(GitEvent.PR_OPENED);
+                return;
+            }
+
+            if (action.equals(PrClosed) && prBody.merged) {
+                trigger.setEvent(GitEvent.PR_MERGED);
+                return;
+            }
+
+            throw new ArgumentException("Cannot handle action {0} from pull request", action);
         }
     }
 
@@ -324,12 +328,11 @@ public class GitHubConverter implements TriggerConverter {
 
         public String username;
 
-        public Author toAuthor() {
-            Author author = new Author();
-            author.setEmail(email);
-            author.setName(name);
-            author.setUsername(username);
-            return author;
+        public GitUser toAuthor() {
+            return new GitUser()
+                    .setEmail(email)
+                    .setName(name)
+                    .setUsername(username);
         }
 
     }

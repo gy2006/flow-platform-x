@@ -25,6 +25,7 @@ import static com.flowci.core.trigger.domain.Variables.GIT_COMPARE_URL;
 import static com.flowci.core.trigger.domain.Variables.GIT_EVENT;
 import static com.flowci.core.trigger.domain.Variables.GIT_SOURCE;
 
+import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.converter.GitHubConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
@@ -33,7 +34,6 @@ import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
-import com.flowci.core.trigger.domain.GitTrigger.GitSource;
 import com.flowci.core.trigger.domain.Variables;
 import com.flowci.domain.StringVars;
 import java.io.InputStream;
@@ -45,16 +45,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * @author yang
  */
-public class GithubConverterTest extends SpringScenario {
+public class GitHubConverterTest extends SpringScenario {
 
     @Autowired
-    private TriggerConverter githubConverter;
+    private TriggerConverter gitHubConverter;
 
     @Test
     public void should_parse_ping_event() {
         InputStream stream = load("github/webhook_ping.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.Ping, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.Ping, stream);
         Assert.assertTrue(optional.isPresent());
 
         GitPingTrigger trigger = (GitPingTrigger) optional.get();
@@ -70,7 +70,7 @@ public class GithubConverterTest extends SpringScenario {
     public void should_parse_push_event() {
         InputStream stream = load("github/webhook_push.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PushOrTag, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PushOrTag, stream);
         GitPushTrigger trigger = (GitPushTrigger) optional.get();
 
         Assert.assertNotNull(trigger);
@@ -95,7 +95,7 @@ public class GithubConverterTest extends SpringScenario {
     public void should_parse_push_event_and_create_variables() {
         InputStream stream = load("github/webhook_push.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PushOrTag, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PushOrTag, stream);
         GitPushTrigger trigger = (GitPushTrigger) optional.get();
 
         StringVars variables = trigger.toVariableMap();
@@ -121,7 +121,7 @@ public class GithubConverterTest extends SpringScenario {
     public void should_parse_tag_event() {
         InputStream stream = load("github/webhook_tag.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PushOrTag, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PushOrTag, stream);
         GitPushTrigger trigger = (GitPushTrigger) optional.get();
         Assert.assertNotNull(trigger);
 
@@ -145,11 +145,11 @@ public class GithubConverterTest extends SpringScenario {
     public void should_parse_pr_open_event() {
         InputStream stream = load("github/webhook_pr_open.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PR, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PR, stream);
         GitPrTrigger trigger = (GitPrTrigger) optional.get();
         Assert.assertNotNull(trigger);
 
-        Assert.assertEquals(GitEvent.PR_OPEN, trigger.getEvent());
+        Assert.assertEquals(GitEvent.PR_OPENED, trigger.getEvent());
         Assert.assertEquals(GitSource.GITHUB, trigger.getSource());
 
         Assert.assertEquals("2", trigger.getNumber());
@@ -179,12 +179,12 @@ public class GithubConverterTest extends SpringScenario {
     public void should_parse_pr_close_event() {
         InputStream stream = load("github/webhook_pr_close.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PR, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PR, stream);
         GitPrTrigger trigger = (GitPrTrigger) optional.get();
         Assert.assertNotNull(trigger);
 
         Assert.assertNotNull(trigger);
-        Assert.assertEquals(GitEvent.PR_CLOSE, trigger.getEvent());
+        Assert.assertEquals(GitEvent.PR_MERGED, trigger.getEvent());
         Assert.assertEquals(GitSource.GITHUB, trigger.getSource());
 
         Assert.assertEquals("7", trigger.getNumber());

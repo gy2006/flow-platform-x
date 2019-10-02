@@ -66,14 +66,14 @@ public class Job extends Mongoable implements Pathable {
         PUSH,
 
         /**
-         * Git PR open event
+         * Git PR opened event
          */
-        PR_OPEN,
+        PR_OPENED,
 
         /**
-         * Git PR close event
+         * Git PR merged event
          */
-        PR_CLOSE,
+        PR_MERGED,
 
         /**
          * Git tag event

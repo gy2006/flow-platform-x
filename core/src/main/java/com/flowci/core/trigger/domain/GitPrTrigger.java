@@ -53,18 +53,18 @@ public final class GitPrTrigger extends GitTrigger {
 
     private String numOfFileChanges;
 
-    private Sender sender;
+    private GitUser sender;
 
     private Boolean merged;
 
-    private Source head;
+    private Source head; // from
 
-    private Source base;
+    private Source base; // to
 
     @Override
     public StringVars toVariableMap() {
         StringVars map = super.toVariableMap();
-        map.put(Variables.GIT_AUTHOR, sender.username);
+        map.put(Variables.GIT_AUTHOR, sender.getUsername());
 
         map.put(PR_TITLE, title);
         map.put(PR_MESSAGE, body);
@@ -80,15 +80,6 @@ public final class GitPrTrigger extends GitTrigger {
         map.put(PR_BASE_REPO_BRANCH, base.ref);
         map.put(PR_BASE_REPO_COMMIT, base.commit);
         return map;
-    }
-
-    @Getter
-    @Setter
-    public static class Sender {
-
-        private String id;
-
-        private String username;
     }
 
     @Getter
