@@ -23,13 +23,13 @@ import com.flowci.core.trigger.converter.TriggerConverter;
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
+import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitUser;
+import java.io.InputStream;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.io.InputStream;
-import java.util.Optional;
 
 public class GitLabConverterTest extends SpringScenario {
 
@@ -53,15 +53,39 @@ public class GitLabConverterTest extends SpringScenario {
         Assert.assertEquals("Update .flow.yml test", push.getMessage());
         Assert.assertEquals("2017-10-17T08:23:36Z", push.getTime());
         Assert.assertEquals(
-                "https://gitlab.com/yang-guo-2016/kai-web/commit/d8e7334543d437c1a889a9187e66d1968280d7d4",
-                push.getCommitUrl());
+            "https://gitlab.com/yang-guo-2016/kai-web/commit/d8e7334543d437c1a889a9187e66d1968280d7d4",
+            push.getCommitUrl());
 
         GitUser author = push.getAuthor();
         Assert.assertEquals("yang-guo-2016", author.getUsername());
         Assert.assertEquals("benqyang_2006@hotmail.com", author.getEmail());
         Assert.assertEquals(
-                "https://secure.gravatar.com/avatar/25fc63da4f632d2a2c10724cba3b9efc?s=80\u0026d=identicon",
-                author.getAvatarLink());
+            "https://secure.gravatar.com/avatar/25fc63da4f632d2a2c10724cba3b9efc?s=80\u0026d=identicon",
+            author.getAvatarLink());
+    }
+
+    @Test
+    public void should_get_tag_trigger_from_gitlab_event() {
+        InputStream stream = load("gitlab/webhook_tag.json");
+
+        Optional<GitTrigger> optional = gitLabConverter.convert(GitLabConverter.Tag, stream);
+        Assert.assertTrue(optional.isPresent());
+        Assert.assertTrue(optional.get() instanceof GitPushTrigger);
+
+        GitPushTrigger tag = (GitPushTrigger) optional.get();
+        Assert.assertEquals(GitEvent.TAG, tag.getEvent());
+        Assert.assertEquals(GitSource.GITLAB, tag.getSource());
+
+        Assert.assertEquals("ee31197fd0fab68d1e5ab56dabcfae150ab5d057", tag.getCommitId());
+        Assert.assertEquals("v2.0", tag.getRef());
+        Assert.assertEquals("test tag push", tag.getMessage());
+
+        GitUser author = tag.getAuthor();
+        Assert.assertEquals("yang-guo-2016", author.getUsername());
+        Assert.assertEquals("gy@fir.im", author.getEmail());
+        Assert.assertEquals(
+            "https://secure.gravatar.com/avatar/25fc63da4f632d2a2c10724cba3b9efc?s=80\u0026d=identicon",
+            author.getAvatarLink());
     }
 
     @Test
@@ -97,12 +121,12 @@ public class GitLabConverterTest extends SpringScenario {
         Assert.assertNull(sender.getEmail());
         Assert.assertEquals("yang-guo-2016", sender.getUsername());
         Assert.assertEquals(
-                "https://secure.gravatar.com/avatar/25fc63da4f632d2a2c10724cba3b9efc?s=80\u0026d=identicon",
-                sender.getAvatarLink());
+            "https://secure.gravatar.com/avatar/25fc63da4f632d2a2c10724cba3b9efc?s=80\u0026d=identicon",
+            sender.getAvatarLink());
     }
 
     @Test
-    public void should_get_pr_close_trigger_from_gitlab_event () {
+    public void should_get_pr_close_trigger_from_gitlab_event() {
 
     }
 }

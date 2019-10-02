@@ -23,15 +23,13 @@ import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
+import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.domain.GitUser;
 import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
 import com.flowci.util.StringHelper;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -39,6 +37,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * @author yang
@@ -49,8 +50,6 @@ public class GitLabConverter implements TriggerConverter {
 
     public static final String Header = "x-gitlab-event";
 
-    public static final String Ping = "ping";
-
     public static final String Push = "Push Hook";
 
     public static final String Tag = "Tag Push Hook";
@@ -58,10 +57,11 @@ public class GitLabConverter implements TriggerConverter {
     public static final String PR = "Merge Request Hook";
 
     private final Map<String, Function<InputStream, GitTrigger>> mapping =
-            ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
-                    .put(Push, new OnPushEvent())
-                    .put(PR, new OnPrEvent())
-                    .build();
+        ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
+            .put(Push, new OnPushOrTagEvent())
+            .put(Tag, new OnPushOrTagEvent())
+            .put(PR, new OnPrEvent())
+            .build();
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -76,25 +76,17 @@ public class GitLabConverter implements TriggerConverter {
     //      Converters
     // ======================================================
 
-    private class OnPushEvent implements Function<InputStream, GitTrigger> {
+    private class OnPushOrTagEvent implements Function<InputStream, GitTrigger> {
 
         @Override
         public GitTrigger apply(InputStream stream) {
             try {
-                PushEvent event = objectMapper.readValue(stream, PushEvent.class);
+                PushOrTagEvent event = objectMapper.readValue(stream, PushOrTagEvent.class);
                 return event.toTrigger();
             } catch (IOException e) {
                 log.warn("Unable to parse Gitlab push event");
                 return null;
             }
-        }
-    }
-
-    private class OnTagEvent implements Function<InputStream, GitTrigger> {
-
-        @Override
-        public GitTrigger apply(InputStream stream) {
-            return null;
         }
     }
 
@@ -124,13 +116,19 @@ public class GitLabConverter implements TriggerConverter {
         abstract GitTrigger toTrigger();
     }
 
-    private static class PushEvent extends Event {
+    private static class PushOrTagEvent extends Event {
+
+        final static String PushEvent = "push";
+
+        final static String TagEvent = "tag_push";
 
         public String before;
 
         public String after;
 
         public String ref;
+
+        public String message;
 
         @JsonAlias("user_id")
         public String userId;
@@ -151,18 +149,24 @@ public class GitLabConverter implements TriggerConverter {
 
         @Override
         GitTrigger toTrigger() {
-            GitPushTrigger trigger = new GitPushTrigger();
-            trigger.setSource(GitSource.GITLAB);
-            trigger.setEvent(GitTrigger.GitEvent.PUSH);
-
             if (commits == null || commits.size() == 0) {
                 throw new ArgumentException("No commits data on GitLab push event");
             }
 
+            GitPushTrigger trigger = new GitPushTrigger();
+            trigger.setSource(GitSource.GITLAB);
+            trigger.setEvent(getEvent());
+
+            trigger.setCommitId(after);
+            trigger.setMessage(message);
+
             Commit topCommit = commits.get(0);
 
-            trigger.setCommitId(topCommit.id);
-            trigger.setMessage(topCommit.message);
+            // get message from commit if no message available
+            if (Strings.isNullOrEmpty(message)) {
+                trigger.setMessage(topCommit.message);
+            }
+
             trigger.setCommitUrl(topCommit.url);
             trigger.setCompareUrl(topCommit.url);
             trigger.setRef(BranchHelper.getBranchName(ref));
@@ -170,7 +174,7 @@ public class GitLabConverter implements TriggerConverter {
 
             // set commit author info
             GitUser gitUser = new GitUser()
-                    .setEmail(topCommit.author.email);
+                .setEmail(topCommit.author.email);
 
             if (Objects.equals(topCommit.author.name, nameOfUser)) {
                 gitUser.setUsername(username);
@@ -180,13 +184,25 @@ public class GitLabConverter implements TriggerConverter {
             trigger.setAuthor(gitUser);
             return trigger;
         }
+
+        private GitEvent getEvent() {
+            if (name.equals(TagEvent)) {
+                return GitEvent.TAG;
+            }
+
+            if (name.equals(PushEvent)) {
+                return GitEvent.PUSH;
+            }
+
+            throw new ArgumentException("Unsupported event '{0}' from gitlab", name);
+        }
     }
 
     private static class PrEvent extends Event {
 
-        final static String PR_OPENED = "opened";
+        final static String PrOpened = "opened";
 
-        final static String PR_MERGED = "merged";
+        final static String PrMerged = "merged";
 
         public GitLabUser user;
 
@@ -206,7 +222,7 @@ public class GitLabConverter implements TriggerConverter {
             trigger.setTime(attributes.createdAt);
             trigger.setNumOfCommits("0");
             trigger.setNumOfFileChanges("0");
-            trigger.setMerged(attributes.state.equals(PR_MERGED));
+            trigger.setMerged(attributes.state.equals(PrMerged));
 
             GitPrTrigger.Source head = new GitPrTrigger.Source();
             head.setCommit(attributes.lastCommit.id);
@@ -223,25 +239,25 @@ public class GitLabConverter implements TriggerConverter {
             trigger.setBase(base);
 
             GitUser sender = new GitUser()
-                    .setUsername(user.username)
-                    .setAvatarLink(user.avatar);
+                .setUsername(user.username)
+                .setAvatarLink(user.avatar);
             trigger.setSender(sender);
 
             return trigger;
         }
 
         private void setTriggerEvent(GitPrTrigger trigger) {
-            if (attributes.state.equals(PR_OPENED)) {
+            if (attributes.state.equals(PrOpened)) {
                 trigger.setEvent(GitTrigger.GitEvent.PR_OPENED);
                 return;
             }
 
-            if (attributes.state.equals(PR_MERGED)) {
+            if (attributes.state.equals(PrMerged)) {
                 trigger.setEvent(GitTrigger.GitEvent.PR_MERGED);
                 return;
             }
 
-            throw new ArgumentException("Cannot handle action {0} from pull request", attributes.state);
+            throw new ArgumentException("Unsupported pr action '{0}' from gitlab", attributes.state);
         }
     }
 
