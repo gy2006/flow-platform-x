@@ -48,13 +48,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class GithubConverterTest extends SpringScenario {
 
     @Autowired
-    private TriggerConverter githubConverter;
+    private TriggerConverter gitHubConverter;
 
     @Test
     public void should_parse_ping_event() {
         InputStream stream = load("github/webhook_ping.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.Ping, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.Ping, stream);
         Assert.assertTrue(optional.isPresent());
 
         GitPingTrigger trigger = (GitPingTrigger) optional.get();
@@ -70,7 +70,7 @@ public class GithubConverterTest extends SpringScenario {
     public void should_parse_push_event() {
         InputStream stream = load("github/webhook_push.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PushOrTag, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PushOrTag, stream);
         GitPushTrigger trigger = (GitPushTrigger) optional.get();
 
         Assert.assertNotNull(trigger);
@@ -95,7 +95,7 @@ public class GithubConverterTest extends SpringScenario {
     public void should_parse_push_event_and_create_variables() {
         InputStream stream = load("github/webhook_push.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PushOrTag, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PushOrTag, stream);
         GitPushTrigger trigger = (GitPushTrigger) optional.get();
 
         StringVars variables = trigger.toVariableMap();
@@ -121,7 +121,7 @@ public class GithubConverterTest extends SpringScenario {
     public void should_parse_tag_event() {
         InputStream stream = load("github/webhook_tag.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PushOrTag, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PushOrTag, stream);
         GitPushTrigger trigger = (GitPushTrigger) optional.get();
         Assert.assertNotNull(trigger);
 
@@ -145,7 +145,7 @@ public class GithubConverterTest extends SpringScenario {
     public void should_parse_pr_open_event() {
         InputStream stream = load("github/webhook_pr_open.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PR, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PR, stream);
         GitPrTrigger trigger = (GitPrTrigger) optional.get();
         Assert.assertNotNull(trigger);
 
@@ -179,7 +179,7 @@ public class GithubConverterTest extends SpringScenario {
     public void should_parse_pr_close_event() {
         InputStream stream = load("github/webhook_pr_close.json");
 
-        Optional<GitTrigger> optional = githubConverter.convert(GitHubConverter.PR, stream);
+        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PR, stream);
         GitPrTrigger trigger = (GitPrTrigger) optional.get();
         Assert.assertNotNull(trigger);
 

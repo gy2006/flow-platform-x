@@ -22,6 +22,7 @@ import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.trigger.domain.*;
 import com.flowci.core.trigger.domain.GitPrTrigger.Source;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
+import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
 import com.flowci.util.StringHelper;
 import com.google.common.base.Strings;
@@ -150,7 +151,7 @@ public class GitHubConverter implements TriggerConverter {
 
         public GitPushTrigger toTrigger() {
             if (Objects.isNull(commit)) {
-                throw new ArgumentException("On commits data on Github push event");
+                throw new ArgumentException("No commits data on Github push event");
             }
 
             GitPushTrigger trigger = new GitPushTrigger();
@@ -161,34 +162,13 @@ public class GitHubConverter implements TriggerConverter {
             trigger.setMessage(commit.message);
             trigger.setCommitUrl(commit.url);
             trigger.setCompareUrl(compare);
-            trigger.setRef(getBranchName(ref));
+            trigger.setRef(BranchHelper.getBranchName(ref));
             trigger.setTime(commit.timestamp);
 
             // set commit author info
             trigger.setAuthor(pusher.toAuthor());
 
             return trigger;
-        }
-
-        private static String getBranchName(String ref) {
-            if (Strings.isNullOrEmpty(ref)) {
-                return StringHelper.EMPTY;
-            }
-
-            // find first '/'
-            int index = ref.indexOf('/');
-            if (index == -1) {
-                return StringHelper.EMPTY;
-            }
-
-            // find second '/'
-            ref = ref.substring(index + 1);
-            index = ref.indexOf('/');
-            if (index == -1) {
-                return StringHelper.EMPTY;
-            }
-
-            return ref.substring(index + 1);
         }
     }
 
