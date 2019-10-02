@@ -247,7 +247,7 @@ public class GitHubConverter implements TriggerConverter {
                 return;
             }
 
-            if (action.equals(PrClosed)) {
+            if (action.equals(PrClosed) && prBody.merged) {
                 trigger.setEvent(GitEvent.PR_MERGED);
                 return;
             }
