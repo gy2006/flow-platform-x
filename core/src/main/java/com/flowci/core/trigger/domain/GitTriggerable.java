@@ -16,7 +16,7 @@
 
 package com.flowci.core.trigger.domain;
 
-public interface GitEvent {
+public interface GitTriggerable {
 
     GitTrigger toTrigger();
 }

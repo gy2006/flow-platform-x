@@ -17,10 +17,8 @@
 package com.flowci.core.trigger.converter;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.GitSource;
-import com.flowci.core.trigger.domain.GitEvent;
+import com.flowci.core.trigger.domain.GitTriggerable;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitUser;
@@ -28,20 +26,17 @@ import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 
 @Log4j2
 @Component("gogsConverter")
-public class GogsConverter implements TriggerConverter {
+public class GogsConverter extends TriggerConverter {
 
     public static final String Header = "x-gogs-event";
 
@@ -53,39 +48,20 @@ public class GogsConverter implements TriggerConverter {
 
     private final Map<String, Function<InputStream, GitTrigger>> mapping =
             ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
-                    .put(PushOrTag, new EventConverter<>(PushOrTagEvent.class))
+                    .put(PushOrTag, new EventConverter<>("PushOrTag", PushOrTagEvent.class))
                     .build();
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Override
+    GitSource getGitSource() {
+        return GitSource.GOGS;
+    }
 
     @Override
-    public Optional<GitTrigger> convert(String event, InputStream body) {
-        GitTrigger trigger = mapping.get(event).apply(body);
-        return Optional.ofNullable(trigger);
+    Map<String, Function<InputStream, GitTrigger>> getMapping() {
+        return mapping;
     }
 
-    private class EventConverter<T extends GitEvent> implements Function<InputStream, GitTrigger> {
-
-        private final Class<T> target;
-
-        public EventConverter(Class<T> target) {
-            this.target = target;
-        }
-
-        @Override
-        public GitTrigger apply(InputStream stream) {
-            try {
-                T event = objectMapper.readValue(stream, target);
-                return event.toTrigger();
-            } catch (IOException e) {
-                log.warn("Unable to parse Gogs ping event");
-                return null;
-            }
-        }
-    }
-
-    private static class PushOrTagEvent implements GitEvent {
+    private static class PushOrTagEvent implements GitTriggerable {
 
         public String before;
 
