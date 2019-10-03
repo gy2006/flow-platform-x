@@ -18,10 +18,7 @@ package com.flowci.core.trigger.converter;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.flowci.core.common.domain.GitSource;
-import com.flowci.core.trigger.domain.GitTriggerable;
-import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitTrigger;
-import com.flowci.core.trigger.domain.GitUser;
+import com.flowci.core.trigger.domain.*;
 import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
 import com.flowci.util.StringHelper;
@@ -51,6 +48,7 @@ public class GogsConverter extends TriggerConverter {
             ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
                     .put(Push, new EventConverter<>("Push", PushEvent.class))
                     .put(Tag, new EventConverter<>("Tag", ReleaseEvent.class))
+                    .put(PR, new EventConverter<>("PR", PrEvent.class))
                     .build();
 
     @Override
@@ -125,6 +123,111 @@ public class GogsConverter extends TriggerConverter {
 
             return tag;
         }
+    }
+
+    private static class PrEvent implements GitTriggerable {
+
+        final static String ACTION_OPENED = "opened";
+
+        final static String ACTION_CLOSED = "closed";
+
+        public String action;
+
+        @JsonAlias("pull_request")
+        public PrBody prBody;
+
+        public User sender;
+
+        @Override
+        public GitTrigger toTrigger() {
+            GitPrTrigger trigger = new GitPrTrigger();
+            setTriggerEvent(trigger);
+
+            trigger.setSource(GitSource.GOGS);
+            trigger.setNumber(prBody.number);
+            trigger.setBody(prBody.body);
+            trigger.setTitle(prBody.title);
+            trigger.setUrl(prBody.url);
+            trigger.setTime(prBody.mergedAt);
+            trigger.setNumOfCommits(StringHelper.EMPTY);
+            trigger.setNumOfFileChanges(StringHelper.EMPTY);
+            trigger.setMerged(prBody.merged);
+
+            GitPrTrigger.Source head = new GitPrTrigger.Source();
+            head.setCommit(StringHelper.EMPTY);
+            head.setRef(prBody.headBranch);
+            head.setRepoName(prBody.head.fullName);
+            head.setRepoUrl(prBody.head.url);
+            trigger.setHead(head);
+
+            GitPrTrigger.Source base = new GitPrTrigger.Source();
+            base.setCommit(StringHelper.EMPTY);
+            base.setRef(prBody.baseBranch);
+            base.setRepoName(prBody.base.fullName);
+            base.setRepoUrl(prBody.base.url);
+            trigger.setBase(base);
+
+            trigger.setSender(sender.toGitUser());
+            return trigger;
+        }
+
+        private void setTriggerEvent(GitPrTrigger trigger) {
+            if (action.equals(ACTION_OPENED)) {
+                trigger.setEvent(GitTrigger.GitEvent.PR_OPENED);
+                return;
+            }
+
+            if (action.equals(ACTION_CLOSED) && prBody.merged) {
+                trigger.setEvent(GitTrigger.GitEvent.PR_MERGED);
+                return;
+            }
+
+            throw new ArgumentException("Cannot handle action {0} from pull request", action);
+        }
+    }
+
+    private static class PrBody {
+
+        public String id;
+
+        public String number;
+
+        public String title;
+
+        public String body;
+
+        public User user;
+
+        @JsonAlias("html_url")
+        public String url;
+
+        @JsonAlias("head_repo")
+        public Repo head;
+
+        @JsonAlias("head_branch")
+        public String headBranch;
+
+        @JsonAlias("base_repo")
+        public Repo base;
+
+        @JsonAlias("base_branch")
+        public String baseBranch;
+
+        public boolean merged;
+
+        @JsonAlias("merged_at")
+        public String mergedAt;
+    }
+
+    private static class Repo {
+
+        public String name;
+
+        @JsonAlias("full_name")
+        public String fullName;
+
+        @JsonAlias("html_url")
+        public String url;
     }
 
     private static class Release {

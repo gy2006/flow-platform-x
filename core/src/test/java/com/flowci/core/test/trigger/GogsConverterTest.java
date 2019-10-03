@@ -17,7 +17,6 @@
 package com.flowci.core.test.trigger;
 
 import com.flowci.core.test.SpringScenario;
-import com.flowci.core.trigger.converter.GitHubConverter;
 import com.flowci.core.trigger.converter.GogsConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
 import com.flowci.core.trigger.domain.GitPushTrigger;
