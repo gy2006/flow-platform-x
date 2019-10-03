@@ -39,7 +39,7 @@ public class GogsConverterTest extends SpringScenario {
     public void should_get_push_trigger_from_gogs_event() {
         InputStream stream = load("gogs/webhook_push.json");
 
-        Optional<GitTrigger> optional = gogsConverter.convert(GogsConverter.PushOrTag, stream);
+        Optional<GitTrigger> optional = gogsConverter.convert(GogsConverter.Push, stream);
         Assert.assertTrue(optional.isPresent());
         Assert.assertTrue(optional.get() instanceof GitPushTrigger);
 
@@ -58,5 +58,28 @@ public class GogsConverterTest extends SpringScenario {
         Assert.assertEquals(
                 "https://secure.gravatar.com/avatar/0dce14d99e8295e36aca078f195fa0c3?d=identicon",
                 pusher.getAvatarLink());
+    }
+
+    @Test
+    public void should_get_tag_trigger_from_gogs_event() {
+        InputStream stream = load("gogs/webhook_tag.json");
+
+        Optional<GitTrigger> optional = gogsConverter.convert(GogsConverter.Tag, stream);
+        Assert.assertTrue(optional.isPresent());
+        Assert.assertTrue(optional.get() instanceof GitPushTrigger);
+
+        GitPushTrigger tag = (GitPushTrigger) optional.get();
+        Assert.assertEquals("v4.0", tag.getRef());
+        Assert.assertEquals("4", tag.getCommitId());
+        Assert.assertEquals("2019-10-03T12:46:57Z", tag.getTime());
+        Assert.assertEquals("title for v4.0", tag.getMessage());
+        Assert.assertEquals("", tag.getCommitUrl());
+
+        GitUser author = tag.getAuthor();
+        Assert.assertEquals("test", author.getUsername());
+        Assert.assertEquals("benqyang_2006@gogs.com", author.getEmail());
+        Assert.assertEquals(
+                "https://secure.gravatar.com/avatar/0dce14d99e8295e36aca078f195fa0c3?d=identicon",
+                author.getAvatarLink());
     }
 }

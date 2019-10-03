@@ -24,6 +24,7 @@ import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitUser;
 import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
+import com.flowci.util.StringHelper;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
@@ -40,15 +41,16 @@ public class GogsConverter extends TriggerConverter {
 
     public static final String Header = "x-gogs-event";
 
-    public static final String Ping = "ping";
+    public static final String Push = "push";
 
-    public static final String PushOrTag = "push";
+    public static final String Tag = "release";
 
     public static final String PR = "pull_request";
 
     private final Map<String, Function<InputStream, GitTrigger>> mapping =
             ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
-                    .put(PushOrTag, new EventConverter<>("PushOrTag", PushOrTagEvent.class))
+                    .put(Push, new EventConverter<>("Push", PushEvent.class))
+                    .put(Tag, new EventConverter<>("Tag", ReleaseEvent.class))
                     .build();
 
     @Override
@@ -61,7 +63,11 @@ public class GogsConverter extends TriggerConverter {
         return mapping;
     }
 
-    private static class PushOrTagEvent implements GitTriggerable {
+    // ======================================================
+    //      Objects for GitHub
+    // ======================================================
+
+    private static class PushEvent implements GitTriggerable {
 
         public String before;
 
@@ -95,6 +101,51 @@ public class GogsConverter extends TriggerConverter {
 
             return trigger;
         }
+    }
+
+    // Release event
+    private static class ReleaseEvent implements GitTriggerable {
+
+        public String action;
+
+        public Release release;
+
+        @Override
+        public GitTrigger toTrigger() {
+            GitPushTrigger tag = new GitPushTrigger();
+            tag.setEvent(GitTrigger.GitEvent.TAG);
+            tag.setSource(GitSource.GOGS);
+
+            tag.setRef(release.tagName);
+            tag.setMessage(release.name);
+            tag.setCommitId(release.id);
+            tag.setTime(release.createdAt);
+            tag.setCommitUrl(StringHelper.EMPTY);
+            tag.setAuthor(release.author.toGitUser());
+
+            return tag;
+        }
+    }
+
+    private static class Release {
+
+        public String id;
+
+        @JsonAlias("tag_name")
+        public String tagName;
+
+        @JsonAlias("target_commitish")
+        public String ref;
+
+        // title
+        public String name;
+
+        public String body;
+
+        @JsonAlias("created_at")
+        public String createdAt;
+
+        public User author;
     }
 
     private static class Commit {
