@@ -36,8 +36,6 @@ public class Variables {
 
     public static final String GIT_BRANCH = "FLOWCI_GIT_BRANCH";
 
-    public static final String GIT_COMPARE_URL = "FLOWCI_GIT_COMPARE_URL";
-
     public static final String GIT_COMMIT_ID = "FLOWCI_GIT_COMMIT_ID";
 
     public static final String GIT_COMMIT_MESSAGE = "FLOWCI_GIT_COMMIT_MESSAGE";

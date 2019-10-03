@@ -168,7 +168,6 @@ public class GitLabConverter implements TriggerConverter {
             }
 
             trigger.setCommitUrl(topCommit.url);
-            trigger.setCompareUrl(topCommit.url);
             trigger.setRef(BranchHelper.getBranchName(ref));
             trigger.setTime(topCommit.timestamp);
 

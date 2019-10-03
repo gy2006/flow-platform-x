@@ -155,8 +155,6 @@ public class GitHubConverter implements TriggerConverter {
 
         public String ref;
 
-        public String compare;
-
         @JsonProperty("head_commit")
         public CommitObject commit;
 
@@ -178,12 +176,11 @@ public class GitHubConverter implements TriggerConverter {
             trigger.setCommitId(commit.id);
             trigger.setMessage(commit.message);
             trigger.setCommitUrl(commit.url);
-            trigger.setCompareUrl(compare);
             trigger.setRef(BranchHelper.getBranchName(ref));
             trigger.setTime(commit.timestamp);
 
             // set commit author info
-            trigger.setAuthor(pusher.toAuthor());
+            trigger.setAuthor(pusher.toGitUser());
 
             return trigger;
         }
@@ -328,7 +325,7 @@ public class GitHubConverter implements TriggerConverter {
 
         public String username;
 
-        public GitUser toAuthor() {
+        public GitUser toGitUser() {
             return new GitUser()
                     .setEmail(email)
                     .setName(name)

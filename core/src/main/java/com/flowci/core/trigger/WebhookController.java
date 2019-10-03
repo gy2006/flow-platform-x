@@ -20,6 +20,7 @@ import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.trigger.converter.GitHubConverter;
 import com.flowci.core.trigger.converter.GitLabConverter;
+import com.flowci.core.trigger.converter.GogsConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.event.GitHookEvent;
@@ -56,14 +57,18 @@ public class WebhookController {
     private TriggerConverter gitLabConverter;
 
     @Autowired
+    private TriggerConverter gogsConverter;
+
+    @Autowired
     private SpringEventManager eventManager;
 
-    private final Map<GitSource, TriggerConverter> converterMap = new HashMap<>(2);
+    private final Map<GitSource, TriggerConverter> converterMap = new HashMap<>(3);
 
     @PostConstruct
     public void createMapping() {
         converterMap.put(GitSource.GITHUB, gitHubConverter);
         converterMap.put(GitSource.GITLAB, gitLabConverter);
+        converterMap.put(GitSource.GOGS, gogsConverter);
     }
 
     @PostMapping("/{name}")
@@ -87,8 +92,16 @@ public class WebhookController {
     private GitSourceWithEvent findGitSourceByHeader(HttpServletRequest request) {
         GitSourceWithEvent obj = new GitSourceWithEvent();
 
+        // gogs, on the first place since it has github header..
+        String event = request.getHeader(GogsConverter.Header);
+        if (StringHelper.hasValue(event)) {
+            obj.source = GitSource.GOGS;
+            obj.event = event;
+            return obj;
+        }
+
         // github
-        String event = request.getHeader(GitHubConverter.Header);
+        event = request.getHeader(GitHubConverter.Header);
         if (StringHelper.hasValue(event)) {
             obj.source = GitSource.GITHUB;
             obj.event = event;
