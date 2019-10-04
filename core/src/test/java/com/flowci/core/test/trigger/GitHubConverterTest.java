@@ -21,7 +21,6 @@ import static com.flowci.core.trigger.domain.Variables.GIT_COMMIT_ID;
 import static com.flowci.core.trigger.domain.Variables.GIT_COMMIT_MESSAGE;
 import static com.flowci.core.trigger.domain.Variables.GIT_COMMIT_TIME;
 import static com.flowci.core.trigger.domain.Variables.GIT_COMMIT_URL;
-import static com.flowci.core.trigger.domain.Variables.GIT_COMPARE_URL;
 import static com.flowci.core.trigger.domain.Variables.GIT_EVENT;
 import static com.flowci.core.trigger.domain.Variables.GIT_SOURCE;
 
@@ -81,8 +80,6 @@ public class GitHubConverterTest extends SpringScenario {
         Assert.assertEquals("fdafadsf\n\ndfsdafad", trigger.getMessage());
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/commit/40d0dd6e8e942643d794d7ed8d27610fb8729914",
             trigger.getCommitUrl());
-        Assert.assertEquals("https://github.com/yang-guo-2016/Test/compare/5a1e8ee1007b...40d0dd6e8e94",
-            trigger.getCompareUrl());
         Assert.assertEquals("master", trigger.getRef());
         Assert.assertEquals("2017-08-08T11:19:05+08:00", trigger.getTime());
 
@@ -105,9 +102,6 @@ public class GitHubConverterTest extends SpringScenario {
         Assert.assertEquals("GITHUB", variables.get(GIT_SOURCE));
 
         Assert.assertEquals("master", variables.get(GIT_BRANCH));
-        Assert.assertEquals("https://github.com/yang-guo-2016/Test/compare/5a1e8ee1007b...40d0dd6e8e94",
-            variables.get(GIT_COMPARE_URL));
-
         Assert.assertEquals("40d0dd6e8e942643d794d7ed8d27610fb8729914", variables.get(GIT_COMMIT_ID));
         Assert.assertEquals("fdafadsf\n\ndfsdafad", variables.get(GIT_COMMIT_MESSAGE));
         Assert.assertEquals("2017-08-08T11:19:05+08:00", variables.get(GIT_COMMIT_TIME));
@@ -132,7 +126,6 @@ public class GitHubConverterTest extends SpringScenario {
         Assert.assertEquals("Update settings.gradle", trigger.getMessage());
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/commit/26d1d0fa6ee44a8f4e02250d13e84bf02722f5e7",
             trigger.getCommitUrl());
-        Assert.assertEquals("https://github.com/yang-guo-2016/Test/compare/v1.6", trigger.getCompareUrl());
         Assert.assertEquals("v1.6", trigger.getRef());
         Assert.assertEquals("2017-08-08T13:19:55+08:00", trigger.getTime());
 

@@ -18,35 +18,29 @@ package com.flowci.core.trigger.converter;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.GitSource;
-import com.flowci.core.trigger.domain.GitPrTrigger;
-import com.flowci.core.trigger.domain.GitPushTrigger;
-import com.flowci.core.trigger.domain.GitTrigger;
+import com.flowci.core.trigger.domain.*;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
-import com.flowci.core.trigger.domain.GitUser;
 import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
 import com.flowci.util.StringHelper;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import java.io.IOException;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Component;
+
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * @author yang
  */
 @Log4j2
 @Component("gitLabConverter")
-public class GitLabConverter implements TriggerConverter {
+public class GitLabConverter extends TriggerConverter {
 
     public static final String Header = "x-gitlab-event";
 
@@ -58,62 +52,29 @@ public class GitLabConverter implements TriggerConverter {
 
     private final Map<String, Function<InputStream, GitTrigger>> mapping =
         ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
-            .put(Push, new OnPushOrTagEvent())
-            .put(Tag, new OnPushOrTagEvent())
-            .put(PR, new OnPrEvent())
+            .put(Push, new EventConverter<>("Push", PushOrTagEvent.class))
+            .put(Tag, new EventConverter<>("Tag", PushOrTagEvent.class))
+            .put(PR, new EventConverter<>("PR", PrEvent.class))
             .build();
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Override
+    GitSource getGitSource() {
+        return GitSource.GITLAB;
+    }
 
     @Override
-    public Optional<GitTrigger> convert(String event, InputStream body) {
-        GitTrigger trigger = mapping.get(event).apply(body);
-        return Optional.ofNullable(trigger);
-    }
-
-    // ======================================================
-    //      Converters
-    // ======================================================
-
-    private class OnPushOrTagEvent implements Function<InputStream, GitTrigger> {
-
-        @Override
-        public GitTrigger apply(InputStream stream) {
-            try {
-                PushOrTagEvent event = objectMapper.readValue(stream, PushOrTagEvent.class);
-                return event.toTrigger();
-            } catch (IOException e) {
-                log.warn("Unable to parse Gitlab push event");
-                return null;
-            }
-        }
-    }
-
-    private class OnPrEvent implements Function<InputStream, GitTrigger> {
-
-        @Override
-        public GitTrigger apply(InputStream stream) {
-            try {
-                PrEvent event = objectMapper.readValue(stream, PrEvent.class);
-                return event.toTrigger();
-            } catch (IOException e) {
-                log.warn("Unable to parse Gitlab push event");
-                return null;
-            }
-        }
+    Map<String, Function<InputStream, GitTrigger>> getMapping() {
+        return mapping;
     }
 
     // ======================================================
     //      Objects for GitLab
     // ======================================================
 
-    private abstract static class Event {
+    private abstract static class Event implements GitTriggerable {
 
         @JsonProperty("event_name")
         public String name;
-
-        abstract GitTrigger toTrigger();
     }
 
     private static class PushOrTagEvent extends Event {
@@ -148,7 +109,7 @@ public class GitLabConverter implements TriggerConverter {
         public List<Commit> commits;
 
         @Override
-        GitTrigger toTrigger() {
+        public GitTrigger toTrigger() {
             if (commits == null || commits.size() == 0) {
                 throw new ArgumentException("No commits data on GitLab push event");
             }
@@ -168,7 +129,6 @@ public class GitLabConverter implements TriggerConverter {
             }
 
             trigger.setCommitUrl(topCommit.url);
-            trigger.setCompareUrl(topCommit.url);
             trigger.setRef(BranchHelper.getBranchName(ref));
             trigger.setTime(topCommit.timestamp);
 
@@ -210,7 +170,7 @@ public class GitLabConverter implements TriggerConverter {
         public PrAttributes attributes;
 
         @Override
-        GitTrigger toTrigger() {
+        public GitTrigger toTrigger() {
             GitPrTrigger trigger = new GitPrTrigger();
             setTriggerEvent(trigger);
 

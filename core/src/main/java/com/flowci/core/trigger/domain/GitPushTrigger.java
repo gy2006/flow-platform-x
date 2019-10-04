@@ -41,8 +41,6 @@ public final class GitPushTrigger extends GitTrigger {
 
     private String time;
 
-    private String compareUrl;
-
     private String commitUrl;
 
     @Override
@@ -50,7 +48,6 @@ public final class GitPushTrigger extends GitTrigger {
         StringVars map = super.toVariableMap();
 
         map.put(Variables.GIT_BRANCH, ref);
-        map.put(Variables.GIT_COMPARE_URL, compareUrl);
         map.put(Variables.GIT_AUTHOR, author.getEmail());
 
         map.put(Variables.GIT_COMMIT_ID, commitId);

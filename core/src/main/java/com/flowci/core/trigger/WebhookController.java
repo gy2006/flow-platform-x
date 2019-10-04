@@ -20,14 +20,15 @@ import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.trigger.converter.GitHubConverter;
 import com.flowci.core.trigger.converter.GitLabConverter;
+import com.flowci.core.trigger.converter.GogsConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.event.GitHookEvent;
+import com.flowci.exception.ArgumentException;
 import com.flowci.util.StringHelper;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -56,28 +57,27 @@ public class WebhookController {
     private TriggerConverter gitLabConverter;
 
     @Autowired
+    private TriggerConverter gogsConverter;
+
+    @Autowired
     private SpringEventManager eventManager;
 
-    private final Map<GitSource, TriggerConverter> converterMap = new HashMap<>(2);
+    private final Map<GitSource, TriggerConverter> converterMap = new HashMap<>(3);
 
     @PostConstruct
     public void createMapping() {
         converterMap.put(GitSource.GITHUB, gitHubConverter);
         converterMap.put(GitSource.GITLAB, gitLabConverter);
+        converterMap.put(GitSource.GOGS, gogsConverter);
     }
 
     @PostMapping("/{name}")
-    public void gitTrigger(@PathVariable String name) throws IOException {
+    public void onGitTrigger(@PathVariable String name) throws IOException {
         GitSourceWithEvent data = findGitSourceByHeader(request);
-
-        if (Objects.isNull(data)) {
-            return;
-        }
-
         Optional<GitTrigger> trigger = converterMap.get(data.source).convert(data.event, request.getInputStream());
 
         if (!trigger.isPresent()) {
-            return;
+            throw new ArgumentException("Unsupported git event {0}", data.event);
         }
 
         log.info("{} trigger received: {}", data.source, trigger.get());
@@ -87,8 +87,16 @@ public class WebhookController {
     private GitSourceWithEvent findGitSourceByHeader(HttpServletRequest request) {
         GitSourceWithEvent obj = new GitSourceWithEvent();
 
+        // gogs, on the first place since it has github header..
+        String event = request.getHeader(GogsConverter.Header);
+        if (StringHelper.hasValue(event)) {
+            obj.source = GitSource.GOGS;
+            obj.event = event;
+            return obj;
+        }
+
         // github
-        String event = request.getHeader(GitHubConverter.Header);
+        event = request.getHeader(GitHubConverter.Header);
         if (StringHelper.hasValue(event)) {
             obj.source = GitSource.GITHUB;
             obj.event = event;
@@ -103,7 +111,7 @@ public class WebhookController {
             return obj;
         }
 
-        return null;
+        throw new ArgumentException("Unsupported git event {0}", event);
     }
 
     private static class GitSourceWithEvent {
