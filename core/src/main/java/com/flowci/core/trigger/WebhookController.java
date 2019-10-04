@@ -24,11 +24,11 @@ import com.flowci.core.trigger.converter.GogsConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.event.GitHookEvent;
+import com.flowci.exception.ArgumentException;
 import com.flowci.util.StringHelper;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -72,17 +72,12 @@ public class WebhookController {
     }
 
     @PostMapping("/{name}")
-    public void gitTrigger(@PathVariable String name) throws IOException {
+    public void onGitTrigger(@PathVariable String name) throws IOException {
         GitSourceWithEvent data = findGitSourceByHeader(request);
-
-        if (Objects.isNull(data)) {
-            return;
-        }
-
         Optional<GitTrigger> trigger = converterMap.get(data.source).convert(data.event, request.getInputStream());
 
         if (!trigger.isPresent()) {
-            return;
+            throw new ArgumentException("Unsupported git event {0}", data.event);
         }
 
         log.info("{} trigger received: {}", data.source, trigger.get());
@@ -116,7 +111,7 @@ public class WebhookController {
             return obj;
         }
 
-        return null;
+        throw new ArgumentException("Unsupported git event {0}", event);
     }
 
     private static class GitSourceWithEvent {
