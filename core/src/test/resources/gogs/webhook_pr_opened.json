@@ -9,7 +9,7 @@
       "username": "test",
       "login": "test",
       "full_name": "",
-      "email": "benqyang_2006@hotmail.com",
+      "email": "benqyang_2006@gogs.test",
       "avatar_url": "https://secure.gravatar.com/avatar/0dce14d99e8295e36aca078f195fa0c3?d=identicon"
     },
     "title": "first pr test",
@@ -27,7 +27,7 @@
         "username": "test",
         "login": "test",
         "full_name": "",
-        "email": "benqyang_2006@hotmail.com",
+        "email": "benqyang_2006@gogs.test",
         "avatar_url": "https://secure.gravatar.com/avatar/0dce14d99e8295e36aca078f195fa0c3?d=identicon"
       },
       "name": "my-first-repo",
@@ -59,7 +59,7 @@
         "username": "test",
         "login": "test",
         "full_name": "",
-        "email": "benqyang_2006@hotmail.com",
+        "email": "benqyang_2006@gogs.test",
         "avatar_url": "https://secure.gravatar.com/avatar/0dce14d99e8295e36aca078f195fa0c3?d=identicon"
       },
       "name": "my-first-repo",
@@ -97,7 +97,7 @@
       "username": "test",
       "login": "test",
       "full_name": "",
-      "email": "benqyang_2006@hotmail.com",
+      "email": "benqyang_2006@gogs.test",
       "avatar_url": "https://secure.gravatar.com/avatar/0dce14d99e8295e36aca078f195fa0c3?d=identicon"
     },
     "name": "my-first-repo",
@@ -126,7 +126,7 @@
     "username": "test",
     "login": "test",
     "full_name": "",
-    "email": "benqyang_2006@hotmail.com",
+    "email": "benqyang_2006@gogs.test",
     "avatar_url": "https://secure.gravatar.com/avatar/0dce14d99e8295e36aca078f195fa0c3?d=identicon"
   }
 }

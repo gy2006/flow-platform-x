@@ -168,6 +168,11 @@ public class GogsConverter extends TriggerConverter {
             trigger.setBase(base);
 
             trigger.setSender(sender.toGitUser());
+
+            if (!StringHelper.hasValue(trigger.getTime())) {
+                trigger.setTime(StringHelper.EMPTY);
+            }
+
             return trigger;
         }
 
@@ -270,7 +275,7 @@ public class GogsConverter extends TriggerConverter {
 
     private static class User {
 
-        public int id;
+        public String id;
 
         public String username;
 
@@ -281,6 +286,7 @@ public class GogsConverter extends TriggerConverter {
 
         GitUser toGitUser() {
             return new GitUser()
+                    .setId(id)
                     .setEmail(email)
                     .setUsername(username)
                     .setAvatarLink(avatarUrl);
