@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.manager;
+package com.flowci.core.job.service;
 
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobStatusChangeEvent;
@@ -23,7 +23,7 @@ import com.flowci.core.job.event.StepStatusChangeEvent;
 /**
  * @author yang
  */
-public interface PushManager {
+public interface PushService {
 
     void onJobCreated(JobCreatedEvent event);
 
