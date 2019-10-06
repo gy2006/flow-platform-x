@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.domain;
+package com.flowci.core.stats.domain;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
@@ -30,30 +30,28 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Getter
 @Setter
+@Accessors(chain = true)
 @EqualsAndHashCode(of = "id")
 @Document(collection = "job_statistic")
-public class JobStats {
+@CompoundIndexes(
+    @CompoundIndex(name = "index_flow_day_type", def = "{'flowId' : 1, 'day': -1, 'type': 1}")
+)
+public class StatsItem {
 
     @Id
-    private String id; // job id
+    private String id; // auto id
 
     private String flowId;
+
+    /**
+     * Int value to represent day, ex 20190123
+     */
+    private int day;
 
     /**
      * Status Type, ex: status, ut, code coverage
      */
     private String type;
 
-    private String branch;
-
-    /**
-     * User email from git if trigger from git
-     * Or email of system if trigger from ui
-     * Or NULL if trigger from cron
-     */
-    private String creator;
-
-    private Date createdAt;
-
-    private Map<String, Object> data = new HashMap<>();
+    private StatsCounter counter = new StatsCounter();
 }

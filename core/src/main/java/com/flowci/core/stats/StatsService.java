@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.service;
+package com.flowci.core.stats;
 
-import com.flowci.core.job.event.JobStatusChangeEvent;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.stereotype.Service;
+import com.flowci.core.job.domain.Job;
+import com.flowci.core.stats.domain.StatsCounter;
+import com.flowci.core.stats.domain.StatsItem;
 
 /**
+ * Statistic Service
+ *
  * @author yang
  */
-@Log4j2
-@Service
-public class StatsServiceImpl implements StatsService {
+public interface StatsService {
 
-    @Override
-    public void onJobStatusChange(JobStatusChangeEvent event) {
 
-    }
+    /**
+     * Add statistic item
+     * @param job related job
+     * @param type statistic type
+     * @param counter statistic value
+     */
+    StatsItem add(Job job, String type, StatsCounter counter);
+
 }

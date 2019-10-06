@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.service;
+package com.flowci.core.common.helper;
 
-import com.flowci.core.job.event.JobStatusChangeEvent;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
- * Statistic Service
- *
  * @author yang
  */
-public interface StatsService {
+public abstract class DateHelper {
 
-    void onJobStatusChange(JobStatusChangeEvent event);
+    private static final SimpleDateFormat intDayFormatter = new SimpleDateFormat("yyyyMMdd");
 
+    public static int toIntDay(Date date) {
+        return Integer.parseInt(intDayFormatter.format(date));
+    }
 }

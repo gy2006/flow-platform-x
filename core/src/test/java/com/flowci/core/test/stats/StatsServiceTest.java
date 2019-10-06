@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.dao;
+package com.flowci.core.test.stats;
 
-import com.flowci.core.job.domain.JobStats;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import com.flowci.core.test.SpringScenario;
+import org.junit.Test;
 
 /**
  * @author yang
  */
-@Repository
-public interface JobStatsDao extends MongoRepository<JobStats, String> {
+public class StatsServiceTest extends SpringScenario {
 
+    @Test
+    public void should_add_stats_item() {
+
+    }
 }
