@@ -27,6 +27,7 @@ import com.flowci.core.stats.domain.StatsItem;
  */
 public interface StatsService {
 
+    StatsItem get(String flowId, String type, int day);
 
     /**
      * Add statistic item

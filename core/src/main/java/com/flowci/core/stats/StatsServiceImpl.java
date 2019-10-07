@@ -44,6 +44,11 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
+    public StatsItem get(String flowId, String type, int day) {
+        return statsItemDao.findByFlowIdAndDayAndType(flowId, day, type);
+    }
+
+    @Override
     public StatsItem add(Job job, String type, StatsCounter counter) {
         int day = DateHelper.toIntDay(job.getCreatedAt());
         StatsItem item = statsItemDao.findByFlowIdAndDayAndType(job.getFlowId(), day, type);
