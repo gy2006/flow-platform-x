@@ -17,15 +17,17 @@
 package com.flowci.core.test.stats;
 
 import com.flowci.core.common.helper.DateHelper;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.stats.StatsService;
-import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
 import com.flowci.core.test.SpringScenario;
-import java.util.Date;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.Date;
 
 /**
  * @author yang
@@ -36,22 +38,22 @@ public class StatsServiceTest extends SpringScenario {
     private StatsService statsService;
 
     @Test
-    public void should_add_stats_item() {
+    public void should_add_stats_item_when_job_status_changed() {
         Job job = new Job();
         job.setFlowId("123-456");
         job.setCreatedAt(new Date());
+        job.setStatus(Job.Status.SUCCESS);
 
-        StatsCounter counter = new StatsCounter();
-        counter.put("PASSED", 1.0F);
-        counter.put("FAILED", 2.0F);
+        multicastEvent(new JobStatusChangeEvent(this, job));
+        ThreadHelper.sleep(1000);
 
-        String type = "JOB_STATUS";
-        statsService.add(job, type, counter);
-        statsService.add(job, type, counter);
-
-        StatsItem item = statsService.get(job.getFlowId(), type, DateHelper.toIntDay(new Date()));
+        StatsItem item = statsService.get(job.getFlowId(), StatsItem.TYPE_JOB_STATUS, DateHelper.toIntDay(new Date()));
         Assert.assertNotNull(item);
-        Assert.assertEquals(new Float(2.0F), item.getCounter().get("PASSED"));
-        Assert.assertEquals(new Float(4.0F), item.getCounter().get("FAILED"));
+        Assert.assertEquals(Job.FINISH_STATUS.size(), item.getCounter().size());
+
+        Assert.assertEquals(new Float(1.0F), item.getCounter().get("SUCCESS"));
+        Assert.assertEquals(new Float(0.0F), item.getCounter().get("FAILURE"));
+        Assert.assertEquals(new Float(0.0F), item.getCounter().get("CANCELLED"));
+        Assert.assertEquals(new Float(0.0F), item.getCounter().get("TIMEOUT"));
     }
 }

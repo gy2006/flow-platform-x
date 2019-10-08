@@ -38,6 +38,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 )
 public class StatsItem {
 
+    public static final String TYPE_JOB_STATUS = "CI_JOB_STATUS";
+
     @Id
     private String id; // auto id
 

@@ -24,6 +24,9 @@ import com.flowci.domain.StringVars;
 import com.flowci.domain.Vars;
 import com.flowci.tree.Selector;
 import java.util.Date;
+import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -36,12 +39,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Setter
 @Document(collection = "job")
 public class Job extends Mongoable implements Pathable {
-
-    public static Pathable path(Long buildNumber) {
-        Job job = new Job();
-        job.setBuildNumber(buildNumber);
-        return job;
-    }
 
     public enum Trigger {
 
@@ -141,6 +138,19 @@ public class Job extends Mongoable implements Pathable {
         private int freeDisk;
     }
 
+    public static Pathable path(Long buildNumber) {
+        Job job = new Job();
+        job.setBuildNumber(buildNumber);
+        return job;
+    }
+
+    public final static Set<Status> FINISH_STATUS = ImmutableSet.<Status>builder()
+            .add(Status.TIMEOUT)
+            .add(Status.CANCELLED)
+            .add(Status.FAILURE)
+            .add(Status.SUCCESS)
+            .build();
+
     private final static Integer MinPriority = 1;
 
     private final static Integer MaxPriority = 255;
@@ -203,10 +213,7 @@ public class Job extends Mongoable implements Pathable {
 
     @JsonIgnore
     public boolean isDone() {
-        return status == Status.TIMEOUT
-            || status == Status.CANCELLED
-            || status == Status.FAILURE
-            || status == Status.SUCCESS;
+        return FINISH_STATUS.contains(status);
     }
 
     @JsonIgnore

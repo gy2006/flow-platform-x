@@ -40,7 +40,19 @@ public class StatsServiceImpl implements StatsService {
 
     @EventListener(JobStatusChangeEvent.class)
     public void onJobStatusChange(JobStatusChangeEvent event) {
+        Job job = event.getJob();
 
+        if (!job.isDone()) {
+            return;
+        }
+
+        StatsCounter counter = new StatsCounter();
+        for (Job.Status status : Job.FINISH_STATUS) {
+            counter.put(status.name(), 0.0F);
+        }
+        counter.put(job.getStatus().name(), 1.0F);
+
+        add(job, StatsItem.TYPE_JOB_STATUS, counter);
     }
 
     @Override
