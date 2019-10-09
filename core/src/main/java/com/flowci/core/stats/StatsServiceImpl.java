@@ -22,12 +22,12 @@ import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.stats.dao.StatsItemDao;
 import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
-
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 /**
@@ -59,7 +59,8 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<StatsItem> list(String flowId, String type, int fromDay, int toDay) {
-        return statsItemDao.findByFlowIdAndTypeDayBetween(flowId, type, fromDay, toDay);
+        Sort sort = new Sort(Sort.Direction.ASC, "day");
+        return statsItemDao.findByFlowIdAndTypeDayBetween(flowId, type, fromDay, toDay, sort);
     }
 
     @Override

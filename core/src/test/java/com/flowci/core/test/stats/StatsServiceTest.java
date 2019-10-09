@@ -23,15 +23,13 @@ import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.stats.StatsService;
 import com.flowci.core.stats.domain.StatsItem;
 import com.flowci.core.test.SpringScenario;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.Date;
-import java.util.List;
 
 /**
  * @author yang

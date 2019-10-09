@@ -17,6 +17,7 @@
 package com.flowci.core.stats.dao;
 
 import com.flowci.core.stats.domain.StatsItem;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -30,7 +31,7 @@ import java.util.List;
 public interface StatsItemDao extends MongoRepository<StatsItem, String> {
 
     @Query("{'flowId':?0, 'type': ?1, 'day' : {$gte : ?2, $lte : ?3}}")
-    List<StatsItem> findByFlowIdAndTypeDayBetween(String flowId, String type, int dayGT, int dayLT);
+    List<StatsItem> findByFlowIdAndTypeDayBetween(String flowId, String type, int dayGT, int dayLT, Sort sort);
 
     StatsItem findByFlowIdAndDayAndType(String flowId, int day, String type);
 }
