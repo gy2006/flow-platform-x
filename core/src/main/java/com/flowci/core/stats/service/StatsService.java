@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package com.flowci.core.stats;
+package com.flowci.core.stats.service;
 
-import com.flowci.core.job.domain.Job;
 import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
-
 import java.util.List;
 
 /**
@@ -41,10 +39,7 @@ public interface StatsService {
 
     /**
      * Add statistic item
-     * @param job related job
-     * @param type statistic type
-     * @param counter statistic value
      */
-    StatsItem add(Job job, String type, StatsCounter counter);
+    StatsItem add(String flowId, int day, String type, StatsCounter counter);
 
 }

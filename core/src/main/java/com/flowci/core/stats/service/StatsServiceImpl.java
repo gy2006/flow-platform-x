@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.stats;
+package com.flowci.core.stats.service;
 
 import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.job.domain.Job;
@@ -54,7 +54,8 @@ public class StatsServiceImpl implements StatsService {
         }
         counter.put(job.getStatus().name(), 1.0F);
 
-        add(job, StatsItem.TYPE_JOB_STATUS, counter);
+        int day = DateHelper.toIntDay(job.getCreatedAt());
+        add(job.getFlowId(), day, StatsItem.TYPE_JOB_STATUS, counter);
     }
 
     @Override
@@ -69,14 +70,13 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
-    public StatsItem add(Job job, String type, StatsCounter counter) {
-        int day = DateHelper.toIntDay(job.getCreatedAt());
-        StatsItem item = statsItemDao.findByFlowIdAndDayAndType(job.getFlowId(), day, type);
+    public StatsItem add(String flowId, int day, String type, StatsCounter counter) {
+        StatsItem item = statsItemDao.findByFlowIdAndDayAndType(flowId, day, type);
 
         if (Objects.isNull(item)) {
             item = new StatsItem()
                 .setDay(day)
-                .setFlowId(job.getFlowId())
+                .setFlowId(flowId)
                 .setType(type)
                 .setCounter(counter);
             return statsItemDao.insert(item);

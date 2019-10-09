@@ -20,7 +20,7 @@ import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobStatusChangeEvent;
-import com.flowci.core.stats.StatsService;
+import com.flowci.core.stats.service.StatsService;
 import com.flowci.core.stats.domain.StatsItem;
 import com.flowci.core.test.SpringScenario;
 import java.time.Instant;

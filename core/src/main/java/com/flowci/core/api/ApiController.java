@@ -18,11 +18,20 @@
 package com.flowci.core.api;
 
 import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.api.domain.AddStatsItem;
+import com.flowci.core.api.service.ApiService;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
-import com.flowci.domain.Agent;
+import com.flowci.core.stats.domain.StatsCounter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Provides API which calling from agent plugin
@@ -43,10 +52,17 @@ public class ApiController {
     public String getRsaPrivateKey(@RequestHeader(HeaderAgentToken) String token,
                                    @PathVariable String name) {
 
-        Agent agent = agentService.getByToken(token);
+        agentService.getByToken(token);
 
         Credential credential = apiService.getCredential(name, RSACredential.class);
         RSACredential pair = (RSACredential) credential;
         return pair.getPrivateKey();
+    }
+
+    @PostMapping("/stats")
+    public void addStatsItem(@RequestHeader(HeaderAgentToken) String token,
+                             @Validated @RequestBody AddStatsItem body) {
+        agentService.getByToken(token);
+        apiService.addStats(body.getName(), body.getType(), StatsCounter.from(body.getData()));
     }
 }

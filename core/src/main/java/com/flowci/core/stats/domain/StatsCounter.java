@@ -24,6 +24,12 @@ import java.util.Map;
  */
 public class StatsCounter extends HashMap<String, Float> {
 
+    public static StatsCounter from(Map<String, Float> data) {
+        StatsCounter counter = new StatsCounter();
+        counter.putAll(data);
+        return counter;
+    }
+
     public void add(StatsCounter another) {
         for (Map.Entry<String, Float> entry : another.entrySet()) {
             Float localValue = this.getOrDefault(entry.getKey(), 0.0F);
