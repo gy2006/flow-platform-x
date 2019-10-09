@@ -206,6 +206,7 @@ public class JobServiceImpl implements JobService {
         job.setBuildNumber(jobNumber.getNumber());
         job.setCurrentPath(root.getPathAsString());
         job.setAgentSelector(root.getSelector());
+        job.setCreatedAt(Date.from(Instant.now()));
 
         // init job context
         initJobContext(job, flow, input);
