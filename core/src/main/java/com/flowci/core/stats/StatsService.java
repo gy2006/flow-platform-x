@@ -20,6 +20,8 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
 
+import java.util.List;
+
 /**
  * Statistic Service
  *
@@ -27,6 +29,14 @@ import com.flowci.core.stats.domain.StatsItem;
  */
 public interface StatsService {
 
+    /**
+     * List statistic by range
+     */
+    List<StatsItem> list(String flowId, String type, int fromDay, int toDay);
+
+    /**
+     * Get statistic item
+     */
     StatsItem get(String flowId, String type, int day);
 
     /**

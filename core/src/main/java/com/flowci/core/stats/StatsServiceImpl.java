@@ -22,6 +22,8 @@ import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.stats.dao.StatsItemDao;
 import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
+
+import java.util.List;
 import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +55,11 @@ public class StatsServiceImpl implements StatsService {
         counter.put(job.getStatus().name(), 1.0F);
 
         add(job, StatsItem.TYPE_JOB_STATUS, counter);
+    }
+
+    @Override
+    public List<StatsItem> list(String flowId, String type, int fromDay, int toDay) {
+        return statsItemDao.findByFlowIdAndTypeDayBetween(flowId, type, fromDay, toDay);
     }
 
     @Override

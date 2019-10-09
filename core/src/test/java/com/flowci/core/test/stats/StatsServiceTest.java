@@ -27,7 +27,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author yang
@@ -55,5 +59,40 @@ public class StatsServiceTest extends SpringScenario {
         Assert.assertEquals(new Float(0.0F), item.getCounter().get("FAILURE"));
         Assert.assertEquals(new Float(0.0F), item.getCounter().get("CANCELLED"));
         Assert.assertEquals(new Float(0.0F), item.getCounter().get("TIMEOUT"));
+    }
+
+    @Test
+    public void should_list_stats_by_days() {
+        String flowId = "11123123";
+
+        Date yesterday = Date.from(Instant.now().minus(1, ChronoUnit.DAYS));
+        Date today = Date.from(Instant.now());
+        Date tomorrow = Date.from(Instant.now().plus(1, ChronoUnit.DAYS));
+
+        Job job1 = new Job();
+        job1.setFlowId(flowId);
+        job1.setCreatedAt(yesterday);
+        job1.setStatus(Job.Status.SUCCESS);
+
+        Job job2 = new Job();
+        job2.setFlowId(flowId);
+        job2.setCreatedAt(today);
+        job2.setStatus(Job.Status.SUCCESS);
+
+        Job job3 = new Job();
+        job3.setFlowId(flowId);
+        job3.setCreatedAt(tomorrow);
+        job3.setStatus(Job.Status.FAILURE);
+
+        multicastEvent(new JobStatusChangeEvent(this, job1));
+        multicastEvent(new JobStatusChangeEvent(this, job2));
+        multicastEvent(new JobStatusChangeEvent(this, job3));
+        ThreadHelper.sleep(1000);
+
+        int fromDay = DateHelper.toIntDay(yesterday);
+        int toDay = DateHelper.toIntDay(tomorrow);
+        List<StatsItem> list = statsService.list(flowId, StatsItem.TYPE_JOB_STATUS, fromDay, toDay);
+        Assert.assertNotNull(list);
+        Assert.assertEquals(3, list.size());
     }
 }
