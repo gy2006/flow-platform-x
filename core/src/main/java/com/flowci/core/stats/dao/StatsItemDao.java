@@ -33,5 +33,8 @@ public interface StatsItemDao extends MongoRepository<StatsItem, String> {
     @Query("{'flowId':?0, 'type': ?1, 'day' : {$gte : ?2, $lte : ?3}}")
     List<StatsItem> findByFlowIdAndTypeDayBetween(String flowId, String type, int dayGT, int dayLT, Sort sort);
 
+    @Query("{'flowId':?0, 'day' : {$gte : ?1, $lte : ?2}}")
+    List<StatsItem> findByFlowIdDayBetween(String flowId, int dayGT, int dayLT, Sort sort);
+
     StatsItem findByFlowIdAndDayAndType(String flowId, int day, String type);
 }

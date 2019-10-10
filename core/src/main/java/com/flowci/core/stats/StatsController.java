@@ -40,7 +40,7 @@ public class StatsController {
 
     @GetMapping
     public List<StatsItem> list(@RequestParam String id,
-                                @RequestParam String t,
+                                @RequestParam(required = false) String t,
                                 @RequestParam int from,
                                 @RequestParam int to) {
 

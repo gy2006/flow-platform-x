@@ -24,6 +24,8 @@ import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
 import java.util.List;
 import java.util.Objects;
+
+import com.flowci.util.StringHelper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -61,7 +63,12 @@ public class StatsServiceImpl implements StatsService {
     @Override
     public List<StatsItem> list(String flowId, String type, int fromDay, int toDay) {
         Sort sort = new Sort(Sort.Direction.ASC, "day");
-        return statsItemDao.findByFlowIdAndTypeDayBetween(flowId, type, fromDay, toDay, sort);
+
+        if (StringHelper.hasValue(type)) {
+            return statsItemDao.findByFlowIdAndTypeDayBetween(flowId, type, fromDay, toDay, sort);
+        }
+
+        return statsItemDao.findByFlowIdDayBetween(flowId, fromDay, toDay, sort);
     }
 
     @Override
