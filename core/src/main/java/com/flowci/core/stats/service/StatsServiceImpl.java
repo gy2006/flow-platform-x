@@ -20,11 +20,14 @@ import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.stats.dao.StatsItemDao;
+import com.flowci.core.stats.dao.StatsTypeDao;
 import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
+
 import java.util.List;
 import java.util.Objects;
 
+import com.flowci.core.stats.domain.StatsType;
 import com.flowci.util.StringHelper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +43,9 @@ import org.springframework.stereotype.Service;
 public class StatsServiceImpl implements StatsService {
 
     @Autowired
+    private StatsTypeDao statsTypeDao;
+
+    @Autowired
     private StatsItemDao statsItemDao;
 
     @EventListener(JobStatusChangeEvent.class)
@@ -50,14 +56,12 @@ public class StatsServiceImpl implements StatsService {
             return;
         }
 
-        StatsCounter counter = new StatsCounter();
-        for (Job.Status status : Job.FINISH_STATUS) {
-            counter.put(status.name(), 0.0F);
-        }
-        counter.put(job.getStatus().name(), 1.0F);
+        StatsType jobStatusType = statsTypeDao.findByName(StatsItem.TYPE_JOB_STATUS);
+        StatsItem item = jobStatusType.createEmptyItem();
+        item.getCounter().put(job.getStatus().name(), 1.0F);
 
         int day = DateHelper.toIntDay(job.getCreatedAt());
-        add(job.getFlowId(), day, StatsItem.TYPE_JOB_STATUS, counter);
+        add(job.getFlowId(), day, item.getType(), item.getCounter());
     }
 
     @Override
@@ -82,10 +86,10 @@ public class StatsServiceImpl implements StatsService {
 
         if (Objects.isNull(item)) {
             item = new StatsItem()
-                .setDay(day)
-                .setFlowId(flowId)
-                .setType(type)
-                .setCounter(counter);
+                    .setDay(day)
+                    .setFlowId(flowId)
+                    .setType(type)
+                    .setCounter(counter);
             return statsItemDao.insert(item);
         }
 

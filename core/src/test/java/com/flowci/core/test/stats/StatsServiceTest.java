@@ -20,6 +20,7 @@ import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.stats.init.StatsTypeInitializer;
 import com.flowci.core.stats.service.StatsService;
 import com.flowci.core.stats.domain.StatsItem;
 import com.flowci.core.test.SpringScenario;
@@ -28,6 +29,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -37,7 +39,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class StatsServiceTest extends SpringScenario {
 
     @Autowired
+    private StatsTypeInitializer statsTypeInitializer;
+
+    @Autowired
     private StatsService statsService;
+
+    @Before
+    public void initTypes() {
+        statsTypeInitializer.initJobStatsType();
+    }
 
     @Test
     public void should_add_stats_item_when_job_status_changed() {

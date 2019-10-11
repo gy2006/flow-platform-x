@@ -16,44 +16,46 @@
 
 package com.flowci.core.stats.domain;
 
+import com.flowci.core.job.domain.Job;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.CompoundIndex;
-import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-/**
- * @author yang
- */
-@Getter
-@Setter
-@Accessors(chain = true)
-@EqualsAndHashCode(of = "id")
-@Document(collection = "flow_stats")
-@CompoundIndexes(
-    @CompoundIndex(name = "index_flow_day_type", def = "{'flowId' : 1, 'day': -1, 'type': 1}")
-)
-public class StatsItem {
+import java.util.LinkedList;
+import java.util.List;
 
-    public static final String TYPE_JOB_STATUS = "CI_JOB_STATUS";
+@Setter
+@Getter
+@EqualsAndHashCode(of = "name")
+@Accessors(chain = true)
+@Document(collection = "flow_stats_type")
+public class StatsType {
 
     @Id
-    private String id; // auto id
+    private String id;
 
+    @Indexed(name = "index_flow_stats_type_name", unique = true)
+    private String name;
+
+    // optional, reserved to create flow based stats
     private String flowId;
 
-    /**
-     * Int value to represent day, ex 20190123
-     */
-    private int day;
+    // stats fields that applied in counter as key
+    private List<String> fields = new LinkedList<>();
 
-    /**
-     * Status Type, ex: status, ut, code coverage
-     */
-    private String type;
+    public StatsItem createEmptyItem() {
+        StatsCounter counter = new StatsCounter();
+        for (String field : fields) {
+            counter.put(field, 0.0F);
+        }
 
-    private StatsCounter counter = new StatsCounter();
+        return new StatsItem()
+                .setFlowId(flowId)
+                .setType(name)
+                .setCounter(counter);
+    }
 }
