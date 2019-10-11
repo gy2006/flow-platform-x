@@ -24,6 +24,7 @@ import com.flowci.core.stats.dao.StatsTypeDao;
 import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
 
+import com.flowci.exception.NotFoundException;
 import java.util.List;
 import java.util.Objects;
 
@@ -73,6 +74,15 @@ public class StatsServiceImpl implements StatsService {
         }
 
         return statsItemDao.findByFlowIdDayBetween(flowId, fromDay, toDay, sort);
+    }
+
+    @Override
+    public StatsType getMetaType(String name) {
+        StatsType t = statsTypeDao.findByName(name);
+        if (Objects.isNull(t)) {
+            throw new NotFoundException("Stats type {0} is not found", name);
+        }
+        return t;
     }
 
     @Override

@@ -17,11 +17,13 @@
 package com.flowci.core.stats;
 
 import com.flowci.core.stats.domain.StatsItem;
+import com.flowci.core.stats.domain.StatsType;
 import com.flowci.core.stats.service.StatsService;
 import com.flowci.exception.ArgumentException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +39,11 @@ public class StatsController {
 
     @Autowired
     private StatsService statsService;
+
+    @GetMapping("/type/{name}")
+    public StatsType getMetaType(@PathVariable String name) {
+        return statsService.getMetaType(name);
+    }
 
     @GetMapping
     public List<StatsItem> list(@RequestParam String id,
