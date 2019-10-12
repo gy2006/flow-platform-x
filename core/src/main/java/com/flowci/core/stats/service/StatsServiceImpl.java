@@ -86,6 +86,11 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
+    public List<StatsType> getMetaTypeList() {
+        return statsTypeDao.findAll();
+    }
+
+    @Override
     public StatsItem get(String flowId, String type, int day) {
         return statsItemDao.findByFlowIdAndDayAndType(flowId, day, type);
     }

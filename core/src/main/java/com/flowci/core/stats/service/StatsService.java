@@ -39,6 +39,11 @@ public interface StatsService {
     StatsType getMetaType(String name);
 
     /**
+     * Get stats meta type list
+     */
+    List<StatsType> getMetaTypeList();
+
+    /**
      * Get statistic item
      */
     StatsItem get(String flowId, String type, int day);

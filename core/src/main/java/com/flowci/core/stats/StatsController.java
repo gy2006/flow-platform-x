@@ -40,6 +40,11 @@ public class StatsController {
     @Autowired
     private StatsService statsService;
 
+    @GetMapping("/type")
+    public List<StatsType> getMetaTypeList() {
+        return statsService.getMetaTypeList();
+    }
+
     @GetMapping("/type/{name}")
     public StatsType getMetaType(@PathVariable String name) {
         return statsService.getMetaType(name);
