@@ -16,13 +16,14 @@
 
 package com.flowci.core.common.adviser;
 
-import com.flowci.domain.http.ResponseMessage;
 import com.flowci.core.common.domain.StatusCode;
+import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.CIException;
 import com.flowci.exception.ErrorCode;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -38,16 +39,20 @@ import org.springframework.web.bind.annotation.ResponseStatus;
     "com.flowci.core.flow",
     "com.flowci.core.job",
     "com.flowci.core.agent",
+    "com.flowci.core.stats",
     "com.flowci.core.credential"
 })
 public class ExceptionAdviser {
 
+
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseMessage<Object> methodArgumentNotValidException(MethodArgumentNotValidException e) {
-        String defaultMessage = e.getBindingResult().getFieldError().getDefaultMessage();
-        return new ResponseMessage<>(ErrorCode.INVALID_ARGUMENT, defaultMessage, null);
+    @ExceptionHandler({
+        MethodArgumentNotValidException.class,
+        MissingServletRequestParameterException.class
+    })
+    public ResponseMessage<Object> inputArgumentException(Exception e) {
+        return new ResponseMessage<>(ErrorCode.INVALID_ARGUMENT, e.getMessage(), null);
     }
 
     @ResponseBody

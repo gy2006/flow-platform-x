@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.stats.dao;
 
-/**
- * @author yang
- */
-public abstract class Common {
+import com.flowci.core.stats.domain.StatsType;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
-    public enum OS {
+@Repository
+public interface StatsTypeDao extends MongoRepository<StatsType, String> {
 
-        LINUX,
-
-        MAC,
-
-        WIN,
-
-        UNKNOWN
-    }
-
+    StatsType findByName(String name);
 }

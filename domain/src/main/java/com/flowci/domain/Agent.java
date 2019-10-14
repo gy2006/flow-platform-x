@@ -17,6 +17,7 @@
 package com.flowci.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.flowci.domain.Common.OS;
 import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.Collections;
@@ -79,7 +80,7 @@ public class Agent implements Serializable {
 
     private String host;
 
-    private Common.OS os;
+    private Common.OS os = OS.UNKNOWN;
 
     private Resource resource = new Resource();
 

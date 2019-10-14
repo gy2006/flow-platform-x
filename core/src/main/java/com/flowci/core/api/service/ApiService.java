@@ -15,11 +15,15 @@
  *
  */
 
-package com.flowci.core.api;
+package com.flowci.core.api.service;
 
 import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.stats.domain.StatsCounter;
+import com.flowci.core.stats.domain.StatsItem;
 
 public interface ApiService {
 
     Credential getCredential(String name, Class<? extends Credential> target);
+
+    StatsItem addStats(String flowName, String statsType, StatsCounter counter);
 }

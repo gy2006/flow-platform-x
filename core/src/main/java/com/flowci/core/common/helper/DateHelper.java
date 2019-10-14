@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.common.helper;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @author yang
  */
-public abstract class Common {
+public abstract class DateHelper {
 
-    public enum OS {
+    private static final SimpleDateFormat intDayFormatter = new SimpleDateFormat("yyyyMMdd");
 
-        LINUX,
-
-        MAC,
-
-        WIN,
-
-        UNKNOWN
+    public static int toIntDay(Date date) {
+        return Integer.parseInt(intDayFormatter.format(date));
     }
-
 }

@@ -14,22 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.api.domain;
+
+import java.util.HashMap;
+import java.util.Map;
+import javax.validation.constraints.NotEmpty;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author yang
  */
-public abstract class Common {
+@Getter
+@Setter
+public final class AddStatsItem {
 
-    public enum OS {
+    @NotEmpty
+    private String name;
 
-        LINUX,
+    @NotEmpty
+    private String type;
 
-        MAC,
-
-        WIN,
-
-        UNKNOWN
-    }
+    private Map<String, Float> data = new HashMap<>();
 
 }

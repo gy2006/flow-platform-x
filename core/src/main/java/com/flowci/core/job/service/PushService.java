@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.job.service;
+
+import com.flowci.core.job.event.JobCreatedEvent;
+import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.job.event.StepStatusChangeEvent;
 
 /**
  * @author yang
  */
-public abstract class Common {
+public interface PushService {
 
-    public enum OS {
+    void onJobCreated(JobCreatedEvent event);
 
-        LINUX,
+    void onJobStatusChange(JobStatusChangeEvent event);
 
-        MAC,
-
-        WIN,
-
-        UNKNOWN
-    }
-
+    void onStepStatusChange(StepStatusChangeEvent event);
 }

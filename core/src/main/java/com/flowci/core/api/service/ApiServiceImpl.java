@@ -15,21 +15,34 @@
  *
  */
 
-package com.flowci.core.api;
+package com.flowci.core.api.service;
 
+import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.flow.dao.FlowDao;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.stats.domain.StatsCounter;
+import com.flowci.core.stats.domain.StatsItem;
+import com.flowci.core.stats.service.StatsService;
+import com.flowci.exception.ArgumentException;
 import com.flowci.exception.NotFoundException;
+import java.util.Date;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.Objects;
 
 @Service
 public class ApiServiceImpl implements ApiService {
 
     @Autowired
     private CredentialDao credentialDao;
+
+    @Autowired
+    private FlowDao flowDao;
+
+    @Autowired
+    private StatsService statsService;
 
     public Credential getCredential(String name, Class<? extends Credential> target) {
         Credential credential = credentialDao.findByName(name);
@@ -43,5 +56,16 @@ public class ApiServiceImpl implements ApiService {
         }
 
         throw new NotFoundException("Credential {0} is not found", name);
+    }
+
+    @Override
+    public StatsItem addStats(String flowName, String statsType, StatsCounter counter) {
+        Flow flow = flowDao.findByName(flowName);
+        if (Objects.isNull(flow)) {
+            throw new ArgumentException("Invalid flow name");
+        }
+
+        int today = DateHelper.toIntDay(new Date());
+        return statsService.add(flow.getId(), today, statsType, counter);
     }
 }

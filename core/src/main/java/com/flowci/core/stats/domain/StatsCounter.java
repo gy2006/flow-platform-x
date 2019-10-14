@@ -14,22 +14,26 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.stats.domain;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author yang
  */
-public abstract class Common {
+public class StatsCounter extends HashMap<String, Float> {
 
-    public enum OS {
-
-        LINUX,
-
-        MAC,
-
-        WIN,
-
-        UNKNOWN
+    public static StatsCounter from(Map<String, Float> data) {
+        StatsCounter counter = new StatsCounter();
+        counter.putAll(data);
+        return counter;
     }
 
+    public void add(StatsCounter another) {
+        for (Map.Entry<String, Float> entry : another.entrySet()) {
+            Float localValue = this.getOrDefault(entry.getKey(), 0.0F);
+            this.put(entry.getKey(), localValue + entry.getValue());
+        }
+    }
 }
