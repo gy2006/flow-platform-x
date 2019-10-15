@@ -81,8 +81,6 @@ public interface JobService {
      */
     boolean isExpired(Job job);
 
-    /**
-     * Handle the executed cmd form callback queue
-     */
-    void handleCallback(ExecutedCmd execCmd);
+    Job setJobStatusAndSave(Job job, Job.Status newStatus, String message);
 }
+
