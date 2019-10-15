@@ -20,6 +20,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
@@ -40,6 +42,10 @@ public class JobSummary {
         STRING
     }
 
+    @Id
+    private String id;
+
+    @Indexed(name = "index_job_summary_jobid")
     private String jobId;
 
     private String name;

@@ -19,9 +19,10 @@ package com.flowci.core.api;
 
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.api.domain.AddStatsItem;
-import com.flowci.core.api.service.ApiService;
+import com.flowci.core.api.service.OpenRestService;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
+import com.flowci.core.job.domain.JobSummary;
 import com.flowci.core.stats.domain.StatsCounter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -38,12 +39,12 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api")
-public class ApiController {
+public class OpenRestController {
 
     private static final String HeaderAgentToken = "AGENT-TOKEN";
 
     @Autowired
-    private ApiService apiService;
+    private OpenRestService openRestService;
 
     @Autowired
     private AgentService agentService;
@@ -54,7 +55,7 @@ public class ApiController {
 
         agentService.getByToken(token);
 
-        Credential credential = apiService.getCredential(name, RSACredential.class);
+        Credential credential = openRestService.getCredential(name, RSACredential.class);
         RSACredential pair = (RSACredential) credential;
         return pair.getPrivateKey();
     }
@@ -63,6 +64,13 @@ public class ApiController {
     public void addStatsItem(@RequestHeader(HeaderAgentToken) String token,
                              @Validated @RequestBody AddStatsItem body) {
         agentService.getByToken(token);
-        apiService.addStats(body.getName(), body.getType(), StatsCounter.from(body.getData()));
+        openRestService.addStats(body.getName(), body.getType(), StatsCounter.from(body.getData()));
+    }
+
+    @PostMapping("/summary")
+    public void createJobSummary(@RequestHeader(HeaderAgentToken) String token,
+                             @Validated @RequestBody JobSummary body) {
+        agentService.getByToken(token);
+        openRestService.createJobSummary(body);
     }
 }
