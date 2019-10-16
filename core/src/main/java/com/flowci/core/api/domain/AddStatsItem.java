@@ -30,9 +30,6 @@ import lombok.Setter;
 public final class AddStatsItem {
 
     @NotEmpty
-    private String name;
-
-    @NotEmpty
     private String type;
 
     private Map<String, Float> data = new HashMap<>();

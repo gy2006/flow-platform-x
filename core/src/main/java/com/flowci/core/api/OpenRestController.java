@@ -19,10 +19,10 @@ package com.flowci.core.api;
 
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.api.domain.AddStatsItem;
+import com.flowci.core.api.domain.CreateJobSummary;
 import com.flowci.core.api.service.OpenRestService;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
-import com.flowci.core.job.domain.JobSummary;
 import com.flowci.core.stats.domain.StatsCounter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -60,17 +60,20 @@ public class OpenRestController {
         return pair.getPrivateKey();
     }
 
-    @PostMapping("/stats")
+    @PostMapping("/stats/{flowName}")
     public void addStatsItem(@RequestHeader(HeaderAgentToken) String token,
+                             @PathVariable String flowName,
                              @Validated @RequestBody AddStatsItem body) {
         agentService.getByToken(token);
-        openRestService.addStats(body.getName(), body.getType(), StatsCounter.from(body.getData()));
+        openRestService.addStats(flowName, body.getType(), StatsCounter.from(body.getData()));
     }
 
-    @PostMapping("/summary")
+    @PostMapping("/summary/{flowName}/{buildNumber}")
     public void createJobSummary(@RequestHeader(HeaderAgentToken) String token,
-                             @Validated @RequestBody JobSummary body) {
+                                 @PathVariable String flowName,
+                                 @PathVariable long buildNumber,
+                                 @Validated @RequestBody CreateJobSummary body) {
         agentService.getByToken(token);
-        openRestService.createJobSummary(body);
+        openRestService.createJobSummary(flowName, buildNumber, body);
     }
 }

@@ -17,6 +17,7 @@
 
 package com.flowci.core.api.service;
 
+import com.flowci.core.api.domain.CreateJobSummary;
 import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
@@ -26,6 +27,7 @@ import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobSummaryDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobSummary;
+import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
 import com.flowci.core.stats.service.StatsService;
@@ -34,7 +36,6 @@ import com.flowci.exception.NotFoundException;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -72,23 +73,35 @@ public class OpenRestServiceImpl implements OpenRestService {
 
     @Override
     public StatsItem addStats(String flowName, String statsType, StatsCounter counter) {
-        Flow flow = flowDao.findByName(flowName);
-        if (Objects.isNull(flow)) {
-            throw new ArgumentException("Invalid flow name");
-        }
-
+        Flow flow = getFlow(flowName);
         int today = DateHelper.toIntDay(new Date());
         return statsService.add(flow.getId(), today, statsType, counter);
     }
 
     @Override
-    public JobSummary createJobSummary(JobSummary summary) {
-        Optional<Job> optional = jobDao.findById(summary.getJobId());
+    public JobSummary createJobSummary(String flowName, long buildNumber, CreateJobSummary body) {
+        Flow flow = getFlow(flowName);
+        String key = JobKeyBuilder.build(flow, buildNumber);
+        Job job = jobDao.findByKey(key);
 
-        if (!optional.isPresent()) {
+        if (Objects.isNull(job)) {
             throw new ArgumentException("Invalid job");
         }
 
+        JobSummary summary = new JobSummary()
+            .setJobId(job.getId())
+            .setName(body.getName())
+            .setType(JobSummary.Type.valueOf(body.getType()))
+            .setData(body.getData());
+
         return jobSummaryDao.save(summary);
+    }
+
+    private Flow getFlow(String name) {
+        Flow flow = flowDao.findByName(name);
+        if (Objects.isNull(flow)) {
+            throw new ArgumentException("Invalid flow name");
+        }
+        return flow;
     }
 }

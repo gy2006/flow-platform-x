@@ -14,44 +14,24 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.domain;
+package com.flowci.core.api.domain;
 
-import lombok.EqualsAndHashCode;
+import javax.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
- * To describe job summary data
+ * @author yang
  */
-
-@Setter
 @Getter
-@EqualsAndHashCode(of = "jobId")
-@Accessors(chain = true)
-@Document(collection = "job_summary")
-public class JobSummary {
+@Setter
+public class CreateJobSummary {
 
-    public enum Type {
-
-        JSON,
-
-        STRING
-    }
-
-    @Id
-    private String id;
-
-    @Indexed(name = "index_job_summary_jobid")
-    private String jobId;
-
+    @NotEmpty
     private String name;
 
-    private Type type;
+    @NotEmpty
+    private String type; // for JobSummary.Type
 
-    // base64 encoded data
-    private String data;
+    private String data; // base64 encoded
 }
