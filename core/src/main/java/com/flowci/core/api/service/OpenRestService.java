@@ -27,7 +27,7 @@ public interface OpenRestService {
 
     Credential getCredential(String name, Class<? extends Credential> target);
 
-    StatsItem addStats(String flowName, String statsType, StatsCounter counter);
+    StatsItem saveStatsForFlow(String flowName, String statsType, StatsCounter counter);
 
-    JobSummary createJobSummary(String flowName, long buildNumber, CreateJobSummary body);
+    JobSummary saveJobSummary(String flowName, long buildNumber, CreateJobSummary body);
 }

@@ -65,7 +65,7 @@ public class OpenRestController {
                              @PathVariable String flowName,
                              @Validated @RequestBody AddStatsItem body) {
         agentService.getByToken(token);
-        openRestService.addStats(flowName, body.getType(), StatsCounter.from(body.getData()));
+        openRestService.saveStatsForFlow(flowName, body.getType(), StatsCounter.from(body.getData()));
     }
 
     @PostMapping("/summary/{flowName}/{buildNumber}")
@@ -74,6 +74,6 @@ public class OpenRestController {
                                  @PathVariable long buildNumber,
                                  @Validated @RequestBody CreateJobSummary body) {
         agentService.getByToken(token);
-        openRestService.createJobSummary(flowName, buildNumber, body);
+        openRestService.saveJobSummary(flowName, buildNumber, body);
     }
 }

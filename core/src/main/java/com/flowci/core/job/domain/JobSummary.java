@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -33,6 +34,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @EqualsAndHashCode(of = "jobId")
 @Accessors(chain = true)
 @Document(collection = "job_summary")
+@CompoundIndex(
+        name = "index_job_summary_id_name_type",
+        def = "{'jobId': 1, 'name': 1, 'type': 1}",
+        unique = true
+)
 public class JobSummary {
 
     public enum Type {

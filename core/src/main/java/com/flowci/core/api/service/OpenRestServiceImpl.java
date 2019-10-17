@@ -32,13 +32,17 @@ import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
 import com.flowci.core.stats.service.StatsService;
 import com.flowci.exception.ArgumentException;
+import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.util.Objects;
+
+@Log4j2
 @Service
 public class OpenRestServiceImpl implements OpenRestService {
 
@@ -72,14 +76,14 @@ public class OpenRestServiceImpl implements OpenRestService {
     }
 
     @Override
-    public StatsItem addStats(String flowName, String statsType, StatsCounter counter) {
+    public StatsItem saveStatsForFlow(String flowName, String statsType, StatsCounter counter) {
         Flow flow = getFlow(flowName);
         int today = DateHelper.toIntDay(new Date());
         return statsService.add(flow.getId(), today, statsType, counter);
     }
 
     @Override
-    public JobSummary createJobSummary(String flowName, long buildNumber, CreateJobSummary body) {
+    public JobSummary saveJobSummary(String flowName, long buildNumber, CreateJobSummary body) {
         Flow flow = getFlow(flowName);
         String key = JobKeyBuilder.build(flow, buildNumber);
         Job job = jobDao.findByKey(key);
@@ -94,7 +98,12 @@ public class OpenRestServiceImpl implements OpenRestService {
             .setType(JobSummary.Type.valueOf(body.getType()))
             .setData(body.getData());
 
-        return jobSummaryDao.save(summary);
+        try {
+            return jobSummaryDao.save(summary);
+        } catch (DuplicateKeyException e) {
+            log.warn("Duplicate job summary key");
+            throw new DuplicateException("The job summary duplicated");
+        }
     }
 
     private Flow getFlow(String name) {
