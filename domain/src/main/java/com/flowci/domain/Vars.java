@@ -61,6 +61,10 @@ public abstract class Vars<V> extends LinkedHashMap<String, V> implements Serial
     }
 
     public Vars<V> merge(Vars<V> other) {
+        if (Objects.isNull(other)) {
+            return this;
+        }
+
         for (Map.Entry<String, V> entry : other.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }
@@ -68,6 +72,10 @@ public abstract class Vars<V> extends LinkedHashMap<String, V> implements Serial
     }
 
     void merge(Map<String, V> vars) {
+        if (Objects.isNull(vars)) {
+            return;
+        }
+
         for (Map.Entry<String, V> entry : vars.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }
