@@ -17,29 +17,46 @@
 
 package com.flowci.core.api.service;
 
+import com.flowci.core.api.domain.CreateJobSummary;
 import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.job.dao.JobDao;
+import com.flowci.core.job.dao.JobSummaryDao;
+import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.domain.JobSummary;
+import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
 import com.flowci.core.stats.service.StatsService;
 import com.flowci.exception.ArgumentException;
+import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
-import java.util.Date;
-import java.util.Objects;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.util.Objects;
+
+@Log4j2
 @Service
-public class ApiServiceImpl implements ApiService {
+public class OpenRestServiceImpl implements OpenRestService {
 
     @Autowired
     private CredentialDao credentialDao;
 
     @Autowired
     private FlowDao flowDao;
+
+    @Autowired
+    private JobDao jobDao;
+
+    @Autowired
+    private JobSummaryDao jobSummaryDao;
 
     @Autowired
     private StatsService statsService;
@@ -59,13 +76,41 @@ public class ApiServiceImpl implements ApiService {
     }
 
     @Override
-    public StatsItem addStats(String flowName, String statsType, StatsCounter counter) {
-        Flow flow = flowDao.findByName(flowName);
+    public StatsItem saveStatsForFlow(String flowName, String statsType, StatsCounter counter) {
+        Flow flow = getFlow(flowName);
+        int today = DateHelper.toIntDay(new Date());
+        return statsService.add(flow.getId(), today, statsType, counter);
+    }
+
+    @Override
+    public JobSummary saveJobSummary(String flowName, long buildNumber, CreateJobSummary body) {
+        Flow flow = getFlow(flowName);
+        String key = JobKeyBuilder.build(flow, buildNumber);
+        Job job = jobDao.findByKey(key);
+
+        if (Objects.isNull(job)) {
+            throw new ArgumentException("Invalid job");
+        }
+
+        JobSummary summary = new JobSummary()
+            .setJobId(job.getId())
+            .setName(body.getName())
+            .setType(JobSummary.Type.valueOf(body.getType()))
+            .setData(body.getData());
+
+        try {
+            return jobSummaryDao.save(summary);
+        } catch (DuplicateKeyException e) {
+            log.warn("Duplicate job summary key");
+            throw new DuplicateException("The job summary duplicated");
+        }
+    }
+
+    private Flow getFlow(String name) {
+        Flow flow = flowDao.findByName(name);
         if (Objects.isNull(flow)) {
             throw new ArgumentException("Invalid flow name");
         }
-
-        int today = DateHelper.toIntDay(new Date());
-        return statsService.add(flow.getId(), today, statsType, counter);
+        return flow;
     }
 }

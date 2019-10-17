@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-package com.flowci.core.api.domain;
+package com.flowci.core.job.dao;
 
-import java.util.HashMap;
-import java.util.Map;
-import javax.validation.constraints.NotEmpty;
-import lombok.Getter;
-import lombok.Setter;
+import com.flowci.core.job.domain.JobSummary;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
-/**
- * @author yang
- */
-@Getter
-@Setter
-public final class AddStatsItem {
-
-    @NotEmpty
-    private String type;
-
-    private Map<String, Float> data = new HashMap<>();
-
+@Repository
+public interface JobSummaryDao extends MongoRepository<JobSummary, String> {
 }

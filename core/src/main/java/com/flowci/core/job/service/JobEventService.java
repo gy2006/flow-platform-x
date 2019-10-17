@@ -14,24 +14,14 @@
  * limitations under the License.
  */
 
-package com.flowci.core.api.domain;
+package com.flowci.core.job.service;
 
-import java.util.HashMap;
-import java.util.Map;
-import javax.validation.constraints.NotEmpty;
-import lombok.Getter;
-import lombok.Setter;
+import com.flowci.domain.ExecutedCmd;
 
-/**
- * @author yang
- */
-@Getter
-@Setter
-public final class AddStatsItem {
+public interface JobEventService {
 
-    @NotEmpty
-    private String type;
-
-    private Map<String, Float> data = new HashMap<>();
-
+    /**
+     * Handle the executed cmd form callback queue
+     */
+    void handleCallback(ExecutedCmd execCmd);
 }

@@ -14,24 +14,10 @@
  * limitations under the License.
  */
 
-package com.flowci.core.api.domain;
+package com.flowci.core.test.api;
 
-import java.util.HashMap;
-import java.util.Map;
-import javax.validation.constraints.NotEmpty;
-import lombok.Getter;
-import lombok.Setter;
+import com.flowci.core.test.SpringScenario;
 
-/**
- * @author yang
- */
-@Getter
-@Setter
-public final class AddStatsItem {
-
-    @NotEmpty
-    private String type;
-
-    private Map<String, Float> data = new HashMap<>();
+public class OpenRestControllerTest extends SpringScenario {
 
 }

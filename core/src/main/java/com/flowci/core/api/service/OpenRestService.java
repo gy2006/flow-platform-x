@@ -17,13 +17,17 @@
 
 package com.flowci.core.api.service;
 
+import com.flowci.core.api.domain.CreateJobSummary;
 import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.job.domain.JobSummary;
 import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.domain.StatsItem;
 
-public interface ApiService {
+public interface OpenRestService {
 
     Credential getCredential(String name, Class<? extends Credential> target);
 
-    StatsItem addStats(String flowName, String statsType, StatsCounter counter);
+    StatsItem saveStatsForFlow(String flowName, String statsType, StatsCounter counter);
+
+    JobSummary saveJobSummary(String flowName, long buildNumber, CreateJobSummary body);
 }

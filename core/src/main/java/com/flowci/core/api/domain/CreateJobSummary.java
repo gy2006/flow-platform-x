@@ -16,8 +16,6 @@
 
 package com.flowci.core.api.domain;
 
-import java.util.HashMap;
-import java.util.Map;
 import javax.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,11 +25,13 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public final class AddStatsItem {
+public class CreateJobSummary {
 
     @NotEmpty
-    private String type;
+    private String name;
 
-    private Map<String, Float> data = new HashMap<>();
+    @NotEmpty
+    private String type; // for JobSummary.Type
 
+    private String data; // base64 encoded
 }
