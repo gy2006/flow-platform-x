@@ -48,7 +48,7 @@ public class CmdIn extends CmdBase {
      * Cmd timeout in seconds
      */
     @NonNull
-    private Long timeout = 1800L;
+    private Integer timeout = 1800;
 
     @NonNull
     private Vars<String> inputs = new StringVars();
