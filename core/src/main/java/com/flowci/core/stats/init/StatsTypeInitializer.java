@@ -16,31 +16,57 @@
 
 package com.flowci.core.stats.init;
 
-import com.flowci.core.job.domain.Job;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.stats.dao.StatsTypeDao;
-import com.flowci.core.stats.domain.StatsItem;
 import com.flowci.core.stats.domain.StatsType;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.util.List;
 
+/**
+ * Init statistic type from json 'default_statistic_type.json'
+ */
+
+@Log4j2
 @Component
 public final class StatsTypeInitializer {
+
+    private final static TypeReference<List<StatsType>> StatsTypeRef = new TypeReference<List<StatsType>>() {
+    };
+
+    @Value("classpath:default_statistic_type.json")
+    private Resource defaultTypeJsonFile;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private StatsTypeDao statsTypeDao;
 
     @PostConstruct
     public void initJobStatsType() {
-        StatsType jobStatusType = new StatsType().setName(StatsItem.TYPE_JOB_STATUS);
-        for (Job.Status status : Job.FINISH_STATUS) {
-            jobStatusType.getFields().add(status.name());
-        }
-
         try {
-            statsTypeDao.save(jobStatusType);
+            List<StatsType> types = objectMapper.readValue(defaultTypeJsonFile.getInputStream(), StatsTypeRef);
+
+            for (StatsType t : types) {
+                save(t);
+            }
+        } catch (IOException e) {
+            log.warn(e.getMessage());
+        }
+    }
+
+    private void save(StatsType t) {
+        try {
+            statsTypeDao.save(t);
         } catch (DuplicateKeyException ignore) {
 
         }

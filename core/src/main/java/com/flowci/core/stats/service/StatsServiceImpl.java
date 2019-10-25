@@ -27,6 +27,7 @@ import com.flowci.core.stats.domain.StatsItem;
 import com.flowci.exception.NotFoundException;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.flowci.core.stats.domain.StatsType;
 import com.flowci.util.StringHelper;
@@ -57,8 +58,13 @@ public class StatsServiceImpl implements StatsService {
             return;
         }
 
-        StatsType jobStatusType = statsTypeDao.findByName(StatsItem.TYPE_JOB_STATUS);
-        StatsItem item = jobStatusType.createEmptyItem();
+        Optional<StatsType> optional = statsTypeDao.findByName(StatsItem.TYPE_JOB_STATUS);
+        if (!optional.isPresent()) {
+            log.warn("Job statistic type is missing");
+            return;
+        }
+
+        StatsItem item = optional.get().createEmptyItem();
         item.getCounter().put(job.getStatus().name(), 1.0F);
 
         int day = DateHelper.toIntDay(job.getCreatedAt());
@@ -78,11 +84,11 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public StatsType getMetaType(String name) {
-        StatsType t = statsTypeDao.findByName(name);
-        if (Objects.isNull(t)) {
+        Optional<StatsType> optional = statsTypeDao.findByName(name);
+        if (!optional.isPresent()) {
             throw new NotFoundException("Stats type {0} is not found", name);
         }
-        return t;
+        return optional.get();
     }
 
     @Override

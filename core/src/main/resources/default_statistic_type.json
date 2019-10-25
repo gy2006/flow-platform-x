@@ -1,0 +1,65 @@
+[
+  {
+    "name": "CI_JOB_STATUS",
+    "desc": "job status",
+    "fields": [
+      "TIMEOUT", "CANCELLED", "FAILURE", "SUCCESS"
+    ]
+  },
+
+  {
+    "name": "junit",
+    "desc": "junit",
+    "fields": [
+      "tests", "failures", "errors", "skipped"
+    ]
+  },
+
+  {
+    "name": "jacoco_INSTRUCTION",
+    "desc": "jacoco instruction",
+    "fields": [
+      "missed", "covered"
+    ]
+  },
+
+  {
+    "name": "jacoco BRANCH",
+    "desc": "jacoco branch",
+    "fields": [
+      "missed", "covered"
+    ]
+  },
+
+  {
+    "name": "jacoco_LINE",
+    "desc": "jacoco line",
+    "fields": [
+      "missed", "covered"
+    ]
+  },
+
+  {
+    "name": "jacoco_COMPLEXITY",
+    "desc": "jacoco complexity",
+    "fields": [
+      "missed", "covered"
+    ]
+  },
+
+  {
+    "name": "jacoco_METHOD",
+    "desc": "jacoco method",
+    "fields": [
+      "missed", "covered"
+    ]
+  },
+
+  {
+    "name": "jacoco CLASS",
+    "desc": "jacoco class",
+    "fields": [
+      "missed", "covered"
+    ]
+  }
+]

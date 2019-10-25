@@ -20,8 +20,10 @@ import com.flowci.core.stats.domain.StatsType;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface StatsTypeDao extends MongoRepository<StatsType, String> {
 
-    StatsType findByName(String name);
+    Optional<StatsType> findByName(String name);
 }

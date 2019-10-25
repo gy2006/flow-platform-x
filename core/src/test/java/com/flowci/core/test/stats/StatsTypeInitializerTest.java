@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Optional;
 
 public class StatsTypeInitializerTest extends SpringScenario {
 
@@ -34,10 +35,14 @@ public class StatsTypeInitializerTest extends SpringScenario {
 
     @Test
     public void should_create_job_stats_type() {
-        StatsType jobStatusType = statsTypeDao.findByName(StatsItem.TYPE_JOB_STATUS);
-        Assert.assertNotNull(jobStatusType);
+        List<StatsType> defaultTypes = statsTypeDao.findAll();
+        Assert.assertNotNull(defaultTypes);
+        Assert.assertEquals(8, defaultTypes.size());
 
-        List<String> fields = jobStatusType.getFields();
+        Optional<StatsType> optional = statsTypeDao.findByName(StatsItem.TYPE_JOB_STATUS);
+        Assert.assertTrue(optional.isPresent());
+        
+        List<String> fields = optional.get().getFields();
         Assert.assertTrue(fields.contains(Job.Status.SUCCESS.name()));
         Assert.assertTrue(fields.contains(Job.Status.FAILURE.name()));
         Assert.assertTrue(fields.contains(Job.Status.TIMEOUT.name()));

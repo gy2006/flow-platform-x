@@ -41,6 +41,8 @@ public class StatsType {
     @Indexed(name = "index_flow_stats_type_name", unique = true)
     private String name;
 
+    private String desc;
+
     // optional, reserved to create flow based stats
     private String flowId;
 
