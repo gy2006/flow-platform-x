@@ -103,6 +103,11 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public StatsItem add(String flowId, int day, String type, StatsCounter counter) {
+        boolean exists = statsTypeDao.existsByName(type);
+        if (!exists) {
+            throw new NotFoundException("Statistic type {0} doesn't existed", type);
+        }
+
         StatsItem item = statsItemDao.findByFlowIdAndDayAndType(flowId, day, type);
 
         if (Objects.isNull(item)) {

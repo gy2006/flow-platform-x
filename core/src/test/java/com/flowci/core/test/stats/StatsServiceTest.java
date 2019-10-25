@@ -20,6 +20,7 @@ import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.stats.domain.StatsCounter;
 import com.flowci.core.stats.init.StatsTypeInitializer;
 import com.flowci.core.stats.service.StatsService;
 import com.flowci.core.stats.domain.StatsItem;
@@ -28,6 +29,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+
+import com.flowci.exception.NotFoundException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +50,12 @@ public class StatsServiceTest extends SpringScenario {
     @Before
     public void initTypes() {
         statsTypeInitializer.initJobStatsType();
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void should_throw_exception_if_type_not_exist() {
+        int day = DateHelper.toIntDay(new Date());
+        statsService.add("12323", day, "not exist", new StatsCounter());
     }
 
     @Test

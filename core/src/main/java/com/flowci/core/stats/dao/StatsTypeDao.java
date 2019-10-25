@@ -26,4 +26,6 @@ import java.util.Optional;
 public interface StatsTypeDao extends MongoRepository<StatsType, String> {
 
     Optional<StatsType> findByName(String name);
+
+    boolean existsByName(String name);
 }
