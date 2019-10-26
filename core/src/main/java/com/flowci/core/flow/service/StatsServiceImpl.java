@@ -28,13 +28,15 @@ import com.flowci.core.flow.domain.StatsType;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.service.PluginService;
+import com.flowci.exception.NotFoundException;
 import com.flowci.tree.Node;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -111,24 +113,29 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
-    public Collection<StatsType> getStatsType(Flow flow) {
+    public List<StatsType> getStatsType(Flow flow) {
         Optional<Yml> optional = ymlDao.findById(flow.getId());
 
+        List<StatsType> list = new LinkedList<>(defaultTypes.values());
         if (!optional.isPresent()) {
-            return defaultTypes.values();
+            return list;
         }
 
         Node root = YmlParser.load(flow.getName(), optional.get().getRaw());
-
-        // TODO: get stats type from plugins
         for (Node child : root.getChildren()) {
             if (!child.hasPlugin()) {
                 continue;
             }
 
+            try {
+                Plugin plugin = pluginService.get(child.getPlugin());
+                list.addAll(plugin.getStatsTypes());
+            } catch (NotFoundException ignore) {
+
+            }
         }
 
-        return null;
+        return list;
     }
 
     @Override

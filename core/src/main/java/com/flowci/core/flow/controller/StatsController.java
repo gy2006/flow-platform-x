@@ -18,6 +18,7 @@ package com.flowci.core.flow.controller;
 
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.StatsItem;
+import com.flowci.core.flow.domain.StatsType;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.service.StatsService;
 import com.flowci.exception.ArgumentException;
@@ -43,6 +44,12 @@ public class StatsController {
 
     @Autowired
     private StatsService statsService;
+
+    @GetMapping("/{name}/stats/types")
+    public List<StatsType> types(@PathVariable String name) {
+        Flow flow = flowService.get(name);
+        return statsService.getStatsType(flow);
+    }
 
     @GetMapping("/{name}/stats")
     public List<StatsItem> list(@PathVariable String name,

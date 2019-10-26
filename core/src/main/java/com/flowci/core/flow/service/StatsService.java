@@ -20,7 +20,6 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.StatsCounter;
 import com.flowci.core.flow.domain.StatsItem;
 import com.flowci.core.flow.domain.StatsType;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -37,9 +36,9 @@ public interface StatsService {
     Map<String, StatsType> defaultTypes();
 
     /**
-     * Get plugins of flow
+     * Get stats type from default and plugins
      */
-    Collection<StatsType> getStatsType(Flow flow);
+    List<StatsType> getStatsType(Flow flow);
 
     /**
      * List statistic by range
