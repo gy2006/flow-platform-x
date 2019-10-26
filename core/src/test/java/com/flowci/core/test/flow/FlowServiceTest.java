@@ -180,28 +180,10 @@ public class FlowServiceTest extends SpringScenario {
         Assert.assertEquals(flow.getName(), flows.get(0).getName());
     }
 
-    @Test
-    public void should_save_yml_for_flow() throws IOException {
-        // when:
-        Flow flow = flowService.create("hello");
-        String ymlRaw = StringHelper.toString(load("flow.yml"));
-
-        // then: yml object should be created
-        Yml yml = ymlService.saveYml(flow, ymlRaw);
-        Assert.assertNotNull(yml);
-        Assert.assertEquals(flow.getId(), yml.getId());
-    }
-
     @Test(expected = ArgumentException.class)
     public void should_throw_exception_if_flow_name_is_invalid_when_create() {
         String name = "hello.world";
         flowService.create(name);
-    }
-
-    @Test(expected = YmlException.class)
-    public void should_throw_exception_if_yml_illegal_yml_format() {
-        Flow flow = flowService.create("test");
-        ymlService.saveYml(flow, "hello-...");
     }
 
     @Ignore
