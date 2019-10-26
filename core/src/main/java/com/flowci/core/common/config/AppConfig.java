@@ -17,6 +17,7 @@
 package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.common.domain.SyncEvent;
 import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.common.helper.JacksonHelper;
 import com.flowci.util.FileHelper;
@@ -31,10 +32,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -83,9 +86,9 @@ public class AppConfig {
     public String serverAddress() throws URISyntaxException {
         String host = env.getProperty(App.Host, serverProperties.getAddress().toString());
         return new URIBuilder().setScheme("http")
-                .setHost(host).setPort(serverProperties.getPort())
-                .build()
-                .toString();
+            .setHost(host).setPort(serverProperties.getPort())
+            .build()
+            .toString();
     }
 
     @Bean("tmpDir")
@@ -105,8 +108,24 @@ public class AppConfig {
 
     @Bean(name = "applicationEventMulticaster")
     public ApplicationEventMulticaster simpleApplicationEventMulticaster() {
-        SimpleApplicationEventMulticaster eventMulticaster = new SimpleApplicationEventMulticaster();
-        eventMulticaster.setTaskExecutor(new SimpleAsyncTaskExecutor("s-event-"));
-        return eventMulticaster;
+        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("s-event-");
+
+        return new SimpleApplicationEventMulticaster() {
+
+            @Override
+            public void multicastEvent(ApplicationEvent event, ResolvableType eventType) {
+                ResolvableType resolvableType = ResolvableType.forInstance(event);
+                ResolvableType type = (eventType != null ? eventType : resolvableType);
+
+                if (event instanceof SyncEvent) {
+                    getApplicationListeners(event, type).forEach(listener -> invokeListener(listener, event));
+                    return;
+                }
+
+                getApplicationListeners(event, type).forEach(listener -> {
+                    executor.execute(() -> invokeListener(listener, event));
+                });
+            }
+        };
     }
 }

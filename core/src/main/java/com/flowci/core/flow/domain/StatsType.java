@@ -14,37 +14,26 @@
  * limitations under the License.
  */
 
-package com.flowci.core.stats.domain;
+package com.flowci.core.flow.domain;
 
-import com.flowci.core.job.domain.Job;
+import java.util.LinkedList;
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.LinkedList;
-import java.util.List;
 
 @Setter
 @Getter
 @EqualsAndHashCode(of = "name")
 @Accessors(chain = true)
-@Document(collection = "flow_stats_type")
 public class StatsType {
 
-    @Id
-    private String id;
+    public static final String JOB_STATUS = "default/ci_job_status";
 
-    @Indexed(name = "index_flow_stats_type_name", unique = true)
     private String name;
 
     private String desc;
-
-    // optional, reserved to create flow based stats
-    private String flowId;
 
     // stats fields that applied in counter as key
     private List<String> fields = new LinkedList<>();
@@ -56,8 +45,7 @@ public class StatsType {
         }
 
         return new StatsItem()
-                .setFlowId(flowId)
-                .setType(name)
-                .setCounter(counter);
+            .setType(name)
+            .setCounter(counter);
     }
 }

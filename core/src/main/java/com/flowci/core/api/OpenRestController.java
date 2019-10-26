@@ -23,7 +23,7 @@ import com.flowci.core.api.domain.CreateJobSummary;
 import com.flowci.core.api.service.OpenRestService;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
-import com.flowci.core.stats.domain.StatsCounter;
+import com.flowci.core.flow.domain.StatsCounter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;

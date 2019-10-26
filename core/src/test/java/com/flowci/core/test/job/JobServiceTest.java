@@ -22,6 +22,7 @@ import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.flow.service.YmlService;
 import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.Job;
@@ -73,6 +74,9 @@ public class JobServiceTest extends ZookeeperScenario {
     private FlowService flowService;
 
     @Autowired
+    private YmlService ymlService;
+
+    @Autowired
     private JobEventService jobEventService;
 
     @Autowired
@@ -102,7 +106,7 @@ public class JobServiceTest extends ZookeeperScenario {
         mockLogin();
 
         flow = flowService.create("hello");
-        yml = flowService.saveYml(flow, StringHelper.toString(load("flow.yml")));
+        yml = ymlService.saveYml(flow, StringHelper.toString(load("flow.yml")));
 
         Assert.assertNotNull(flowJobQueueManager.get(flow.getQueueName()));
     }
@@ -284,7 +288,7 @@ public class JobServiceTest extends ZookeeperScenario {
     @Test
     public void should_handle_cmd_callback_for_failure_status_but_allow_failure() throws IOException {
         // init: agent and job
-        yml = flowService.saveYml(flow, StringHelper.toString(load("flow-all-failure.yml")));
+        yml = ymlService.saveYml(flow, StringHelper.toString(load("flow-all-failure.yml")));
         Agent agent = agentService.create("hello.agent", null);
         Job job = prepareJobForRunningStatus(agent);
 
@@ -341,7 +345,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
     @Test
     public void should_job_failure_with_final_node() throws Exception {
-        yml = flowService.saveYml(flow, StringHelper.toString(load("flow-failure-with-final.yml")));
+        yml = ymlService.saveYml(flow, StringHelper.toString(load("flow-failure-with-final.yml")));
         Agent agent = agentService.create("hello.agent.0", null);
         Job job = prepareJobForRunningStatus(agent);
 
@@ -369,7 +373,7 @@ public class JobServiceTest extends ZookeeperScenario {
     @Test
     public void should_run_before_condition() throws IOException, InterruptedException {
         // init: save yml, make agent online and create job
-        yml = flowService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
+        yml = ymlService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
 
         Agent agent = agentService.create("hello.agent.1", null);
         mockAgentOnline(agentService.getPath(agent));
@@ -412,7 +416,7 @@ public class JobServiceTest extends ZookeeperScenario {
     @Test
     public void should_cancel_job_if_agent_offline() throws IOException, InterruptedException {
         // init:
-        yml = flowService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
+        yml = ymlService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
         Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
 
         // mock agent online

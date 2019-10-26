@@ -14,25 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test.stats;
+package com.flowci.core.test.flow;
 
 import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobStatusChangeEvent;
-import com.flowci.core.stats.domain.StatsCounter;
-import com.flowci.core.stats.init.StatsTypeInitializer;
-import com.flowci.core.stats.service.StatsService;
-import com.flowci.core.stats.domain.StatsItem;
+import com.flowci.core.flow.domain.StatsItem;
+import com.flowci.core.flow.domain.StatsType;
+import com.flowci.core.flow.service.StatsService;
 import com.flowci.core.test.SpringScenario;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
-
-import com.flowci.exception.NotFoundException;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -42,21 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class StatsServiceTest extends SpringScenario {
 
     @Autowired
-    private StatsTypeInitializer statsTypeInitializer;
-
-    @Autowired
     private StatsService statsService;
-
-    @Before
-    public void initTypes() {
-        statsTypeInitializer.initJobStatsType();
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void should_throw_exception_if_type_not_exist() {
-        int day = DateHelper.toIntDay(new Date());
-        statsService.add("12323", day, "not exist", new StatsCounter());
-    }
 
     @Test
     public void should_add_stats_item_when_job_status_changed() {
@@ -68,7 +50,7 @@ public class StatsServiceTest extends SpringScenario {
         multicastEvent(new JobStatusChangeEvent(this, job));
         ThreadHelper.sleep(1000);
 
-        StatsItem item = statsService.get(job.getFlowId(), StatsItem.TYPE_JOB_STATUS, DateHelper.toIntDay(new Date()));
+        StatsItem item = statsService.get(job.getFlowId(), StatsType.JOB_STATUS, DateHelper.toIntDay(new Date()));
         Assert.assertNotNull(item);
         Assert.assertEquals(Job.FINISH_STATUS.size(), item.getCounter().size());
 
@@ -108,7 +90,7 @@ public class StatsServiceTest extends SpringScenario {
 
         int fromDay = DateHelper.toIntDay(yesterday);
         int toDay = DateHelper.toIntDay(tomorrow);
-        List<StatsItem> list = statsService.list(flowId, StatsItem.TYPE_JOB_STATUS, fromDay, toDay);
+        List<StatsItem> list = statsService.list(flowId, StatsType.JOB_STATUS, fromDay, toDay);
         Assert.assertNotNull(list);
         Assert.assertEquals(3, list.size());
     }

@@ -1,6 +1,6 @@
 [
   {
-    "name": "CI_JOB_STATUS",
+    "name": "default/ci_job_status",
     "desc": "job status",
     "fields": [
       "TIMEOUT", "CANCELLED", "FAILURE", "SUCCESS"
@@ -24,7 +24,7 @@
   },
 
   {
-    "name": "jacoco BRANCH",
+    "name": "jacoco_BRANCH",
     "desc": "jacoco branch",
     "fields": [
       "missed", "covered"
@@ -56,7 +56,7 @@
   },
 
   {
-    "name": "jacoco CLASS",
+    "name": "jacoco_CLASS",
     "desc": "jacoco class",
     "fields": [
       "missed", "covered"

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.core.stats.service;
+package com.flowci.core.flow.service;
 
-import com.flowci.core.stats.domain.StatsCounter;
-import com.flowci.core.stats.domain.StatsItem;
-import com.flowci.core.stats.domain.StatsType;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.StatsCounter;
+import com.flowci.core.flow.domain.StatsItem;
+import com.flowci.core.flow.domain.StatsType;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Statistic Service
@@ -29,19 +32,19 @@ import java.util.List;
 public interface StatsService {
 
     /**
+     * List system default stats type
+     */
+    Map<String, StatsType> defaultTypes();
+
+    /**
+     * Get plugins of flow
+     */
+    Collection<StatsType> getStatsType(Flow flow);
+
+    /**
      * List statistic by range
      */
     List<StatsItem> list(String flowId, String type, int fromDay, int toDay);
-
-    /**
-     * Get stats meta type data
-     */
-    StatsType getMetaType(String name);
-
-    /**
-     * Get stats meta type list
-     */
-    List<StatsType> getMetaTypeList();
 
     /**
      * Get statistic item

@@ -14,26 +14,16 @@
  * limitations under the License.
  */
 
-package com.flowci.core.stats.domain;
+package com.flowci.core.flow.event;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.flowci.core.flow.domain.Flow;
 
 /**
  * @author yang
  */
-public class StatsCounter extends HashMap<String, Float> {
+public class FlowConfirmedEvent extends FlowOperationEvent {
 
-    public static StatsCounter from(Map<String, Float> data) {
-        StatsCounter counter = new StatsCounter();
-        counter.putAll(data);
-        return counter;
-    }
-
-    public void add(StatsCounter another) {
-        for (Map.Entry<String, Float> entry : another.entrySet()) {
-            Float localValue = this.getOrDefault(entry.getKey(), 0.0F);
-            this.put(entry.getKey(), localValue + entry.getValue());
-        }
+    public FlowConfirmedEvent(Object source, Flow flow) {
+        super(source, flow);
     }
 }

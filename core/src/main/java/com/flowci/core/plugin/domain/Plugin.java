@@ -16,8 +16,10 @@
 
 package com.flowci.core.plugin.domain;
 
+import com.flowci.core.flow.domain.StatsType;
 import com.flowci.domain.Version;
 import java.io.Serializable;
+import java.util.LinkedList;
 import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -37,7 +39,10 @@ public class Plugin implements Serializable {
 
     private Version version;
 
-    private List<Variable> inputs;
+    private List<Variable> inputs = new LinkedList<>();
+
+    // Plugin that supported statistic types
+    private List<StatsType> statsTypes = new LinkedList<>();
 
     private boolean allowFailure = false;
 

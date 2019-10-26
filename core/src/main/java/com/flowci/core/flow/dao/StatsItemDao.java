@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.flowci.core.stats.dao;
+package com.flowci.core.flow.dao;
 
-import com.flowci.core.stats.domain.StatsItem;
+import com.flowci.core.flow.domain.StatsItem;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;

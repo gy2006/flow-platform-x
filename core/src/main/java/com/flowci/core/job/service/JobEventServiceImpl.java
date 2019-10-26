@@ -26,6 +26,8 @@ import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.event.FlowCreatedEvent;
+import com.flowci.core.flow.event.FlowDeletedEvent;
 import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.job.dao.JobDao;
@@ -36,24 +38,33 @@ import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.StatusHelper;
-import com.flowci.domain.*;
+import com.flowci.domain.Agent;
+import com.flowci.domain.CmdId;
+import com.flowci.domain.CmdIn;
+import com.flowci.domain.ExecutedCmd;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.Vars;
 import com.flowci.tree.GroovyRunner;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import groovy.util.ScriptException;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 @Log4j2
 @Service
@@ -93,7 +104,6 @@ public class JobEventServiceImpl implements JobEventService {
 
     private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
 
-
     //====================================================================
     //        %% Internal events
     //====================================================================
@@ -128,28 +138,24 @@ public class JobEventServiceImpl implements JobEventService {
         consumer.start(false);
     }
 
-    @EventListener(value = FlowOperationEvent.class)
-    public void onFlowDeleted(FlowOperationEvent event) {
-        if (event.isDeletedEvent()) {
-            stopJobConsumer(event.getFlow());
-            jobService.delete(event.getFlow());
-        }
+    @EventListener
+    public void deleteJob(FlowDeletedEvent event) {
+        stopJobConsumer(event.getFlow());
+        jobService.delete(event.getFlow());
     }
 
-    @EventListener(value = FlowOperationEvent.class)
-    public void onFlowCreated(FlowOperationEvent event) {
-        if (event.isCreatedEvent()) {
-            startJobConsumer(event.getFlow());
-        }
+    @EventListener
+    public void startJobConsumer(FlowCreatedEvent event) {
+        startJobConsumer(event.getFlow());
     }
 
-    @EventListener(value = CreateNewJobEvent.class)
+    @EventListener
     public void onApplicationEvent(CreateNewJobEvent event) {
         Job job = jobService.create(event.getFlow(), event.getYml(), event.getTrigger(), event.getInput());
         jobService.start(job);
     }
 
-    @EventListener(value = AgentStatusChangeEvent.class)
+    @EventListener
     public void notifyToFindAvailableAgent(AgentStatusChangeEvent event) {
         Agent agent = event.getAgent();
 
@@ -347,8 +353,8 @@ public class JobEventServiceImpl implements JobEventService {
         }
 
         Vars<String> map = new StringVars()
-                .merge(job.getContext())
-                .merge(node.getEnvironments());
+            .merge(job.getContext())
+            .merge(node.getEnvironments());
 
         try {
             GroovyRunner<Boolean> runner = GroovyRunner.create(DefaultBeforeTimeout, node.getBefore(), map);

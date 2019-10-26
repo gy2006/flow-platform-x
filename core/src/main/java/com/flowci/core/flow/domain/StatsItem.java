@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.stats.domain;
+package com.flowci.core.flow.domain;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -37,8 +37,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
     @CompoundIndex(name = "index_flow_day_type", def = "{'flowId' : 1, 'day': -1, 'type': 1}")
 )
 public class StatsItem {
-
-    public static final String TYPE_JOB_STATUS = "CI_JOB_STATUS";
 
     @Id
     private String id; // auto id

@@ -53,6 +53,8 @@ public abstract class FlowAction {
 
     public static final String LIST_USER = "list_user_of_flow";
 
+    public static final String LIST_PLUGINS = "list_plugins";
+
     public static final String[] ALL = {
         CREATE,
         CHECK_NAME,
@@ -70,7 +72,8 @@ public abstract class FlowAction {
         SETUP_CREDENTIAL,
         ADD_USER,
         REMOVE_USER,
-        LIST_USER
+        LIST_USER,
+        LIST_PLUGINS
     };
 
 }

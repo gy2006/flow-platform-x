@@ -18,17 +18,17 @@ package com.flowci.core.test.flow;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.common.domain.Variables;
 import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
-import com.flowci.core.common.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.flow.service.YmlService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.StringVars;
 import com.flowci.domain.VarValue;
 import com.flowci.domain.Vars;
 import com.flowci.domain.http.ResponseMessage;
@@ -42,8 +42,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,10 +60,13 @@ import org.springframework.context.ApplicationListener;
 public class FlowServiceTest extends SpringScenario {
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private FlowService flowService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private YmlService ymlService;
 
     @MockBean
     private CredentialService credentialService;
@@ -123,7 +129,7 @@ public class FlowServiceTest extends SpringScenario {
         Assert.assertEquals(Status.CONFIRMED, confirmed.getStatus());
 
         // then: the default yml should be created with expected variables
-        Yml yml = flowService.getYml(confirmed);
+        Yml yml = ymlService.getYml(confirmed);
         Assert.assertNotNull(yml);
 
         Node root = YmlParser.load("test", yml.getRaw());
@@ -142,7 +148,7 @@ public class FlowServiceTest extends SpringScenario {
         Flow confirmed = flowService.confirm(name, null, null);
 
         // then:
-        Yml yml = flowService.getYml(confirmed);
+        Yml yml = ymlService.getYml(confirmed);
         Assert.assertNotNull(yml);
 
         Node root = YmlParser.load("test", yml.getRaw());
@@ -181,7 +187,7 @@ public class FlowServiceTest extends SpringScenario {
         String ymlRaw = StringHelper.toString(load("flow.yml"));
 
         // then: yml object should be created
-        Yml yml = flowService.saveYml(flow, ymlRaw);
+        Yml yml = ymlService.saveYml(flow, ymlRaw);
         Assert.assertNotNull(yml);
         Assert.assertEquals(flow.getId(), yml.getId());
     }
@@ -195,7 +201,7 @@ public class FlowServiceTest extends SpringScenario {
     @Test(expected = YmlException.class)
     public void should_throw_exception_if_yml_illegal_yml_format() {
         Flow flow = flowService.create("test");
-        flowService.saveYml(flow, "hello-...");
+        ymlService.saveYml(flow, "hello-...");
     }
 
     @Ignore
@@ -236,15 +242,5 @@ public class FlowServiceTest extends SpringScenario {
         // then:
         countDown.await(60, TimeUnit.SECONDS);
         Assert.assertTrue(branches.size() >= 1);
-    }
-
-    @Test
-    public void should_create_default_template_yml() {
-        Flow flow = new Flow("hello");
-        flow.getVariables().put("FLOWCI_FLOW_NAME", "hello");
-        flow.getVariables().put("FLOWCI_GIT_URL", "git@github.com:FlowCI/docs.git");
-
-        String templateYml = flowService.getTemplateYml(flow);
-        Assert.assertNotNull(templateYml);
     }
 }

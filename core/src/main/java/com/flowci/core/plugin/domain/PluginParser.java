@@ -16,11 +16,12 @@
 
 package com.flowci.core.plugin.domain;
 
+import com.flowci.core.flow.domain.StatsType;
 import com.flowci.domain.VarType;
 import com.flowci.domain.Version;
 import com.flowci.util.YamlHelper;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import lombok.NoArgsConstructor;
@@ -49,6 +50,8 @@ public class PluginParser {
 
         public List<VariableWrapper> inputs;
 
+        public List<StatsWrapper> stats;
+
         public Boolean allow_failure;
 
         @NonNull
@@ -62,16 +65,36 @@ public class PluginParser {
                 plugin.setAllowFailure(allow_failure);
             }
 
-            if (Objects.isNull(inputs)) {
-                return plugin;
+            if (!Objects.isNull(stats)) {
+                for (StatsWrapper wrapper : stats) {
+                    plugin.getStatsTypes().add(wrapper.toStatsType());
+                }
             }
 
-            plugin.setInputs(new ArrayList<>(inputs.size()));
-            for (VariableWrapper wrapper : inputs) {
-                plugin.getInputs().add(wrapper.toVariable());
+            if (!Objects.isNull(inputs)) {
+                for (VariableWrapper wrapper : inputs) {
+                    plugin.getInputs().add(wrapper.toVariable());
+                }
             }
 
             return plugin;
+        }
+    }
+
+    @NoArgsConstructor
+    private static class StatsWrapper {
+
+        public String name;
+
+        public String desc;
+
+        public List<String> fields = new LinkedList<>();
+
+        public StatsType toStatsType() {
+            return new StatsType()
+                .setName(name)
+                .setDesc(desc)
+                .setFields(fields);
         }
     }
 

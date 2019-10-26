@@ -20,8 +20,8 @@ package com.flowci.core.api.service;
 import com.flowci.core.api.domain.CreateJobSummary;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.job.domain.JobSummary;
-import com.flowci.core.stats.domain.StatsCounter;
-import com.flowci.core.stats.domain.StatsItem;
+import com.flowci.core.flow.domain.StatsCounter;
+import com.flowci.core.flow.domain.StatsItem;
 
 public interface OpenRestService {
 

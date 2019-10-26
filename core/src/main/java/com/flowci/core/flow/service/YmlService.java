@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-package com.flowci.core.stats.dao;
+package com.flowci.core.flow.service;
 
-import com.flowci.core.stats.domain.StatsType;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.Yml;
 
-import java.util.Optional;
+/**
+ * @author yang
+ */
+public interface YmlService {
 
-@Repository
-public interface StatsTypeDao extends MongoRepository<StatsType, String> {
+    /**
+     * Get yml by flow
+     */
+    Yml getYml(Flow flow);
 
-    Optional<StatsType> findByName(String name);
-
-    boolean existsByName(String name);
+    /**
+     * Create or update yml for flow
+     */
+    Yml saveYml(Flow flow, String yml);
 }
