@@ -19,6 +19,7 @@ package com.flowci.core.flow.service;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.domain.StatsType;
 import com.flowci.domain.SimpleKeyPair;
 
 import java.util.List;
@@ -81,21 +82,6 @@ public interface FlowService {
      * Update flow name or variables
      */
     void update(Flow flow);
-
-    /**
-     * Get default template yml of flow
-     */
-    String getTemplateYml(Flow flow);
-
-    /**
-     * Get yml by flow
-     */
-    Yml getYml(Flow flow);
-
-    /**
-     * Create or update yml for flow
-     */
-    Yml saveYml(Flow flow, String yml);
 
     /**
      * Create ssh-rsa credential

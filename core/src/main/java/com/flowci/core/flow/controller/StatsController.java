@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package com.flowci.core.stats;
+package com.flowci.core.flow.controller;
 
-import com.flowci.core.stats.domain.StatsItem;
-import com.flowci.core.stats.domain.StatsType;
-import com.flowci.core.stats.service.StatsService;
+import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.StatsItem;
+import com.flowci.core.flow.domain.StatsType;
+import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.flow.service.StatsService;
 import com.flowci.exception.ArgumentException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,26 +34,25 @@ import org.springframework.web.bind.annotation.RestController;
  * @author yang
  */
 @RestController
-@RequestMapping("/stats")
+@RequestMapping("/flows")
 public class StatsController {
 
     private static final int MaxDays = 30;
 
     @Autowired
+    private FlowService flowService;
+
+    @Autowired
     private StatsService statsService;
 
-    @GetMapping("/type")
-    public List<StatsType> getMetaTypeList() {
-        return statsService.getMetaTypeList();
+    @GetMapping("/{name}/stats/types")
+    public List<StatsType> types(@PathVariable String name) {
+        Flow flow = flowService.get(name);
+        return statsService.getStatsType(flow);
     }
 
-    @GetMapping("/type/{name}")
-    public StatsType getMetaType(@PathVariable String name) {
-        return statsService.getMetaType(name);
-    }
-
-    @GetMapping
-    public List<StatsItem> list(@RequestParam String id,
+    @GetMapping("/{name}/stats")
+    public List<StatsItem> list(@PathVariable String name,
                                 @RequestParam(required = false) String t,
                                 @RequestParam int from,
                                 @RequestParam int to) {
@@ -60,7 +61,8 @@ public class StatsController {
             throw new ArgumentException("Illegal query argument");
         }
 
-        return statsService.list(id, t, from, to);
+        Flow flow = flowService.get(name);
+        return statsService.list(flow.getId(), t, from, to);
     }
 
 }

@@ -17,35 +17,18 @@
 
 package com.flowci.core.flow.event;
 
+import com.flowci.core.common.domain.SyncEvent;
 import com.flowci.core.flow.domain.Flow;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
-public class FlowOperationEvent extends ApplicationEvent {
-
-    public enum Operation {
-        CREATED,
-
-        DELETED
-    }
+public abstract class FlowOperationEvent extends ApplicationEvent implements SyncEvent {
 
     @Getter
-    private final Flow flow;
+    protected final Flow flow;
 
-    @Getter
-    private final Operation operation;
-
-    public FlowOperationEvent(Object source, Flow flow, Operation operation) {
+    public FlowOperationEvent(Object source, Flow flow) {
         super(source);
         this.flow = flow;
-        this.operation = operation;
-    }
-
-    public boolean isDeletedEvent() {
-        return this.operation == Operation.DELETED;
-    }
-
-    public boolean isCreatedEvent() {
-        return this.operation == Operation.CREATED;
     }
 }

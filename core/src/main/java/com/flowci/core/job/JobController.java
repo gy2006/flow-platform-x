@@ -21,6 +21,7 @@ import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.flow.service.YmlService;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.CreateJob;
@@ -73,6 +74,9 @@ public class JobController {
 
     @Autowired
     private FlowService flowService;
+
+    @Autowired
+    private YmlService ymlService;
 
     @Autowired
     private JobService jobService;
@@ -166,7 +170,7 @@ public class JobController {
     @Action(JobAction.CREATE)
     public Job create(@Validated @RequestBody CreateJob data) {
         Flow flow = flowService.get(data.getFlow());
-        Yml yml = flowService.getYml(flow);
+        Yml yml = ymlService.getYml(flow);
         return jobService.create(flow, yml, Trigger.API, data.getInputs());
     }
 
