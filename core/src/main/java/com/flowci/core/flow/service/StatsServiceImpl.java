@@ -26,6 +26,7 @@ import com.flowci.core.flow.domain.StatsCounter;
 import com.flowci.core.flow.domain.StatsItem;
 import com.flowci.core.flow.domain.StatsType;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.event.FlowDeletedEvent;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.plugin.domain.Plugin;
@@ -91,7 +92,7 @@ public class StatsServiceImpl implements StatsService {
         }
     }
 
-    @EventListener(JobStatusChangeEvent.class)
+    @EventListener
     public void onJobStatusChange(JobStatusChangeEvent event) {
         Job job = event.getJob();
 
@@ -105,6 +106,11 @@ public class StatsServiceImpl implements StatsService {
 
         int day = DateHelper.toIntDay(job.getCreatedAt());
         add(job.getFlowId(), day, item.getType(), item.getCounter());
+    }
+
+    @EventListener
+    public void onFlowDelete(FlowDeletedEvent event) {
+        statsItemDao.deleteByFlowId(event.getFlow().getId());
     }
 
     @Override

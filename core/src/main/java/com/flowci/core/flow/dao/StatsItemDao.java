@@ -37,4 +37,6 @@ public interface StatsItemDao extends MongoRepository<StatsItem, String> {
     List<StatsItem> findByFlowIdDayBetween(String flowId, int dayGT, int dayLT, Sort sort);
 
     StatsItem findByFlowIdAndDayAndType(String flowId, int day, String type);
+
+    void deleteByFlowId(String flowId);
 }
