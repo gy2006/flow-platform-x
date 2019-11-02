@@ -29,15 +29,15 @@ public abstract class DateHelper {
 
     private static final SimpleDateFormat intDayFormatter = new SimpleDateFormat("yyyyMMdd");
 
-    public static int toIntDay(Date date) {
+    public static synchronized int toIntDay(Date date) {
         return Integer.parseInt(intDayFormatter.format(date));
     }
 
-    public static Instant toInstant(int day) {
+    public static synchronized Instant toInstant(int day) {
         try {
-            Date date = intDayFormatter.parse(Integer.toString(day));
+            Date date = intDayFormatter.parse("" + day);
             return date.toInstant();
-        } catch (ParseException e) {
+         } catch (ParseException e) {
             throw new ArgumentException("Invalid day format");
         }
     }
