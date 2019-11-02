@@ -16,7 +16,10 @@
 
 package com.flowci.core.common.helper;
 
+import com.flowci.exception.ArgumentException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 
 /**
@@ -28,5 +31,14 @@ public abstract class DateHelper {
 
     public static int toIntDay(Date date) {
         return Integer.parseInt(intDayFormatter.format(date));
+    }
+
+    public static Instant toInstant(int day) {
+        try {
+            Date date = intDayFormatter.parse(Integer.toString(day));
+            return date.toInstant();
+        } catch (ParseException e) {
+            throw new ArgumentException("Invalid day format");
+        }
     }
 }

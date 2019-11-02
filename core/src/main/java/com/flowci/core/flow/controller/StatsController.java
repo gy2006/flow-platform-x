@@ -16,12 +16,15 @@
 
 package com.flowci.core.flow.controller;
 
+import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.StatsItem;
 import com.flowci.core.flow.domain.StatsType;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.service.StatsService;
 import com.flowci.exception.ArgumentException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,12 +60,27 @@ public class StatsController {
                                 @RequestParam int from,
                                 @RequestParam int to) {
 
-        if (to < from || to - from > MaxDays) {
+        if (isValidDuration(from, to)) {
             throw new ArgumentException("Illegal query argument");
         }
 
         Flow flow = flowService.get(name);
         return statsService.list(flow.getId(), t, from, to);
+    }
+
+    private boolean isValidDuration(int from, int to) {
+        Instant f = DateHelper.toInstant(from);
+        Instant t = DateHelper.toInstant(to);
+
+        if (f.isAfter(t)) {
+            return false;
+        }
+
+        if (f.plus(MaxDays, ChronoUnit.DAYS).isAfter(t)) {
+            return false;
+        }
+
+        return true;
     }
 
 }
