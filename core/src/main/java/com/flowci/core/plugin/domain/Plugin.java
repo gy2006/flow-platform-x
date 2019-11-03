@@ -46,6 +46,9 @@ public class Plugin implements Serializable {
 
     private boolean allowFailure = false;
 
+    // icon path in plugin repo
+    private String icon;
+
     private String script;
 
     public Plugin(String name, Version version) {

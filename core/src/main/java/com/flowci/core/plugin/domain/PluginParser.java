@@ -48,6 +48,8 @@ public class PluginParser {
         @NonNull
         public String version;
 
+        public String icon;
+
         public List<VariableWrapper> inputs;
 
         public List<StatsWrapper> stats;
@@ -59,6 +61,7 @@ public class PluginParser {
 
         public Plugin toPlugin() {
             Plugin plugin = new Plugin(name, Version.parse(version));
+            plugin.setIcon(icon);
             plugin.setScript(script);
 
             if (!Objects.isNull(allow_failure)) {
