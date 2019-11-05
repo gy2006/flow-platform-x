@@ -43,6 +43,11 @@ public interface PluginService {
     byte[] getReadMe(Plugin plugin);
 
     /**
+     * Get icon byte array
+     */
+    byte[] getIcon(Plugin plugin);
+
+    /**
      * Get repo file path
      */
     Path getDir(Plugin plugin);

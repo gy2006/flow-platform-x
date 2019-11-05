@@ -61,6 +61,8 @@ public class PluginServiceImpl implements PluginService {
 
     private static final String ReadMeFileName = "README.md";
 
+    private static final byte[] EmptyBytes = new byte[0];
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -102,7 +104,18 @@ public class PluginServiceImpl implements PluginService {
             return Files.readAllBytes(Paths.get(path.toString(), ReadMeFileName));
         } catch (IOException e) {
             log.warn("Unable to get plugin README.md file");
-            return new byte[0];
+            return EmptyBytes;
+        }
+    }
+
+    @Override
+    public byte[] getIcon(Plugin plugin) {
+        try {
+            Path path = getDir(plugin);
+            return Files.readAllBytes(Paths.get(path.toString(), plugin.getIcon()));
+        } catch (IOException e) {
+            log.warn("Unable to get plugin icon file");
+            return EmptyBytes;
         }
     }
 
@@ -142,6 +155,8 @@ public class PluginServiceImpl implements PluginService {
     @Override
     public void reload() {
         synchronized (reloadLock) {
+            pluginDao.deleteAll();
+
             String repoUrl = pluginProperties.getDefaultRepo();
             List<PluginRepo> repos = load(repoUrl);
             clone(repos);
@@ -150,11 +165,9 @@ public class PluginServiceImpl implements PluginService {
 
     @Scheduled(fixedRate = 1000 * 3600)
     public void scheduleSync() {
-        if (!pluginProperties.getAutoUpdate()) {
-            return;
+        if (pluginProperties.getAutoUpdate()) {
+            reload();
         }
-
-        reload();
     }
 
     private void saveOrUpdate(Plugin pluginFromRepo) {

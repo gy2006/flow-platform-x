@@ -74,4 +74,8 @@ public class Plugin implements Serializable {
         this.setAllowFailure(src.isAllowFailure());
         this.setScript(src.getScript());
     }
+
+    public boolean isHttpLinkIcon() {
+        return icon != null && (icon.startsWith("http") || icon.startsWith("https"));
+    }
 }
