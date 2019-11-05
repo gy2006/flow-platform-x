@@ -38,6 +38,11 @@ public interface PluginService {
     Plugin get(String name);
 
     /**
+     * Get ReadMe.md content
+     */
+    byte[] getReadMe(Plugin plugin);
+
+    /**
      * Get repo file path
      */
     Path getDir(Plugin plugin);

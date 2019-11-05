@@ -19,6 +19,7 @@ package com.flowci.core.plugin.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.plugin.dao.PluginDao;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginParser;
 import com.flowci.core.plugin.domain.PluginRepo;
@@ -36,9 +37,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -60,6 +59,8 @@ public class PluginServiceImpl implements PluginService {
 
     private static final String PluginFileName = "plugin.yml";
 
+    private static final String ReadMeFileName = "README.md";
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -75,22 +76,34 @@ public class PluginServiceImpl implements PluginService {
     @Autowired
     private ApplicationContext context;
 
-    private Map<String, Plugin> installed = new ConcurrentHashMap<>(10);
+    @Autowired
+    private PluginDao pluginDao;
 
     private final Object reloadLock = new Object();
 
     @Override
     public Collection<Plugin> list() {
-        return installed.values();
+        return pluginDao.findAll();
     }
 
     @Override
     public Plugin get(String name) {
-        Plugin plugin = installed.get(name);
-        if (Objects.isNull(plugin)) {
+        Optional<Plugin> optional = pluginDao.findByName(name);
+        if (!optional.isPresent()) {
             throw new NotFoundException("The plugin {0} is not found", name);
         }
-        return plugin;
+        return optional.get();
+    }
+
+    @Override
+    public byte[] getReadMe(Plugin plugin) {
+        try {
+            Path path = getDir(plugin);
+            return Files.readAllBytes(Paths.get(path.toString(), ReadMeFileName));
+        } catch (IOException e) {
+            log.warn("Unable to get plugin README.md file");
+            return new byte[0];
+        }
     }
 
     @Override
@@ -114,7 +127,7 @@ public class PluginServiceImpl implements PluginService {
             repoCloneExecutor.execute(() -> {
                 try {
                     Plugin plugin = clone(repo);
-                    installed.put(repo.getName(), plugin);
+                    saveOrUpdate(plugin);
                     context.publishEvent(new RepoCloneEvent(this, plugin));
                     log.info("Plugin {} been clone", plugin);
                 } catch (CIException e) {
@@ -142,6 +155,19 @@ public class PluginServiceImpl implements PluginService {
         }
 
         reload();
+    }
+
+    private void saveOrUpdate(Plugin pluginFromRepo) {
+        Optional<Plugin> optional = pluginDao.findByName(pluginFromRepo.getName());
+
+        if (optional.isPresent()) {
+            Plugin exist = optional.get();
+            exist.update(pluginFromRepo);
+            pluginDao.save(exist);
+            return;
+        }
+
+        pluginDao.save(pluginFromRepo);
     }
 
     private Plugin clone(PluginRepo repo) throws GitAPIException, IOException {
@@ -177,6 +203,8 @@ public class PluginServiceImpl implements PluginService {
 
     /**
      * Load plugin.yml from local repo
+     * and convert to Plugin object
+     *
      * @throws IOException
      */
     private Plugin load(File dir, PluginRepo repo) throws IOException {
