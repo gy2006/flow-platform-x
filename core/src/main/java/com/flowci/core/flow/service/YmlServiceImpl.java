@@ -33,6 +33,8 @@ import com.flowci.util.StringHelper;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -67,6 +69,17 @@ public class YmlServiceImpl implements YmlService {
     //====================================================================
     //        %% Public function
     //====================================================================
+
+    @Override
+    public List<Node> ListChildren(Flow flow) {
+        Optional<Yml> optional = ymlDao.findById(flow.getId());
+        if (!optional.isPresent()) {
+            return Collections.emptyList();
+        }
+
+        Node root = YmlParser.load(flow.getName(), optional.get().getRaw());
+        return root.getChildren();
+    }
 
     @Override
     public Yml getYml(Flow flow) {
