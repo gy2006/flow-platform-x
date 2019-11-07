@@ -19,22 +19,35 @@ package com.flowci.core.plugin.domain;
 import com.flowci.core.flow.domain.StatsType;
 import com.flowci.domain.Version;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author yang
  */
 @Getter
 @Setter
+@NoArgsConstructor
 @EqualsAndHashCode(of = {"name"})
 @ToString(of = {"name", "version"})
+@Document(collection = "plugins")
 public class Plugin implements Serializable {
 
+    @Id
+    private String id;
+
+    @Indexed(name = "index_plugins_name", unique = true)
     private String name;
 
     private Version version;
@@ -43,6 +56,8 @@ public class Plugin implements Serializable {
 
     // Plugin that supported statistic types
     private List<StatsType> statsTypes = new LinkedList<>();
+
+    private Set<String> tags = new HashSet<>();
 
     private boolean allowFailure = false;
 
@@ -54,5 +69,18 @@ public class Plugin implements Serializable {
     public Plugin(String name, Version version) {
         this.name = name;
         this.version = version;
+    }
+
+    public void update(Plugin src) {
+        this.setIcon(src.getIcon());
+        this.setVersion(src.getVersion());
+        this.setInputs(src.getInputs());
+        this.setStatsTypes(src.getStatsTypes());
+        this.setAllowFailure(src.isAllowFailure());
+        this.setScript(src.getScript());
+    }
+
+    public boolean isHttpLinkIcon() {
+        return icon != null && (icon.startsWith("http") || icon.startsWith("https"));
     }
 }

@@ -14,31 +14,18 @@
  * limitations under the License.
  */
 
-package com.flowci.core.flow.service;
+package com.flowci.core.plugin.dao;
 
-import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.Yml;
-import com.flowci.tree.Node;
-
-import java.util.List;
+import com.flowci.core.plugin.domain.Plugin;
+import java.util.Optional;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author yang
  */
-public interface YmlService {
+@Repository
+public interface PluginDao extends MongoRepository<Plugin, String> {
 
-    /**
-     * List all children node from YAML
-     */
-    List<Node> ListChildren(Flow flow);
-
-    /**
-     * Get yml by flow
-     */
-    Yml getYml(Flow flow);
-
-    /**
-     * Create or update yml for flow
-     */
-    Yml saveYml(Flow flow, String yml);
+    Optional<Plugin> findByName(String name);
 }

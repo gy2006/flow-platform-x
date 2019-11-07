@@ -72,6 +72,7 @@ public class WebConfig {
                     .addPathPatterns("/jobs/**")
                     .addPathPatterns("/agents/**")
                     .addPathPatterns("/stats/**")
+                    .addPathPatterns("/plugins/**")
                     .addPathPatterns("/credentials/**")
                     .addPathPatterns("/auth/logout")
                     .excludePathPatterns("/agents/connect")
