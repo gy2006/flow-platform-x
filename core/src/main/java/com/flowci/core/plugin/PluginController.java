@@ -18,23 +18,13 @@ package com.flowci.core.plugin;
 
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.service.PluginService;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.nio.file.Paths;
-import java.util.Base64;
-import java.util.Collection;
-
 import com.flowci.util.StringHelper;
-import com.sun.org.apache.bcel.internal.generic.FSUB;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
+import java.util.Base64;
+import java.util.Collection;
 
 /**
  * @author yang
@@ -42,8 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping("/plugins")
 public class PluginController {
-
-    private static final String DefaultIconType = "image/svg+xml";
 
     @Autowired
     private PluginService pluginService;
