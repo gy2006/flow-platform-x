@@ -18,19 +18,14 @@ package com.flowci.core.plugin.domain;
 
 import com.flowci.core.flow.domain.StatsType;
 import com.flowci.domain.Version;
-import java.io.Serializable;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
@@ -39,36 +34,27 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Setter
 @NoArgsConstructor
-@EqualsAndHashCode(of = {"name"})
-@ToString(of = {"name", "version"})
+@EqualsAndHashCode(of = {"id"}, callSuper = false)
 @Document(collection = "plugins")
-public class Plugin implements Serializable {
+public class Plugin extends PluginRepoInfo {
 
     @Id
     private String id;
-
-    @Indexed(name = "index_plugins_name", unique = true)
-    private String name;
-
-    private Version version;
 
     private List<Variable> inputs = new LinkedList<>();
 
     // Plugin that supported statistic types
     private List<StatsType> statsTypes = new LinkedList<>();
 
-    private Set<String> tags = new HashSet<>();
-
     private boolean allowFailure = false;
-
-    // icon path in plugin repo
-    private String icon;
 
     private String script;
 
+    private String icon;
+
     public Plugin(String name, Version version) {
-        this.name = name;
-        this.version = version;
+        this.setName(name);
+        this.setVersion(version);
     }
 
     public void update(Plugin src) {

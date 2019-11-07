@@ -24,8 +24,6 @@ import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import org.yaml.snakeyaml.Yaml;
@@ -56,8 +54,6 @@ public class PluginParser {
 
         public List<StatsWrapper> stats;
 
-        public Set<String> tags;
-
         public Boolean allow_failure;
 
         @NonNull
@@ -67,10 +63,6 @@ public class PluginParser {
             Plugin plugin = new Plugin(name, Version.parse(version));
             plugin.setIcon(icon);
             plugin.setScript(script);
-
-            if (!Objects.isNull(tags)) {
-                plugin.getTags().addAll(tags);
-            }
 
             if (!Objects.isNull(allow_failure)) {
                 plugin.setAllowFailure(allow_failure);

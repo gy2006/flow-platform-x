@@ -17,11 +17,14 @@
 package com.flowci.core.plugin.domain;
 
 import com.flowci.domain.Version;
+import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.mongodb.core.index.Indexed;
 
 /**
  * @author yang
@@ -30,8 +33,9 @@ import lombok.ToString;
 @Setter
 @EqualsAndHashCode(of = {"name"})
 @ToString(of = {"name", "version", "source", "branch"})
-public class PluginRepo {
+public class PluginRepoInfo implements Serializable {
 
+    @Indexed(name = "index_plugins_name", unique = true)
     private String name;
 
     private String source;
@@ -40,7 +44,7 @@ public class PluginRepo {
 
     private String description;
 
-    private Set<String> labels;
+    private Set<String> tags = new HashSet<>();
 
     private String author;
 

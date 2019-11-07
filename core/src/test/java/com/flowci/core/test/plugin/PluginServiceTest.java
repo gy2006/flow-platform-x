@@ -22,7 +22,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 
 import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.domain.PluginRepo;
+import com.flowci.core.plugin.domain.PluginRepoInfo;
 import com.flowci.core.plugin.event.RepoCloneEvent;
 import com.flowci.core.plugin.service.PluginService;
 import com.flowci.core.test.SpringScenario;
@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -66,10 +67,10 @@ public class PluginServiceTest extends SpringScenario {
 
     @Test
     public void should_load_plugin_repos_from_url() {
-        List<PluginRepo> repos = pluginService.load(RepoURL);
+        List<PluginRepoInfo> repos = pluginService.load(RepoURL);
         Assert.assertEquals(1, repos.size());
 
-        PluginRepo repo = repos.get(0);
+        PluginRepoInfo repo = repos.get(0);
         Assert.assertEquals("gitclone", repo.getName());
         Assert.assertEquals("https://github.com/yang-guo-2016/flowci-plugin-gitclone", repo.getSource());
         Assert.assertEquals("git clone plugin", repo.getDescription());
@@ -77,10 +78,11 @@ public class PluginServiceTest extends SpringScenario {
         Assert.assertEquals(Version.parse("0.0.1"), repo.getVersion());
     }
 
+    @Ignore
     @Test
     public void should_clone_plugin_repo() throws Throwable {
         // init:
-        List<PluginRepo> repos = pluginService.load(RepoURL);
+        List<PluginRepoInfo> repos = pluginService.load(RepoURL);
 
         // init counter
         CountDownLatch counter = new CountDownLatch(1);
