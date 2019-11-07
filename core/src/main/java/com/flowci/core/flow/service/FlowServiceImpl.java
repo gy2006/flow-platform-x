@@ -31,8 +31,10 @@ import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.event.FlowConfirmedEvent;
+import com.flowci.core.flow.event.FlowCreatedEvent;
+import com.flowci.core.flow.event.FlowDeletedEvent;
 import com.flowci.core.flow.event.FlowInitEvent;
-import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.CreateNewJobEvent;
@@ -44,16 +46,18 @@ import com.flowci.core.trigger.event.GitHookEvent;
 import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.domain.ObjectWrapper;
 import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.VarType;
+import com.flowci.domain.VarValue;
+import com.flowci.domain.Vars;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
-import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
+import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.YmlParser;
-import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
@@ -62,7 +66,6 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -73,14 +76,11 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
@@ -130,13 +130,7 @@ public class FlowServiceImpl implements FlowService {
     private PathManager pathManager;
 
     @Autowired
-    private CronService cronService;
-
-    @Autowired
     private CredentialService credentialService;
-
-    @Autowired
-    private Template defaultYmlTemplate;
 
     @Autowired
     private Cache<String, List<String>> gitBranchCache;
@@ -163,9 +157,7 @@ public class FlowServiceImpl implements FlowService {
 
         for (; iter.hasNext(); ) {
             Flow flow = iter.next();
-            String value = flow.getVariables().get(Variables.Flow.SSH_RSA);
-
-            if (Objects.equals(value, credential.getName())) {
+            if (Objects.equals(flow.getCredentialName(), credential.getName())) {
                 continue;
             }
 
@@ -218,9 +210,10 @@ public class FlowServiceImpl implements FlowService {
         flow.setName(name);
         flow.setCreatedBy(userId);
 
-        VariableMap vars = flow.getVariables();
-        vars.put(Variables.Flow.Name, name);
-        vars.put(Variables.Flow.Webhook, getWebhook(name));
+        // set default vars
+        Vars<VarValue> localVars = flow.getLocally();
+        localVars.put(Variables.Flow.Name, VarValue.of(flow.getName(), VarType.STRING, false));
+        localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.HTTP_URL, false));
 
         try {
             flowDao.save(flow);
@@ -230,7 +223,7 @@ public class FlowServiceImpl implements FlowService {
             addUsers(flow, flow.getCreatedBy());
             createFlowJobQueue(flow);
 
-            eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.CREATED));
+            eventManager.publish(new FlowCreatedEvent(this, flow));
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Flow {0} already exists", name);
         } catch (IOException e) {
@@ -249,17 +242,18 @@ public class FlowServiceImpl implements FlowService {
             throw new DuplicateException("Flow {0} has created", name);
         }
 
-        VariableMap variables = flow.getVariables();
-        variables.putIfNotEmpty(Variables.Flow.GitUrl, gitUrl);
-        variables.putIfNotEmpty(Variables.Flow.SSH_RSA, credential);
+        if (!Strings.isNullOrEmpty(gitUrl)) {
+            flow.getLocally().put(Variables.Flow.GitUrl, VarValue.of(gitUrl, VarType.GIT_URL, true));
+        }
+
+        if (!Strings.isNullOrEmpty(credential)) {
+            flow.getLocally().put(Variables.Flow.SSH_RSA, VarValue.of(credential, VarType.STRING, true));
+        }
 
         flow.setStatus(Status.CONFIRMED);
         flowDao.save(flow);
 
-        // create template yml
-        String templateYml = getTemplateYml(flow);
-        saveYml(flow, templateYml);
-
+        eventManager.publish(new FlowConfirmedEvent(this, flow));
         return flow;
     }
 
@@ -289,15 +283,8 @@ public class FlowServiceImpl implements FlowService {
         flowDao.delete(flow);
         flowUserDao.delete(flow.getId());
 
-        try {
-            Yml yml = getYml(flow);
-            ymlDao.delete(yml);
-        } catch (NotFoundException ignore) {
-
-        }
-
         removeFlowJobQueue(flow);
-        eventManager.publish(new FlowOperationEvent(this, flow, FlowOperationEvent.Operation.DELETED));
+        eventManager.publish(new FlowDeletedEvent(this, flow));
         return flow;
     }
 
@@ -305,52 +292,6 @@ public class FlowServiceImpl implements FlowService {
     public void update(Flow flow) {
         flow.setUpdatedAt(Date.from(Instant.now()));
         flowDao.save(flow);
-    }
-
-    @Override
-    public String getTemplateYml(Flow flow) {
-        VelocityContext context = new VelocityContext();
-        for (Map.Entry<String, String> entry : flow.getVariables().entrySet()) {
-            context.put(entry.getKey(), entry.getValue());
-        }
-
-        try (StringWriter sw = new StringWriter()) {
-            defaultYmlTemplate.merge(context, sw);
-            return sw.toString();
-        } catch (IOException e) {
-            return StringHelper.EMPTY;
-        }
-    }
-
-    @Override
-    public Yml getYml(Flow flow) {
-        Optional<Yml> optional = ymlDao.findById(flow.getId());
-        if (optional.isPresent()) {
-            return optional.get();
-        }
-        throw new NotFoundException("No yml defined for flow {0}", flow.getName());
-    }
-
-    @Override
-    public Yml saveYml(Flow flow, String yml) {
-        if (Strings.isNullOrEmpty(yml)) {
-            throw new ArgumentException("Yml content cannot be null or empty");
-        }
-
-        YmlParser.load(flow.getName(), yml);
-        Yml ymlObj = new Yml(flow.getId(), yml);
-        ymlObj.setCreatedBy(sessionManager.getUserId());
-        ymlDao.save(ymlObj);
-
-        Node node = YmlParser.load(flow.getName(), ymlObj.getRaw());
-
-        // sync flow envs from yml root envs
-        flow.getVariables().merge(node.getEnvironments());
-        flowDao.save(flow);
-
-        // update cron task
-        cronService.update(flow, node, ymlObj);
-        return ymlObj;
     }
 
     @Override
@@ -389,8 +330,8 @@ public class FlowServiceImpl implements FlowService {
     public List<String> listGitBranch(String name) {
         final Flow flow = get(name);
 
-        String gitUrl = flow.getVariables().get(Variables.Flow.GitUrl);
-        String credentialName = flow.getVariables().get(Variables.Flow.SSH_RSA);
+        String gitUrl = flow.getGitUrl();
+        String credentialName = flow.getCredentialName();
 
         if (Strings.isNullOrEmpty(gitUrl) || Strings.isNullOrEmpty(credentialName)) {
             return Collections.emptyList();
@@ -468,7 +409,14 @@ public class FlowServiceImpl implements FlowService {
             flow.setWebhookStatus(ws);
             update(flow);
         } else {
-            Yml yml = getYml(flow);
+            Optional<Yml> optional = ymlDao.findById(flow.getId());
+
+            if (!optional.isPresent()) {
+                log.warn("No available yml for flow {}", flow.getName());
+                return;
+            }
+
+            Yml yml = optional.get();
             Node root = YmlParser.load(flow.getName(), yml.getRaw());
 
             if (!canStartJob(root, event.getTrigger())) {
@@ -476,7 +424,7 @@ public class FlowServiceImpl implements FlowService {
                 return;
             }
 
-            VariableMap gitInput = event.getTrigger().toVariableMap();
+            StringVars gitInput = event.getTrigger().toVariableMap();
             Trigger jobTrigger = event.getTrigger().toJobTrigger();
 
             eventManager.publish(new CreateNewJobEvent(this, flow, yml, jobTrigger, gitInput));

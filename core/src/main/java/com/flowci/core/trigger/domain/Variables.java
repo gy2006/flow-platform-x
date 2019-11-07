@@ -30,13 +30,11 @@ public class Variables {
     public static final String GIT_EVENT = "FLOWCI_GIT_EVENT";
 
     /**
-     * Should be email of the git user who start an event
+     * Email of the git user who start an event
      */
     public static final String GIT_AUTHOR = "FLOWCI_GIT_AUTHOR";
 
     public static final String GIT_BRANCH = "FLOWCI_GIT_BRANCH";
-
-    public static final String GIT_COMPARE_URL = "FLOWCI_GIT_COMPARE_URL";
 
     public static final String GIT_COMMIT_ID = "FLOWCI_GIT_COMMIT_ID";
 

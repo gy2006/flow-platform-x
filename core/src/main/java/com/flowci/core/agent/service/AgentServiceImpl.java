@@ -131,6 +131,7 @@ public class AgentServiceImpl implements AgentService {
         Agent target = getByToken(init.getToken());
         target.setHost("http://" + init.getIp() + ":" + init.getPort());
         target.setOs(init.getOs());
+        target.setResource(init.getResource());
         agentDao.save(target);
 
         Settings settings = ObjectsHelper.copy(baseSettings);
@@ -163,6 +164,11 @@ public class AgentServiceImpl implements AgentService {
             throw new NotFoundException("Agent token {0} is not available", token);
         }
         return agent;
+    }
+
+    @Override
+    public boolean isExisted(String token) {
+        return agentDao.existsAgentByToken(token);
     }
 
     @Override
@@ -265,7 +271,6 @@ public class AgentServiceImpl implements AgentService {
     @Override
     public Agent update(String token, String name, Set<String> tags) {
         Agent agent = getByToken(token);
-
         agent.setName(name);
         agent.setTags(tags);
 
@@ -274,6 +279,14 @@ public class AgentServiceImpl implements AgentService {
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Agent name {0} is already defined", name);
         }
+    }
+
+    @Override
+    public Agent update(String token, Agent.Resource resource) {
+        Agent agent = getByToken(token);
+        agent.setResource(resource);
+        agentDao.save(agent);
+        return agent;
     }
 
     @Override

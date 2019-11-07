@@ -1,5 +1,9 @@
 name: gitclone
 version: 0.0.1
+icon: "src/icon.svg"
+tags:
+  - "git"
+  - "clone"
 
 inputs:
 - name: GIT_URL
@@ -11,6 +15,15 @@ inputs:
 - name: GIT_RSA_CREDENTIAL
   type: string
   required: true
+
+stats:
+  - name: "junit"
+    desc: "junit"
+    fields:
+      - "tests"
+      - "failures"
+      - "errors"
+      - "skipped"
 
 allow_failure: true
 

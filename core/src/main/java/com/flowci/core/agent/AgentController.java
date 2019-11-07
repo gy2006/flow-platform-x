@@ -25,18 +25,15 @@ import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Settings;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Objects;
-import javax.servlet.http.HttpServletRequest;
-
-import com.flowci.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 /**
  * @author yang
@@ -44,8 +41,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/agents")
 public class AgentController {
-
-    private static final String HeaderAgentToken = "AGENT-TOKEN";
 
     @Autowired
     private AgentService agentService;
@@ -86,7 +81,7 @@ public class AgentController {
     // --------------------------------------------------------
 
     @PostMapping("/connect")
-    public Settings connect(@RequestHeader(HeaderAgentToken) String token,
+    public Settings connect(@RequestHeader(AgentInterceptor.HeaderAgentToken) String token,
                             @RequestBody AgentInit init,
                             HttpServletRequest request) {
         init.setToken(token);
@@ -94,13 +89,14 @@ public class AgentController {
         return agentService.connect(init);
     }
 
+    @PostMapping("/resource")
+    public void resourceUpdate(@RequestHeader(AgentInterceptor.HeaderAgentToken) String token,
+                               @RequestBody Agent.Resource resource) {
+        agentService.update(token, resource);
+    }
+
     @PostMapping("/logs/upload")
-    public void upload(@RequestHeader(HeaderAgentToken) String token,
-                       @RequestPart("file") MultipartFile file) {
-
-        // verify token
-        agentService.getByToken(token);
-
+    public void upload(@RequestPart("file") MultipartFile file) {
         try(InputStream stream = file.getInputStream()) {
             loggingService.save(file.getOriginalFilename(), stream);
         } catch (IOException ignored) {

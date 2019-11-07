@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 fir.im
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package com.flowci.domain;
 public abstract class Common {
 
     public enum OS {
+
         LINUX,
 
         MAC,

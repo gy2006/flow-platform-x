@@ -19,13 +19,15 @@ package com.flowci.core.common.mongo;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.TypedVars;
+import com.flowci.domain.Vars;
 import com.flowci.exception.ArgumentException;
+import java.io.IOException;
+import java.util.Objects;
 import lombok.Getter;
 import org.bson.Document;
 import org.springframework.core.convert.converter.Converter;
-
-import java.io.IOException;
 
 @Getter
 public class VariableMapConverter {
@@ -42,26 +44,43 @@ public class VariableMapConverter {
         this.writer = new Writer();
     }
 
-    public class Reader implements Converter<Document, VariableMap> {
+    public class Reader implements Converter<Document, Vars<?>> {
 
         @Override
-        public VariableMap convert(Document source) {
+        public Vars<?> convert(Document source) {
             try {
-                return objectMapper.readValue(source.toJson(), VariableMap.class);
+                String type = source.getString(Vars.JSON_TYPE_FIELD);
+
+                if (Objects.isNull(type)) {
+                    source.put(Vars.JSON_TYPE_FIELD, Vars.JSON_STRING_TYPE);
+                    type = Vars.JSON_STRING_TYPE;
+                }
+
+                if (type.equals(Vars.JSON_STRING_TYPE)) {
+                    return objectMapper.readValue(source.toJson(), StringVars.class);
+                }
+
+                if (type.equals(Vars.JSON_TYPED_TYPE)) {
+                    return objectMapper.readValue(source.toJson(), TypedVars.class);
+                }
+
+                throw new ArgumentException("Missing type code for vars");
+
             } catch (IOException e) {
-                throw new ArgumentException("Cannot parse mongo doc {0} to VariableMap", source.toJson());
+                throw new ArgumentException("Cannot parse mongo doc {0} to StringVars", source.toJson());
             }
         }
     }
 
-    public class Writer implements Converter<VariableMap, Document> {
+    public class Writer implements Converter<Vars<?>, Document> {
+
         @Override
-        public Document convert(VariableMap source) {
+        public Document convert(Vars<?> source) {
             try {
                 String json = objectMapper.writeValueAsString(source);
                 return Document.parse(json);
             } catch (JsonProcessingException e) {
-                throw new ArgumentException("Cannot parse VariableMap to json");
+                throw new ArgumentException("Cannot parse StringVars to json");
             }
         }
     }

@@ -25,6 +25,7 @@ import com.flowci.core.common.domain.JsonablePage;
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.test.MockMvcHelper;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.test.flow.FlowMockHelper;
@@ -55,8 +56,8 @@ public class JobControllerTest extends SpringScenario {
             new TypeReference<ResponseMessage<Job>>() {
             };
 
-    private static final TypeReference<ResponseMessage<JsonablePage<Job>>> JobListType =
-            new TypeReference<ResponseMessage<JsonablePage<Job>>>() {
+    private static final TypeReference<ResponseMessage<JsonablePage<JobItem>>> JobListType =
+            new TypeReference<ResponseMessage<JsonablePage<JobItem>>>() {
             };
 
     private static final TypeReference<ResponseMessage<List<ExecutedCmd>>> JobStepsType =
@@ -140,16 +141,16 @@ public class JobControllerTest extends SpringScenario {
         Job second = createJobForFlow(flow);
 
         // when:
-        ResponseMessage<JsonablePage<Job>> message = mockMvcHelper
+        ResponseMessage<JsonablePage<JobItem>> message = mockMvcHelper
                 .expectSuccessAndReturnClass(get("/jobs/hello-flow"), JobListType);
         Assert.assertEquals(StatusCode.OK, message.getCode());
 
         // then:
-        Page<Job> page = message.getData().toPage();
+        Page<JobItem> page = message.getData().toPage();
         Assert.assertEquals(2, page.getTotalElements());
 
-        Assert.assertEquals(second, page.getContent().get(0));
-        Assert.assertEquals(first, page.getContent().get(1));
+        Assert.assertEquals(second.getId(), page.getContent().get(0).getId());
+        Assert.assertEquals(first.getId(), page.getContent().get(1).getId());
     }
 
     @Test

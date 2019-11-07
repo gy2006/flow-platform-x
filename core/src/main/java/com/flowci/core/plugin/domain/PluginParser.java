@@ -16,14 +16,16 @@
 
 package com.flowci.core.plugin.domain;
 
-import com.flowci.domain.Variable;
-import com.flowci.domain.Variable.ValueType;
+import com.flowci.core.flow.domain.StatsType;
+import com.flowci.domain.VarType;
 import com.flowci.domain.Version;
 import com.flowci.util.YamlHelper;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import org.yaml.snakeyaml.Yaml;
@@ -48,7 +50,13 @@ public class PluginParser {
         @NonNull
         public String version;
 
+        public String icon;
+
         public List<VariableWrapper> inputs;
+
+        public List<StatsWrapper> stats;
+
+        public Set<String> tags;
 
         public Boolean allow_failure;
 
@@ -57,22 +65,47 @@ public class PluginParser {
 
         public Plugin toPlugin() {
             Plugin plugin = new Plugin(name, Version.parse(version));
+            plugin.setIcon(icon);
             plugin.setScript(script);
+
+            if (!Objects.isNull(tags)) {
+                plugin.getTags().addAll(tags);
+            }
 
             if (!Objects.isNull(allow_failure)) {
                 plugin.setAllowFailure(allow_failure);
             }
 
-            if (Objects.isNull(inputs)) {
-                return plugin;
+            if (!Objects.isNull(stats)) {
+                for (StatsWrapper wrapper : stats) {
+                    plugin.getStatsTypes().add(wrapper.toStatsType());
+                }
             }
 
-            plugin.setInputs(new ArrayList<>(inputs.size()));
-            for (VariableWrapper wrapper : inputs) {
-                plugin.getInputs().add(wrapper.toVariable());
+            if (!Objects.isNull(inputs)) {
+                for (VariableWrapper wrapper : inputs) {
+                    plugin.getInputs().add(wrapper.toVariable());
+                }
             }
 
             return plugin;
+        }
+    }
+
+    @NoArgsConstructor
+    private static class StatsWrapper {
+
+        public String name;
+
+        public String desc;
+
+        public List<String> fields = new LinkedList<>();
+
+        public StatsType toStatsType() {
+            return new StatsType()
+                .setName(name)
+                .setDesc(desc)
+                .setFields(fields);
         }
     }
 
@@ -91,7 +124,7 @@ public class PluginParser {
         public Boolean required;
 
         public Variable toVariable() {
-            Variable var = new Variable(name, ValueType.valueOf(type.toUpperCase()));
+            Variable var = new Variable(name, VarType.valueOf(type.toUpperCase()));
             var.setRequired(required);
             var.setAlias(alias);
             return var;

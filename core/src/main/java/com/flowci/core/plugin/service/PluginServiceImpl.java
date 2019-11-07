@@ -19,6 +19,7 @@ package com.flowci.core.plugin.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.plugin.dao.PluginDao;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginParser;
 import com.flowci.core.plugin.domain.PluginRepo;
@@ -26,30 +27,26 @@ import com.flowci.core.plugin.event.RepoCloneEvent;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.CIException;
 import com.flowci.exception.NotFoundException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author yang
@@ -61,6 +58,10 @@ public class PluginServiceImpl implements PluginService {
     private static final TypeReference<List<PluginRepo>> RepoListType = new TypeReference<List<PluginRepo>>() {};
 
     private static final String PluginFileName = "plugin.yml";
+
+    private static final String ReadMeFileName = "README.md";
+
+    private static final byte[] EmptyBytes = new byte[0];
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -77,22 +78,45 @@ public class PluginServiceImpl implements PluginService {
     @Autowired
     private ApplicationContext context;
 
-    private Map<String, Plugin> installed = new ConcurrentHashMap<>(10);
+    @Autowired
+    private PluginDao pluginDao;
 
     private final Object reloadLock = new Object();
 
     @Override
     public Collection<Plugin> list() {
-        return installed.values();
+        return pluginDao.findAll();
     }
 
     @Override
     public Plugin get(String name) {
-        Plugin plugin = installed.get(name);
-        if (Objects.isNull(plugin)) {
+        Optional<Plugin> optional = pluginDao.findByName(name);
+        if (!optional.isPresent()) {
             throw new NotFoundException("The plugin {0} is not found", name);
         }
-        return plugin;
+        return optional.get();
+    }
+
+    @Override
+    public byte[] getReadMe(Plugin plugin) {
+        try {
+            Path path = getDir(plugin);
+            return Files.readAllBytes(Paths.get(path.toString(), ReadMeFileName));
+        } catch (IOException e) {
+            log.warn("Unable to get plugin README.md file");
+            return EmptyBytes;
+        }
+    }
+
+    @Override
+    public byte[] getIcon(Plugin plugin) {
+        try {
+            Path path = getDir(plugin);
+            return Files.readAllBytes(Paths.get(path.toString(), plugin.getIcon()));
+        } catch (IOException e) {
+            log.warn("Unable to get plugin icon file");
+            return EmptyBytes;
+        }
     }
 
     @Override
@@ -116,7 +140,7 @@ public class PluginServiceImpl implements PluginService {
             repoCloneExecutor.execute(() -> {
                 try {
                     Plugin plugin = clone(repo);
-                    installed.put(repo.getName(), plugin);
+                    saveOrUpdate(plugin);
                     context.publishEvent(new RepoCloneEvent(this, plugin));
                     log.info("Plugin {} been clone", plugin);
                 } catch (CIException e) {
@@ -131,6 +155,8 @@ public class PluginServiceImpl implements PluginService {
     @Override
     public void reload() {
         synchronized (reloadLock) {
+            pluginDao.deleteAll();
+
             String repoUrl = pluginProperties.getDefaultRepo();
             List<PluginRepo> repos = load(repoUrl);
             clone(repos);
@@ -139,11 +165,22 @@ public class PluginServiceImpl implements PluginService {
 
     @Scheduled(fixedRate = 1000 * 3600)
     public void scheduleSync() {
-        if (!pluginProperties.getAutoUpdate()) {
+        if (pluginProperties.getAutoUpdate()) {
+            reload();
+        }
+    }
+
+    private void saveOrUpdate(Plugin pluginFromRepo) {
+        Optional<Plugin> optional = pluginDao.findByName(pluginFromRepo.getName());
+
+        if (optional.isPresent()) {
+            Plugin exist = optional.get();
+            exist.update(pluginFromRepo);
+            pluginDao.save(exist);
             return;
         }
 
-        reload();
+        pluginDao.save(pluginFromRepo);
     }
 
     private Plugin clone(PluginRepo repo) throws GitAPIException, IOException {
@@ -179,6 +216,8 @@ public class PluginServiceImpl implements PluginService {
 
     /**
      * Load plugin.yml from local repo
+     * and convert to Plugin object
+     *
      * @throws IOException
      */
     private Plugin load(File dir, PluginRepo repo) throws IOException {

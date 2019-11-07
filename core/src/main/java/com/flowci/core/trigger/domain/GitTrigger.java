@@ -16,13 +16,15 @@
 
 package com.flowci.core.trigger.domain;
 
+import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.job.domain.Job.Trigger;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.StringVars;
 import com.flowci.exception.NotFoundException;
-import java.io.Serializable;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.io.Serializable;
 
 /**
  * @author yang
@@ -36,34 +38,23 @@ public abstract class GitTrigger implements Serializable {
 
     private GitEvent event;
 
-    public enum GitSource {
-
-        GITLAB,
-
-        GITHUB,
-
-        CODING,
-
-        OSCHINA,
-
-        BITBUCKET
-    }
-
     public enum GitEvent {
+
+        UNKNOWN,
 
         PING,
 
         PUSH,
 
-        PR_OPEN,
+        PR_OPENED, // pr opened
 
-        PR_CLOSE,
+        PR_MERGED, // pr merged
 
         TAG
     }
 
-    public VariableMap toVariableMap() {
-        VariableMap map = new VariableMap(15);
+    public StringVars toVariableMap() {
+        StringVars map = new StringVars(15);
         map.put(Variables.GIT_SOURCE, source.name());
         map.put(Variables.GIT_EVENT, event.name());
         return map;
@@ -81,12 +72,12 @@ public abstract class GitTrigger implements Serializable {
             return Trigger.TAG;
         }
 
-        if (event == GitEvent.PR_OPEN) {
-            return Trigger.PR_OPEN;
+        if (event == GitEvent.PR_OPENED) {
+            return Trigger.PR_OPENED;
         }
 
-        if (event == GitEvent.PR_CLOSE) {
-            return Trigger.PR_CLOSE;
+        if (event == GitEvent.PR_MERGED) {
+            return Trigger.PR_MERGED;
         }
 
         throw new NotFoundException("Cannot found related job trigger for {0}", event.name());

@@ -30,6 +30,9 @@ import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.domain.Agent;
 import com.flowci.exception.NotFoundException;
+import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.junit.After;
 import org.junit.runner.RunWith;
@@ -43,11 +46,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.io.InputStream;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * @author yang
@@ -74,6 +72,18 @@ public abstract class SpringScenario {
         @Bean
         public AuthHelper authHelper() {
             return new AuthHelper();
+        }
+
+        /**
+         * Rewrite the web mvc config to ignore jackson mxis
+         */
+        @Bean
+        public Class<?> httpJacksonMixin() {
+            return VarsMixinIgnore.class;
+        }
+
+        public interface VarsMixinIgnore {
+
         }
     }
 

@@ -18,12 +18,13 @@ package com.flowci.core.plugin;
 
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.service.PluginService;
-import java.util.Collection;
+import com.flowci.util.StringHelper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Base64;
+import java.util.Collection;
 
 /**
  * @author yang
@@ -35,9 +36,28 @@ public class PluginController {
     @Autowired
     private PluginService pluginService;
 
-    @GetMapping("/installed")
+    @GetMapping
     public Collection<Plugin> installed() {
         return pluginService.list();
+    }
+
+    @GetMapping(value = "/{name}/readme", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String getReadMeContent(@PathVariable String name) {
+        Plugin plugin = pluginService.get(name);
+        byte[] raw = pluginService.getReadMe(plugin);
+        return Base64.getEncoder().encodeToString(raw);
+    }
+
+    @GetMapping(value = "/{name}/icon", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String getPluginIcon(@PathVariable String name) {
+        Plugin plugin = pluginService.get(name);
+
+        if (plugin.isHttpLinkIcon()) {
+            return StringHelper.EMPTY;
+        }
+
+        byte[] raw = pluginService.getIcon(plugin);
+        return Base64.getEncoder().encodeToString(raw);
     }
 
     @PostMapping("/reload")

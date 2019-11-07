@@ -24,6 +24,7 @@ import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.flow.service.YmlService;
 import com.flowci.core.job.event.CreateNewJobEvent;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.ObjectWrapper;
@@ -52,6 +53,9 @@ public class CronServiceTest extends ZookeeperScenario {
 
     @Autowired
     private FlowService flowService;
+
+    @Autowired
+    private YmlService ymlService;
 
     @Before
     public void login() {
@@ -87,7 +91,7 @@ public class CronServiceTest extends ZookeeperScenario {
     public void should_add_cron_task() throws IOException, InterruptedException {
         InputStream stream = load("flow-with-cron.yml");
         Flow flow = flowService.create("cron-test");
-        flowService.saveYml(flow, StringHelper.toString(stream));
+        ymlService.saveYml(flow, StringHelper.toString(stream));
 
         final CountDownLatch counter = new CountDownLatch(2);
         final ObjectWrapper<Flow> result = new ObjectWrapper<>();

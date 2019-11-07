@@ -18,17 +18,19 @@ package com.flowci.core.test.flow;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.common.domain.Variables;
 import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
-import com.flowci.core.common.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.flow.service.YmlService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.VarValue;
+import com.flowci.domain.Vars;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.YmlException;
@@ -40,8 +42,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,17 +60,37 @@ import org.springframework.context.ApplicationListener;
 public class FlowServiceTest extends SpringScenario {
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private FlowService flowService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private YmlService ymlService;
 
     @MockBean
     private CredentialService credentialService;
 
+    @Autowired
+    private String serverAddress;
+
     @Before
     public void login() {
         mockLogin();
+    }
+
+    @Test
+    public void should_have_default_vars() {
+        Flow flow = flowService.create("vars-test");
+        Assert.assertEquals(2, flow.getLocally().size());
+
+        VarValue nameVar = flow.getLocally().get(Variables.Flow.Name);
+        Assert.assertEquals(flow.getName(), nameVar.getData());
+        Assert.assertFalse(nameVar.isEditable());
+
+        VarValue webhookVar = flow.getLocally().get(Variables.Flow.Webhook);
+        Assert.assertEquals(serverAddress + "/webhooks/" + flow.getName(), webhookVar.getData());
+        Assert.assertFalse(webhookVar.isEditable());
     }
 
     @Test
@@ -104,12 +129,11 @@ public class FlowServiceTest extends SpringScenario {
         Assert.assertEquals(Status.CONFIRMED, confirmed.getStatus());
 
         // then: the default yml should be created with expected variables
-        Yml yml = flowService.getYml(confirmed);
+        Yml yml = ymlService.getYml(confirmed);
         Assert.assertNotNull(yml);
 
         Node root = YmlParser.load("test", yml.getRaw());
-        Assert.assertEquals(gitUrl, root.getEnv(Variables.Flow.GitUrl));
-        Assert.assertEquals(credential, root.getEnv(Variables.Flow.SSH_RSA));
+        Assert.assertEquals(1, root.getChildren().size());
 
         // then:
         List<Flow> flows = flowService.list(Status.CONFIRMED);
@@ -124,7 +148,7 @@ public class FlowServiceTest extends SpringScenario {
         Flow confirmed = flowService.confirm(name, null, null);
 
         // then:
-        Yml yml = flowService.getYml(confirmed);
+        Yml yml = ymlService.getYml(confirmed);
         Assert.assertNotNull(yml);
 
         Node root = YmlParser.load("test", yml.getRaw());
@@ -142,13 +166,10 @@ public class FlowServiceTest extends SpringScenario {
         Mockito.when(credentialService.get(credentialName)).thenReturn(mocked);
 
         Flow flow = flowService.create("hello");
-        flow.getVariables().put("FLOW_NAME", "hello.world");
-        flow.getVariables().put(Variables.Flow.SSH_RSA, credentialName);
-        flowService.update(flow);
-        flowService.confirm(flow.getName(), null, null);
+        flowService.confirm(flow.getName(), null, credentialName);
 
-        VariableMap variables = flowService.get(flow.getName()).getVariables();
-        Assert.assertEquals(credentialName, variables.get(Variables.Flow.SSH_RSA));
+        Vars<VarValue> variables = flowService.get(flow.getName()).getLocally();
+        Assert.assertEquals(credentialName, variables.get(Variables.Flow.SSH_RSA).getData());
 
         // when:
         List<Flow> flows = flowService.listByCredential(credentialName);
@@ -159,28 +180,10 @@ public class FlowServiceTest extends SpringScenario {
         Assert.assertEquals(flow.getName(), flows.get(0).getName());
     }
 
-    @Test
-    public void should_save_yml_for_flow() throws IOException {
-        // when:
-        Flow flow = flowService.create("hello");
-        String ymlRaw = StringHelper.toString(load("flow.yml"));
-
-        // then: yml object should be created
-        Yml yml = flowService.saveYml(flow, ymlRaw);
-        Assert.assertNotNull(yml);
-        Assert.assertEquals(flow.getId(), yml.getId());
-    }
-
     @Test(expected = ArgumentException.class)
     public void should_throw_exception_if_flow_name_is_invalid_when_create() {
         String name = "hello.world";
         flowService.create(name);
-    }
-
-    @Test(expected = YmlException.class)
-    public void should_throw_exception_if_yml_illegal_yml_format() {
-        Flow flow = flowService.create("test");
-        flowService.saveYml(flow, "hello-...");
     }
 
     @Ignore
@@ -221,15 +224,5 @@ public class FlowServiceTest extends SpringScenario {
         // then:
         countDown.await(60, TimeUnit.SECONDS);
         Assert.assertTrue(branches.size() >= 1);
-    }
-
-    @Test
-    public void should_create_default_template_yml() {
-        Flow flow = new Flow("hello");
-        flow.getVariables().put("FLOWCI_FLOW_NAME", "hello");
-        flow.getVariables().put("FLOWCI_GIT_URL", "git@github.com:FlowCI/docs.git");
-
-        String templateYml = flowService.getTemplateYml(flow);
-        Assert.assertNotNull(templateYml);
     }
 }

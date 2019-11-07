@@ -17,9 +17,12 @@
 package com.flowci.core.job;
 
 import com.flowci.core.auth.annotation.Action;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.flow.service.YmlService;
+import com.flowci.core.user.domain.User;
 import com.flowci.domain.CmdId;
 import com.flowci.core.job.domain.CreateJob;
 import com.flowci.core.job.domain.Job;
@@ -67,7 +70,13 @@ public class JobController {
     private static final String ParameterLatest = "latest";
 
     @Autowired
+    private SessionManager sessionManager;
+
+    @Autowired
     private FlowService flowService;
+
+    @Autowired
+    private YmlService ymlService;
 
     @Autowired
     private JobService jobService;
@@ -161,14 +170,16 @@ public class JobController {
     @Action(JobAction.CREATE)
     public Job create(@Validated @RequestBody CreateJob data) {
         Flow flow = flowService.get(data.getFlow());
-        Yml yml = flowService.getYml(flow);
+        Yml yml = ymlService.getYml(flow);
         return jobService.create(flow, yml, Trigger.API, data.getInputs());
     }
 
     @PostMapping("/run")
     @Action(JobAction.RUN)
     public void createAndRun(@Validated @RequestBody CreateJob data) {
+        final User current = sessionManager.get();
         jobRunExecutor.execute(() -> {
+            sessionManager.set(current);
             Job job = create(data);
             jobService.start(job);
         });

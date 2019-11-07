@@ -19,14 +19,18 @@ package com.flowci.core.job.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
 import com.flowci.core.common.domain.Pathable;
-import com.flowci.domain.VariableMap;
+import com.flowci.domain.Agent;
+import com.flowci.domain.StringVars;
+import com.flowci.domain.Vars;
 import com.flowci.tree.Selector;
+import java.util.Date;
+import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.Date;
 
 /**
  * @author yang
@@ -35,12 +39,6 @@ import java.util.Date;
 @Setter
 @Document(collection = "job")
 public class Job extends Mongoable implements Pathable {
-
-    public static Pathable path(Long buildNumber) {
-        Job job = new Job();
-        job.setBuildNumber(buildNumber);
-        return job;
-    }
 
     public enum Trigger {
 
@@ -65,14 +63,14 @@ public class Job extends Mongoable implements Pathable {
         PUSH,
 
         /**
-         * Git PR open event
+         * Git PR opened event
          */
-        PR_OPEN,
+        PR_OPENED,
 
         /**
-         * Git PR close event
+         * Git PR merged event
          */
-        PR_CLOSE,
+        PR_MERGED,
 
         /**
          * Git tag event
@@ -118,6 +116,41 @@ public class Job extends Mongoable implements Pathable {
         TIMEOUT
     }
 
+    /**
+     * Agent snapshot
+     */
+    @Getter
+    @Setter
+    public static class AgentInfo {
+
+        private String name;
+
+        private String os;
+
+        private int cpu;
+
+        private int totalMemory;
+
+        private int freeMemory;
+
+        private int totalDisk;
+
+        private int freeDisk;
+    }
+
+    public static Pathable path(Long buildNumber) {
+        Job job = new Job();
+        job.setBuildNumber(buildNumber);
+        return job;
+    }
+
+    public final static Set<Status> FINISH_STATUS = ImmutableSet.<Status>builder()
+            .add(Status.TIMEOUT)
+            .add(Status.CANCELLED)
+            .add(Status.FAILURE)
+            .add(Status.SUCCESS)
+            .build();
+
     private final static Integer MinPriority = 1;
 
     private final static Integer MaxPriority = 255;
@@ -143,9 +176,11 @@ public class Job extends Mongoable implements Pathable {
 
     private String agentId;
 
+    private AgentInfo agentInfo = new AgentInfo();
+
     private String currentPath;
 
-    private VariableMap context = new VariableMap();
+    private Vars<String> context = new StringVars();
 
     private String message;
 
@@ -178,10 +213,7 @@ public class Job extends Mongoable implements Pathable {
 
     @JsonIgnore
     public boolean isDone() {
-        return status == Status.TIMEOUT
-                || status == Status.CANCELLED
-                || status == Status.FAILURE
-                || status == Status.SUCCESS;
+        return FINISH_STATUS.contains(status);
     }
 
     @JsonIgnore
@@ -202,6 +234,16 @@ public class Job extends Mongoable implements Pathable {
     @Override
     public String pathName() {
         return getBuildNumber().toString();
+    }
+
+    public void setAgentSnapshot(Agent agent) {
+        agentInfo.setName(agent.getName());
+        agentInfo.setOs(agent.getOs().name());
+        agentInfo.setCpu(agent.getResource().getCpu());
+        agentInfo.setTotalMemory(agent.getResource().getTotalMemory());
+        agentInfo.setFreeMemory(agent.getResource().getFreeMemory());
+        agentInfo.setTotalDisk(agent.getResource().getTotalDisk());
+        agentInfo.setFreeDisk(agent.getResource().getFreeDisk());
     }
 
     @Override

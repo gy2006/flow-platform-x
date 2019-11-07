@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,9 +35,9 @@ import org.springframework.data.domain.Pageable;
  */
 @Getter
 @Setter
-public class JsonablePage<T> {
+public class JsonablePage<T> implements Serializable {
 
-    public static class PageableDeserializer extends JsonDeserializer<Pageable> {
+    public static class PageableDeserializer extends JsonDeserializer<Pageable> implements Serializable {
 
         @Override
         public Pageable deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {

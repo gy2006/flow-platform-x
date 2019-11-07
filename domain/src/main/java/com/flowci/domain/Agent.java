@@ -17,13 +17,17 @@
 package com.flowci.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.flowci.domain.Common.OS;
 import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
  * @author yang
@@ -52,6 +56,22 @@ public class Agent implements Serializable {
         }
     }
 
+    @Getter
+    @Setter
+    @Accessors(chain = true)
+    public static class Resource {
+
+        private int cpu;
+
+        private int totalMemory; // in MB
+
+        private int freeMemory; // in MB
+
+        private int totalDisk; // in MB
+
+        private int freeDisk; // in MB
+    }
+
     private String id;
 
     private String name;
@@ -60,7 +80,9 @@ public class Agent implements Serializable {
 
     private String host;
 
-    private Common.OS os;
+    private Common.OS os = OS.UNKNOWN;
+
+    private Resource resource = new Resource();
 
     private Set<String> tags = Collections.emptySet();
 
