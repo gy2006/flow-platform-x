@@ -40,6 +40,11 @@ public class PluginParserTest {
         Assert.assertEquals("src/icon.svg", plugin.getIcon());
         Assert.assertEquals(3, plugin.getInputs().size());
         Assert.assertEquals(Boolean.TRUE, plugin.isAllowFailure());
+
+        Assert.assertNotNull(plugin.getTags());
+        Assert.assertEquals(2, plugin.getTags().size());
+        Assert.assertTrue(plugin.getTags().contains("git"));
+        Assert.assertTrue(plugin.getTags().contains("clone"));
     }
 
 }

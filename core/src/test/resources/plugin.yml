@@ -1,6 +1,9 @@
 name: gitclone
 version: 0.0.1
 icon: "src/icon.svg"
+tags:
+  - "git"
+  - "clone"
 
 inputs:
 - name: GIT_URL
