@@ -333,22 +333,22 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public List<String> listGitBranch(String name) {
         final Flow flow = get(name);
+        final String gitUrl = flow.getGitUrl();
+        final String credentialName = flow.getCredentialName();
+        final ObjectWrapper<String> privateKey= new ObjectWrapper<>(StringHelper.EMPTY);
 
-        String gitUrl = flow.getGitUrl();
-        String credentialName = flow.getCredentialName();
+        if (StringHelper.hasValue(credentialName)) {
+            RSACredential sshRsa = (RSACredential) credentialService.get(credentialName);
 
-        if (Strings.isNullOrEmpty(gitUrl) || Strings.isNullOrEmpty(credentialName)) {
-            return Collections.emptyList();
-        }
+            if (Objects.isNull(sshRsa)) {
+                throw new ArgumentException("Invalid ssh-rsa name");
+            }
 
-        RSACredential sshRsa = (RSACredential) credentialService.get(credentialName);
-
-        if (Objects.isNull(sshRsa)) {
-            throw new ArgumentException("Invalid ssh-rsa name");
+            privateKey.setValue(sshRsa.getPrivateKey());
         }
 
         return gitBranchCache.get(flow.getId(), (Function<String, List<String>>) flowId -> {
-            GitBranchLoader gitTestRunner = new GitBranchLoader(flow.getId(), sshRsa.getPrivateKey(), gitUrl);
+            GitBranchLoader gitTestRunner = new GitBranchLoader(flow.getId(), privateKey.getValue(), gitUrl);
             return gitTestRunner.load();
         });
     }
