@@ -71,8 +71,8 @@ public class CmdManagerImpl implements CmdManager {
         cmd.setScripts(Lists.newArrayList(script));
         cmd.setPlugin(node.getPlugin());
 
-        // get cmd work dir with default value flow id
-        cmd.setWorkDir(inputs.get(Variables.Flow.WorkDir, job.getFlowId()));
+        // default work dir is {agent dir}/{flow id}
+        cmd.setWorkDir(job.getFlowId());
 
         return cmd;
     }

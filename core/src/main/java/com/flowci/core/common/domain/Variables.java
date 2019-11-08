@@ -44,9 +44,6 @@ public abstract class Variables {
         public static final String GitBranch = "FLOWCI_GIT_BRANCH"; // set
 
         public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA"; // set
-
-        // which define the flow work dir which under the agent default workspace
-        public static final String WorkDir = "FLOWCI_FLOW_WORKDIR";
     }
 
     public abstract static class Job {
