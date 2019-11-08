@@ -16,10 +16,13 @@
 
 package com.flowci.core.test.credential;
 
+import com.flowci.core.credential.domain.AuthCredential;
 import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.credential.domain.Credential.Category;
 import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.SimpleAuth;
 import com.flowci.exception.DuplicateException;
 import java.util.List;
 
@@ -57,6 +60,27 @@ public class CredentialServiceTest extends SpringScenario {
         RSACredential keyPair = (RSACredential) loaded;
         Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getPublicKey()));
         Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getPrivateKey()));
+    }
+
+    @Test
+    public void should_create_auth_credential() {
+        SimpleAuth sa = new SimpleAuth();
+        sa.setUsername("test@flow.ci");
+        sa.setPassword("12345");
+
+        Credential auth = credentialService.createAuth("hello.auth", sa);
+        Assert.assertNotNull(auth);
+        Assert.assertEquals(Category.AUTH, auth.getCategory());
+        Assert.assertEquals(sessionManager.getUserId(), auth.getCreatedBy());
+        Assert.assertNotNull(auth.getCreatedAt());
+        Assert.assertNotNull(auth.getUpdatedAt());
+
+        Credential loaded = credentialService.get("hello.auth");
+        Assert.assertTrue(loaded instanceof AuthCredential);
+
+        AuthCredential keyPair = (AuthCredential) loaded;
+        Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getUsername()));
+        Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getPassword()));
     }
 
     @Test(expected = DuplicateException.class)

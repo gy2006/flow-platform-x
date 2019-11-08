@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,34 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.domain;
 
-import com.flowci.core.common.domain.Mongoable;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.data.mongodb.core.index.Indexed;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author yang
  */
-@Getter
-@Setter
-public class Credential extends Mongoable {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor(staticName = "of")
+public class SimpleAuth {
 
-    public enum Category {
+    private String username;
 
-        AUTH,
-
-        SSH_RSA,
-
-        SSH_DSS,
-
-        SSH_ED25519
-    }
-
-    @Indexed(name = "index_credential_name", unique = true)
-    private String name;
-
-    private Category category;
-
+    private String password;
 }

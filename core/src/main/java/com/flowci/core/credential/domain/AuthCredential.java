@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,34 @@
 
 package com.flowci.core.credential.domain;
 
-import com.flowci.core.common.domain.Mongoable;
+import com.flowci.domain.SimpleAuth;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
+ * Username and password credential
+ *
  * @author yang
  */
 @Getter
 @Setter
-public class Credential extends Mongoable {
+@Document(collection = "credential")
+public class AuthCredential extends Credential {
 
-    public enum Category {
+    private SimpleAuth pair;
 
-        AUTH,
-
-        SSH_RSA,
-
-        SSH_DSS,
-
-        SSH_ED25519
+    public AuthCredential() {
+        this.pair = new SimpleAuth();
+        this.setCategory(Category.AUTH);
     }
 
-    @Indexed(name = "index_credential_name", unique = true)
-    private String name;
+    public String getUsername() {
+        return pair.getUsername();
+    }
 
-    private Category category;
+    public String getPassword() {
+        return pair.getPassword();
+    }
 
 }
