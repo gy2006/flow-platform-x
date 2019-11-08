@@ -28,15 +28,19 @@ import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.domain.VarValue;
-import com.flowci.exception.ArgumentException;
 import com.google.common.collect.Lists;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author yang
@@ -95,12 +99,7 @@ public class FlowController {
             return;
         }
 
-        if (body.hasCredentialName()) {
-            flowService.testGitConnection(name, body.getGitUrl(), body.getCredential());
-            return;
-        }
-
-        throw new ArgumentException("Credential name or private key must be provided");
+        flowService.testGitConnection(name, body.getGitUrl(), body.getCredential());
     }
 
     @GetMapping(value = "/{name}/git/branches")

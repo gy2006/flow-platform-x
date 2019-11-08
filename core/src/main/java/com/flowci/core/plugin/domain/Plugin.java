@@ -20,7 +20,6 @@ import com.flowci.core.flow.domain.StatsType;
 import com.flowci.domain.Version;
 import java.util.LinkedList;
 import java.util.List;
-
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -64,9 +63,5 @@ public class Plugin extends PluginRepoInfo {
         this.setStatsTypes(src.getStatsTypes());
         this.setAllowFailure(src.isAllowFailure());
         this.setScript(src.getScript());
-    }
-
-    public boolean isHttpLinkIcon() {
-        return icon != null && (icon.startsWith("http") || icon.startsWith("https"));
     }
 }

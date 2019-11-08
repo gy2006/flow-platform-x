@@ -58,6 +58,7 @@ import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.YmlParser;
+import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
@@ -82,6 +83,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.JschConfigSessionFactory;
@@ -309,7 +311,9 @@ public class FlowServiceImpl implements FlowService {
         final Flow flow = get(name);
         final ObjectWrapper<String> privateKeyWrapper = new ObjectWrapper<>(privateKeyOrCredentialName);
 
-        if (!CipherHelper.RSA.isPrivateKey(privateKeyOrCredentialName)) {
+        if (StringHelper.hasValue(privateKeyOrCredentialName)
+            && !CipherHelper.RSA.isPrivateKey(privateKeyOrCredentialName)) {
+
             RSACredential sshRsa = (RSACredential) credentialService.get(privateKeyOrCredentialName);
 
             if (Objects.isNull(sshRsa)) {
@@ -486,15 +490,20 @@ public class FlowServiceImpl implements FlowService {
                 // publish FETCHING event
                 eventManager.publish(new GitTestEvent(this, flowId));
 
-                Collection<Ref> refs = Git.lsRemoteRepository()
+                LsRemoteCommand command = Git.lsRemoteRepository()
                     .setRemote(url)
                     .setHeads(true)
-                    .setTransportConfigCallback(transport -> {
+                    .setTimeout(20);
+
+                // set ssh factory
+                if (!StringHelper.isHttpLink(url)) {
+                    command.setTransportConfigCallback(transport -> {
                         SshTransport sshTransport = (SshTransport) transport;
                         sshTransport.setSshSessionFactory(sessionFactory);
-                    })
-                    .setTimeout(20)
-                    .call();
+                    });
+                }
+
+                Collection<Ref> refs = command.call();
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();
