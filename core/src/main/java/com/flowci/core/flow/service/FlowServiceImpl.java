@@ -479,7 +479,7 @@ public class FlowServiceImpl implements FlowService {
 
         GitBranchLoader(String flowId, String privateKey, String url) {
             this.flowId = flowId;
-            this.privateKey = privateKey;
+            this.privateKey = privateKey == null ? StringHelper.EMPTY : privateKey;
             this.url = url;
         }
 

@@ -36,8 +36,4 @@ public class FlowGitTest {
     public boolean hasPrivateKey() {
         return !Strings.isNullOrEmpty(privateKey);
     }
-
-    public boolean hasCredentialName() {
-        return !Strings.isNullOrEmpty(credential);
-    }
 }
