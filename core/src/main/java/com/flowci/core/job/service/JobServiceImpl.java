@@ -245,8 +245,12 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job cancel(Job job) {
+        if (job.isQueuing()) {
+            setJobStatusAndSave(job, Job.Status.CANCELLED, "canceled while queued up");
+        }
+
         // send stop cmd when is running
-        if (job.isRunning()) {
+        else if (job.isRunning()) {
             Agent agent = agentService.get(job.getAgentId());
             CmdIn killCmd = cmdManager.createKillCmd();
 
