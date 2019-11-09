@@ -16,7 +16,7 @@
 
 package com.flowci.core.credential.domain;
 
-import com.flowci.domain.SimpleAuth;
+import com.flowci.domain.SimpleAuthPair;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -31,10 +31,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "credential")
 public class AuthCredential extends Credential {
 
-    private SimpleAuth pair;
+    private SimpleAuthPair pair;
 
     public AuthCredential() {
-        this.pair = new SimpleAuth();
+        this.pair = new SimpleAuthPair();
         this.setCategory(Category.AUTH);
     }
 

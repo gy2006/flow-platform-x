@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.credential.domain;
 
-import lombok.AllArgsConstructor;
+import com.flowci.domain.SimpleAuthPair;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * @author yang
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor(staticName = "of")
-public class SimpleAuth {
+public class CreateAuth {
 
+    @NotNull
+    private String name;
+
+    @NotNull
     private String username;
 
+    @NotNull
     private String password;
+
+    public SimpleAuthPair getAuthPair() {
+        return SimpleAuthPair.of(username, password);
+    }
 }

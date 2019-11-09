@@ -17,13 +17,15 @@
 package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowci.core.common.mongo.EncryptConverter;
 import com.flowci.core.common.mongo.FlowMappingContext;
-import com.flowci.core.common.mongo.SimpleKeyPairConverter;
 import com.flowci.core.common.mongo.VariableMapConverter;
 import com.flowci.core.job.domain.JobItem;
 import com.flowci.domain.ExecutedCmd;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
@@ -35,9 +37,6 @@ import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.util.ClassTypeInformation;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author yang
@@ -76,9 +75,11 @@ public class MongoConfig extends AbstractMongoConfiguration {
         converters.add(variableConverter.getReader());
         converters.add(variableConverter.getWriter());
 
-        SimpleKeyPairConverter keyPairConverter = new SimpleKeyPairConverter(appProperties.getSecret());
-        converters.add(keyPairConverter.getReader());
-        converters.add(keyPairConverter.getWriter());
+        EncryptConverter encryptConverter = new EncryptConverter(appProperties.getSecret());
+        converters.add(encryptConverter.new SimpleKeyPairReader());
+        converters.add(encryptConverter.new SimpleKeyPairWriter());
+        converters.add(encryptConverter.new SimpleAuthPairReader());
+        converters.add(encryptConverter.new SimpleAuthPairWriter());
 
         converters.add(new JobItem.ContextReader());
         return new MongoCustomConversions(converters);

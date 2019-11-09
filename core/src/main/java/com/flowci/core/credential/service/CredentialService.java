@@ -19,7 +19,7 @@ package com.flowci.core.credential.service;
 import com.flowci.core.credential.domain.AuthCredential;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
-import com.flowci.domain.SimpleAuth;
+import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 
 import java.util.List;
@@ -62,6 +62,6 @@ public interface CredentialService {
     /**
      * Create auth username, password pair
      */
-    AuthCredential createAuth(String name, SimpleAuth pair);
+    AuthCredential createAuth(String name, SimpleAuthPair pair);
 
 }

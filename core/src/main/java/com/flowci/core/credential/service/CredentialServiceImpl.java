@@ -22,7 +22,7 @@ import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.AuthCredential;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
-import com.flowci.domain.SimpleAuth;
+import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
@@ -99,7 +99,7 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public AuthCredential createAuth(String name, SimpleAuth pair) {
+    public AuthCredential createAuth(String name, SimpleAuthPair pair) {
         AuthCredential auth = new AuthCredential();
         auth.setName(name);
         auth.setPair(pair);
