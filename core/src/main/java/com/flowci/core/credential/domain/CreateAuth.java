@@ -17,7 +17,7 @@
 package com.flowci.core.credential.domain;
 
 import com.flowci.domain.SimpleAuthPair;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 import lombok.Data;
 
 /**
@@ -26,13 +26,13 @@ import lombok.Data;
 @Data
 public class CreateAuth {
 
-    @NotNull
+    @NotEmpty
     private String name;
 
-    @NotNull
+    @NotEmpty
     private String username;
 
-    @NotNull
+    @NotEmpty
     private String password;
 
     public SimpleAuthPair getAuthPair() {

@@ -16,10 +16,9 @@
 
 package com.flowci.core.credential.domain;
 
-import javax.validation.constraints.NotNull;
-
 import com.flowci.domain.SimpleKeyPair;
 import com.google.common.base.Strings;
+import javax.validation.constraints.NotEmpty;
 import lombok.Data;
 
 /**
@@ -28,11 +27,13 @@ import lombok.Data;
 @Data
 public class CreateRSA {
 
-    @NotNull
+    @NotEmpty
     private String name;
 
+    @NotEmpty
     private String publicKey;
 
+    @NotEmpty
     private String privateKey;
 
     public boolean hasKeyPair() {
