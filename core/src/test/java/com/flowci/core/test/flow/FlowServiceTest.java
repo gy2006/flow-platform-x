@@ -19,6 +19,7 @@ package com.flowci.core.test.flow;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.Variables;
+import com.flowci.core.credential.domain.AuthCredential;
 import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.flow.domain.Flow;
@@ -28,6 +29,7 @@ import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.service.YmlService;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.domain.VarValue;
 import com.flowci.domain.Vars;
@@ -186,9 +188,9 @@ public class FlowServiceTest extends SpringScenario {
         flowService.create(name);
     }
 
-//    @Ignore
+    @Ignore
     @Test
-    public void should_test_git_connection_by_list_remote_branches() throws IOException, InterruptedException {
+    public void should_list_remote_branches_via_ssh_rsa() throws IOException, InterruptedException {
         // init: load private key
         TypeReference<ResponseMessage<SimpleKeyPair>> keyPairResponseType =
             new TypeReference<ResponseMessage<SimpleKeyPair>>() {
@@ -222,6 +224,42 @@ public class FlowServiceTest extends SpringScenario {
         flowService.testGitConnection(flow.getName(), gitUrl, privateKey);
 
         // then:
+        countDown.await(30, TimeUnit.SECONDS);
+        Assert.assertTrue(branches.size() >= 1);
+    }
+
+    @Ignore
+    @Test
+    public void should_list_remote_branches_via_http_with_credential() throws InterruptedException {
+        String credentialName = "test-auth-c";
+        AuthCredential mocked = new AuthCredential();
+        mocked.setName(credentialName);
+        mocked.setPair(SimpleAuthPair.of("xxx", "xxx"));
+        Mockito.when(credentialService.get(credentialName)).thenReturn(mocked);
+
+        // given:
+        Flow flow = flowService.create("git-test");
+        CountDownLatch countDown = new CountDownLatch(2);
+        List<String> branches = new LinkedList<>();
+
+        addEventListener((ApplicationListener<GitTestEvent>) event -> {
+            if (!event.getFlowId().equals(flow.getId())) {
+                return;
+            }
+
+            if (event.getStatus() == GitTestEvent.Status.FETCHING) {
+                countDown.countDown();
+            }
+
+            if (event.getStatus() == GitTestEvent.Status.DONE) {
+                countDown.countDown();
+                branches.addAll(event.getBranches());
+            }
+        });
+
+        String gitUrl = "https://xxxx";
+        flowService.testGitConnection(flow.getName(), gitUrl, mocked.getName());
+
         countDown.await(30, TimeUnit.SECONDS);
         Assert.assertTrue(branches.size() >= 1);
     }

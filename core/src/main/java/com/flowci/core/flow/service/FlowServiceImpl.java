@@ -65,6 +65,7 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.util.FS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -541,13 +542,16 @@ public class FlowServiceImpl implements FlowService {
 
         private final AuthCredential credential;
 
-        public HttpGitBranchLoader(String flowId, String url, AuthCredential credential) {
+        HttpGitBranchLoader(String flowId, String url, AuthCredential credential) {
             super(flowId, url);
             this.credential = credential;
         }
 
         @Override
         void setup(LsRemoteCommand command) throws Throwable {
+            UsernamePasswordCredentialsProvider provider = new UsernamePasswordCredentialsProvider(
+                    credential.getUsername(), credential.getPassword());
+            command.setCredentialsProvider(provider);
         }
 
         @Override
