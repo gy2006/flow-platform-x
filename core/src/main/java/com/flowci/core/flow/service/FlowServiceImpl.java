@@ -412,9 +412,7 @@ public class FlowServiceImpl implements FlowService {
         if (StringHelper.isHttpLink(url)) {
             AuthCredential authCredential = (AuthCredential) wrapper.getValue();
             try (GitBranchLoader loader = new HttpGitBranchLoader(flow.getId(), url, authCredential)) {
-                List<String> branches = loader.load();
-                gitBranchCache.put(flow.getId(), branches);
-                return branches;
+                return loader.load();
             } catch (Exception errorOnClose) {
                 return Collections.emptyList();
             }
@@ -422,9 +420,7 @@ public class FlowServiceImpl implements FlowService {
 
         RSACredential rsaCredential = (RSACredential) wrapper.getValue();
         try (GitBranchLoader loader = new SshGitBranchLoader(flow.getId(), url, rsaCredential)) {
-            List<String> branches = loader.load();
-            gitBranchCache.put(flow.getId(), branches);
-            return branches;
+            return loader.load();
         } catch (Exception errorOnClose) {
             return Collections.emptyList();
         }
