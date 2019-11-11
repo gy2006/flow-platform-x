@@ -186,7 +186,7 @@ public class FlowServiceTest extends SpringScenario {
         flowService.create(name);
     }
 
-    @Ignore
+//    @Ignore
     @Test
     public void should_test_git_connection_by_list_remote_branches() throws IOException, InterruptedException {
         // init: load private key
@@ -222,7 +222,7 @@ public class FlowServiceTest extends SpringScenario {
         flowService.testGitConnection(flow.getName(), gitUrl, privateKey);
 
         // then:
-        countDown.await(60, TimeUnit.SECONDS);
+        countDown.await(30, TimeUnit.SECONDS);
         Assert.assertTrue(branches.size() >= 1);
     }
 }

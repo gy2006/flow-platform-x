@@ -22,6 +22,7 @@ import com.flowci.core.common.manager.PathManager;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
+import com.flowci.core.credential.domain.AuthCredential;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.credential.service.CredentialService;
@@ -31,11 +32,7 @@ import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
-import com.flowci.core.flow.event.FlowConfirmedEvent;
-import com.flowci.core.flow.event.FlowCreatedEvent;
-import com.flowci.core.flow.event.FlowDeletedEvent;
-import com.flowci.core.flow.event.FlowInitEvent;
-import com.flowci.core.flow.event.GitTestEvent;
+import com.flowci.core.flow.event.*;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.event.CreateNewJobEvent;
 import com.flowci.core.trigger.domain.GitPingTrigger;
@@ -44,12 +41,7 @@ import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.event.GitHookEvent;
 import com.flowci.core.user.event.UserDeletedEvent;
-import com.flowci.domain.ObjectWrapper;
-import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.StringVars;
-import com.flowci.domain.VarType;
-import com.flowci.domain.VarValue;
-import com.flowci.domain.Vars;
+import com.flowci.domain.*;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
@@ -66,25 +58,9 @@ import com.google.common.collect.Sets;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Date;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig.Host;
@@ -96,6 +72,14 @@ import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Date;
+import java.time.Instant;
+import java.util.*;
 
 /**
  * @author yang
@@ -309,25 +293,7 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public void testGitConnection(String name, String url, String privateKeyOrCredentialName) {
         final Flow flow = get(name);
-        final ObjectWrapper<String> privateKeyWrapper = new ObjectWrapper<>(privateKeyOrCredentialName);
-
-        if (StringHelper.hasValue(privateKeyOrCredentialName)
-            && !CipherHelper.RSA.isPrivateKey(privateKeyOrCredentialName)) {
-
-            RSACredential sshRsa = (RSACredential) credentialService.get(privateKeyOrCredentialName);
-
-            if (Objects.isNull(sshRsa)) {
-                throw new ArgumentException("Invalid ssh-rsa name");
-            }
-
-            privateKeyWrapper.setValue(sshRsa.getPrivateKey());
-        }
-
-        gitTestExecutor.execute(() -> {
-            GitBranchLoader loader = new GitBranchLoader(flow.getId(), privateKeyWrapper.getValue(), url);
-            List<String> branches = loader.load();
-            gitBranchCache.put(flow.getId(), branches);
-        });
+        gitTestExecutor.execute(() -> fetchBranchFromGit(flow, url, privateKeyOrCredentialName));
     }
 
     @Override
@@ -335,22 +301,9 @@ public class FlowServiceImpl implements FlowService {
         final Flow flow = get(name);
         final String gitUrl = flow.getGitUrl();
         final String credentialName = flow.getCredentialName();
-        final ObjectWrapper<String> privateKey= new ObjectWrapper<>(StringHelper.EMPTY);
 
-        if (StringHelper.hasValue(credentialName)) {
-            RSACredential sshRsa = (RSACredential) credentialService.get(credentialName);
-
-            if (Objects.isNull(sshRsa)) {
-                throw new ArgumentException("Invalid ssh-rsa name");
-            }
-
-            privateKey.setValue(sshRsa.getPrivateKey());
-        }
-
-        return gitBranchCache.get(flow.getId(), (Function<String, List<String>>) flowId -> {
-            GitBranchLoader gitTestRunner = new GitBranchLoader(flow.getId(), privateKey.getValue(), gitUrl);
-            return gitTestRunner.load();
-        });
+        return gitBranchCache.get(flow.getId(), (Function<String, List<String>>) flowId ->
+                fetchBranchFromGit(flow, gitUrl, credentialName));
     }
 
     @Override
@@ -439,6 +392,43 @@ public class FlowServiceImpl implements FlowService {
     //        %% Utils
     //====================================================================
 
+    private List<String> fetchBranchFromGit(Flow flow, String url, String privateKeyOrCredential) {
+        final ObjectWrapper<Credential> wrapper = new ObjectWrapper<>();
+
+        if (StringHelper.hasValue(privateKeyOrCredential)) {
+            Credential credential = null;
+            if (CipherHelper.RSA.isPrivateKey(privateKeyOrCredential)) {
+                RSACredential c = new RSACredential();
+                c.setPrivateKey(privateKeyOrCredential);
+                credential = c;
+            } else {
+                credential = credentialService.get(privateKeyOrCredential);
+            }
+
+            wrapper.setValue(credential);
+        }
+
+        if (StringHelper.isHttpLink(url)) {
+            AuthCredential authCredential = (AuthCredential) wrapper.getValue();
+            try (GitBranchLoader loader = new HttpGitBranchLoader(flow.getId(), url, authCredential)) {
+                List<String> branches = loader.load();
+                gitBranchCache.put(flow.getId(), branches);
+                return branches;
+            } catch (Exception errorOnClose) {
+                return Collections.emptyList();
+            }
+        }
+
+        RSACredential rsaCredential = (RSACredential) wrapper.getValue();
+        try (GitBranchLoader loader = new SshGitBranchLoader(flow.getId(), url, rsaCredential)) {
+            List<String> branches = loader.load();
+            gitBranchCache.put(flow.getId(), branches);
+            return branches;
+        } catch (Exception errorOnClose) {
+            return Collections.emptyList();
+        }
+    }
+
     private boolean canStartJob(Node root, GitTrigger trigger) {
         TriggerFilter condition = root.getTrigger();
 
@@ -467,43 +457,37 @@ public class FlowServiceImpl implements FlowService {
         return serverAddress + "/webhooks/" + name;
     }
 
-    private class GitBranchLoader {
+    //====================================================================
+    //        %% Inner Classes
+    //====================================================================
+
+    private abstract class GitBranchLoader implements AutoCloseable {
 
         private static final String RefPrefix = "refs/heads/";
 
-        private final String flowId;
+        protected final String flowId;
 
-        private final String privateKey;
+        protected final String url;
 
-        private final String url;
-
-        GitBranchLoader(String flowId, String privateKey, String url) {
+        GitBranchLoader(String flowId, String url) {
             this.flowId = flowId;
-            this.privateKey = privateKey == null ? StringHelper.EMPTY : privateKey;
             this.url = url;
         }
 
-        public List<String> load() {
-            List<String> branches = new LinkedList<>();
+        abstract void setup(LsRemoteCommand command) throws Throwable;
 
-            try (PrivateKeySessionFactory sessionFactory = new PrivateKeySessionFactory(privateKey)) {
-                // publish FETCHING event
-                eventManager.publish(new GitTestEvent(this, flowId));
-
-                LsRemoteCommand command = Git.lsRemoteRepository()
+        List<String> load() {
+            // publish FETCHING event
+            eventManager.publish(new GitTestEvent(this, flowId));
+            LsRemoteCommand command = Git.lsRemoteRepository()
                     .setRemote(url)
                     .setHeads(true)
                     .setTimeout(20);
 
-                // set ssh factory
-                if (!StringHelper.isHttpLink(url)) {
-                    command.setTransportConfigCallback(transport -> {
-                        SshTransport sshTransport = (SshTransport) transport;
-                        sshTransport.setSshSessionFactory(sessionFactory);
-                    });
-                }
-
+            try {
+                setup(command);
                 Collection<Ref> refs = command.call();
+                List<String> branches = new LinkedList<>();
 
                 for (Ref ref : refs) {
                     String refName = ref.getName();
@@ -512,13 +496,63 @@ public class FlowServiceImpl implements FlowService {
 
                 // publish DONE event
                 eventManager.publish(new GitTestEvent(this, flowId, branches));
-
-            } catch (IOException | GitAPIException e) {
+                return branches;
+            } catch (Throwable e) {
                 // publish ERROR event
+                log.warn(e.getMessage());
                 eventManager.publish(new GitTestEvent(this, flowId, e.getMessage()));
+                return Collections.emptyList();
+            }
+        }
+    }
+
+    private class SshGitBranchLoader extends GitBranchLoader {
+
+        private final String privateKey;
+
+        private PrivateKeySessionFactory sessionFactory;
+
+        SshGitBranchLoader(String flowId, String url, RSACredential credential) {
+            super(flowId, url);
+            this.privateKey = Objects.isNull(credential) ? StringHelper.EMPTY : credential.getPrivateKey();
+        }
+
+        @Override
+        void setup(LsRemoteCommand command) throws Throwable {
+            this.sessionFactory = new PrivateKeySessionFactory(privateKey);
+
+            command.setTransportConfigCallback(transport -> {
+                SshTransport sshTransport = (SshTransport) transport;
+                sshTransport.setSshSessionFactory(sessionFactory);
+            });
+        }
+
+        @Override
+        public void close() throws Exception {
+            if (Objects.isNull(sessionFactory)) {
+                return;
             }
 
-            return branches;
+            sessionFactory.close();
+        }
+    }
+
+    private class HttpGitBranchLoader extends GitBranchLoader {
+
+        private final AuthCredential credential;
+
+        public HttpGitBranchLoader(String flowId, String url, AuthCredential credential) {
+            super(flowId, url);
+            this.credential = credential;
+        }
+
+        @Override
+        void setup(LsRemoteCommand command) throws Throwable {
+        }
+
+        @Override
+        public void close() throws Exception {
+
         }
     }
 
