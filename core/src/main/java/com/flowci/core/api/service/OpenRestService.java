@@ -25,7 +25,7 @@ import com.flowci.core.flow.domain.StatsItem;
 
 public interface OpenRestService {
 
-    Credential getCredential(String name, Class<? extends Credential> target);
+    Credential getCredential(String name);
 
     StatsItem saveStatsForFlow(String flowName, String statsType, StatsCounter counter);
 

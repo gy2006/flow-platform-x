@@ -16,6 +16,7 @@
 
 package com.flowci.core.credential.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.domain.SimpleAuthPair;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,10 +39,12 @@ public class AuthCredential extends Credential {
         this.setCategory(Category.AUTH);
     }
 
+    @JsonIgnore
     public String getUsername() {
         return pair.getUsername();
     }
 
+    @JsonIgnore
     public String getPassword() {
         return pair.getPassword();
     }

@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author yang
@@ -62,13 +63,11 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Credential get(String name) {
-        Credential c = credentialDao.findByName(name);
-
-        if (Objects.isNull(c)) {
-            throw new NotFoundException("Credential {0} is not found", name);
+        Optional<Credential> optional = credentialDao.findByName(name);
+        if (optional.isPresent()) {
+            return optional.get();
         }
-
-        return c;
+        throw new NotFoundException("Credential {0} is not found", name);
     }
 
     @Override
