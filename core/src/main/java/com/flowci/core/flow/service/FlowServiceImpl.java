@@ -410,6 +410,10 @@ public class FlowServiceImpl implements FlowService {
         }
 
         if (StringHelper.isHttpLink(url)) {
+            if (wrapper.getValue() instanceof RSACredential) {
+                throw new ArgumentException("Invalid credential for http git url");
+            }
+
             AuthCredential authCredential = (AuthCredential) wrapper.getValue();
             try (GitBranchLoader loader = new HttpGitBranchLoader(flow.getId(), url, authCredential)) {
                 return loader.load();
@@ -418,11 +422,17 @@ public class FlowServiceImpl implements FlowService {
             }
         }
 
-        RSACredential rsaCredential = (RSACredential) wrapper.getValue();
-        try (GitBranchLoader loader = new SshGitBranchLoader(flow.getId(), url, rsaCredential)) {
-            return loader.load();
-        } catch (Exception errorOnClose) {
-            return Collections.emptyList();
+        else {
+            if (wrapper.getValue() instanceof AuthCredential) {
+                throw new ArgumentException("Invalid credential for ssh url");
+            }
+
+            RSACredential rsaCredential = (RSACredential) wrapper.getValue();
+            try (GitBranchLoader loader = new SshGitBranchLoader(flow.getId(), url, rsaCredential)) {
+                return loader.load();
+            } catch (Exception errorOnClose) {
+                return Collections.emptyList();
+            }
         }
     }
 
