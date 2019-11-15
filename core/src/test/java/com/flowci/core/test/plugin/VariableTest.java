@@ -16,7 +16,7 @@
 
 package com.flowci.core.test.plugin;
 
-import com.flowci.core.plugin.domain.Variable;
+import com.flowci.core.plugin.domain.Input;
 import com.flowci.domain.VarType;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,7 +28,7 @@ public class VariableTest {
 
     @Test
     public void should_verify_integer() {
-        Variable v = new Variable()
+        Input v = new Input()
             .setName("test")
             .setAlias("test")
             .setRequired(true)
@@ -42,7 +42,7 @@ public class VariableTest {
 
     @Test
     public void should_verify_email() {
-        Variable v = new Variable()
+        Input v = new Input()
             .setName("test")
             .setAlias("test")
             .setRequired(false)
@@ -57,7 +57,7 @@ public class VariableTest {
 
     @Test
     public void should_verify_git_url() {
-        Variable v = new Variable()
+        Input v = new Input()
             .setName("test")
             .setAlias("test")
             .setRequired(false)
@@ -75,7 +75,7 @@ public class VariableTest {
 
     @Test
     public void should_verify_web_url() {
-        Variable v = new Variable()
+        Input v = new Input()
             .setName("test")
             .setAlias("test")
             .setRequired(false)

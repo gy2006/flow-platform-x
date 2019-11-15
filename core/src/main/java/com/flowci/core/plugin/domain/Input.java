@@ -17,14 +17,11 @@
 package com.flowci.core.plugin.domain;
 
 import com.flowci.domain.VarType;
-import com.google.common.base.Strings;
-import java.io.Serializable;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import com.flowci.util.StringHelper;
+import lombok.*;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 /**
  * @author yang
@@ -35,7 +32,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(of = {"name"})
 @NoArgsConstructor
 @Accessors(chain = true)
-public class Variable implements Serializable {
+public class Input implements Serializable {
 
     private String name;
 
@@ -48,25 +45,29 @@ public class Variable implements Serializable {
     // default value
     private String value;
 
-    public Variable(String name) {
+    public Input(String name) {
         this.name = name;
     }
 
-    public Variable(String name, VarType type) {
+    public Input(String name, VarType type) {
         this.name = name;
         this.type = type;
     }
 
     public boolean verify(String value) {
-        if (required && Strings.isNullOrEmpty(value)) {
+        if (required && !StringHelper.hasValue(value)) {
             return false;
         }
 
-        if (!required && Strings.isNullOrEmpty(value)) {
+        if (!required && !StringHelper.hasValue(value)) {
             return true;
         }
 
         return VarType.verify(type, value);
+    }
+
+    public boolean hasDefaultValue() {
+        return StringHelper.hasValue(value);
     }
 
     public int getIntDefaultValue() {

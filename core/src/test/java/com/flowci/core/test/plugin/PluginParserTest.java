@@ -18,7 +18,7 @@ package com.flowci.core.test.plugin;
 
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginParser;
-import com.flowci.core.plugin.domain.Variable;
+import com.flowci.core.plugin.domain.Input;
 import com.flowci.domain.VarType;
 import com.flowci.domain.Version;
 import java.io.InputStream;
@@ -43,10 +43,10 @@ public class PluginParserTest {
         Assert.assertEquals(Version.of(0, 0, 1, null), plugin.getVersion());
         Assert.assertEquals("src/icon.svg", plugin.getIcon());
 
-        List<Variable> inputs = plugin.getInputs();
+        List<Input> inputs = plugin.getInputs();
         Assert.assertEquals(4, inputs.size());
 
-        Variable varForTimeout = inputs.get(3);
+        Input varForTimeout = inputs.get(3);
         Assert.assertNotNull(varForTimeout);
         Assert.assertEquals("GIT_TIMEOUT", varForTimeout.getName());
         Assert.assertEquals(VarType.INT, varForTimeout.getType());

@@ -118,8 +118,8 @@ public class PluginParser {
         // default value
         public String value;
 
-        public Variable toVariable() {
-            Variable var = new Variable(name, VarType.valueOf(type.toUpperCase()));
+        public Input toVariable() {
+            Input var = new Input(name, VarType.valueOf(type.toUpperCase()));
             var.setRequired(required);
             var.setAlias(alias);
             var.setValue(value);
