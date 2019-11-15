@@ -16,6 +16,7 @@
 
 package com.flowci.core.plugin.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.domain.VarType;
 import com.flowci.util.StringHelper;
 import lombok.*;
@@ -66,10 +67,12 @@ public class Input implements Serializable {
         return VarType.verify(type, value);
     }
 
+    @JsonIgnore
     public boolean hasDefaultValue() {
         return StringHelper.hasValue(value);
     }
 
+    @JsonIgnore
     public int getIntDefaultValue() {
         return Integer.parseInt(this.value);
     }
