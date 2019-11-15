@@ -45,6 +45,9 @@ public class Variable implements Serializable {
 
     private boolean required = true;
 
+    // default value
+    private String value;
+
     public Variable(String name) {
         this.name = name;
     }
@@ -64,5 +67,9 @@ public class Variable implements Serializable {
         }
 
         return VarType.verify(type, value);
+    }
+
+    public int getIntDefaultValue() {
+        return Integer.parseInt(this.value);
     }
 }

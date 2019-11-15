@@ -115,10 +115,14 @@ public class PluginParser {
         @NonNull
         public Boolean required;
 
+        // default value
+        public String value;
+
         public Variable toVariable() {
             Variable var = new Variable(name, VarType.valueOf(type.toUpperCase()));
             var.setRequired(required);
             var.setAlias(alias);
+            var.setValue(value);
             return var;
         }
     }

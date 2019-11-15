@@ -12,6 +12,10 @@ inputs:
 - name: GIT_RSA_CREDENTIAL
   type: string
   required: true
+- name: GIT_TIMEOUT
+  type: int
+  required: false
+  value: 60
 
 stats:
   - name: "junit"

@@ -16,7 +16,6 @@
 
 package com.flowci.core.job.manager;
 
-import com.flowci.core.common.domain.Variables;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.Variable;
