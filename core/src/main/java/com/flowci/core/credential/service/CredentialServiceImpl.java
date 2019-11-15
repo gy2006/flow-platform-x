@@ -19,8 +19,10 @@ package com.flowci.core.credential.service;
 import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.credential.dao.CredentialDao;
+import com.flowci.core.credential.domain.AuthCredential;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
+import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
@@ -34,6 +36,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author yang
@@ -60,13 +63,11 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Credential get(String name) {
-        Credential c = credentialDao.findByName(name);
-
-        if (Objects.isNull(c)) {
-            throw new NotFoundException("Credential {0} is not found", name);
+        Optional<Credential> optional = credentialDao.findByName(name);
+        if (optional.isPresent()) {
+            return optional.get();
         }
-
-        return c;
+        throw new NotFoundException("Credential {0} is not found", name);
     }
 
     @Override
@@ -96,15 +97,23 @@ public class CredentialServiceImpl implements CredentialService {
         return save(rsaCredential);
     }
 
-    private RSACredential save(RSACredential keyPair) {
+    @Override
+    public AuthCredential createAuth(String name, SimpleAuthPair pair) {
+        AuthCredential auth = new AuthCredential();
+        auth.setName(name);
+        auth.setPair(pair);
+        return save(auth);
+    }
+
+    private <T extends Credential> T save(T credential) {
         try {
             Date now = Date.from(Instant.now());
-            keyPair.setUpdatedAt(now);
-            keyPair.setCreatedAt(now);
-            keyPair.setCreatedBy(sessionManager.getUserId());
-            return credentialDao.insert(keyPair);
+            credential.setUpdatedAt(now);
+            credential.setCreatedAt(now);
+            credential.setCreatedBy(sessionManager.getUserId());
+            return credentialDao.insert(credential);
         } catch (DuplicateKeyException e) {
-            throw new DuplicateException("Credential name {0} is already defined", keyPair.getName());
+            throw new DuplicateException("Credential name {0} is already defined", credential.getName());
         }
     }
 }

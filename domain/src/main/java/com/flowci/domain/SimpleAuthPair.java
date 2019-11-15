@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.dao;
+package com.flowci.domain;
 
-import com.flowci.core.credential.domain.Credential;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
-import org.springframework.stereotype.Repository;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author yang
  */
-@Repository
-public interface CredentialDao extends MongoRepository<Credential, String>, CustomCredentialDao {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor(staticName = "of")
+public class SimpleAuthPair {
 
-    List<Credential> findAllAndOrderByCreatedAt();
+    private String username;
 
-    Optional<Credential> findByName(String name);
-
+    private String password;
 }

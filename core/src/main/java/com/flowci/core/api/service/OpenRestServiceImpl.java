@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.Objects;
+import java.util.Optional;
 
 @Log4j2
 @Service
@@ -61,15 +62,12 @@ public class OpenRestServiceImpl implements OpenRestService {
     @Autowired
     private StatsService statsService;
 
-    public Credential getCredential(String name, Class<? extends Credential> target) {
-        Credential credential = credentialDao.findByName(name);
+    @Override
+    public Credential getCredential(String name) {
+        Optional<Credential> optional = credentialDao.findByName(name);
 
-        if (Objects.isNull(credential)) {
-            throw new NotFoundException("Credential {0} is not found", name);
-        }
-
-        if (credential.getClass().equals(target)) {
-            return credential;
+        if (optional.isPresent()) {
+            return optional.get();
         }
 
         throw new NotFoundException("Credential {0} is not found", name);

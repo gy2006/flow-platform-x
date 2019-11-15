@@ -42,4 +42,12 @@ public abstract class Mongoable implements Serializable {
     protected String createdBy;
 
     protected String updatedBy;
+
+    public void cleanDBInfo() {
+        this.id = null;
+        this.createdAt = null;
+        this.updatedAt = null;
+        this.createdBy = null;
+        this.updatedBy = null;
+    }
 }

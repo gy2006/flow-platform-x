@@ -50,14 +50,18 @@ public class OpenRestController {
     private AgentService agentService;
 
     @GetMapping("/credential/{name}")
-    public String getRsaPrivateKey(@RequestHeader(HeaderAgentToken) String token,
-                                   @PathVariable String name) {
-
+    public Credential getCredential(@RequestHeader(HeaderAgentToken) String token, @PathVariable String name) {
         agentService.getByToken(token);
 
-        Credential credential = openRestService.getCredential(name, RSACredential.class);
-        RSACredential pair = (RSACredential) credential;
-        return pair.getPrivateKey();
+        Credential credential = openRestService.getCredential(name);
+        credential.cleanDBInfo();
+
+        if (credential instanceof RSACredential) {
+            RSACredential rsa = (RSACredential) credential;
+            rsa.setPublicKey(null);
+        }
+
+        return credential;
     }
 
     @PostMapping("/stats/{flowName}")

@@ -25,19 +25,22 @@ public abstract class CredentialAction {
 
     public static final String GET = "get_credential";
 
-    public static final String CREATE_RSA = "create_credential";
+    public static final String CREATE_RSA = "create_credential_rsa";
+
+    public static final String CREATE_AUTH = "create_credential_auth";
 
     public static final String GENERATE_RSA = "generate_rsa";
 
     public static final String DELETE = "delete_credential";
 
     public static final String[] ALL = {
-            LIST,
-            LIST_NAME,
-            GET,
-            CREATE_RSA,
-            GENERATE_RSA,
-            DELETE
+        LIST,
+        LIST_NAME,
+        GET,
+        CREATE_RSA,
+        CREATE_AUTH,
+        GENERATE_RSA,
+        DELETE
     };
 
 }

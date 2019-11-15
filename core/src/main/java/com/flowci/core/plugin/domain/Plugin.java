@@ -40,7 +40,7 @@ public class Plugin extends PluginRepoInfo {
     @Id
     private String id;
 
-    private List<Variable> inputs = new LinkedList<>();
+    private List<Input> inputs = new LinkedList<>();
 
     // Plugin that supported statistic types
     private List<StatsType> statsTypes = new LinkedList<>();

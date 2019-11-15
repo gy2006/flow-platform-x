@@ -14,10 +14,28 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test.api;
+package com.flowci.core.credential.domain;
 
-import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.SimpleAuthPair;
+import javax.validation.constraints.NotEmpty;
+import lombok.Data;
 
-public class OpenRestControllerTest extends SpringScenario {
+/**
+ * @author yang
+ */
+@Data
+public class CreateAuth {
 
+    @NotEmpty
+    private String name;
+
+    @NotEmpty
+    private String username;
+
+    @NotEmpty
+    private String password;
+
+    public SimpleAuthPair getAuthPair() {
+        return SimpleAuthPair.of(username, password);
+    }
 }
