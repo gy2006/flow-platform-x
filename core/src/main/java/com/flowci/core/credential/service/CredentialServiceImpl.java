@@ -21,22 +21,22 @@ import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.AuthCredential;
 import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.credential.domain.Credential.Category;
 import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
+import com.flowci.util.StringHelper;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 /**
  * @author yang
@@ -57,8 +57,12 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public List<Credential> listName() {
-        return credentialDao.listNameOnly();
+    public List<Credential> listName(String category) {
+        if (!StringHelper.hasValue(category)) {
+            return credentialDao.listNameOnly();
+        }
+
+        return credentialDao.listNameOnly(Category.valueOf(category));
     }
 
     @Override

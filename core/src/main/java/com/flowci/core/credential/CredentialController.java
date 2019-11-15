@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -60,8 +61,8 @@ public class CredentialController {
 
     @GetMapping("/list/name")
     @Action(CredentialAction.LIST_NAME)
-    public List<Credential> listName() {
-        return credentialService.listName();
+    public List<Credential> listName(@RequestParam String category) {
+        return credentialService.listName(category);
     }
 
     @PostMapping("/rsa")

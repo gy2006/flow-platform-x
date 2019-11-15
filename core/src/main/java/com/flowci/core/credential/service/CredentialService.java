@@ -37,7 +37,7 @@ public interface CredentialService {
     /**
      * List credential name only for current user
      */
-    List<Credential> listName();
+    List<Credential> listName(String category);
 
     /**
      * Get credential for current user
