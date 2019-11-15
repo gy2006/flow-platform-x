@@ -43,7 +43,7 @@ public abstract class Variables {
 
         public static final String GitBranch = "FLOWCI_GIT_BRANCH"; // set
 
-        public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA"; // set
+        public static final String CREDENTIAL_NAME = "FLOWCI_CREDENTIAL_NAME"; // set
     }
 
     public abstract static class Job {

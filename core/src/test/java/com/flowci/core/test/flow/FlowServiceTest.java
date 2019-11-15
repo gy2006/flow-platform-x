@@ -35,10 +35,9 @@ import com.flowci.domain.VarValue;
 import com.flowci.domain.Vars;
 import com.flowci.domain.http.ResponseMessage;
 import com.flowci.exception.ArgumentException;
-import com.flowci.exception.YmlException;
 import com.flowci.tree.Node;
 import com.flowci.tree.YmlParser;
-import com.flowci.util.StringHelper;
+
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -155,7 +154,7 @@ public class FlowServiceTest extends SpringScenario {
 
         Node root = YmlParser.load("test", yml.getRaw());
         Assert.assertNull(root.getEnv(Variables.Flow.GitUrl));
-        Assert.assertNull(root.getEnv(Variables.Flow.SSH_RSA));
+        Assert.assertNull(root.getEnv(Variables.Flow.CREDENTIAL_NAME));
     }
 
     @Test
@@ -171,7 +170,7 @@ public class FlowServiceTest extends SpringScenario {
         flowService.confirm(flow.getName(), null, credentialName);
 
         Vars<VarValue> variables = flowService.get(flow.getName()).getLocally();
-        Assert.assertEquals(credentialName, variables.get(Variables.Flow.SSH_RSA).getData());
+        Assert.assertEquals(credentialName, variables.get(Variables.Flow.CREDENTIAL_NAME).getData());
 
         // when:
         List<Flow> flows = flowService.listByCredential(credentialName);

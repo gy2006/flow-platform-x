@@ -234,7 +234,7 @@ public class FlowServiceImpl implements FlowService {
         }
 
         if (!Strings.isNullOrEmpty(credential)) {
-            flow.getLocally().put(Variables.Flow.SSH_RSA, VarValue.of(credential, VarType.STRING, true));
+            flow.getLocally().put(Variables.Flow.CREDENTIAL_NAME, VarValue.of(credential, VarType.STRING, true));
         }
 
         flow.setStatus(Status.CONFIRMED);
@@ -294,7 +294,9 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public void testGitConnection(String name, String url, String privateKeyOrCredentialName) {
         final Flow flow = get(name);
-        gitTestExecutor.execute(() -> fetchBranchFromGit(flow, url, privateKeyOrCredentialName));
+        final Credential c = getCredential(url, privateKeyOrCredentialName);
+
+        gitTestExecutor.execute(() -> fetchBranchFromGit(flow, url, c));
     }
 
     @Override
@@ -302,9 +304,10 @@ public class FlowServiceImpl implements FlowService {
         final Flow flow = get(name);
         final String gitUrl = flow.getGitUrl();
         final String credentialName = flow.getCredentialName();
+        final Credential c = getCredential(gitUrl, credentialName);
 
         return gitBranchCache.get(flow.getId(), (Function<String, List<String>>) flowId ->
-                fetchBranchFromGit(flow, gitUrl, credentialName));
+                fetchBranchFromGit(flow, gitUrl, c));
     }
 
     @Override
@@ -393,46 +396,69 @@ public class FlowServiceImpl implements FlowService {
     //        %% Utils
     //====================================================================
 
-    private List<String> fetchBranchFromGit(Flow flow, String url, String privateKeyOrCredential) {
-        final ObjectWrapper<Credential> wrapper = new ObjectWrapper<>();
+    private Credential getCredential(String url, String privateKeyOrCredential) {
+        if (!StringHelper.hasValue(privateKeyOrCredential)) {
+            return null;
+        }
 
-        if (StringHelper.hasValue(privateKeyOrCredential)) {
-            Credential credential = null;
-            if (CipherHelper.RSA.isPrivateKey(privateKeyOrCredential)) {
-                RSACredential c = new RSACredential();
-                c.setPrivateKey(privateKeyOrCredential);
-                credential = c;
-            } else {
-                credential = credentialService.get(privateKeyOrCredential);
-            }
+        Credential credential;
 
-            wrapper.setValue(credential);
+        if (CipherHelper.RSA.isPrivateKey(privateKeyOrCredential)) {
+            RSACredential c = new RSACredential();
+            c.setPrivateKey(privateKeyOrCredential);
+            credential = c;
+        } else {
+            credential = credentialService.get(privateKeyOrCredential);
         }
 
         if (StringHelper.isHttpLink(url)) {
-            if (wrapper.getValue() instanceof RSACredential) {
+            if (credential instanceof RSACredential) {
                 throw new ArgumentException("Invalid credential for http git url");
-            }
-
-            AuthCredential authCredential = (AuthCredential) wrapper.getValue();
-            try (GitBranchLoader loader = new HttpGitBranchLoader(flow.getId(), url, authCredential)) {
-                return loader.load();
-            } catch (Exception errorOnClose) {
-                return Collections.emptyList();
             }
         }
 
         else {
-            if (wrapper.getValue() instanceof AuthCredential) {
-                throw new ArgumentException("Invalid credential for ssh url");
+            if (Objects.isNull(credential)) {
+                throw new ArgumentException("RSA credential is required for ssh git connection");
             }
 
-            RSACredential rsaCredential = (RSACredential) wrapper.getValue();
-            try (GitBranchLoader loader = new SshGitBranchLoader(flow.getId(), url, rsaCredential)) {
-                return loader.load();
-            } catch (Exception errorOnClose) {
-                return Collections.emptyList();
+            if (credential instanceof AuthCredential) {
+                throw new ArgumentException("Invalid credential for ssh url");
             }
+        }
+
+        return credential;
+    }
+
+    private List<String> fetchBranchFromGit(Flow flow, String url, Credential credential) {
+        if (Objects.isNull(credential)) {
+            return fetchBranchViaHttp(flow, url, null);
+        }
+
+        if (credential.getCategory() == Credential.Category.SSH_RSA) {
+            return fetchBranchViaSSH(flow, url, (RSACredential) credential);
+        }
+
+        if (credential.getCategory() == Credential.Category.AUTH) {
+            return fetchBranchViaHttp(flow, url, (AuthCredential) credential);
+        }
+
+        throw new UnsupportedOperationException("Unsupported credential category");
+    }
+
+    private List<String> fetchBranchViaHttp(Flow flow, String url, AuthCredential credential) {
+        try (GitBranchLoader loader = new HttpGitBranchLoader(flow.getId(), url, credential)) {
+            return loader.load();
+        } catch (Exception errorOnClose) {
+            return Collections.emptyList();
+        }
+    }
+
+    private List<String> fetchBranchViaSSH(Flow flow, String url, RSACredential credential) {
+        try (GitBranchLoader loader = new SshGitBranchLoader(flow.getId(), url, credential)) {
+            return loader.load();
+        } catch (Exception errorOnClose) {
+            return Collections.emptyList();
         }
     }
 
@@ -555,6 +581,10 @@ public class FlowServiceImpl implements FlowService {
 
         @Override
         void setup(LsRemoteCommand command) throws Throwable {
+            if (Objects.isNull(credential)) {
+                return;
+            }
+
             UsernamePasswordCredentialsProvider provider = new UsernamePasswordCredentialsProvider(
                     credential.getUsername(), credential.getPassword());
             command.setCredentialsProvider(provider);
