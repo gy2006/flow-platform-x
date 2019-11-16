@@ -100,6 +100,10 @@ public class FlowController {
             return;
         }
 
+        if (body.hasUsernamePassword()) {
+            //TODO: handle username password test
+        }
+
         flowService.testGitConnection(name, body.getGitUrl(), body.getCredential());
     }
 
