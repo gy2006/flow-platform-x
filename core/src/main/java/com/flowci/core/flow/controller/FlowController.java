@@ -26,6 +26,7 @@ import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.service.FlowVarService;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
+import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.domain.VarValue;
 import com.google.common.collect.Lists;
@@ -121,6 +122,12 @@ public class FlowController {
     @Action(FlowAction.SETUP_CREDENTIAL)
     public String setupRSACredential(@PathVariable String name, @RequestBody SimpleKeyPair pair) {
         return flowService.setSshRsaCredential(name, pair);
+    }
+
+    @PostMapping("/{name}/credentials/auth")
+    @Action(FlowAction.SETUP_CREDENTIAL)
+    public String setupAuthCredential(@PathVariable String name, @RequestBody SimpleAuthPair pair) {
+        return flowService.setAuthCredential(name, pair);
     }
 
     @PostMapping("/{name}/users")

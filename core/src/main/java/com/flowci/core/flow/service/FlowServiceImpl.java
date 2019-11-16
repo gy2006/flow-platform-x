@@ -229,11 +229,11 @@ public class FlowServiceImpl implements FlowService {
             throw new DuplicateException("Flow {0} has created", name);
         }
 
-        if (!Strings.isNullOrEmpty(gitUrl)) {
+        if (StringHelper.hasValue(gitUrl)) {
             flow.getLocally().put(Variables.Flow.GitUrl, VarValue.of(gitUrl, VarType.GIT_URL, true));
         }
 
-        if (!Strings.isNullOrEmpty(credential)) {
+        if (StringHelper.hasValue(credential)) {
             flow.getLocally().put(Variables.Flow.CREDENTIAL_NAME, VarValue.of(credential, VarType.STRING, true));
         }
 
@@ -287,6 +287,16 @@ public class FlowServiceImpl implements FlowService {
 
         String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
         credentialService.createRSA(credentialName, pair);
+
+        return credentialName;
+    }
+
+    @Override
+    public String setAuthCredential(String name, SimpleAuthPair keyPair) {
+        Flow flow = get(name);
+
+        String credentialName = "flow-" + flow.getName() + "-auth";
+        credentialService.createAuth(credentialName, keyPair);
 
         return credentialName;
     }
