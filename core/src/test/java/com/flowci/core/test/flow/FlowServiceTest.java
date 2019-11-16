@@ -27,6 +27,7 @@ import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.core.flow.service.FlowService;
+import com.flowci.core.flow.service.GitService;
 import com.flowci.core.flow.service.YmlService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.SimpleAuthPair;
@@ -65,6 +66,9 @@ public class FlowServiceTest extends SpringScenario {
 
     @Autowired
     private FlowService flowService;
+
+    @Autowired
+    private GitService gitService;
 
     @Autowired
     private YmlService ymlService;
@@ -220,7 +224,7 @@ public class FlowServiceTest extends SpringScenario {
         // when:
         String gitUrl = "git@github.com:FlowCI/docs.git";
         String privateKey = r.getData().getPrivateKey();
-        flowService.testGitConnection(flow.getName(), gitUrl, privateKey);
+        gitService.testConn(flow, gitUrl, privateKey);
 
         // then:
         countDown.await(30, TimeUnit.SECONDS);
@@ -257,7 +261,7 @@ public class FlowServiceTest extends SpringScenario {
         });
 
         String gitUrl = "https://xxxx";
-        flowService.testGitConnection(flow.getName(), gitUrl, mocked.getName());
+        gitService.testConn(flow, gitUrl, mocked.getName());
 
         countDown.await(30, TimeUnit.SECONDS);
         Assert.assertTrue(branches.size() >= 1);

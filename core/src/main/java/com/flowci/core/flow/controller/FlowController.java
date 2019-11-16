@@ -24,6 +24,7 @@ import com.flowci.core.flow.domain.FlowGitTest;
 import com.flowci.core.flow.domain.GitSettings;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.service.FlowVarService;
+import com.flowci.core.flow.service.GitService;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
 import com.flowci.domain.SimpleAuthPair;
@@ -90,27 +91,6 @@ public class FlowController {
             gitSettings = new GitSettings();
         }
         return flowService.confirm(name, gitSettings.getGitUrl(), gitSettings.getCredential());
-    }
-
-    @PostMapping(value = "/{name}/git/test")
-    @Action(FlowAction.GIT_TEST)
-    public void gitTest(@PathVariable String name, @Validated @RequestBody FlowGitTest body) {
-        if (body.hasPrivateKey()) {
-            flowService.testGitConnection(name, body.getGitUrl(), body.getPrivateKey());
-            return;
-        }
-
-        if (body.hasUsernamePassword()) {
-            //TODO: handle username password test
-        }
-
-        flowService.testGitConnection(name, body.getGitUrl(), body.getCredential());
-    }
-
-    @GetMapping(value = "/{name}/git/branches")
-    @Action(FlowAction.LIST_BRANCH)
-    public List<String> listGitBranches(@PathVariable String name) {
-        return flowService.listGitBranch(name);
     }
 
     @DeleteMapping("/{name}")

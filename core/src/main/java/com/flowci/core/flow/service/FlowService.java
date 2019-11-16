@@ -100,16 +100,6 @@ public interface FlowService {
      */
     String setAuthCredential(String name, SimpleAuthPair keyPair);
 
-    /**
-     * Test git connection for flow and dispatch application event
-     */
-    void testGitConnection(String name, String url, String privateKeyOrCredentialName);
-
-    /**
-     * List remote branches
-     * @return list of branches or empty list if git config not defined
-     */
-    List<String> listGitBranch(String name);
 
     /**
      * Add users to flow
