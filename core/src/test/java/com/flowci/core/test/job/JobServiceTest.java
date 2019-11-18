@@ -19,6 +19,7 @@ package com.flowci.core.test.job;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.common.domain.Variables;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.service.FlowService;
@@ -123,12 +124,25 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // when: create job
         Job job = jobService.create(flow, yml, Trigger.MANUAL, input);
+        Vars<String> context = job.getContext();
+        Assert.assertNotNull(context);
+
+        // then: default vars
+        Assert.assertTrue(context.containsKey(Variables.Flow.Name));
+        Assert.assertTrue(context.containsKey(Variables.App.Url));
+
+        Assert.assertTrue(context.containsKey(Variables.Job.Status));
+        Assert.assertTrue(context.containsKey(Variables.Job.BuildNumber));
+        Assert.assertTrue(context.containsKey(Variables.Job.Trigger));
+        Assert.assertTrue(context.containsKey(Variables.Job.TriggerBy));
+        Assert.assertTrue(context.containsKey(Variables.Job.StartAt));
+        Assert.assertTrue(context.containsKey(Variables.Job.FinishAt));
 
         // then: vars should be included in job context
-        Assert.assertTrue(job.getContext().containsKey("LOCAL_VAR"));
-        Assert.assertTrue(job.getContext().containsKey("INPUT_VAR"));
-        Assert.assertTrue(job.getContext().containsKey("FLOW_WORKSPACE"));
-        Assert.assertTrue(job.getContext().containsKey("FLOW_VERSION"));
+        Assert.assertTrue(context.containsKey("LOCAL_VAR"));
+        Assert.assertTrue(context.containsKey("INPUT_VAR"));
+        Assert.assertTrue(context.containsKey("FLOW_WORKSPACE"));
+        Assert.assertTrue(context.containsKey("FLOW_VERSION"));
     }
 
     @Test

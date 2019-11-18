@@ -302,9 +302,13 @@ public class JobServiceImpl implements JobService {
         context.mergeFromTypedVars(flow.getLocally());
 
         context.put(Variables.App.Url, serverAddress);
+        context.put(Variables.Flow.Name, flow.getName());
+
+        context.put(Variables.Job.Status, Job.Status.PENDING.name());
         context.put(Variables.Job.Trigger, job.getTrigger().toString());
         context.put(Variables.Job.BuildNumber, job.getBuildNumber().toString());
-        context.put(Variables.Job.Status, Job.Status.PENDING.name());
+        context.put(Variables.Job.StartAt, job.startAtInStr());
+        context.put(Variables.Job.FinishAt, job.finishAtInStr());
 
         if (!Objects.isNull(inputs)) {
             for (StringVars vars : inputs) {

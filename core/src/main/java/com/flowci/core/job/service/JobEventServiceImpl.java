@@ -29,7 +29,6 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.event.FlowCreatedEvent;
 import com.flowci.core.flow.event.FlowDeletedEvent;
 import com.flowci.core.flow.event.FlowInitEvent;
-import com.flowci.core.flow.event.FlowOperationEvent;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.CreateNewJobEvent;
@@ -231,9 +230,9 @@ public class JobEventServiceImpl implements JobEventService {
         stepService.resultUpdate(execCmd);
         log.debug("Executed cmd {} been recorded", execCmd);
 
-        setJobStartAndFinishTime(job, tree, node, execCmd);
+        updateJobTime(job, tree, node, execCmd);
 
-        setJobContext(job, node, execCmd);
+        setJobContext(job, execCmd);
 
         // find next node
         Node next = findNext(job, tree, node, execCmd.isSuccess());
@@ -265,25 +264,22 @@ public class JobEventServiceImpl implements JobEventService {
         log.info("[Job] " + job.getKey() + " " + message, params);
     }
 
-    private void setJobStartAndFinishTime(Job job, NodeTree tree, Node node, ExecutedCmd cmd) {
+    private void updateJobTime(Job job, NodeTree tree, Node node, ExecutedCmd cmd) {
         if (tree.isFirst(node.getPath())) {
             job.setStartAt(cmd.getStartAt());
         }
 
-        if (tree.isLast(node.getPath())) {
-            job.setFinishAt(cmd.getFinishAt());
-        }
+        job.setFinishAt(cmd.getFinishAt());
     }
 
-    private void setJobContext(Job job, Node node, ExecutedCmd cmd) {
+    private void setJobContext(Job job, ExecutedCmd cmd) {
         // merge output to job context
         Vars<String> context = job.getContext();
         context.merge(cmd.getOutput());
 
-        // setup current job status if not tail node
-        if (!node.isTail()) {
-            context.put(Variables.Job.Status, StatusHelper.convert(cmd).name());
-        }
+        context.put(Variables.Job.Status, StatusHelper.convert(cmd).name());
+        context.put(Variables.Job.StartAt, job.startAtInStr());
+        context.put(Variables.Job.FinishAt, job.finishAtInStr());
     }
 
     private Node findNext(Job job, NodeTree tree, Node current, boolean isSuccess) {
