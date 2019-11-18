@@ -19,13 +19,17 @@ package com.flowci.core.api;
 
 import com.flowci.core.api.domain.AddStatsItem;
 import com.flowci.core.api.domain.CreateJobSummary;
+import com.flowci.core.api.domain.Step;
 import com.flowci.core.api.service.OpenRestService;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.flow.domain.StatsCounter;
+import com.flowci.core.user.domain.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Provides API which calling from agent plugin
@@ -50,16 +54,26 @@ public class OpenRestController {
         return credential;
     }
 
-    @PostMapping("/stats/{flowName}")
-    public void addStatsItem(@PathVariable String flowName,
-                             @Validated @RequestBody AddStatsItem body) {
-        openRestService.saveStatsForFlow(flowName, body.getType(), StatsCounter.from(body.getData()));
+    @GetMapping("/flow/{name}/users")
+    public List<User> listFlowUserEmail(@PathVariable String name) {
+        return openRestService.users(name);
     }
 
-    @PostMapping("/summary/{flowName}/{buildNumber}")
-    public void createJobSummary(@PathVariable String flowName,
-                                 @PathVariable long buildNumber,
+    @PostMapping("/flow/{name}/stats")
+    public void addStatsItem(@PathVariable String name,
+                             @Validated @RequestBody AddStatsItem body) {
+        openRestService.saveStatsForFlow(name, body.getType(), StatsCounter.from(body.getData()));
+    }
+
+    @GetMapping("/flow/{name}/job/{number}/steps")
+    public List<Step> listJobSteps(@PathVariable String name, @PathVariable Long number) {
+        return openRestService.steps(name, number);
+    }
+
+    @PostMapping("/flow/{name}/job/{number}/summary")
+    public void createJobSummary(@PathVariable String name,
+                                 @PathVariable long number,
                                  @Validated @RequestBody CreateJobSummary body) {
-        openRestService.saveJobSummary(flowName, buildNumber, body);
+        openRestService.saveJobSummary(name, number, body);
     }
 }
