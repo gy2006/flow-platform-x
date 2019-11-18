@@ -36,6 +36,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
+ * ExecutedCmd == Step node with executed status and data
+ *
  * @author yang
  */
 @Data

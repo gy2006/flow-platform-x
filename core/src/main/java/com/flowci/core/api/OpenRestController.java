@@ -17,7 +17,6 @@
 
 package com.flowci.core.api;
 
-import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.api.domain.AddStatsItem;
 import com.flowci.core.api.domain.CreateJobSummary;
 import com.flowci.core.api.service.OpenRestService;
@@ -26,13 +25,7 @@ import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.flow.domain.StatsCounter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Provides API which calling from agent plugin

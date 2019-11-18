@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package com.flowci.core.user.dao;
+package com.flowci.core.api.domain;
 
-import com.flowci.core.user.domain.User;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-/**
- * @author yang
- */
-@Repository
-public interface UserDao extends MongoRepository<User, String>, UserDaoExtend {
+@Getter
+@Setter
+@Document(collection = "user")
+public class SimpleUser {
 
-    User findByEmail(String email);
+    private String email;
 }
