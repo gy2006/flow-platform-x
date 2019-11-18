@@ -20,6 +20,8 @@ import com.flowci.domain.ExecutedCmd;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * @author yang
  */
@@ -27,4 +29,6 @@ import org.springframework.stereotype.Repository;
 public interface ExecutedCmdDao extends MongoRepository<ExecutedCmd, String> {
 
     Long deleteByFlowId(String flowId);
+
+    List<ExecutedCmd> findByFlowIdAndBuildNumber(String flowId, long buildNumber);
 }

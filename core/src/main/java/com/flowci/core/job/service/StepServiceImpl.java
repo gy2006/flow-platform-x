@@ -98,20 +98,8 @@ public class StepServiceImpl implements StepService {
 
     @Override
     public List<ExecutedCmd> list(Job job) {
-        return jobStepCache.get(job.getId(), s -> {
-            NodeTree tree = ymlManager.getTree(job);
-            List<Node> nodes = tree.getOrdered();
-
-            List<ExecutedCmd> cmds = new ArrayList<>(nodes.size());
-            for (Node node : nodes) {
-                CmdId cmdId = cmdManager.createId(job, node);
-
-                Optional<ExecutedCmd> optional = executedCmdDao.findById(cmdId.toString());
-                optional.ifPresent(cmds::add);
-            }
-
-            return cmds;
-        });
+        return jobStepCache.get(job.getId(),
+                s -> executedCmdDao.findByFlowIdAndBuildNumber(job.getFlowId(), job.getBuildNumber()));
     }
 
     @Override

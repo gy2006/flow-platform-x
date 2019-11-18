@@ -17,14 +17,18 @@
 package com.flowci.core.api.domain;
 
 import com.flowci.domain.ExecutedCmd;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
-@Data
+@Setter
+@Getter
+@AllArgsConstructor(staticName = "of")
 @Accessors(chain = true)
 public class Step {
 
-    private String name;
+    private final String name;
 
-    private ExecutedCmd.Status status;
+    private final ExecutedCmd.Status status;
 }

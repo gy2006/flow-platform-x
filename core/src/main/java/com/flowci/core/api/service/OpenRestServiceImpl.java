@@ -25,28 +25,29 @@ import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.FlowUserDao;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.StatsCounter;
+import com.flowci.core.flow.domain.StatsItem;
+import com.flowci.core.flow.service.StatsService;
+import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobSummaryDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobSummary;
 import com.flowci.core.job.util.JobKeyBuilder;
-import com.flowci.core.flow.domain.StatsCounter;
-import com.flowci.core.flow.domain.StatsItem;
-import com.flowci.core.flow.service.StatsService;
 import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
+import com.flowci.domain.CmdId;
+import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
+import com.flowci.tree.NodePath;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Log4j2
 @Service
@@ -69,6 +70,9 @@ public class OpenRestServiceImpl implements OpenRestService {
 
     @Autowired
     private JobSummaryDao jobSummaryDao;
+
+    @Autowired
+    private ExecutedCmdDao executedCmdDao;
 
     @Autowired
     private StatsService statsService;
@@ -124,7 +128,17 @@ public class OpenRestServiceImpl implements OpenRestService {
 
     @Override
     public List<Step> steps(String flowName, long buildNumber) {
-        return null;
+        Flow flow = getFlow(flowName);
+        List<ExecutedCmd> list = executedCmdDao.findByFlowIdAndBuildNumber(flow.getId(), buildNumber);
+
+        List<Step> steps = new ArrayList<>(list.size());
+        for (ExecutedCmd item : list) {
+            CmdId cmdId = item.getCmdId();
+            NodePath path = NodePath.create(cmdId.getNodePath());
+            steps.add(Step.of(path.name(), item.getStatus()));
+        }
+
+        return steps;
     }
 
     private Flow getFlow(String name) {
