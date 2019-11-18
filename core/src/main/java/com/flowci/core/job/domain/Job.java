@@ -23,14 +23,14 @@ import com.flowci.domain.Agent;
 import com.flowci.domain.StringVars;
 import com.flowci.domain.Vars;
 import com.flowci.tree.Selector;
-import java.util.Date;
-import java.util.Set;
-
 import com.google.common.collect.ImmutableSet;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Date;
+import java.util.Set;
 
 /**
  * @author yang
@@ -207,22 +207,8 @@ public class Job extends Mongoable implements Pathable {
     }
 
     @JsonIgnore
-    public boolean isPending() {
-        return status == Status.PENDING;
-    }
-
-    @JsonIgnore
     public boolean isDone() {
         return FINISH_STATUS.contains(status);
-    }
-
-    @JsonIgnore
-    public Integer increase() {
-        if (this.priority < MaxPriority) {
-            this.priority++;
-        }
-
-        return this.priority;
     }
 
     @JsonIgnore
