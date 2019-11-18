@@ -154,7 +154,7 @@ public class Job extends Mongoable implements Pathable {
             .add(Status.SUCCESS)
             .build();
 
-    private final static SimpleDateFormat DateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss SSS");
+    private final static SimpleDateFormat DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
     private final static Integer MinPriority = 1;
 
