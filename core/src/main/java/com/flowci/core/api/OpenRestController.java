@@ -41,18 +41,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class OpenRestController {
 
-    private static final String HeaderAgentToken = "AGENT-TOKEN";
-
     @Autowired
     private OpenRestService openRestService;
 
-    @Autowired
-    private AgentService agentService;
-
     @GetMapping("/credential/{name}")
-    public Credential getCredential(@RequestHeader(HeaderAgentToken) String token, @PathVariable String name) {
-        agentService.getByToken(token);
-
+    public Credential getCredential(@PathVariable String name) {
         Credential credential = openRestService.getCredential(name);
         credential.cleanDBInfo();
 
@@ -65,19 +58,15 @@ public class OpenRestController {
     }
 
     @PostMapping("/stats/{flowName}")
-    public void addStatsItem(@RequestHeader(HeaderAgentToken) String token,
-                             @PathVariable String flowName,
+    public void addStatsItem(@PathVariable String flowName,
                              @Validated @RequestBody AddStatsItem body) {
-        agentService.getByToken(token);
         openRestService.saveStatsForFlow(flowName, body.getType(), StatsCounter.from(body.getData()));
     }
 
     @PostMapping("/summary/{flowName}/{buildNumber}")
-    public void createJobSummary(@RequestHeader(HeaderAgentToken) String token,
-                                 @PathVariable String flowName,
+    public void createJobSummary(@PathVariable String flowName,
                                  @PathVariable long buildNumber,
                                  @Validated @RequestBody CreateJobSummary body) {
-        agentService.getByToken(token);
         openRestService.saveJobSummary(flowName, buildNumber, body);
     }
 }

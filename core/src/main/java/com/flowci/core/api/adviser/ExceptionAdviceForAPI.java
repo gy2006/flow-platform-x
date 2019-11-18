@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.common.adviser;
+package com.flowci.core.api.adviser;
 
 import com.flowci.core.common.domain.StatusCode;
 import com.flowci.domain.http.ResponseMessage;
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 /**
  * @author yang
  */
-@ControllerAdvice({"com.flowci.core.open"})
+@ControllerAdvice({"com.flowci.core.api"})
 public class ExceptionAdviceForAPI {
 
     @ResponseBody

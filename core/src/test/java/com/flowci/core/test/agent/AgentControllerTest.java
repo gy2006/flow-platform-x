@@ -18,7 +18,7 @@ package com.flowci.core.test.agent;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.agent.AgentInterceptor;
+import com.flowci.core.agent.AgentAuth;
 import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.domain.CreateOrUpdateAgent;
 import com.flowci.core.agent.domain.DeleteAgent;
@@ -190,7 +190,7 @@ public class AgentControllerTest extends SpringScenario {
                 .setTotalMemory(20);
 
         ResponseMessage message = mockMvcHelper.expectSuccessAndReturnClass(post("/agents/resource")
-                .header(AgentInterceptor.HeaderAgentToken, agent.getToken())
+                .header(AgentAuth.HeaderAgentToken, agent.getToken())
                 .content(objectMapper.writeValueAsBytes(resource))
                 .contentType(MediaType.APPLICATION_JSON), ResponseMessage.class);
 

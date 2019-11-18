@@ -18,14 +18,17 @@ package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.agent.AgentInterceptor;
-import com.flowci.core.auth.AuthInterceptor;
+import com.flowci.core.agent.AgentAuth;
+import com.flowci.core.api.adviser.ApiAuth;
+import com.flowci.core.auth.WebAuth;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.helper.JacksonHelper;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.Vars;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
@@ -33,25 +36,25 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
+import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig {
 
+    @Autowired
+    private HandlerInterceptor apiAuth;
+
+    @Autowired
+    private HandlerInterceptor agentAuth;
+
+    @Autowired
+    private HandlerInterceptor webAuth;
+
     @Bean
     public ThreadLocal<User> currentUser() {
         return new ThreadLocal<>();
-    }
-
-    @Bean
-    public AuthInterceptor authHandler() {
-        return new AuthInterceptor();
-    }
-
-    @Bean
-    public AgentInterceptor agentInterceptor() {
-        return new AgentInterceptor();
     }
 
     @Bean
@@ -66,7 +69,7 @@ public class WebConfig {
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(new CrosInterceptor());
 
-                registry.addInterceptor(authHandler())
+                registry.addInterceptor(webAuth)
                     .addPathPatterns("/users/**")
                     .addPathPatterns("/flows/**")
                     .addPathPatterns("/jobs/**")
@@ -79,7 +82,10 @@ public class WebConfig {
                     .excludePathPatterns("/agents/resource")
                     .excludePathPatterns("/agents/logs/upload");
 
-                registry.addInterceptor(agentInterceptor())
+                registry.addInterceptor(apiAuth)
+                        .addPathPatterns("/api/**");
+
+                registry.addInterceptor(agentAuth)
                         .addPathPatterns("/agents/connect")
                         .addPathPatterns("/agents/resource")
                         .addPathPatterns("/agents/logs/upload");
