@@ -232,7 +232,7 @@ public class JobEventServiceImpl implements JobEventService {
 
         updateJobTime(job, tree, node, execCmd);
 
-        setJobContext(job, execCmd);
+        setJobContext(job, node, execCmd);
 
         // find next node
         Node next = findNext(job, tree, node, execCmd.isSuccess());
@@ -272,14 +272,17 @@ public class JobEventServiceImpl implements JobEventService {
         job.setFinishAt(cmd.getFinishAt());
     }
 
-    private void setJobContext(Job job, ExecutedCmd cmd) {
+    private void setJobContext(Job job, Node node, ExecutedCmd cmd) {
         // merge output to job context
         Vars<String> context = job.getContext();
         context.merge(cmd.getOutput());
 
-        context.put(Variables.Job.Status, StatusHelper.convert(cmd).name());
         context.put(Variables.Job.StartAt, job.startAtInStr());
         context.put(Variables.Job.FinishAt, job.finishAtInStr());
+
+        if (!node.isTail()) {
+            context.put(Variables.Job.Status, StatusHelper.convert(cmd).name());
+        }
     }
 
     private Node findNext(Job job, NodeTree tree, Node current, boolean isSuccess) {
