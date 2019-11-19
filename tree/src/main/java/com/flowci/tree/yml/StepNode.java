@@ -47,7 +47,7 @@ public class StepNode extends YmlNode {
 
     private Boolean tail = false;
 
-    public StepNode(Node node) {
+    StepNode(Node node) {
         setName(node.getName());
         setEnvs(node.getEnvironments());
         setScript(node.getScript());
