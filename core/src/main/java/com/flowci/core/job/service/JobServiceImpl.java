@@ -285,6 +285,10 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job setJobStatusAndSave(Job job, Job.Status newStatus, String message) {
+        if (job.getStatus() == newStatus) {
+            return jobDao.save(job);
+        }
+
         job.setStatus(newStatus);
         job.setMessage(message);
         job.getContext().put(Variables.Job.Status, newStatus.name());

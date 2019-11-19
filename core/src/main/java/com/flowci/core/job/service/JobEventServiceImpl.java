@@ -29,7 +29,6 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.event.FlowCreatedEvent;
 import com.flowci.core.flow.event.FlowDeletedEvent;
 import com.flowci.core.flow.event.FlowInitEvent;
-import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.CreateNewJobEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
@@ -37,27 +36,12 @@ import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.StatusHelper;
-import com.flowci.domain.Agent;
-import com.flowci.domain.CmdId;
-import com.flowci.domain.CmdIn;
-import com.flowci.domain.ExecutedCmd;
-import com.flowci.domain.StringVars;
-import com.flowci.domain.Vars;
+import com.flowci.domain.*;
 import com.flowci.tree.GroovyRunner;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import groovy.util.ScriptException;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,14 +49,17 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+
 @Log4j2
 @Service
 public class JobEventServiceImpl implements JobEventService {
 
     private static final Integer DefaultBeforeTimeout = 5;
-
-    @Autowired
-    private JobDao jobDao;
 
     @Autowired
     private SpringEventManager eventManager;
@@ -250,10 +237,9 @@ public class JobEventServiceImpl implements JobEventService {
 
         // continue to run next node
         job.setCurrentPath(next.getPathAsString());
-        jobDao.save(job);
 
         log.debug("Send job {} step {} to agent", job.getKey(), node.getName());
-        sendToAgent(job, next, current);
+        saveJobAndSendToAgent(job, next, current);
     }
 
     //====================================================================
@@ -279,6 +265,7 @@ public class JobEventServiceImpl implements JobEventService {
 
         context.put(Variables.Job.StartAt, job.startAtInStr());
         context.put(Variables.Job.FinishAt, job.finishAtInStr());
+        context.put(Variables.Job.Steps, stepService.toVarString(job, node));
 
         if (!node.isTail()) {
             context.put(Variables.Job.Status, StatusHelper.convert(cmd).name());
@@ -343,7 +330,7 @@ public class JobEventServiceImpl implements JobEventService {
         }
 
         // dispatch job to agent queue
-        sendToAgent(job, next, available);
+        saveJobAndSendToAgent(job, next, available);
     }
 
     private Boolean executeBeforeCondition(Job job, Node node) {
@@ -352,8 +339,8 @@ public class JobEventServiceImpl implements JobEventService {
         }
 
         Vars<String> map = new StringVars()
-            .merge(job.getContext())
-            .merge(node.getEnvironments());
+                .merge(job.getContext())
+                .merge(node.getEnvironments());
 
         try {
             GroovyRunner<Boolean> runner = GroovyRunner.create(DefaultBeforeTimeout, node.getBefore(), map);
@@ -401,7 +388,7 @@ public class JobEventServiceImpl implements JobEventService {
     /**
      * Send step to agent
      */
-    private void sendToAgent(Job job, Node node, Agent agent) {
+    private void saveJobAndSendToAgent(Job job, Node node, Agent agent) {
         // set executed cmd step to running
         ExecutedCmd executedCmd = stepService.get(job, node);
 
@@ -409,6 +396,8 @@ public class JobEventServiceImpl implements JobEventService {
             if (!executedCmd.isRunning()) {
                 stepService.statusChange(job, node, ExecutedCmd.Status.RUNNING, null);
             }
+
+            jobService.setJobStatusAndSave(job, job.getStatus(), null);
 
             CmdIn cmd = cmdManager.createShellCmd(job, node);
             agentService.dispatch(cmd, agent);

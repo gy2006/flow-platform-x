@@ -81,6 +81,9 @@ public interface JobService {
      */
     boolean isExpired(Job job);
 
+    /**
+     * Save job, with new status, and publish job status change event
+     */
     Job setJobStatusAndSave(Job job, Job.Status newStatus, String message);
 }
 
