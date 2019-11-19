@@ -18,7 +18,6 @@
 package com.flowci.core.api.service;
 
 import com.flowci.core.api.domain.CreateJobSummary;
-import com.flowci.core.api.domain.Step;
 import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
@@ -36,18 +35,17 @@ import com.flowci.core.job.domain.JobSummary;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
-import com.flowci.domain.CmdId;
-import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
-import com.flowci.tree.NodePath;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Log4j2
 @Service
@@ -124,21 +122,6 @@ public class OpenRestServiceImpl implements OpenRestService {
         Flow flow = getFlow(flowName);
         List<String> userIds = flowUserDao.findAllUsers(flow.getId());
         return userDao.listUserEmailByIds(userIds);
-    }
-
-    @Override
-    public List<Step> steps(String flowName, long buildNumber) {
-        Flow flow = getFlow(flowName);
-        List<ExecutedCmd> list = executedCmdDao.findByFlowIdAndBuildNumber(flow.getId(), buildNumber);
-
-        List<Step> steps = new ArrayList<>(list.size());
-        for (ExecutedCmd item : list) {
-            CmdId cmdId = item.getCmdId();
-            NodePath path = NodePath.create(cmdId.getNodePath());
-            steps.add(Step.of(path.name(), item.getStatus()));
-        }
-
-        return steps;
     }
 
     private Flow getFlow(String name) {

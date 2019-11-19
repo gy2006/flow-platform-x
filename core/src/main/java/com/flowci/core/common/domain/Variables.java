@@ -59,5 +59,8 @@ public abstract class Variables {
         public static final String StartAt = "FLOWCI_JOB_START_AT";
 
         public static final String FinishAt = "FLOWCI_JOB_FINISH_AT";
+
+        // {step name}={status};{step name}={status}
+        public static final String Steps = "FLOWCI_JOB_STEPS";
     }
 }

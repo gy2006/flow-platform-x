@@ -19,17 +19,20 @@ package com.flowci.core.api;
 
 import com.flowci.core.api.domain.AddStatsItem;
 import com.flowci.core.api.domain.CreateJobSummary;
-import com.flowci.core.api.domain.Step;
 import com.flowci.core.api.service.OpenRestService;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.flow.domain.StatsCounter;
 import com.flowci.core.user.domain.User;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Provides API which calling from agent plugin
@@ -63,11 +66,6 @@ public class OpenRestController {
     public void addStatsItem(@PathVariable String name,
                              @Validated @RequestBody AddStatsItem body) {
         openRestService.saveStatsForFlow(name, body.getType(), StatsCounter.from(body.getData()));
-    }
-
-    @GetMapping("/flow/{name}/job/{number}/steps")
-    public List<Step> listJobSteps(@PathVariable String name, @PathVariable Long number) {
-        return openRestService.steps(name, number);
     }
 
     @PostMapping("/flow/{name}/job/{number}/summary")

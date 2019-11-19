@@ -49,9 +49,4 @@ public interface OpenRestService {
      * List email of all flow users
      */
     List<User> users(String flowName);
-
-    /**
-     * List all steps for job
-     */
-    List<Step> steps(String flowName, long buildNumber);
 }
