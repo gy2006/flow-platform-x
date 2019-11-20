@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,34 +14,30 @@
  * limitations under the License.
  */
 
-package com.flowci.core.agent.dao;
+package com.flowci.core.job.dao;
 
-import com.flowci.domain.Agent;
-import javax.annotation.PostConstruct;
+import com.flowci.domain.ExecutedCmd;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.index.Index;
+import org.springframework.data.mongodb.core.index.CompoundIndexDefinition;
 import org.springframework.stereotype.Component;
 
-/**
- * @author yang
- */
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+
 @Component
-public class AgentIndexHandler {
+public class JobIndexInitializer {
 
     @Autowired
     protected MongoOperations mongoOps;
 
     @PostConstruct
-    public void createIndexOnName() {
-        mongoOps.indexOps(Agent.class)
-            .ensureIndex(new Index().on("name", Direction.ASC).unique());
-    }
+    public void createIndexOnExecutedCmd() {
+        Document fields = new Document();
+        fields.put("flowId", 1);
+        fields.put("buildNumber", 1);
 
-    @PostConstruct
-    public void createIndexOnToken() {
-        mongoOps.indexOps(Agent.class)
-            .ensureIndex(new Index().on("token", Direction.ASC).unique());
+        mongoOps.indexOps(ExecutedCmd.class)
+                .ensureIndex(new CompoundIndexDefinition(fields));
     }
 }

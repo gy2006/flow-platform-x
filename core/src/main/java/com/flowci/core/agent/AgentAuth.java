@@ -20,6 +20,7 @@ import com.flowci.core.agent.service.AgentService;
 import com.flowci.exception.AuthenticationException;
 import com.flowci.util.StringHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
@@ -28,7 +29,8 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * To verify the request from agent
  */
-public class AgentInterceptor implements HandlerInterceptor {
+@Component("agentAuth")
+public class AgentAuth implements HandlerInterceptor {
 
     public static final String HeaderAgentToken = "AGENT-TOKEN";
 

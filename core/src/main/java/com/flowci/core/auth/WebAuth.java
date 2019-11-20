@@ -24,6 +24,7 @@ import com.flowci.exception.AccessException;
 import com.flowci.exception.AuthenticationException;
 import com.google.common.base.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -35,7 +36,8 @@ import java.util.Objects;
 /**
  * @author yang
  */
-public class AuthInterceptor implements HandlerInterceptor {
+@Component("webAuth")
+public class WebAuth implements HandlerInterceptor {
 
     private static final String MagicToken = "helloflowciadmin";
 

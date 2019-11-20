@@ -19,9 +19,12 @@ package com.flowci.tree;
 import com.flowci.exception.YmlException;
 import com.flowci.tree.yml.FlowNode;
 import com.flowci.tree.yml.StepNode;
+import com.flowci.util.StringHelper;
 import com.flowci.util.YamlHelper;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,10 +65,20 @@ public class YmlParser {
                 root.setName(defaultName);
             }
 
+            if (!NodePath.validate(root.getName())) {
+                throw new YmlException("Invalid name {0}", root.getName());
+            }
+
             // steps must be provided
             List<StepNode> steps = root.getSteps();
             if (Objects.isNull(steps) || steps.isEmpty()) {
-                throw new YmlException("The 'step' must be defined");
+                throw new YmlException("The 'steps' must be defined");
+            }
+
+            for (StepNode node : steps) {
+                if (StringHelper.hasValue(node.getName()) && !NodePath.validate(node.getName())) {
+                    throw new YmlException("Invalid name '{0}'", node.name);
+                }
             }
 
             return root.toNode(0);

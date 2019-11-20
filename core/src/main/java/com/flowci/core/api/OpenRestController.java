@@ -17,20 +17,20 @@
 
 package com.flowci.core.api;
 
-import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.api.domain.AddStatsItem;
 import com.flowci.core.api.domain.CreateJobSummary;
 import com.flowci.core.api.service.OpenRestService;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.flow.domain.StatsCounter;
+import com.flowci.core.user.domain.User;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,18 +41,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class OpenRestController {
 
-    private static final String HeaderAgentToken = "AGENT-TOKEN";
-
     @Autowired
     private OpenRestService openRestService;
 
-    @Autowired
-    private AgentService agentService;
-
     @GetMapping("/credential/{name}")
-    public Credential getCredential(@RequestHeader(HeaderAgentToken) String token, @PathVariable String name) {
-        agentService.getByToken(token);
-
+    public Credential getCredential(@PathVariable String name) {
         Credential credential = openRestService.getCredential(name);
         credential.cleanDBInfo();
 
@@ -64,20 +57,21 @@ public class OpenRestController {
         return credential;
     }
 
-    @PostMapping("/stats/{flowName}")
-    public void addStatsItem(@RequestHeader(HeaderAgentToken) String token,
-                             @PathVariable String flowName,
-                             @Validated @RequestBody AddStatsItem body) {
-        agentService.getByToken(token);
-        openRestService.saveStatsForFlow(flowName, body.getType(), StatsCounter.from(body.getData()));
+    @GetMapping("/flow/{name}/users")
+    public List<User> listFlowUserEmail(@PathVariable String name) {
+        return openRestService.users(name);
     }
 
-    @PostMapping("/summary/{flowName}/{buildNumber}")
-    public void createJobSummary(@RequestHeader(HeaderAgentToken) String token,
-                                 @PathVariable String flowName,
-                                 @PathVariable long buildNumber,
+    @PostMapping("/flow/{name}/stats")
+    public void addStatsItem(@PathVariable String name,
+                             @Validated @RequestBody AddStatsItem body) {
+        openRestService.saveStatsForFlow(name, body.getType(), StatsCounter.from(body.getData()));
+    }
+
+    @PostMapping("/flow/{name}/job/{number}/summary")
+    public void createJobSummary(@PathVariable String name,
+                                 @PathVariable long number,
                                  @Validated @RequestBody CreateJobSummary body) {
-        agentService.getByToken(token);
-        openRestService.saveJobSummary(flowName, buildNumber, body);
+        openRestService.saveJobSummary(name, number, body);
     }
 }

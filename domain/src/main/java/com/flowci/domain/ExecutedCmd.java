@@ -36,6 +36,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
+ * ExecutedCmd == Step node with executed status and data
+ *
  * @author yang
  */
 @Data
@@ -150,6 +152,11 @@ public class ExecutedCmd extends CmdBase {
     }
 
     @JsonIgnore
+    public String getNodePath() {
+        return cmdId.getNodePath();
+    }
+
+    @JsonIgnore
     public boolean isSuccess() {
         return SuccessStatus.contains(status) || getAllowFailure();
     }
@@ -162,14 +169,5 @@ public class ExecutedCmd extends CmdBase {
     @JsonIgnore
     public boolean isPending() {
         return status == PENDING;
-    }
-
-    @JsonIgnore
-    public Long getDuration() {
-        if (Objects.isNull(startAt) || Objects.isNull(finishAt)) {
-            return -1L;
-        }
-
-        return finishAt.getTime() - startAt.getTime();
     }
 }

@@ -22,26 +22,30 @@ import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.flow.dao.FlowDao;
+import com.flowci.core.flow.dao.FlowUserDao;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.StatsCounter;
+import com.flowci.core.flow.domain.StatsItem;
+import com.flowci.core.flow.service.StatsService;
+import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobSummaryDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobSummary;
 import com.flowci.core.job.util.JobKeyBuilder;
-import com.flowci.core.flow.domain.StatsCounter;
-import com.flowci.core.flow.domain.StatsItem;
-import com.flowci.core.flow.service.StatsService;
+import com.flowci.core.user.dao.UserDao;
+import com.flowci.core.user.domain.User;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
 
 @Log4j2
 @Service
@@ -54,10 +58,19 @@ public class OpenRestServiceImpl implements OpenRestService {
     private FlowDao flowDao;
 
     @Autowired
+    private FlowUserDao flowUserDao;
+
+    @Autowired
     private JobDao jobDao;
 
     @Autowired
+    private UserDao userDao;
+
+    @Autowired
     private JobSummaryDao jobSummaryDao;
+
+    @Autowired
+    private ExecutedCmdDao executedCmdDao;
 
     @Autowired
     private StatsService statsService;
@@ -102,6 +115,13 @@ public class OpenRestServiceImpl implements OpenRestService {
             log.warn("Duplicate job summary key");
             throw new DuplicateException("The job summary duplicated");
         }
+    }
+
+    @Override
+    public List<User> users(String flowName) {
+        Flow flow = getFlow(flowName);
+        List<String> userIds = flowUserDao.findAllUsers(flow.getId());
+        return userDao.listUserEmailByIds(userIds);
     }
 
     private Flow getFlow(String name) {
