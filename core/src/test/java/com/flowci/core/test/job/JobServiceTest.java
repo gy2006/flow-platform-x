@@ -448,7 +448,7 @@ public class JobServiceTest extends ZookeeperScenario {
         });
 
         waitForRunning.await(10, TimeUnit.SECONDS);
-        job = jobDao.findByKey(job.getKey());
+        job = jobDao.findByKey(job.getKey()).get();
         Assert.assertEquals(Status.RUNNING, job.getStatus());
 
         // when: agent status change to offline
@@ -465,7 +465,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         // then: job should be cancelled
         waitForCancelled.await();
-        job = jobDao.findByKey(job.getKey());
+        job = jobDao.findByKey(job.getKey()).get();
         Assert.assertEquals(Status.CANCELLED, job.getStatus());
 
         // then: step should be skipped

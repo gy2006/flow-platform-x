@@ -19,11 +19,13 @@ package com.flowci.core.plugin.domain;
 import com.flowci.core.flow.domain.StatsType;
 import com.flowci.domain.VarType;
 import com.flowci.domain.Version;
+import com.flowci.util.ObjectsHelper;
 import com.flowci.util.YamlHelper;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
+
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import org.yaml.snakeyaml.Yaml;
@@ -52,6 +54,8 @@ public class PluginParser {
 
         public List<VariableWrapper> inputs;
 
+        public Set<String> exports;
+
         public List<StatsWrapper> stats;
 
         public Boolean allow_failure;
@@ -64,21 +68,18 @@ public class PluginParser {
             plugin.setIcon(icon);
             plugin.setScript(script);
 
-            if (!Objects.isNull(allow_failure)) {
-                plugin.setAllowFailure(allow_failure);
-            }
-
-            if (!Objects.isNull(stats)) {
-                for (StatsWrapper wrapper : stats) {
+            ObjectsHelper.ifNotNull(exports, plugin::setExports);
+            ObjectsHelper.ifNotNull(allow_failure, plugin::setAllowFailure);
+            ObjectsHelper.ifNotNull(stats, list -> {
+                for (StatsWrapper wrapper : list) {
                     plugin.getStatsTypes().add(wrapper.toStatsType());
                 }
-            }
-
-            if (!Objects.isNull(inputs)) {
-                for (VariableWrapper wrapper : inputs) {
+            });
+            ObjectsHelper.ifNotNull(inputs, list -> {
+                for (VariableWrapper wrapper : list) {
                     plugin.getInputs().add(wrapper.toVariable());
                 }
-            }
+            });
 
             return plugin;
         }
