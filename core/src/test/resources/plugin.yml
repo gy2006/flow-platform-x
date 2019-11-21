@@ -1,20 +1,25 @@
 name: gitclone
 version: 0.0.1
 icon: "src/icon.svg"
-tags:
-  - "git"
-  - "clone"
 
 inputs:
-- name: GIT_URL
-  type: string
-  required: true
-- name: GIT_BRANCH
-  type: string
-  required: true
-- name: GIT_RSA_CREDENTIAL
-  type: string
-  required: true
+  - name: GIT_URL
+    type: string
+    required: true
+  - name: GIT_BRANCH
+    type: string
+    required: true
+  - name: GIT_RSA_CREDENTIAL
+    type: string
+    required: true
+  - name: GIT_TIMEOUT
+    type: int
+    required: false
+    value: 60
+
+exports:
+  - "VAR_EXPORT_1"
+  - "VAR_EXPORT_2"
 
 stats:
   - name: "junit"

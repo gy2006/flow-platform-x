@@ -16,8 +16,10 @@
 
 package com.flowci.core.flow.domain;
 
-import com.google.common.base.Strings;
-import javax.validation.constraints.NotNull;
+import com.flowci.domain.SimpleAuthPair;
+import com.flowci.domain.SimpleKeyPair;
+import com.flowci.util.StringHelper;
+import javax.validation.constraints.NotEmpty;
 import lombok.Data;
 
 /**
@@ -26,18 +28,26 @@ import lombok.Data;
 @Data
 public class FlowGitTest {
 
-    @NotNull
+    @NotEmpty
     private String gitUrl;
-
-    private String privateKey;
 
     private String credential;
 
-    public boolean hasPrivateKey() {
-        return !Strings.isNullOrEmpty(privateKey);
+    private SimpleAuthPair auth;
+
+    private SimpleKeyPair rsa;
+
+    public boolean hasCredential() {
+        return StringHelper.hasValue(credential);
     }
 
-    public boolean hasCredentialName() {
-        return !Strings.isNullOrEmpty(credential);
+    public boolean hasPrivateKey() {
+        return rsa != null && StringHelper.hasValue(rsa.getPrivateKey());
+    }
+
+    public boolean hasUsernamePassword() {
+        return auth != null
+            && StringHelper.hasValue(auth.getUsername())
+            && StringHelper.hasValue(auth.getPassword());
     }
 }

@@ -22,25 +22,31 @@ import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.flow.dao.FlowDao;
+import com.flowci.core.flow.dao.FlowUserDao;
 import com.flowci.core.flow.domain.Flow;
+import com.flowci.core.flow.domain.StatsCounter;
+import com.flowci.core.flow.domain.StatsItem;
+import com.flowci.core.flow.service.StatsService;
+import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobSummaryDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobSummary;
 import com.flowci.core.job.util.JobKeyBuilder;
-import com.flowci.core.flow.domain.StatsCounter;
-import com.flowci.core.flow.domain.StatsItem;
-import com.flowci.core.flow.service.StatsService;
+import com.flowci.core.user.dao.UserDao;
+import com.flowci.core.user.domain.User;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
-import java.util.Objects;
 
 @Log4j2
 @Service
@@ -53,7 +59,13 @@ public class OpenRestServiceImpl implements OpenRestService {
     private FlowDao flowDao;
 
     @Autowired
+    private FlowUserDao flowUserDao;
+
+    @Autowired
     private JobDao jobDao;
+
+    @Autowired
+    private UserDao userDao;
 
     @Autowired
     private JobSummaryDao jobSummaryDao;
@@ -61,36 +73,27 @@ public class OpenRestServiceImpl implements OpenRestService {
     @Autowired
     private StatsService statsService;
 
-    public Credential getCredential(String name, Class<? extends Credential> target) {
-        Credential credential = credentialDao.findByName(name);
+    @Override
+    public Credential getCredential(String name) {
+        Optional<Credential> optional = credentialDao.findByName(name);
 
-        if (Objects.isNull(credential)) {
-            throw new NotFoundException("Credential {0} is not found", name);
-        }
-
-        if (credential.getClass().equals(target)) {
-            return credential;
+        if (optional.isPresent()) {
+            return optional.get();
         }
 
         throw new NotFoundException("Credential {0} is not found", name);
     }
 
     @Override
-    public StatsItem saveStatsForFlow(String flowName, String statsType, StatsCounter counter) {
+    public void saveStatsForFlow(String flowName, String statsType, StatsCounter counter) {
         Flow flow = getFlow(flowName);
         int today = DateHelper.toIntDay(new Date());
-        return statsService.add(flow.getId(), today, statsType, counter);
+        statsService.add(flow.getId(), today, statsType, counter);
     }
 
     @Override
-    public JobSummary saveJobSummary(String flowName, long buildNumber, CreateJobSummary body) {
-        Flow flow = getFlow(flowName);
-        String key = JobKeyBuilder.build(flow, buildNumber);
-        Job job = jobDao.findByKey(key);
-
-        if (Objects.isNull(job)) {
-            throw new ArgumentException("Invalid job");
-        }
+    public void saveJobSummary(String flowName, long buildNumber, CreateJobSummary body) {
+        Job job = getJob(flowName, buildNumber);
 
         JobSummary summary = new JobSummary()
             .setJobId(job.getId())
@@ -99,11 +102,40 @@ public class OpenRestServiceImpl implements OpenRestService {
             .setData(body.getData());
 
         try {
-            return jobSummaryDao.save(summary);
+            jobSummaryDao.save(summary);
         } catch (DuplicateKeyException e) {
             log.warn("Duplicate job summary key");
             throw new DuplicateException("The job summary duplicated");
         }
+    }
+
+    @Override
+    public void addToJobContext(String flowName, long buildNumber, Map<String, String> vars) {
+        Job job = getJob(flowName, buildNumber);
+
+        // TODO: verify key value string
+
+        job.getContext().putAll(vars);
+        jobDao.save(job);
+    }
+
+    @Override
+    public List<User> users(String flowName) {
+        Flow flow = getFlow(flowName);
+        List<String> userIds = flowUserDao.findAllUsers(flow.getId());
+        return userDao.listUserEmailByIds(userIds);
+    }
+
+    private Job getJob(String name, long number) {
+        Flow flow = getFlow(name);
+        String key = JobKeyBuilder.build(flow, number);
+        Optional<Job> optional = jobDao.findByKey(key);
+
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+
+        throw new NotFoundException("Job for flow {0} with build number {1} not found", name, Long.toString(number));
     }
 
     private Flow getFlow(String name) {

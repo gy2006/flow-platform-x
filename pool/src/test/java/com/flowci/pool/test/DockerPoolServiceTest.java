@@ -22,6 +22,7 @@ import java.net.URI;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,7 @@ public class DockerPoolServiceTest extends PoolScenario {
     @Autowired
     private PoolService<DockerContext> dockerPoolService;
 
+    @Ignore
     @Test
     public void should_start_docker_for_agent() {
         dockerPoolService.start(Context);
@@ -53,6 +55,7 @@ public class DockerPoolServiceTest extends PoolScenario {
         Assert.assertNotNull(Context.getStartAt());
     }
 
+    @Ignore
     @Test
     public void should_stop_the_container() throws InterruptedException {
         dockerPoolService.stop(Context);
@@ -63,6 +66,7 @@ public class DockerPoolServiceTest extends PoolScenario {
         Assert.assertEquals(DockerContext.STATUS_EXITED, Context.getStatus());
     }
 
+    @Ignore
     @Test(expected = IllegalStateException.class)
     public void should_remove_the_container() {
         dockerPoolService.remove(Context);

@@ -20,6 +20,7 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.domain.StatsType;
+import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 
 import java.util.List;
@@ -92,15 +93,13 @@ public interface FlowService {
     String setSshRsaCredential(String name, SimpleKeyPair keyPair);
 
     /**
-     * Test git connection for flow and dispatch application event
+     * Create auth credential
+     * It will create default credential name: 'flow-{flow name}-auth'
+     *
+     * @return credential name
      */
-    void testGitConnection(String name, String url, String privateKeyOrCredentialName);
+    String setAuthCredential(String name, SimpleAuthPair keyPair);
 
-    /**
-     * List remote branches
-     * @return list of branches or empty list if git config not defined
-     */
-    List<String> listGitBranch(String name);
 
     /**
      * Add users to flow

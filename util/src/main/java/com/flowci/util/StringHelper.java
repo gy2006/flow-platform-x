@@ -36,6 +36,14 @@ public abstract class StringHelper {
         return !Strings.isNullOrEmpty(value);
     }
 
+    public static boolean isHttpLink(String value) {
+        if (!hasValue(value)) {
+            return false;
+        }
+
+        return value.startsWith("http://") || value.startsWith("https://");
+    }
+
     public static String toString(InputStream is) throws IOException {
         try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
             int length;

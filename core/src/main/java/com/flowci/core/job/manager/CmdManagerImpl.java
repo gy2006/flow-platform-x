@@ -16,19 +16,20 @@
 
 package com.flowci.core.job.manager;
 
-import com.flowci.core.common.domain.Variables;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.domain.Variable;
+import com.flowci.core.plugin.domain.Input;
 import com.flowci.core.plugin.service.PluginService;
 import com.flowci.domain.*;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.Node;
+import com.flowci.util.StringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -54,6 +55,7 @@ public class CmdManagerImpl implements CmdManager {
 
         String script = node.getScript();
         boolean allowFailure = node.isAllowFailure();
+        Set<String> exports = node.getExports();
 
         if (node.hasPlugin()) {
             Plugin plugin = pluginService.get(node.getPlugin());
@@ -61,18 +63,19 @@ public class CmdManagerImpl implements CmdManager {
 
             script = plugin.getScript();
             allowFailure = plugin.isAllowFailure();
+            exports.addAll(plugin.getExports());
         }
 
         // create cmd based on plugin
         CmdIn cmd = new CmdIn(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
         cmd.setAllowFailure(allowFailure);
-        cmd.setEnvFilters(Sets.newHashSet(node.getExports()));
+        cmd.setEnvFilters(Sets.newHashSet(exports));
         cmd.setScripts(Lists.newArrayList(script));
         cmd.setPlugin(node.getPlugin());
 
-        // get cmd work dir with default value flow id
-        cmd.setWorkDir(inputs.get(Variables.Flow.WorkDir, job.getFlowId()));
+        // default work dir is {agent dir}/{flow id}
+        cmd.setWorkDir(job.getFlowId());
 
         return cmd;
     }
@@ -83,12 +86,19 @@ public class CmdManagerImpl implements CmdManager {
     }
 
     private void verifyPluginInput(Vars<String> context, Plugin plugin) {
-        for (Variable variable : plugin.getInputs()) {
-            String value = context.get(variable.getName());
+        for (Input input : plugin.getInputs()) {
+            String value = context.get(input.getName());
 
-            if (!variable.verify(value)) {
+            // setup plugin default value to context
+            if (!StringHelper.hasValue(value) && input.hasDefaultValue()) {
+                context.put(input.getName(), input.getValue());
+                continue;
+            }
+
+            // verify value from context
+            if (!input.verify(value)) {
                 throw new ArgumentException(
-                        "The illegal input {0} for plugin {1}", variable.getName(), plugin.getName());
+                        "The illegal input {0} for plugin {1}", input.getName(), plugin.getName());
             }
         }
     }

@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test.api;
+package com.flowci.core.api.domain;
 
-import com.flowci.core.test.SpringScenario;
+import com.flowci.domain.ExecutedCmd;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
-public class OpenRestControllerTest extends SpringScenario {
+@Setter
+@Getter
+@AllArgsConstructor(staticName = "of")
+@Accessors(chain = true)
+public class Step {
 
+    private final String name;
+
+    private final ExecutedCmd.Status status;
 }

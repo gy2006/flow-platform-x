@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * @author yang
@@ -51,5 +53,13 @@ public abstract class ObjectsHelper {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+
+    public static <T> void ifNotNull(T val, Consumer<T> consumer) {
+        if (Objects.isNull(val)) {
+            return;
+        }
+
+        consumer.accept(val);
     }
 }

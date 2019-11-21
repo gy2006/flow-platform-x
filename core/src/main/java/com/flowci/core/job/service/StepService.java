@@ -44,7 +44,15 @@ public interface StepService {
      */
     List<ExecutedCmd> list(Job job);
 
+    /**
+     * Get step list in string, {name}={stats};{name}={stats}
+     * No steps after current node
+     */
+    String toVarString(Job job, Node current);
 
+    /**
+     * Change step status, and put steps string to job context
+     */
     void statusChange(Job job, Node node, ExecutedCmd.Status status, String err);
 
     void statusChange(ExecutedCmd entity, ExecutedCmd.Status status, String err);

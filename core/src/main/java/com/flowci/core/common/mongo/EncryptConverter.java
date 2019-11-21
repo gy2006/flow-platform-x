@@ -18,31 +18,30 @@
 package com.flowci.core.common.mongo;
 
 import com.flowci.core.common.helper.CipherHelper;
+import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 import lombok.Getter;
 import org.bson.Document;
 import org.springframework.core.convert.converter.Converter;
 
 @Getter
-public class SimpleKeyPairConverter {
+public class EncryptConverter {
 
     private static final String FieldPublicKey = "publicKey";
 
     private static final String FieldPrivateKey = "privateKey";
 
+    private static final String FieldUsername = "username";
+
+    private static final String FieldPassword = "password";
+
     private final String appSecret;
 
-    private final Reader reader;
-
-    private final Writer writer;
-
-    public SimpleKeyPairConverter(String appSecret) {
+    public EncryptConverter(String appSecret) {
         this.appSecret = appSecret;
-        this.reader = new Reader();
-        this.writer = new Writer();
     }
 
-    public class Reader implements Converter<Document, SimpleKeyPair> {
+    public class SimpleKeyPairReader implements Converter<Document, SimpleKeyPair> {
 
         @Override
         public SimpleKeyPair convert(Document source) {
@@ -50,19 +49,44 @@ public class SimpleKeyPairConverter {
             String encryptedPrivateKey = source.getString(FieldPrivateKey);
 
             return SimpleKeyPair.of(
-                    CipherHelper.AES.decrypt(encryptedPublicKey, appSecret),
-                    CipherHelper.AES.decrypt(encryptedPrivateKey, appSecret)
+                CipherHelper.AES.decrypt(encryptedPublicKey, appSecret),
+                CipherHelper.AES.decrypt(encryptedPrivateKey, appSecret)
             );
         }
     }
 
-    public class Writer implements Converter<SimpleKeyPair, Document> {
+    public class SimpleKeyPairWriter implements Converter<SimpleKeyPair, Document> {
 
         @Override
         public Document convert(SimpleKeyPair pair) {
             Document document = new Document();
             document.put(FieldPublicKey, CipherHelper.AES.encrypt(pair.getPublicKey(), appSecret));
             document.put(FieldPrivateKey, CipherHelper.AES.encrypt(pair.getPrivateKey(), appSecret));
+            return document;
+        }
+    }
+
+    public class SimpleAuthPairReader implements Converter<Document, SimpleAuthPair> {
+
+        @Override
+        public SimpleAuthPair convert(Document source) {
+            String encryptedUsername = source.getString(FieldUsername);
+            String encryptedPassword = source.getString(FieldPassword);
+
+            return SimpleAuthPair.of(
+                CipherHelper.AES.decrypt(encryptedUsername, appSecret),
+                CipherHelper.AES.decrypt(encryptedPassword, appSecret)
+            );
+        }
+    }
+
+    public class SimpleAuthPairWriter implements Converter<SimpleAuthPair, Document> {
+
+        @Override
+        public Document convert(SimpleAuthPair pair) {
+            Document document = new Document();
+            document.put(FieldUsername, CipherHelper.AES.encrypt(pair.getUsername(), appSecret));
+            document.put(FieldPassword, CipherHelper.AES.encrypt(pair.getPassword(), appSecret));
             return document;
         }
     }

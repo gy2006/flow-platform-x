@@ -18,8 +18,13 @@ package com.flowci.core.test.plugin;
 
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginParser;
+import com.flowci.core.plugin.domain.Input;
+import com.flowci.domain.VarType;
 import com.flowci.domain.Version;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Set;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,13 +43,20 @@ public class PluginParserTest {
         Assert.assertEquals("gitclone", plugin.getName());
         Assert.assertEquals(Version.of(0, 0, 1, null), plugin.getVersion());
         Assert.assertEquals("src/icon.svg", plugin.getIcon());
-        Assert.assertEquals(3, plugin.getInputs().size());
-        Assert.assertEquals(Boolean.TRUE, plugin.isAllowFailure());
 
-        Assert.assertNotNull(plugin.getTags());
-        Assert.assertEquals(2, plugin.getTags().size());
-        Assert.assertTrue(plugin.getTags().contains("git"));
-        Assert.assertTrue(plugin.getTags().contains("clone"));
+        List<Input> inputs = plugin.getInputs();
+        Assert.assertEquals(4, inputs.size());
+
+        Input varForTimeout = inputs.get(3);
+        Assert.assertNotNull(varForTimeout);
+        Assert.assertEquals("GIT_TIMEOUT", varForTimeout.getName());
+        Assert.assertEquals(VarType.INT, varForTimeout.getType());
+        Assert.assertEquals(60, varForTimeout.getIntDefaultValue());
+
+        Set<String> exports = plugin.getExports();
+        Assert.assertEquals(2, exports.size());
+        Assert.assertTrue(exports.contains("VAR_EXPORT_1"));
+        Assert.assertTrue(exports.contains("VAR_EXPORT_2"));
     }
 
 }

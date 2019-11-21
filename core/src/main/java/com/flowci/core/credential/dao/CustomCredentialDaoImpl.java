@@ -38,4 +38,12 @@ public class CustomCredentialDaoImpl implements CustomCredentialDao {
 
         return operations.find(query, Credential.class);
     }
+
+    @Override
+    public List<Credential> listNameOnly(Credential.Category category) {
+        Criteria criteria = Criteria.where("category").is(category);
+        Query query = Query.query(criteria).with(new Sort(Sort.Direction.ASC, "createdAt"));
+        query.fields().include("name");
+        return operations.find(query, Credential.class);
+    }
 }

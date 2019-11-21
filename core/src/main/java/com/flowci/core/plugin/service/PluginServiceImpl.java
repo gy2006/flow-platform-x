@@ -22,7 +22,7 @@ import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.plugin.dao.PluginDao;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginParser;
-import com.flowci.core.plugin.domain.PluginRepo;
+import com.flowci.core.plugin.domain.PluginRepoInfo;
 import com.flowci.core.plugin.event.RepoCloneEvent;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.CIException;
@@ -34,6 +34,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +56,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PluginServiceImpl implements PluginService {
 
-    private static final TypeReference<List<PluginRepo>> RepoListType = new TypeReference<List<PluginRepo>>() {};
+    private static final TypeReference<List<PluginRepoInfo>> RepoListType = new TypeReference<List<PluginRepoInfo>>() {};
 
     private static final String PluginFileName = "plugin.yml";
 
@@ -125,8 +126,9 @@ public class PluginServiceImpl implements PluginService {
     }
 
     @Override
-    public List<PluginRepo> load(String repoUrl) {
+    public List<PluginRepoInfo> load(String repoUrl) {
         try {
+            repoUrl = repoUrl + "?t=" + Instant.now().toEpochMilli();
             return objectMapper.readValue(new URL(repoUrl), RepoListType);
         } catch (Throwable e) {
             log.warn("Unable to load plugin repo '{}' : {}", repoUrl, e.getMessage());
@@ -135,8 +137,8 @@ public class PluginServiceImpl implements PluginService {
     }
 
     @Override
-    public void clone(List<PluginRepo> repos) {
-        for (PluginRepo repo : repos) {
+    public void clone(List<PluginRepoInfo> repos) {
+        for (PluginRepoInfo repo : repos) {
             repoCloneExecutor.execute(() -> {
                 try {
                     Plugin plugin = clone(repo);
@@ -158,7 +160,7 @@ public class PluginServiceImpl implements PluginService {
             pluginDao.deleteAll();
 
             String repoUrl = pluginProperties.getDefaultRepo();
-            List<PluginRepo> repos = load(repoUrl);
+            List<PluginRepoInfo> repos = load(repoUrl);
             clone(repos);
         }
     }
@@ -183,7 +185,7 @@ public class PluginServiceImpl implements PluginService {
         pluginDao.save(pluginFromRepo);
     }
 
-    private Plugin clone(PluginRepo repo) throws GitAPIException, IOException {
+    private Plugin clone(PluginRepoInfo repo) throws GitAPIException, IOException {
         log.info("Start to load plugin: {}", repo);
 
         Path dir = getPluginRepoDir(repo.getName(), repo.getVersion().toString());
@@ -220,26 +222,33 @@ public class PluginServiceImpl implements PluginService {
      *
      * @throws IOException
      */
-    private Plugin load(File dir, PluginRepo repo) throws IOException {
+    private Plugin load(File dir, PluginRepoInfo info) throws IOException {
         Path pluginFile = Paths.get(dir.toString(), PluginFileName);
         if (!Files.exists(pluginFile)) {
-            throw new NotFoundException("The 'plugin.yml' not found in plugin repo {0}", repo.getSource());
+            throw new NotFoundException("The 'plugin.yml' not found in plugin repo {0}", info.getSource());
         }
 
         byte[] ymlInBytes = Files.readAllBytes(pluginFile);
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(ymlInBytes)) {
             Plugin plugin = PluginParser.parse(inputStream);
 
-            if (!repo.getName().equals(plugin.getName())) {
+            if (!info.getName().equals(plugin.getName())) {
                 throw new ArgumentException(
-                    "Plugin name '{0}' not match the name defined in repo '{1}'", plugin.getName(), repo.getName());
+                    "Plugin name {0} not match the name defined in repo {1}", plugin.getName(), info.getName());
             }
 
-            if (!repo.getVersion().equals(plugin.getVersion())) {
+            if (!info.getVersion().equals(plugin.getVersion())) {
                 throw new ArgumentException(
-                    "Plugin '{0}' version '{1}' not match the name defined in repo '{2}'",
-                    plugin.getName(), plugin.getVersion().toString(), repo.getVersion().toString());
+                    "Plugin {0} version {1} not match the name defined in repo {2}",
+                    plugin.getName(), plugin.getVersion().toString(), info.getVersion().toString());
             }
+
+            // tags load from repo info obj
+            plugin.setAuthor(info.getAuthor());
+            plugin.setBranch(info.getBranch());
+            plugin.setDescription(info.getDescription());
+            plugin.setSource(info.getSource());
+            plugin.setTags(info.getTags());
 
             return plugin;
         }

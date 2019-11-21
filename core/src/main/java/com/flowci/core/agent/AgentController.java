@@ -81,7 +81,7 @@ public class AgentController {
     // --------------------------------------------------------
 
     @PostMapping("/connect")
-    public Settings connect(@RequestHeader(AgentInterceptor.HeaderAgentToken) String token,
+    public Settings connect(@RequestHeader(AgentAuth.HeaderAgentToken) String token,
                             @RequestBody AgentInit init,
                             HttpServletRequest request) {
         init.setToken(token);
@@ -90,7 +90,7 @@ public class AgentController {
     }
 
     @PostMapping("/resource")
-    public void resourceUpdate(@RequestHeader(AgentInterceptor.HeaderAgentToken) String token,
+    public void resourceUpdate(@RequestHeader(AgentAuth.HeaderAgentToken) String token,
                                @RequestBody Agent.Resource resource) {
         agentService.update(token, resource);
     }

@@ -19,15 +19,35 @@ package com.flowci.core.api.service;
 
 import com.flowci.core.api.domain.CreateJobSummary;
 import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.job.domain.JobSummary;
 import com.flowci.core.flow.domain.StatsCounter;
-import com.flowci.core.flow.domain.StatsItem;
+import com.flowci.core.user.domain.User;
+import java.util.List;
+import java.util.Map;
 
 public interface OpenRestService {
 
-    Credential getCredential(String name, Class<? extends Credential> target);
+    /**
+     * Get credential data by name
+     */
+    Credential getCredential(String name);
 
-    StatsItem saveStatsForFlow(String flowName, String statsType, StatsCounter counter);
+    /**
+     * Save statistic data for flow
+     */
+    void saveStatsForFlow(String flowName, String statsType, StatsCounter counter);
 
-    JobSummary saveJobSummary(String flowName, long buildNumber, CreateJobSummary body);
+    /**
+     * Save summary report for job
+     */
+    void saveJobSummary(String flowName, long buildNumber, CreateJobSummary body);
+
+    /**
+     * Add env vars to job context
+     */
+    void addToJobContext(String flowName, long buildNumber, Map<String, String> vars);
+
+    /**
+     * List email of all flow users
+     */
+    List<User> users(String flowName);
 }

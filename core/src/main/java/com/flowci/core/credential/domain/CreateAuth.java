@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,28 @@
  * limitations under the License.
  */
 
-package com.flowci.core.plugin.domain;
+package com.flowci.core.credential.domain;
 
-import com.flowci.domain.Version;
-import java.util.Set;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import com.flowci.domain.SimpleAuthPair;
+import javax.validation.constraints.NotEmpty;
+import lombok.Data;
 
 /**
  * @author yang
  */
-@Getter
-@Setter
-@EqualsAndHashCode(of = {"name"})
-@ToString(of = {"name", "version", "source", "branch"})
-public class PluginRepo {
+@Data
+public class CreateAuth {
 
+    @NotEmpty
     private String name;
 
-    private String source;
+    @NotEmpty
+    private String username;
 
-    private String branch = "master";
+    @NotEmpty
+    private String password;
 
-    private String description;
-
-    private Set<String> labels;
-
-    private String author;
-
-    private Version version;
+    public SimpleAuthPair getAuthPair() {
+        return SimpleAuthPair.of(username, password);
+    }
 }

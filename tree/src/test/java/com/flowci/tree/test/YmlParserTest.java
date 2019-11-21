@@ -16,6 +16,7 @@
 
 package com.flowci.tree.test;
 
+import com.flowci.exception.YmlException;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
@@ -40,6 +41,12 @@ public class YmlParserTest {
     @Before
     public void init() throws IOException {
         content = loadContent("flow.yml");
+    }
+
+    @Test(expected = YmlException.class)
+    public void should_yml_exception_if_name_is_invalid() throws IOException {
+        content = loadContent("flow-with-invalid-name.yml");
+        YmlParser.load("root", content);
     }
 
     @Test

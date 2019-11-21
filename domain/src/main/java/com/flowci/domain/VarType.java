@@ -28,6 +28,8 @@ public enum VarType {
 
     INT,
 
+    BOOL,
+
     HTTP_URL,
 
     GIT_URL,
@@ -38,6 +40,9 @@ public enum VarType {
         switch (type) {
             case INT:
                 return ObjectsHelper.tryParseInt(value);
+
+            case BOOL:
+                return Boolean.parseBoolean(value);
 
             case HTTP_URL:
                 return PatternHelper.isWebURL(value);

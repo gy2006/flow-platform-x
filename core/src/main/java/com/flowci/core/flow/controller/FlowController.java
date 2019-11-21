@@ -20,23 +20,27 @@ import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.FlowAction;
-import com.flowci.core.flow.domain.FlowGitTest;
 import com.flowci.core.flow.domain.GitSettings;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.service.FlowVarService;
 import com.flowci.core.user.domain.User;
 import com.flowci.core.user.service.UserService;
+import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.domain.VarValue;
-import com.flowci.exception.ArgumentException;
 import com.google.common.collect.Lists;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author yang
@@ -87,28 +91,6 @@ public class FlowController {
         return flowService.confirm(name, gitSettings.getGitUrl(), gitSettings.getCredential());
     }
 
-    @PostMapping(value = "/{name}/git/test")
-    @Action(FlowAction.GIT_TEST)
-    public void gitTest(@PathVariable String name, @Validated @RequestBody FlowGitTest body) {
-        if (body.hasPrivateKey()) {
-            flowService.testGitConnection(name, body.getGitUrl(), body.getPrivateKey());
-            return;
-        }
-
-        if (body.hasCredentialName()) {
-            flowService.testGitConnection(name, body.getGitUrl(), body.getCredential());
-            return;
-        }
-
-        throw new ArgumentException("Credential name or private key must be provided");
-    }
-
-    @GetMapping(value = "/{name}/git/branches")
-    @Action(FlowAction.LIST_BRANCH)
-    public List<String> listGitBranches(@PathVariable String name) {
-        return flowService.listGitBranch(name);
-    }
-
     @DeleteMapping("/{name}")
     @Action(FlowAction.DELETE)
     public Flow delete(@PathVariable String name) {
@@ -122,6 +104,12 @@ public class FlowController {
     @Action(FlowAction.SETUP_CREDENTIAL)
     public String setupRSACredential(@PathVariable String name, @RequestBody SimpleKeyPair pair) {
         return flowService.setSshRsaCredential(name, pair);
+    }
+
+    @PostMapping("/{name}/credentials/auth")
+    @Action(FlowAction.SETUP_CREDENTIAL)
+    public String setupAuthCredential(@PathVariable String name, @RequestBody SimpleAuthPair pair) {
+        return flowService.setAuthCredential(name, pair);
     }
 
     @PostMapping("/{name}/users")

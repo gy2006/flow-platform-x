@@ -17,7 +17,7 @@
 package com.flowci.core.plugin.service;
 
 import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.domain.PluginRepo;
+import com.flowci.core.plugin.domain.PluginRepoInfo;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -55,12 +55,12 @@ public interface PluginService {
     /**
      * Load plugin repo info
      */
-    List<PluginRepo> load(String repoUrl);
+    List<PluginRepoInfo> load(String repoUrl);
 
     /**
      * Git clone plugin repos in Async
      */
-    void clone(List<PluginRepo> repos);
+    void clone(List<PluginRepoInfo> repos);
 
     /**
      * Reload default plugin repo

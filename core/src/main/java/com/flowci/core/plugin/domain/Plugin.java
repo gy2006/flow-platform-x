@@ -18,7 +18,7 @@ package com.flowci.core.plugin.domain;
 
 import com.flowci.core.flow.domain.StatsType;
 import com.flowci.domain.Version;
-import java.io.Serializable;
+
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,9 +28,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
@@ -39,36 +37,30 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Setter
 @NoArgsConstructor
-@EqualsAndHashCode(of = {"name"})
-@ToString(of = {"name", "version"})
+@EqualsAndHashCode(of = {"id"}, callSuper = false)
 @Document(collection = "plugins")
-public class Plugin implements Serializable {
+public class Plugin extends PluginRepoInfo {
 
     @Id
     private String id;
 
-    @Indexed(name = "index_plugins_name", unique = true)
-    private String name;
+    private List<Input> inputs = new LinkedList<>();
 
-    private Version version;
-
-    private List<Variable> inputs = new LinkedList<>();
+    // output env var name which will write to job context
+    private Set<String> exports = new HashSet<>();
 
     // Plugin that supported statistic types
     private List<StatsType> statsTypes = new LinkedList<>();
 
-    private Set<String> tags = new HashSet<>();
-
     private boolean allowFailure = false;
-
-    // icon path in plugin repo
-    private String icon;
 
     private String script;
 
+    private String icon;
+
     public Plugin(String name, Version version) {
-        this.name = name;
-        this.version = version;
+        this.setName(name);
+        this.setVersion(version);
     }
 
     public void update(Plugin src) {
@@ -78,9 +70,5 @@ public class Plugin implements Serializable {
         this.setStatsTypes(src.getStatsTypes());
         this.setAllowFailure(src.isAllowFailure());
         this.setScript(src.getScript());
-    }
-
-    public boolean isHttpLinkIcon() {
-        return icon != null && (icon.startsWith("http") || icon.startsWith("https"));
     }
 }

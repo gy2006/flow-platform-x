@@ -24,4 +24,6 @@ import java.util.List;
 public interface CustomCredentialDao {
 
     List<Credential> listNameOnly();
+
+    List<Credential> listNameOnly(Credential.Category category);
 }

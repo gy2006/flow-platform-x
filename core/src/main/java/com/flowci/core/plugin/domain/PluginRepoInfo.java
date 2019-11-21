@@ -16,53 +16,37 @@
 
 package com.flowci.core.plugin.domain;
 
-import com.flowci.domain.VarType;
-import com.google.common.base.Strings;
+import com.flowci.domain.Version;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import lombok.experimental.Accessors;
+import org.springframework.data.mongodb.core.index.Indexed;
 
 /**
  * @author yang
  */
 @Getter
 @Setter
-@ToString(of = {"name"})
 @EqualsAndHashCode(of = {"name"})
-@NoArgsConstructor
-@Accessors(chain = true)
-public class Variable implements Serializable {
+@ToString(of = {"name", "version", "source", "branch"})
+public class PluginRepoInfo implements Serializable {
 
+    @Indexed(name = "index_plugins_name", unique = true)
     private String name;
 
-    private String alias;
+    private String source;
 
-    private VarType type = VarType.STRING;
+    private String branch = "master";
 
-    private boolean required = true;
+    private String description;
 
-    public Variable(String name) {
-        this.name = name;
-    }
+    private Set<String> tags = new HashSet<>();
 
-    public Variable(String name, VarType type) {
-        this.name = name;
-        this.type = type;
-    }
+    private String author;
 
-    public boolean verify(String value) {
-        if (required && Strings.isNullOrEmpty(value)) {
-            return false;
-        }
-
-        if (!required && Strings.isNullOrEmpty(value)) {
-            return true;
-        }
-
-        return VarType.verify(type, value);
-    }
+    private Version version;
 }

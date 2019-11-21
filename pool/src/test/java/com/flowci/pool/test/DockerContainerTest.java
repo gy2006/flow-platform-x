@@ -27,10 +27,7 @@ import java.net.URI;
 import java.net.URL;
 import lombok.Getter;
 import lombok.Setter;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -53,12 +50,14 @@ public class DockerContainerTest extends PoolScenario {
         Assert.assertNotNull(containerManager);
     }
 
+    @Ignore
     @Test
     public void should_pull_image() {
         DockerConfig config = DockerConfig.of("unix:///var/run/docker.sock");
         Assert.assertTrue(imageManager.pull(config, Image));
     }
 
+    @Ignore
     @Test
     public void should_create_and_remove_container() throws IOException {
         URL html = getClass().getClassLoader().getResource("html");

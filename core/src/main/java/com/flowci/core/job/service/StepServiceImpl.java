@@ -29,6 +29,7 @@ import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.ExecutedCmd.Status;
 import com.flowci.exception.NotFoundException;
 import com.flowci.tree.Node;
+import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.github.benmanes.caffeine.cache.Cache;
 import java.util.ArrayList;
@@ -98,20 +99,27 @@ public class StepServiceImpl implements StepService {
 
     @Override
     public List<ExecutedCmd> list(Job job) {
-        return jobStepCache.get(job.getId(), s -> {
-            NodeTree tree = ymlManager.getTree(job);
-            List<Node> nodes = tree.getOrdered();
+        return jobStepCache.get(job.getId(),
+                s -> executedCmdDao.findByFlowIdAndBuildNumber(job.getFlowId(), job.getBuildNumber()));
+    }
 
-            List<ExecutedCmd> cmds = new ArrayList<>(nodes.size());
-            for (Node node : nodes) {
-                CmdId cmdId = cmdManager.createId(job, node);
+    @Override
+    public String toVarString(Job job, Node current) {
+        StringBuilder builder = new StringBuilder();
+        for (ExecutedCmd step : list(job)) {
+            NodePath path = NodePath.create(step.getCmdId().getNodePath());
+            builder.append(path.name())
+                    .append("=")
+                    .append(step.getStatus().name());
+            builder.append(";");
 
-                Optional<ExecutedCmd> optional = executedCmdDao.findById(cmdId.toString());
-                optional.ifPresent(cmds::add);
+            if (current != null) {
+                if (step.getNodePath().equals(current.getPathAsString())) {
+                    break;
+                }
             }
-
-            return cmds;
-        });
+        }
+        return builder.deleteCharAt(builder.length() - 1).toString();
     }
 
     @Override

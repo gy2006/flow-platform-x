@@ -23,14 +23,17 @@ import com.flowci.domain.Agent;
 import com.flowci.domain.StringVars;
 import com.flowci.domain.Vars;
 import com.flowci.tree.Selector;
-import java.util.Date;
-import java.util.Set;
-
+import com.flowci.util.StringHelper;
 import com.google.common.collect.ImmutableSet;
+import java.text.SimpleDateFormat;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Date;
+import java.util.Set;
 
 /**
  * @author yang
@@ -151,6 +154,8 @@ public class Job extends Mongoable implements Pathable {
             .add(Status.SUCCESS)
             .build();
 
+    private final static SimpleDateFormat DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
     private final static Integer MinPriority = 1;
 
     private final static Integer MaxPriority = 255;
@@ -207,22 +212,8 @@ public class Job extends Mongoable implements Pathable {
     }
 
     @JsonIgnore
-    public boolean isPending() {
-        return status == Status.PENDING;
-    }
-
-    @JsonIgnore
     public boolean isDone() {
         return FINISH_STATUS.contains(status);
-    }
-
-    @JsonIgnore
-    public Integer increase() {
-        if (this.priority < MaxPriority) {
-            this.priority++;
-        }
-
-        return this.priority;
     }
 
     @JsonIgnore
@@ -234,6 +225,22 @@ public class Job extends Mongoable implements Pathable {
     @Override
     public String pathName() {
         return getBuildNumber().toString();
+    }
+
+    @JsonIgnore
+    public String startAtInStr() {
+        if (Objects.isNull(this.startAt)) {
+            return StringHelper.EMPTY;
+        }
+        return DateFormat.format(this.startAt);
+    }
+
+    @JsonIgnore
+    public String finishAtInStr() {
+        if (Objects.isNull(this.startAt)) {
+            return StringHelper.EMPTY;
+        }
+        return DateFormat.format(this.finishAt);
     }
 
     public void setAgentSnapshot(Agent agent) {

@@ -18,17 +18,24 @@ package com.flowci.core.credential;
 
 import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.common.helper.CipherHelper;
+import com.flowci.core.credential.domain.CreateAuth;
 import com.flowci.core.credential.domain.CreateRSA;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.CredentialAction;
 import com.flowci.core.credential.domain.GenRSA;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.domain.SimpleKeyPair;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author yang
@@ -49,14 +56,13 @@ public class CredentialController {
     @GetMapping
     @Action(CredentialAction.LIST)
     public List<Credential> list() {
-        List<Credential> list = credentialService.list();
-        return list;
+        return credentialService.list();
     }
 
     @GetMapping("/list/name")
     @Action(CredentialAction.LIST_NAME)
-    public List<Credential> listName() {
-        return credentialService.listName();
+    public List<Credential> listName(@RequestParam String category) {
+        return credentialService.listName(category);
     }
 
     @PostMapping("/rsa")
@@ -67,6 +73,12 @@ public class CredentialController {
         }
 
         return credentialService.createRSA(body.getName());
+    }
+
+    @PostMapping("/auth")
+    @Action(CredentialAction.CREATE_AUTH)
+    public Credential create(@Validated @RequestBody CreateAuth body) {
+        return credentialService.createAuth(body.getName(), body.getAuthPair());
     }
 
     @PostMapping("/rsa/gen")

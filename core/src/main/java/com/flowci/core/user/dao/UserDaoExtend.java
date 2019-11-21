@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,11 @@
 package com.flowci.core.user.dao;
 
 import com.flowci.core.user.domain.User;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
 
-/**
- * @author yang
- */
-@Repository
-public interface UserDao extends MongoRepository<User, String>, UserDaoExtend {
+import java.util.Collection;
+import java.util.List;
 
-    User findByEmail(String email);
+public interface UserDaoExtend {
+
+    List<User> listUserEmailByIds(Collection<String> ids);
 }

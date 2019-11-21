@@ -20,11 +20,9 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+
+import com.google.common.collect.Sets;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -37,6 +35,8 @@ import lombok.ToString;
 public final class NodePath implements Serializable {
 
     private final static String PathSeparator = "/";
+
+    private final static Set<String> Reserved = Sets.newHashSet("*", ";", ".", "/");
 
     private final static int MaxDepth = 10;
 
@@ -137,7 +137,7 @@ public final class NodePath implements Serializable {
      * - not empty
      * - cannot start with '/'
      * - 1 <= length <= 100
-     * - cannot contains '*' '.' '/'
+     * - cannot contains '*', '.', '/', ';'
      */
     public static boolean validate(String name) {
         name = name.trim();
@@ -150,8 +150,10 @@ public final class NodePath implements Serializable {
             return false;
         }
 
-        if (name.contains("*") || name.contains(".")) {
-            return false;
+        for (String keyword : Reserved) {
+            if (name.contains(keyword)) {
+                return false;
+            }
         }
 
         return true;

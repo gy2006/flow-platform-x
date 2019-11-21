@@ -43,10 +43,7 @@ public abstract class Variables {
 
         public static final String GitBranch = "FLOWCI_GIT_BRANCH"; // set
 
-        public static final String SSH_RSA = "FLOWCI_CREDENTIAL_SSH_RSA"; // set
-
-        // which define the flow work dir which under the agent default workspace
-        public static final String WorkDir = "FLOWCI_FLOW_WORKDIR";
+        public static final String CREDENTIAL_NAME = "FLOWCI_CREDENTIAL_NAME"; // set
     }
 
     public abstract static class Job {
@@ -58,5 +55,12 @@ public abstract class Variables {
         public static final String Trigger = "FLOWCI_JOB_TRIGGER";
 
         public static final String TriggerBy = "FLOWCI_JOB_TRIGGER_BY"; // == user email of job.createdBy
+
+        public static final String StartAt = "FLOWCI_JOB_START_AT";
+
+        public static final String FinishAt = "FLOWCI_JOB_FINISH_AT";
+
+        // {step name}={status};{step name}={status}
+        public static final String Steps = "FLOWCI_JOB_STEPS";
     }
 }
