@@ -25,6 +25,7 @@ import com.flowci.core.credential.domain.RSACredential;
 import com.flowci.core.flow.domain.StatsCounter;
 import com.flowci.core.user.domain.User;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -73,5 +74,12 @@ public class OpenRestController {
                                  @PathVariable long number,
                                  @Validated @RequestBody CreateJobSummary body) {
         openRestService.saveJobSummary(name, number, body);
+    }
+
+    @PostMapping("/flow/{name}/job/{number}/context")
+    public void addJobContext(@PathVariable String name,
+                              @PathVariable long number,
+                              @RequestBody Map<String, String> vars) {
+        openRestService.addToJobContext(name, number, vars);
     }
 }

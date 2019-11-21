@@ -40,6 +40,7 @@ import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
@@ -70,9 +71,6 @@ public class OpenRestServiceImpl implements OpenRestService {
     private JobSummaryDao jobSummaryDao;
 
     @Autowired
-    private ExecutedCmdDao executedCmdDao;
-
-    @Autowired
     private StatsService statsService;
 
     @Override
@@ -87,21 +85,15 @@ public class OpenRestServiceImpl implements OpenRestService {
     }
 
     @Override
-    public StatsItem saveStatsForFlow(String flowName, String statsType, StatsCounter counter) {
+    public void saveStatsForFlow(String flowName, String statsType, StatsCounter counter) {
         Flow flow = getFlow(flowName);
         int today = DateHelper.toIntDay(new Date());
-        return statsService.add(flow.getId(), today, statsType, counter);
+        statsService.add(flow.getId(), today, statsType, counter);
     }
 
     @Override
-    public JobSummary saveJobSummary(String flowName, long buildNumber, CreateJobSummary body) {
-        Flow flow = getFlow(flowName);
-        String key = JobKeyBuilder.build(flow, buildNumber);
-        Job job = jobDao.findByKey(key);
-
-        if (Objects.isNull(job)) {
-            throw new ArgumentException("Invalid job");
-        }
+    public void saveJobSummary(String flowName, long buildNumber, CreateJobSummary body) {
+        Job job = getJob(flowName, buildNumber);
 
         JobSummary summary = new JobSummary()
             .setJobId(job.getId())
@@ -110,7 +102,7 @@ public class OpenRestServiceImpl implements OpenRestService {
             .setData(body.getData());
 
         try {
-            return jobSummaryDao.save(summary);
+            jobSummaryDao.save(summary);
         } catch (DuplicateKeyException e) {
             log.warn("Duplicate job summary key");
             throw new DuplicateException("The job summary duplicated");
@@ -118,10 +110,32 @@ public class OpenRestServiceImpl implements OpenRestService {
     }
 
     @Override
+    public void addToJobContext(String flowName, long buildNumber, Map<String, String> vars) {
+        Job job = getJob(flowName, buildNumber);
+
+        // TODO: verify key value string
+
+        job.getContext().putAll(vars);
+        jobDao.save(job);
+    }
+
+    @Override
     public List<User> users(String flowName) {
         Flow flow = getFlow(flowName);
         List<String> userIds = flowUserDao.findAllUsers(flow.getId());
         return userDao.listUserEmailByIds(userIds);
+    }
+
+    private Job getJob(String name, long number) {
+        Flow flow = getFlow(name);
+        String key = JobKeyBuilder.build(flow, number);
+        Optional<Job> optional = jobDao.findByKey(key);
+
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+
+        throw new NotFoundException("Job for flow {0} with build number {1} not found", name, Long.toString(number));
     }
 
     private Flow getFlow(String name) {

@@ -18,15 +18,11 @@
 package com.flowci.core.api.service;
 
 import com.flowci.core.api.domain.CreateJobSummary;
-import com.flowci.core.api.domain.Step;
 import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.job.domain.JobSummary;
 import com.flowci.core.flow.domain.StatsCounter;
-import com.flowci.core.flow.domain.StatsItem;
 import com.flowci.core.user.domain.User;
-import com.flowci.domain.ExecutedCmd;
-
 import java.util.List;
+import java.util.Map;
 
 public interface OpenRestService {
 
@@ -38,12 +34,17 @@ public interface OpenRestService {
     /**
      * Save statistic data for flow
      */
-    StatsItem saveStatsForFlow(String flowName, String statsType, StatsCounter counter);
+    void saveStatsForFlow(String flowName, String statsType, StatsCounter counter);
 
     /**
      * Save summary report for job
      */
-    JobSummary saveJobSummary(String flowName, long buildNumber, CreateJobSummary body);
+    void saveJobSummary(String flowName, long buildNumber, CreateJobSummary body);
+
+    /**
+     * Add env vars to job context
+     */
+    void addToJobContext(String flowName, long buildNumber, Map<String, String> vars);
 
     /**
      * List email of all flow users

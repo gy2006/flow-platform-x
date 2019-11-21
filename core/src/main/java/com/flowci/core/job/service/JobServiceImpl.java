@@ -16,6 +16,8 @@
 
 package com.flowci.core.job.service;
 
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
@@ -48,6 +50,12 @@ import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
 import com.flowci.tree.Node;
 import com.flowci.tree.YmlParser;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -56,15 +64,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
-
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 /**
  * @author yang
@@ -124,7 +123,6 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private FlowJobQueueManager flowJobQueueManager;
 
-
     //====================================================================
     //        %% Public functions
     //====================================================================
@@ -143,14 +141,14 @@ public class JobServiceImpl implements JobService {
     @Override
     public Job get(Flow flow, Long buildNumber) {
         String key = JobKeyBuilder.build(flow, buildNumber);
-        Job job = jobDao.findByKey(key);
+        Optional<Job> optional = jobDao.findByKey(key);
 
-        if (Objects.isNull(job)) {
-            throw new NotFoundException(
-                    "The job {0} for build number {1} cannot found", flow.getName(), buildNumber.toString());
+        if (optional.isPresent()) {
+            return optional.get();
         }
 
-        return job;
+        throw new NotFoundException(
+            "The job {0} for build number {1} cannot found", flow.getName(), Long.toString(buildNumber));
     }
 
     @Override
