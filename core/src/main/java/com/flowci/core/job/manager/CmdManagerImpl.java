@@ -29,6 +29,7 @@ import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -54,6 +55,7 @@ public class CmdManagerImpl implements CmdManager {
 
         String script = node.getScript();
         boolean allowFailure = node.isAllowFailure();
+        Set<String> exports = node.getExports();
 
         if (node.hasPlugin()) {
             Plugin plugin = pluginService.get(node.getPlugin());
@@ -61,13 +63,14 @@ public class CmdManagerImpl implements CmdManager {
 
             script = plugin.getScript();
             allowFailure = plugin.isAllowFailure();
+            exports.addAll(plugin.getExports());
         }
 
         // create cmd based on plugin
         CmdIn cmd = new CmdIn(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
         cmd.setAllowFailure(allowFailure);
-        cmd.setEnvFilters(Sets.newHashSet(node.getExports()));
+        cmd.setEnvFilters(Sets.newHashSet(exports));
         cmd.setScripts(Lists.newArrayList(script));
         cmd.setPlugin(node.getPlugin());
 

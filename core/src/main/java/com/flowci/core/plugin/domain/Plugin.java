@@ -18,8 +18,12 @@ package com.flowci.core.plugin.domain;
 
 import com.flowci.core.flow.domain.StatsType;
 import com.flowci.domain.Version;
+
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,6 +45,9 @@ public class Plugin extends PluginRepoInfo {
     private String id;
 
     private List<Input> inputs = new LinkedList<>();
+
+    // output env var name which will write to job context
+    private Set<String> exports = new HashSet<>();
 
     // Plugin that supported statistic types
     private List<StatsType> statsTypes = new LinkedList<>();

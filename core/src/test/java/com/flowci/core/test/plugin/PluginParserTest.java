@@ -23,6 +23,7 @@ import com.flowci.domain.VarType;
 import com.flowci.domain.Version;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,6 +52,11 @@ public class PluginParserTest {
         Assert.assertEquals("GIT_TIMEOUT", varForTimeout.getName());
         Assert.assertEquals(VarType.INT, varForTimeout.getType());
         Assert.assertEquals(60, varForTimeout.getIntDefaultValue());
+
+        Set<String> exports = plugin.getExports();
+        Assert.assertEquals(2, exports.size());
+        Assert.assertTrue(exports.contains("VAR_EXPORT_1"));
+        Assert.assertTrue(exports.contains("VAR_EXPORT_2"));
     }
 
 }
