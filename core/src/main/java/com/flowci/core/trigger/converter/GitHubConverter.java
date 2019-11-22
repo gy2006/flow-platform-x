@@ -136,7 +136,16 @@ public class GitHubConverter extends TriggerConverter {
             trigger.setCommitUrl(commit.url);
             trigger.setRef(BranchHelper.getBranchName(ref));
             trigger.setTime(commit.timestamp);
-            ObjectsHelper.ifNotNull(commits, val -> trigger.setNumOfCommit(val.size()));
+            ObjectsHelper.ifNotNull(commits, val -> {
+
+                // for tag event, no commits in the list
+                if (commits.size() == 0 && commit != null) {
+                    trigger.setNumOfCommit(1);
+                    return;
+                }
+
+                trigger.setNumOfCommit(val.size());
+            });
 
             // set commit author info
             trigger.setAuthor(pusher.toGitUser());

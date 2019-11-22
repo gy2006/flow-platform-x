@@ -23,6 +23,7 @@ import com.flowci.core.trigger.domain.*;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
+import com.flowci.util.ObjectsHelper;
 import com.flowci.util.StringHelper;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -121,27 +122,36 @@ public class GitLabConverter extends TriggerConverter {
             trigger.setCommitId(after);
             trigger.setMessage(message);
 
-            Commit topCommit = commits.get(0);
+            ObjectsHelper.ifNotNull(commits, val -> {
+                if (val.size() == 0) {
+                    return;
+                }
 
-            // get message from commit if no message available
-            if (Strings.isNullOrEmpty(message)) {
-                trigger.setMessage(topCommit.message);
-            }
+                Commit topCommit = val.get(0);
 
-            trigger.setCommitUrl(topCommit.url);
-            trigger.setRef(BranchHelper.getBranchName(ref));
-            trigger.setTime(topCommit.timestamp);
+                // get message from commit if no message available
+                if (Strings.isNullOrEmpty(message)) {
+                    trigger.setMessage(topCommit.message);
+                }
 
-            // set commit author info
-            GitUser gitUser = new GitUser()
-                .setEmail(topCommit.author.email);
+                trigger.setCommitUrl(topCommit.url);
+                trigger.setRef(BranchHelper.getBranchName(ref));
+                trigger.setTime(topCommit.timestamp);
+                trigger.setNumOfCommit(val.size());
 
-            if (Objects.equals(topCommit.author.name, nameOfUser)) {
-                gitUser.setUsername(username);
-                gitUser.setAvatarLink(avatar);
-            }
+                // set commit author info
+                GitUser gitUser = new GitUser()
+                    .setEmail(topCommit.author.email);
 
-            trigger.setAuthor(gitUser);
+                if (Objects.equals(topCommit.author.name, nameOfUser)) {
+                    gitUser.setUsername(username);
+                    gitUser.setAvatarLink(avatar);
+                }
+
+                trigger.setAuthor(gitUser);
+            });
+
+
             return trigger;
         }
 

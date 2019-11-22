@@ -55,6 +55,7 @@ public class GitLabConverterTest extends SpringScenario {
         Assert.assertEquals(
             "https://gitlab.com/yang-guo-2016/kai-web/commit/d8e7334543d437c1a889a9187e66d1968280d7d4",
             push.getCommitUrl());
+        Assert.assertEquals(3, push.getNumOfCommit());
 
         GitUser author = push.getAuthor();
         Assert.assertEquals("yang-guo-2016", author.getUsername());
@@ -79,6 +80,7 @@ public class GitLabConverterTest extends SpringScenario {
         Assert.assertEquals("ee31197fd0fab68d1e5ab56dabcfae150ab5d057", tag.getCommitId());
         Assert.assertEquals("v2.0", tag.getRef());
         Assert.assertEquals("test tag push", tag.getMessage());
+        Assert.assertEquals(1, tag.getNumOfCommit());
 
         GitUser author = tag.getAuthor();
         Assert.assertEquals("yang-guo-2016", author.getUsername());
