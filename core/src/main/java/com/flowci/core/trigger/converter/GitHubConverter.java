@@ -23,8 +23,11 @@ import com.flowci.core.trigger.domain.GitPrTrigger.Source;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.util.BranchHelper;
 import com.flowci.exception.ArgumentException;
+import com.flowci.util.ObjectsHelper;
 import com.google.common.collect.ImmutableMap;
+import java.util.List;
 import lombok.extern.log4j.Log4j2;
+import org.omg.CORBA.ObjectHelper;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -107,6 +110,8 @@ public class GitHubConverter extends TriggerConverter {
 
         public String ref;
 
+        public List<CommitObject> commits;
+
         @JsonProperty("head_commit")
         public CommitObject commit;
 
@@ -131,6 +136,7 @@ public class GitHubConverter extends TriggerConverter {
             trigger.setCommitUrl(commit.url);
             trigger.setRef(BranchHelper.getBranchName(ref));
             trigger.setTime(commit.timestamp);
+            ObjectsHelper.ifNotNull(commits, val -> trigger.setNumOfCommit(val.size()));
 
             // set commit author info
             trigger.setAuthor(pusher.toGitUser());

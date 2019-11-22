@@ -33,6 +33,7 @@ import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
+import com.flowci.core.trigger.domain.GitUser;
 import com.flowci.core.trigger.domain.Variables;
 import com.flowci.domain.StringVars;
 import java.io.InputStream;
@@ -72,6 +73,7 @@ public class GitHubConverterTest extends SpringScenario {
         Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PushOrTag, stream);
         GitPushTrigger trigger = (GitPushTrigger) optional.get();
 
+        // then: object properties should be parsed
         Assert.assertNotNull(trigger);
         Assert.assertEquals(GitEvent.PUSH, trigger.getEvent());
         Assert.assertEquals(GitSource.GITHUB, trigger.getSource());
@@ -83,18 +85,14 @@ public class GitHubConverterTest extends SpringScenario {
         Assert.assertEquals("master", trigger.getRef());
         Assert.assertEquals("2017-08-08T11:19:05+08:00", trigger.getTime());
 
-        Assert.assertEquals("yang-guo-2016", trigger.getAuthor().getName());
-        Assert.assertEquals("gy@fir.im", trigger.getAuthor().getEmail());
-        Assert.assertNull(trigger.getAuthor().getUsername());
-    }
+        GitUser author = trigger.getAuthor();
+        Assert.assertEquals("yang-guo-2016", author.getName());
+        Assert.assertEquals("gy@fir.im", author.getEmail());
+        Assert.assertNull(author.getUsername());
 
-    @Test
-    public void should_parse_push_event_and_create_variables() {
-        InputStream stream = load("github/webhook_push.json");
+        Assert.assertEquals(1, trigger.getNumOfCommit());
 
-        Optional<GitTrigger> optional = gitHubConverter.convert(GitHubConverter.PushOrTag, stream);
-        GitPushTrigger trigger = (GitPushTrigger) optional.get();
-
+        // then: variables should be created
         StringVars variables = trigger.toVariableMap();
         Assert.assertNotNull(variables);
 
@@ -108,6 +106,7 @@ public class GitHubConverterTest extends SpringScenario {
         Assert.assertEquals("https://github.com/yang-guo-2016/Test/commit/40d0dd6e8e942643d794d7ed8d27610fb8729914",
             variables.get(GIT_COMMIT_URL));
         Assert.assertEquals("gy@fir.im", variables.get(Variables.GIT_AUTHOR));
+        Assert.assertEquals("1", variables.get(Variables.GIT_COMMIT_NUM));
 
     }
 

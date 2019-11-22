@@ -44,6 +44,8 @@ public class Variables {
 
     public static final String GIT_COMMIT_URL = "FLOWCI_GIT_COMMIT_URL";
 
+    public static final String GIT_COMMIT_NUM = "FLOWCI_GIT_COMMIT_NUM";
+
     /**
      * Variables for git pull request
      */
