@@ -88,11 +88,13 @@ public class GogsConverter extends TriggerConverter {
             trigger.setEvent(GitTrigger.GitEvent.PUSH);
 
             Commit commit = commits.get(0);
+
             trigger.setCommitId(commit.id);
             trigger.setMessage(commit.message);
             trigger.setCommitUrl(commit.url);
             trigger.setRef(BranchHelper.getBranchName(ref));
             trigger.setTime(commit.timestamp);
+            trigger.setNumOfCommit(commits.size());
 
             // set commit author info
             trigger.setAuthor(pusher.toGitUser());
@@ -120,6 +122,7 @@ public class GogsConverter extends TriggerConverter {
             tag.setTime(release.createdAt);
             tag.setCommitUrl(StringHelper.EMPTY);
             tag.setAuthor(release.author.toGitUser());
+            tag.setNumOfCommit(0);
 
             return tag;
         }
