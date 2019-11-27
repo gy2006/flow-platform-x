@@ -21,11 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.flow.dao.StatsItemDao;
 import com.flowci.core.flow.dao.YmlDao;
-import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.StatsCounter;
-import com.flowci.core.flow.domain.StatsItem;
-import com.flowci.core.flow.domain.StatsType;
-import com.flowci.core.flow.domain.Yml;
+import com.flowci.core.flow.domain.*;
 import com.flowci.core.flow.event.FlowDeletedEvent;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobStatusChangeEvent;
@@ -35,14 +31,6 @@ import com.flowci.exception.NotFoundException;
 import com.flowci.tree.Node;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +38,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author yang
@@ -157,23 +149,36 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public StatsItem get(String flowId, String type, int day) {
-        return statsItemDao.findByFlowIdAndDayAndType(flowId, day, type);
+        Optional<StatsItem> item = statsItemDao.findByFlowIdAndDayAndType(flowId, day, type);
+        if (item.isPresent()) {
+            return item.get();
+        }
+        throw new NotFoundException("Statistic data cannot found");
     }
 
     @Override
     public StatsItem add(String flowId, int day, String type, StatsCounter counter) {
-        StatsItem item = statsItemDao.findByFlowIdAndDayAndType(flowId, day, type);
+        synchronized (this) {
+            StatsItem dayItem = getItem(flowId, day, type, counter);
+            StatsItem totalItem = getItem(flowId, StatsItem.ZERO_DAY, type, counter);
+            statsItemDao.saveAll(Arrays.asList(dayItem, totalItem));
+            return dayItem;
+        }
+    }
 
-        if (Objects.isNull(item)) {
-            item = new StatsItem()
+    private StatsItem getItem(String flowId, int day, String type, StatsCounter counter) {
+        Optional<StatsItem> optional = statsItemDao.findByFlowIdAndDayAndType(flowId, day, type);
+
+        if (optional.isPresent()) {
+            StatsItem item = optional.get();
+            item.getCounter().add(counter);
+            return item;
+        }
+
+        return new StatsItem()
                 .setDay(day)
                 .setFlowId(flowId)
                 .setType(type)
                 .setCounter(counter);
-            return statsItemDao.insert(item);
-        }
-
-        item.getCounter().add(counter);
-        return statsItemDao.save(item);
     }
 }

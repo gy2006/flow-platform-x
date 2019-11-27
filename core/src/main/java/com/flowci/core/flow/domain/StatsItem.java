@@ -38,6 +38,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 )
 public class StatsItem {
 
+    // zero day used for total
+    public static final int ZERO_DAY = 0;
+
     @Id
     private String id; // auto id
 
