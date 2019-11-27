@@ -27,11 +27,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author yang
@@ -52,6 +48,12 @@ public class StatsController {
     public List<StatsType> types(@PathVariable String name) {
         Flow flow = flowService.get(name);
         return statsService.getStatsType(flow);
+    }
+
+    @GetMapping("/{name}/stats/total")
+    public StatsItem total(@PathVariable String name, @RequestParam String t) {
+        Flow flow = flowService.get(name);
+        return statsService.get(flow.getId(), t, StatsItem.ZERO_DAY);
     }
 
     @GetMapping("/{name}/stats")

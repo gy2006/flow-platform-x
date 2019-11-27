@@ -68,6 +68,8 @@ public class StatsServiceImpl implements StatsService {
     @Autowired
     private PluginService pluginService;
 
+    private final Object statsSync = new Object();
+
     private final Map<String, StatsType> defaultTypes = new HashMap<>(5);
 
     @PostConstruct
@@ -158,7 +160,7 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public StatsItem add(String flowId, int day, String type, StatsCounter counter) {
-        synchronized (this) {
+        synchronized (statsSync) {
             StatsItem dayItem = getItem(flowId, day, type, counter);
             StatsItem totalItem = getItem(flowId, StatsItem.ZERO_DAY, type, counter);
             statsItemDao.saveAll(Arrays.asList(dayItem, totalItem));
