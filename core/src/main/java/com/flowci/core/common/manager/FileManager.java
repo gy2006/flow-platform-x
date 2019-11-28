@@ -20,17 +20,17 @@ import com.flowci.core.common.domain.Pathable;
 
 import java.io.IOException;
 
-public interface FileManager<T> {
+public interface FileManager {
 
     /**
      * Create directory for pathable objects
      */
-    T create(Pathable... objs) throws IOException;
+    String create(Pathable... objs) throws IOException;
 
     /**
      * Delete directory for pathable objects
      */
-    T delete(Pathable... objs) throws IOException;
+    String delete(Pathable... objs) throws IOException;
 
     /**
      * Check file is existed

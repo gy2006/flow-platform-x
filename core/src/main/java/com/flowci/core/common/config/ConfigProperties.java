@@ -17,6 +17,7 @@
 package com.flowci.core.common.config;
 
 import java.net.URI;
+import java.net.URL;
 import java.nio.file.Path;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
@@ -86,6 +87,12 @@ public class ConfigProperties {
         return new Auth();
     }
 
+    @Bean("minioProperties")
+    @ConfigurationProperties(prefix = "app.minio")
+    public Minio minio() {
+        return new Minio();
+    }
+
     @Data
     @Validated
     public static class Admin {
@@ -113,7 +120,6 @@ public class ConfigProperties {
 
         private Boolean autoUpdate;
     }
-
 
     @Data
     public static class Zookeeper {
@@ -153,5 +159,17 @@ public class ConfigProperties {
 
         // expired for refresh token
         private Integer refreshExpiredSeconds;
+    }
+
+    @Data
+    public static class Minio {
+
+        private Boolean enabled;
+
+        private URL endpoint;
+
+        private String key;
+
+        private String secret;
     }
 }

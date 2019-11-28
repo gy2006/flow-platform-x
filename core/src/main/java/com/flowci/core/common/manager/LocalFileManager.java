@@ -26,22 +26,26 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class LocalFileManager implements FileManager<Path>  {
+/**
+ * Local file system storage manager,
+ * instance created on @see com.flowci.core.common.config.StorageConfig
+ */
+public class LocalFileManager implements FileManager {
 
     @Autowired
     private Path flowDir;
 
     @Override
-    public Path create(Pathable... objs) throws IOException {
+    public String create(Pathable... objs) throws IOException {
         Path dir = connect(flowDir, objs);
-        return FileHelper.createDirectory(dir);
+        return FileHelper.createDirectory(dir).toString();
     }
 
     @Override
-    public Path delete(Pathable... objs) throws IOException {
+    public String delete(Pathable... objs) throws IOException {
         Path dir = connect(flowDir, objs);
         FileSystemUtils.deleteRecursively(dir);
-        return dir;
+        return dir.toString();
     }
 
     @Override

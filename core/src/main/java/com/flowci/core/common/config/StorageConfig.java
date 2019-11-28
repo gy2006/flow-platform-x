@@ -16,13 +16,22 @@
 
 package com.flowci.core.common.config;
 
+import com.flowci.core.common.manager.FileManager;
+import com.flowci.core.common.manager.LocalFileManager;
+import com.flowci.core.common.manager.MinioFileManager;
 import com.flowci.util.FileHelper;
+import io.minio.MinioClient;
+import io.minio.errors.InvalidEndpointException;
+import io.minio.errors.InvalidPortException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 
 @Configuration
@@ -30,6 +39,9 @@ public class StorageConfig {
 
     @Autowired
     private ConfigProperties appProperties;
+
+    @Autowired
+    private ConfigProperties.Minio minioProperties;
 
     @PostConstruct
     private void initFlowDir() throws IOException {
@@ -40,5 +52,26 @@ public class StorageConfig {
     @Bean("flowDir")
     public Path flowDir() {
         return appProperties.getFlowDir();
+    }
+
+    @Bean("fileManager")
+    @ConditionalOnProperty(name = "app.minio.enabled", havingValue = "true")
+    public FileManager minioFileManager() {
+        return new MinioFileManager();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "app.minio.enabled", havingValue = "true")
+    public MinioClient minioClient() throws InvalidPortException, InvalidEndpointException {
+        URL endpoint = minioProperties.getEndpoint();
+        String key = minioProperties.getKey();
+        String secret = minioProperties.getSecret();
+        return new MinioClient(endpoint, key, secret);
+    }
+
+    @Bean("fileManager")
+    @ConditionalOnMissingBean(FileManager.class)
+    public FileManager localFileManager() {
+        return new LocalFileManager();
     }
 }
