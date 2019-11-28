@@ -19,6 +19,7 @@ package com.flowci.core.common.manager;
 import com.flowci.core.common.domain.Pathable;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 public interface FileManager {
 
@@ -31,6 +32,21 @@ public interface FileManager {
      * Delete directory for pathable objects
      */
     String delete(Pathable... objs) throws IOException;
+
+    /**
+     * Save file to storage
+     */
+    String save(String fileName, InputStream data, Pathable... objs) throws IOException;
+
+    /**
+     * Read file content
+     */
+    InputStream read(String fileName, Pathable... objs) throws IOException;
+
+    /**
+     * Remove file
+     */
+    String remove(String fileName, Pathable... objs) throws IOException;
 
     /**
      * Check file is existed

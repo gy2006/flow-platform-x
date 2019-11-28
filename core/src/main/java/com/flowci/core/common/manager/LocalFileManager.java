@@ -18,6 +18,7 @@ package com.flowci.core.common.manager;
 
 import com.flowci.core.common.domain.Pathable;
 import com.flowci.util.FileHelper;
+import java.io.InputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.FileSystemUtils;
 
@@ -52,6 +53,21 @@ public class LocalFileManager implements FileManager {
     public boolean exist(Pathable... objs) {
         Path dir = connect(flowDir, objs);
         return Files.exists(dir);
+    }
+
+    @Override
+    public String save(String fileName, InputStream data, Pathable... objs) throws IOException {
+        return null;
+    }
+
+    @Override
+    public InputStream read(String fileName, Pathable... objs) throws IOException {
+        return null;
+    }
+
+    @Override
+    public String remove(String fileName, Pathable... objs) throws IOException {
+        return null;
     }
 
     private static Path connect(Path base, Pathable... objs) {

@@ -18,10 +18,20 @@ package com.flowci.core.common.manager;
 
 import com.flowci.core.common.domain.Pathable;
 import io.minio.MinioClient;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.minio.errors.ErrorResponseException;
+import io.minio.errors.InsufficientDataException;
+import io.minio.errors.InternalException;
+import io.minio.errors.InvalidArgumentException;
+import io.minio.errors.InvalidBucketNameException;
+import io.minio.errors.InvalidResponseException;
+import io.minio.errors.NoResponseException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Minio storage manager,
@@ -37,6 +47,7 @@ public class MinioFileManager implements FileManager {
     private MinioClient minioClient;
 
     /**
+     * Create directories
      * First Pathable is bucket, rest of them is object with name "x/y/z/"
      *
      * @param objs
@@ -46,15 +57,13 @@ public class MinioFileManager implements FileManager {
     @Override
     public String create(Pathable... objs) throws IOException {
         try {
-            String bucketName = objs[0].pathName();
-
-            if (!minioClient.bucketExists(bucketName)) {
-                minioClient.makeBucket(bucketName);
+            String bucketName = initBucket(objs);
+            if (objs.length == 1) {
+                return bucketName;
             }
 
             String objectName = getObjectName(objs);
             minioClient.putObject(bucketName, objectName, EmptyStream, 0L, null, null, null);
-
             return bucketName + Separator + objectName;
         } catch (Exception e) {
             throw new IOException(e.getMessage());
@@ -69,6 +78,44 @@ public class MinioFileManager implements FileManager {
     @Override
     public boolean exist(Pathable... objs) {
         return false;
+    }
+
+    @Override
+    public String save(String fileName, InputStream data, Pathable... objs) throws IOException{
+        try {
+            String bucketName = initBucket(objs);
+            String objectName = getObjectName(objs) + fileName;
+            minioClient.putObject(bucketName, objectName, data, null, null, null, null);
+            return bucketName + Separator + objectName;
+        } catch (Exception e) {
+            throw new IOException(e.getMessage());
+        }
+    }
+
+    @Override
+    public InputStream read(String fileName, Pathable... objs) throws IOException {
+        try {
+            String bucketName = objs[0].pathName();
+            String objectName = getObjectName(objs) + fileName;
+            return minioClient.getObject(bucketName, objectName);
+        } catch (Exception e) {
+            throw new IOException(e.getMessage());
+        }
+    }
+
+    @Override
+    public String remove(String fileName, Pathable... objs) throws IOException {
+        return null;
+    }
+
+    private String initBucket(Pathable... objs) throws Exception {
+        String bucketName = objs[0].pathName();
+
+        if (!minioClient.bucketExists(bucketName)) {
+            minioClient.makeBucket(bucketName);
+        }
+
+        return bucketName;
     }
 
     private static String getObjectName(Pathable... objs) {

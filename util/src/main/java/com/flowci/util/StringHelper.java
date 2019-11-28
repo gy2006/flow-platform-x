@@ -17,6 +17,7 @@
 package com.flowci.util;
 
 import com.google.common.base.Strings;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +54,10 @@ public abstract class StringHelper {
             }
             return result.toString(StandardCharsets.UTF_8.name());
         }
+    }
+
+    public static InputStream toInputStream(String val) {
+        return new ByteArrayInputStream(val.getBytes());
     }
 
     public static String toHex(String str) {
