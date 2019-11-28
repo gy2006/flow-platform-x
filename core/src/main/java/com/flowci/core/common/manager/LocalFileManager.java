@@ -18,42 +18,33 @@ package com.flowci.core.common.manager;
 
 import com.flowci.core.common.domain.Pathable;
 import com.flowci.util.FileHelper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.FileSystemUtils;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.util.FileSystemUtils;
 
-/**
- * Create, Delete path for pathable obj
- *
- * @author yang
- */
-@Component
-public class PathManager {
+public class LocalFileManager implements FileManager<Path>  {
 
     @Autowired
     private Path flowDir;
 
+    @Override
     public Path create(Pathable... objs) throws IOException {
         Path dir = connect(flowDir, objs);
         return FileHelper.createDirectory(dir);
     }
 
+    @Override
     public Path delete(Pathable... objs) throws IOException {
         Path dir = connect(flowDir, objs);
         FileSystemUtils.deleteRecursively(dir);
         return dir;
     }
 
-    // Job log path
-    public Path log(Pathable... objs) throws IOException {
-        Path dir = connect(flowDir, objs);
-        return FileHelper.createDirectory(Paths.get(dir.toString(), "logs"));
-    }
-
+    @Override
     public boolean exist(Pathable... objs) {
         Path dir = connect(flowDir, objs);
         return Files.exists(dir);

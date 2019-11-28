@@ -23,6 +23,7 @@ import org.hibernate.validator.constraints.Length;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.Email;
@@ -35,6 +36,7 @@ import javax.validation.constraints.NotBlank;
 @Validated
 @Configuration
 @ConfigurationProperties(prefix = "app")
+@PropertySource("classpath:flow.properties")
 public class ConfigProperties {
 
     private Path workspace;

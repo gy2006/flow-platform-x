@@ -21,11 +21,6 @@ import com.flowci.core.common.domain.SyncEvent;
 import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.common.helper.JacksonHelper;
 import com.flowci.util.FileHelper;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +36,12 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author yang
@@ -71,12 +72,6 @@ public class AppConfig {
     }
 
     @PostConstruct
-    private void initFlowDir() throws IOException {
-        Path path = appProperties.getFlowDir();
-        FileHelper.createDirectory(path);
-    }
-
-    @PostConstruct
     public void initUploadDir() throws IOException {
         Path path = Paths.get(multipartProperties.getLocation());
         FileHelper.createDirectory(path);
@@ -86,19 +81,14 @@ public class AppConfig {
     public String serverAddress() throws URISyntaxException {
         String host = env.getProperty(App.Host, serverProperties.getAddress().toString());
         return new URIBuilder().setScheme("http")
-            .setHost(host).setPort(serverProperties.getPort())
-            .build()
-            .toString();
+                .setHost(host).setPort(serverProperties.getPort())
+                .build()
+                .toString();
     }
 
     @Bean("tmpDir")
     public Path tmpDir() {
         return Paths.get(appProperties.getWorkspace().toString(), "tmp");
-    }
-
-    @Bean("flowDir")
-    public Path flowDir() {
-        return appProperties.getFlowDir();
     }
 
     @Bean("objectMapper")
