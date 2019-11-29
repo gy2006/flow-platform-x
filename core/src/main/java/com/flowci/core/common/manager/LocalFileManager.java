@@ -17,7 +17,10 @@
 package com.flowci.core.common.manager;
 
 import com.flowci.core.common.domain.Pathable;
+import com.flowci.exception.NotFoundException;
 import com.flowci.util.FileHelper;
+
+import java.io.FileInputStream;
 import java.io.InputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.FileSystemUtils;
@@ -26,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Local file system storage manager,
@@ -57,12 +61,22 @@ public class LocalFileManager implements FileManager {
 
     @Override
     public String save(String fileName, InputStream data, Pathable... objs) throws IOException {
-        return null;
+        Path dir = connect(flowDir, objs);
+        Path target = Paths.get(dir.toString(), fileName);
+        Files.copy(data, target, StandardCopyOption.REPLACE_EXISTING);
+        return target.toString();
     }
 
     @Override
     public InputStream read(String fileName, Pathable... objs) throws IOException {
-        return null;
+        Path dir = connect(flowDir, objs);
+        Path target = Paths.get(dir.toString(), fileName);
+
+        if (!Files.exists(target)) {
+            throw new NotFoundException("File not found");
+        }
+
+        return new FileInputStream(target.toFile());
     }
 
     @Override

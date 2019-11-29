@@ -23,6 +23,10 @@ import java.io.InputStream;
 
 public interface FileManager {
 
+    Pathable LogPath = () -> "logs";
+
+    Pathable ResourcePath = () -> "resources";
+
     /**
      * Create directory for pathable objects
      */

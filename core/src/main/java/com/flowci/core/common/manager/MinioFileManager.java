@@ -17,29 +17,19 @@
 package com.flowci.core.common.manager;
 
 import com.flowci.core.common.domain.Pathable;
+import com.flowci.util.StringHelper;
 import io.minio.MinioClient;
-import io.minio.errors.ErrorResponseException;
-import io.minio.errors.InsufficientDataException;
-import io.minio.errors.InternalException;
-import io.minio.errors.InvalidArgumentException;
-import io.minio.errors.InvalidBucketNameException;
-import io.minio.errors.InvalidResponseException;
-import io.minio.errors.NoResponseException;
-import java.io.ByteArrayInputStream;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Minio storage manager,
  * instance created on @see com.flowci.core.common.config.StorageConfig
  */
 public class MinioFileManager implements FileManager {
-
-    private static final ByteArrayInputStream EmptyStream = new ByteArrayInputStream(new byte[0]);
 
     private static final String Separator = "/";
 
@@ -56,18 +46,8 @@ public class MinioFileManager implements FileManager {
      */
     @Override
     public String create(Pathable... objs) throws IOException {
-        try {
-            String bucketName = initBucket(objs);
-            if (objs.length == 1) {
-                return bucketName;
-            }
-
-            String objectName = getObjectName(objs);
-            minioClient.putObject(bucketName, objectName, EmptyStream, 0L, null, null, null);
-            return bucketName + Separator + objectName;
-        } catch (Exception e) {
-            throw new IOException(e.getMessage());
-        }
+        // ignore, will create bucket and object in save
+        return StringHelper.EMPTY;
     }
 
     @Override
@@ -81,7 +61,7 @@ public class MinioFileManager implements FileManager {
     }
 
     @Override
-    public String save(String fileName, InputStream data, Pathable... objs) throws IOException{
+    public String save(String fileName, InputStream data, Pathable... objs) throws IOException {
         try {
             String bucketName = initBucket(objs);
             String objectName = getObjectName(objs) + fileName;
@@ -105,7 +85,14 @@ public class MinioFileManager implements FileManager {
 
     @Override
     public String remove(String fileName, Pathable... objs) throws IOException {
-        return null;
+        try {
+            String bucketName = objs[0].pathName();
+            String objectName = getObjectName(objs) + fileName;
+            minioClient.removeObject(bucketName, objectName);
+            return bucketName + Separator + objectName;
+        } catch (Exception e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
     private String initBucket(Pathable... objs) throws Exception {

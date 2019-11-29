@@ -16,22 +16,20 @@
 
 package com.flowci.core.test.common;
 
-import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.manager.FileManager;
 import com.flowci.core.common.manager.MinioFileManager;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.util.StringHelper;
-import java.io.IOException;
-import java.io.InputStream;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class MinioFileManagerTest extends SpringScenario {
+import java.io.IOException;
+import java.io.InputStream;
 
-    private final Pathable defaultLogObj = () -> "logs";
+public class MinioFileManagerTest extends SpringScenario {
 
     private final Flow flow = new Flow();
 
@@ -50,31 +48,30 @@ public class MinioFileManagerTest extends SpringScenario {
         Assert.assertTrue(fileManager instanceof MinioFileManager);
     }
 
-    @Test
-    public void should_create_bucket() throws IOException {
-        String path = fileManager.create(flow, job);
-        Assert.assertNotNull(path);
-        Assert.assertEquals("flowid/10/", path);
-    }
-
-    @Test
+    @Test(expected = IOException.class)
     public void should_save_and_read_object() throws IOException {
         final String fileName = "test.log";
         final String content = "my-test-log";
 
         // when: save the file
         InputStream data = StringHelper.toInputStream(content);
-        String logPath = fileManager.save(fileName, data, flow, job, defaultLogObj);
+        String logPath = fileManager.save(fileName, data, flow, job, FileManager.LogPath);
         Assert.assertNotNull(logPath);
         Assert.assertEquals("flowid/10/logs/test.log", logPath);
 
         // then: content should be read
-        InputStream read = fileManager.read(fileName, flow, job, defaultLogObj);
+        InputStream read = fileManager.read(fileName, flow, job, FileManager.LogPath);
         Assert.assertEquals(content, StringHelper.toString(read));
+
+        // when: delete
+        fileManager.remove(fileName, flow, job, FileManager.LogPath);
+
+        // then: should throw IOException since not existed
+        fileManager.read(fileName, flow, job, FileManager.LogPath);
     }
 
     @Test(expected = IOException.class)
     public void should_throw_exception_if_not_found() throws IOException {
-        fileManager.read("hello", flow, job, defaultLogObj);
+        fileManager.read("hello", flow, job, FileManager.LogPath);
     }
 }

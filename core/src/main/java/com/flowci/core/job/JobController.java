@@ -144,15 +144,14 @@ public class JobController {
 
     @GetMapping("/logs/{executedCmdId}/download")
     @Action(JobAction.DOWNLOAD_STEP_LOG)
-    public ResponseEntity<Resource> downloadStepLog(@PathVariable String executedCmdId,
-                                                    @RequestParam(required = false) boolean raw) {
+    public ResponseEntity<Resource> downloadStepLog(@PathVariable String executedCmdId) {
         CmdId cmdId = CmdId.parse(executedCmdId);
 
         if (Objects.isNull(cmdId)) {
             throw new ArgumentException("Illegal cmd id");
         }
 
-        Resource resource = loggingService.get(executedCmdId, raw);
+        Resource resource = loggingService.get(executedCmdId);
 
         Job job = jobService.get(cmdId.getJobId());
         Flow flow = flowService.getById(job.getFlowId());

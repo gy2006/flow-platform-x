@@ -39,7 +39,7 @@ public class LoggingServiceTest extends SpringScenario {
         Assert.assertTrue(Files.exists(logPath));
 
         // then:
-        Resource resource = loggingService.get(cmdId.toString(), false);
+        Resource resource = loggingService.get(cmdId.toString());
         Assert.assertNotNull(resource);
     }
 }
