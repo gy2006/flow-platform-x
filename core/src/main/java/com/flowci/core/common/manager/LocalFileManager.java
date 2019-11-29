@@ -60,6 +60,11 @@ public class LocalFileManager implements FileManager {
     }
 
     @Override
+    public boolean exist(String fileName, Pathable... objs) {
+        return false;
+    }
+
+    @Override
     public String save(String fileName, InputStream data, Pathable... objs) throws IOException {
         Path dir = connect(flowDir, objs);
         Path target = Paths.get(dir.toString(), fileName);

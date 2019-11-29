@@ -17,11 +17,9 @@
 package com.flowci.core.common.manager;
 
 import com.flowci.core.common.domain.Pathable;
-import com.flowci.util.StringHelper;
 import io.minio.MinioClient;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -39,25 +37,50 @@ public class MinioFileManager implements FileManager {
     /**
      * Create directories
      * First Pathable is bucket, rest of them is object with name "x/y/z/"
-     *
-     * @param objs
-     * @return
-     * @throws IOException
      */
     @Override
     public String create(Pathable... objs) throws IOException {
-        // ignore, will create bucket and object in save
-        return StringHelper.EMPTY;
-    }
-
-    @Override
-    public String delete(Pathable... objs) throws IOException {
-        return null;
+        //  will create bucket only
+        try {
+            initBucket(objs);
+            String bucketName = initBucket(objs);
+            String objectName = getObjectName(objs);
+            return bucketName + Separator + objectName;
+        } catch (Exception e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
     @Override
     public boolean exist(Pathable... objs) {
-        return false;
+        try {
+            String bucketName = objs[0].pathName();
+            if (!minioClient.bucketExists(bucketName)) {
+                return false;
+            }
+
+            String objectName = getObjectName(objs);
+            minioClient.statObject(bucketName, objectName);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean exist(String fileName, Pathable... objs) {
+        try {
+            String bucketName = objs[0].pathName();
+            if (!minioClient.bucketExists(bucketName)) {
+                return false;
+            }
+
+            String objectName = getObjectName(objs) + fileName;
+            minioClient.statObject(bucketName, objectName);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package com.flowci.core.test.common;
 
+import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.manager.FileManager;
 import com.flowci.core.common.manager.MinioFileManager;
 import com.flowci.core.flow.domain.Flow;
@@ -48,26 +49,31 @@ public class MinioFileManagerTest extends SpringScenario {
         Assert.assertTrue(fileManager instanceof MinioFileManager);
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void should_save_and_read_object() throws IOException {
         final String fileName = "test.log";
         final String content = "my-test-log";
+        final Pathable[] dir = {flow, job, FileManager.LogPath};
 
         // when: save the file
         InputStream data = StringHelper.toInputStream(content);
-        String logPath = fileManager.save(fileName, data, flow, job, FileManager.LogPath);
+        String logPath = fileManager.save(fileName, data, dir);
         Assert.assertNotNull(logPath);
         Assert.assertEquals("flowid/10/logs/test.log", logPath);
 
         // then: content should be read
-        InputStream read = fileManager.read(fileName, flow, job, FileManager.LogPath);
+        boolean exist = fileManager.exist(fileName, dir);
+        Assert.assertTrue(exist);
+
+        InputStream read = fileManager.read(fileName, dir);
         Assert.assertEquals(content, StringHelper.toString(read));
 
         // when: delete
-        fileManager.remove(fileName, flow, job, FileManager.LogPath);
+        fileManager.remove(fileName, dir);
 
         // then: should throw IOException since not existed
-        fileManager.read(fileName, flow, job, FileManager.LogPath);
+        exist = fileManager.exist(fileName, dir);
+        Assert.assertFalse(exist);
     }
 
     @Test(expected = IOException.class)

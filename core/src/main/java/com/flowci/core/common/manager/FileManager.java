@@ -33,11 +33,6 @@ public interface FileManager {
     String create(Pathable... objs) throws IOException;
 
     /**
-     * Delete directory for pathable objects
-     */
-    String delete(Pathable... objs) throws IOException;
-
-    /**
      * Save file to storage
      */
     String save(String fileName, InputStream data, Pathable... objs) throws IOException;
@@ -53,7 +48,12 @@ public interface FileManager {
     String remove(String fileName, Pathable... objs) throws IOException;
 
     /**
-     * Check file is existed
+     * Check directory is existed
      */
     boolean exist(Pathable... objs);
+
+    /**
+     * Check file is existed
+     */
+    boolean exist(String fileName, Pathable... objs);
 }
