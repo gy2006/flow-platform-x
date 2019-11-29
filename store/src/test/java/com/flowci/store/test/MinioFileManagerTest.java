@@ -14,52 +14,49 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test.common;
+package com.flowci.store.test;
 
-import com.flowci.core.common.domain.Pathable;
-import com.flowci.core.common.manager.FileManager;
-import com.flowci.core.common.manager.MinioFileManager;
-import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.job.domain.Job;
-import com.flowci.core.test.SpringScenario;
+import com.flowci.store.FileManager;
+import com.flowci.store.MinioFileManager;
+import com.flowci.store.Pathable;
 import com.flowci.util.StringHelper;
+import io.minio.MinioClient;
+import io.minio.errors.InvalidEndpointException;
+import io.minio.errors.InvalidPortException;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-public class MinioFileManagerTest extends SpringScenario {
+public class MinioFileManagerTest {
 
-    private final Flow flow = new Flow();
+    private final Pathable flow = () -> "flowid-test";
 
-    private final Job job = new Job();
+    private final Pathable job = () -> "10";
 
-    {
-        flow.setId("flowid");
-        job.setBuildNumber(10L);
-    }
+    private final Pathable logDir = () -> "logs";
 
-    @Autowired
     private FileManager fileManager;
 
-    @Test
-    public void should_be_minio_instance() {
-        Assert.assertTrue(fileManager instanceof MinioFileManager);
+    @Before
+    public void init() throws InvalidPortException, InvalidEndpointException {
+        MinioClient client = new MinioClient("http://localhost:9000", "minio", "minio123");
+        fileManager = new MinioFileManager(client);
     }
 
     @Test
     public void should_save_and_read_object() throws IOException {
         final String fileName = "test.log";
         final String content = "my-test-log";
-        final Pathable[] dir = {flow, job, FileManager.LogPath};
+        final Pathable[] dir = {flow, job, logDir};
 
         // when: save the file
         InputStream data = StringHelper.toInputStream(content);
         String logPath = fileManager.save(fileName, data, dir);
         Assert.assertNotNull(logPath);
-        Assert.assertEquals("flowid/10/logs/test.log", logPath);
+        Assert.assertEquals("flowid-test/10/logs/test.log", logPath);
 
         // then: content should be read
         boolean exist = fileManager.exist(fileName, dir);
@@ -78,6 +75,6 @@ public class MinioFileManagerTest extends SpringScenario {
 
     @Test(expected = IOException.class)
     public void should_throw_exception_if_not_found() throws IOException {
-        fileManager.read("hello", flow, job, FileManager.LogPath);
+        fileManager.read("hello", flow, job, logDir);
     }
 }

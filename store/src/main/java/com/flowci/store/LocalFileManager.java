@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package com.flowci.core.common.manager;
+package com.flowci.store;
 
-import com.flowci.core.common.domain.Pathable;
 import com.flowci.exception.NotFoundException;
 import com.flowci.util.FileHelper;
 
 import java.io.FileInputStream;
-import java.io.InputStream;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.FileSystemUtils;
-
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,25 +33,15 @@ import java.nio.file.StandardCopyOption;
  */
 public class LocalFileManager implements FileManager {
 
-    @Autowired
-    private Path flowDir;
-
     @Override
     public String create(Pathable... objs) throws IOException {
-        Path dir = connect(flowDir, objs);
+        Path dir = connect(objs);
         return FileHelper.createDirectory(dir).toString();
     }
 
     @Override
-    public String delete(Pathable... objs) throws IOException {
-        Path dir = connect(flowDir, objs);
-        FileSystemUtils.deleteRecursively(dir);
-        return dir.toString();
-    }
-
-    @Override
     public boolean exist(Pathable... objs) {
-        Path dir = connect(flowDir, objs);
+        Path dir = connect(objs);
         return Files.exists(dir);
     }
 
@@ -66,7 +52,7 @@ public class LocalFileManager implements FileManager {
 
     @Override
     public String save(String fileName, InputStream data, Pathable... objs) throws IOException {
-        Path dir = connect(flowDir, objs);
+        Path dir = connect(objs);
         Path target = Paths.get(dir.toString(), fileName);
         Files.copy(data, target, StandardCopyOption.REPLACE_EXISTING);
         return target.toString();
@@ -74,7 +60,7 @@ public class LocalFileManager implements FileManager {
 
     @Override
     public InputStream read(String fileName, Pathable... objs) throws IOException {
-        Path dir = connect(flowDir, objs);
+        Path dir = connect(objs);
         Path target = Paths.get(dir.toString(), fileName);
 
         if (!Files.exists(target)) {
@@ -89,8 +75,8 @@ public class LocalFileManager implements FileManager {
         return null;
     }
 
-    private static Path connect(Path base, Pathable... objs) {
-        Path path = base;
+    private static Path connect(Pathable... objs) {
+        Path path = Paths.get("");
 
         for (Pathable item : objs) {
             path = Paths.get(path.toString(), item.pathName());

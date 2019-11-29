@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package com.flowci.core.common.manager;
-
-import com.flowci.core.common.domain.Pathable;
+package com.flowci.store;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public interface FileManager {
-
-    Pathable LogPath = () -> "logs";
-
-    Pathable ResourcePath = () -> "resources";
 
     /**
      * Create directory for pathable objects

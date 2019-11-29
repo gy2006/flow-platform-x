@@ -16,9 +16,9 @@
 
 package com.flowci.core.common.config;
 
-import com.flowci.core.common.manager.FileManager;
-import com.flowci.core.common.manager.LocalFileManager;
-import com.flowci.core.common.manager.MinioFileManager;
+import com.flowci.store.FileManager;
+import com.flowci.store.LocalFileManager;
+import com.flowci.store.MinioFileManager;
 import com.flowci.util.FileHelper;
 import io.minio.MinioClient;
 import io.minio.errors.InvalidEndpointException;
@@ -56,8 +56,8 @@ public class StorageConfig {
 
     @Bean("fileManager")
     @ConditionalOnProperty(name = "app.minio.enabled", havingValue = "true")
-    public FileManager minioFileManager() {
-        return new MinioFileManager();
+    public FileManager minioFileManager(MinioClient client) {
+        return new MinioFileManager(client);
     }
 
     @Bean

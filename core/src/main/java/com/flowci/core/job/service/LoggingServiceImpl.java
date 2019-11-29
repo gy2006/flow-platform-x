@@ -16,9 +16,7 @@
 
 package com.flowci.core.job.service;
 
-import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.helper.CacheHelper;
-import com.flowci.core.common.manager.FileManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
@@ -27,6 +25,8 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.flowci.exception.NotFoundException;
+import com.flowci.store.FileManager;
+import com.flowci.store.Pathable;
 import com.flowci.util.FileHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
@@ -71,6 +71,8 @@ public class LoggingServiceImpl implements LoggingService {
     );
 
     private static final int FileBufferSize = 8000; // ~8k
+
+    private static final Pathable LogPath = () -> "logs";
 
     private Cache<String, BufferedReader> logReaderCache =
             CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
@@ -190,7 +192,7 @@ public class LoggingServiceImpl implements LoggingService {
         return new Pathable[]{
                 Flow.path(cmd.getFlowId()),
                 Job.path(cmd.getBuildNumber()),
-                FileManager.LogPath
+                LogPath
         };
     }
 

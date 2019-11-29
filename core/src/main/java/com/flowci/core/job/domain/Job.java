@@ -18,21 +18,21 @@ package com.flowci.core.job.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
-import com.flowci.core.common.domain.Pathable;
 import com.flowci.domain.Agent;
 import com.flowci.domain.StringVars;
 import com.flowci.domain.Vars;
+import com.flowci.store.Pathable;
 import com.flowci.tree.Selector;
 import com.flowci.util.StringHelper;
 import com.google.common.collect.ImmutableSet;
-import java.text.SimpleDateFormat;
-import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Set;
 
 /**

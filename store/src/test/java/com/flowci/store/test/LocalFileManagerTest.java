@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.common.domain;
+package com.flowci.store.test;
 
-/**
- * Support path for storage
- *
- * @author yang
- */
-public interface Pathable {
-
-    String pathName();
-
+public class LocalFileManagerTest {
 }

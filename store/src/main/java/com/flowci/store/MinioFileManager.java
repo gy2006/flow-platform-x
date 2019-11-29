@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.flowci.core.common.manager;
+package com.flowci.store;
 
-import com.flowci.core.common.domain.Pathable;
 import io.minio.MinioClient;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,8 +29,11 @@ public class MinioFileManager implements FileManager {
 
     private static final String Separator = "/";
 
-    @Autowired
-    private MinioClient minioClient;
+    private final MinioClient minioClient;
+
+    public MinioFileManager(MinioClient minioClient) {
+        this.minioClient = minioClient;
+    }
 
     /**
      * Create directories

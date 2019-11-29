@@ -16,7 +16,7 @@
 
 package com.flowci.core.common.manager;
 
-import com.flowci.core.common.domain.Pathable;
+import com.flowci.store.Pathable;
 import com.flowci.util.FileHelper;
 import java.io.IOException;
 import java.nio.file.Files;

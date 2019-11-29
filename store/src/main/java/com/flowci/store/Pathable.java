@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test.common;
+package com.flowci.store;
 
-import com.flowci.core.test.SpringScenario;
+/**
+ * Support path for storage
+ *
+ * @author yang
+ */
+public interface Pathable {
 
-public class LocalFileManagerTest extends SpringScenario {
+    String pathName();
+
 }
