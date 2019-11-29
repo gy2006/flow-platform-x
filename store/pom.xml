@@ -18,11 +18,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.flowci</groupId>
-            <artifactId>exception</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
         </dependency>

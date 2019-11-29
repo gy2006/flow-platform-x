@@ -166,6 +166,8 @@ public class ConfigProperties {
 
         private Boolean enabled;
 
+        private String bucket;
+
         private URL endpoint;
 
         private String key;

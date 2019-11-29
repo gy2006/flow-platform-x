@@ -16,7 +16,6 @@
 
 package com.flowci.store;
 
-import com.flowci.exception.NotFoundException;
 import com.flowci.util.FileHelper;
 
 import java.io.FileInputStream;
@@ -33,38 +32,50 @@ import java.nio.file.StandardCopyOption;
  */
 public class LocalFileManager implements FileManager {
 
+    private final Path base;
+
+    public LocalFileManager(Path base) {
+        this.base = base;
+    }
+
     @Override
     public String create(Pathable... objs) throws IOException {
-        Path dir = connect(objs);
+        Path dir = connect(base, objs);
         return FileHelper.createDirectory(dir).toString();
     }
 
     @Override
     public boolean exist(Pathable... objs) {
-        Path dir = connect(objs);
+        Path dir = connect(base, objs);
         return Files.exists(dir);
     }
 
     @Override
     public boolean exist(String fileName, Pathable... objs) {
-        return false;
+        Path dir = connect(base, objs);
+        Path filePath = Paths.get(dir.toString(), fileName);
+        return Files.exists(filePath);
     }
 
     @Override
     public String save(String fileName, InputStream data, Pathable... objs) throws IOException {
-        Path dir = connect(objs);
-        Path target = Paths.get(dir.toString(), fileName);
-        Files.copy(data, target, StandardCopyOption.REPLACE_EXISTING);
-        return target.toString();
+        Path dir = connect(base, objs);
+        if (!Files.exists(dir)) {
+            create(objs);
+        }
+
+        Path filePath = Paths.get(dir.toString(), fileName);
+        Files.copy(data, filePath, StandardCopyOption.REPLACE_EXISTING);
+        return filePath.toString();
     }
 
     @Override
     public InputStream read(String fileName, Pathable... objs) throws IOException {
-        Path dir = connect(objs);
+        Path dir = connect(base, objs);
         Path target = Paths.get(dir.toString(), fileName);
 
         if (!Files.exists(target)) {
-            throw new NotFoundException("File not found");
+            throw new IOException("File not found");
         }
 
         return new FileInputStream(target.toFile());
@@ -72,11 +83,14 @@ public class LocalFileManager implements FileManager {
 
     @Override
     public String remove(String fileName, Pathable... objs) throws IOException {
-        return null;
+        Path dir = connect(base, objs);
+        Path target = Paths.get(dir.toString(), fileName);
+        Files.deleteIfExists(target);
+        return target.toString();
     }
 
-    private static Path connect(Pathable... objs) {
-        Path path = Paths.get("");
+    private static Path connect(Path base, Pathable... objs) {
+        Path path = base;
 
         for (Pathable item : objs) {
             path = Paths.get(path.toString(), item.pathName());

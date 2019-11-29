@@ -29,10 +29,13 @@ public class MinioFileManager implements FileManager {
 
     private static final String Separator = "/";
 
+    private final String bucket;
+
     private final MinioClient minioClient;
 
-    public MinioFileManager(MinioClient minioClient) {
+    public MinioFileManager(MinioClient minioClient, String bucket) {
         this.minioClient = minioClient;
+        this.bucket = bucket;
     }
 
     /**
@@ -41,10 +44,9 @@ public class MinioFileManager implements FileManager {
      */
     @Override
     public String create(Pathable... objs) throws IOException {
-        //  will create bucket only
+        //  create bucket only
         try {
-            initBucket(objs);
-            String bucketName = initBucket(objs);
+            String bucketName = initBucket();
             String objectName = getObjectName(objs);
             return bucketName + Separator + objectName;
         } catch (Exception e) {
@@ -55,13 +57,12 @@ public class MinioFileManager implements FileManager {
     @Override
     public boolean exist(Pathable... objs) {
         try {
-            String bucketName = objs[0].pathName();
-            if (!minioClient.bucketExists(bucketName)) {
+            if (!minioClient.bucketExists(bucket)) {
                 return false;
             }
 
             String objectName = getObjectName(objs);
-            minioClient.statObject(bucketName, objectName);
+            minioClient.statObject(bucket, objectName);
             return true;
         } catch (Exception e) {
             return false;
@@ -71,13 +72,12 @@ public class MinioFileManager implements FileManager {
     @Override
     public boolean exist(String fileName, Pathable... objs) {
         try {
-            String bucketName = objs[0].pathName();
-            if (!minioClient.bucketExists(bucketName)) {
+            if (!minioClient.bucketExists(bucket)) {
                 return false;
             }
 
             String objectName = getObjectName(objs) + fileName;
-            minioClient.statObject(bucketName, objectName);
+            minioClient.statObject(bucket, objectName);
             return true;
         } catch (Exception e) {
             return false;
@@ -87,7 +87,7 @@ public class MinioFileManager implements FileManager {
     @Override
     public String save(String fileName, InputStream data, Pathable... objs) throws IOException {
         try {
-            String bucketName = initBucket(objs);
+            String bucketName = initBucket();
             String objectName = getObjectName(objs) + fileName;
             minioClient.putObject(bucketName, objectName, data, null, null, null, null);
             return bucketName + Separator + objectName;
@@ -99,9 +99,8 @@ public class MinioFileManager implements FileManager {
     @Override
     public InputStream read(String fileName, Pathable... objs) throws IOException {
         try {
-            String bucketName = objs[0].pathName();
             String objectName = getObjectName(objs) + fileName;
-            return minioClient.getObject(bucketName, objectName);
+            return minioClient.getObject(bucket, objectName);
         } catch (Exception e) {
             throw new IOException(e.getMessage());
         }
@@ -110,29 +109,24 @@ public class MinioFileManager implements FileManager {
     @Override
     public String remove(String fileName, Pathable... objs) throws IOException {
         try {
-            String bucketName = objs[0].pathName();
             String objectName = getObjectName(objs) + fileName;
-            minioClient.removeObject(bucketName, objectName);
-            return bucketName + Separator + objectName;
+            minioClient.removeObject(bucket, objectName);
+            return bucket + Separator + objectName;
         } catch (Exception e) {
             throw new IOException(e.getMessage());
         }
     }
 
-    private String initBucket(Pathable... objs) throws Exception {
-        String bucketName = objs[0].pathName();
-
-        if (!minioClient.bucketExists(bucketName)) {
-            minioClient.makeBucket(bucketName);
+    private String initBucket() throws Exception {
+        if (!minioClient.bucketExists(bucket)) {
+            minioClient.makeBucket(bucket);
         }
-
-        return bucketName;
+        return bucket;
     }
 
     private static String getObjectName(Pathable... objs) {
         StringBuilder builder = new StringBuilder();
-        for (int i = 1; i < objs.length; i++) {
-            Pathable item = objs[i];
+        for (Pathable item : objs) {
             builder.append(item.pathName()).append(Separator);
         }
         return builder.toString();

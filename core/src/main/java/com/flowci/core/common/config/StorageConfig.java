@@ -49,15 +49,10 @@ public class StorageConfig {
         FileHelper.createDirectory(path);
     }
 
-    @Bean("flowDir")
-    public Path flowDir() {
-        return appProperties.getFlowDir();
-    }
-
     @Bean("fileManager")
     @ConditionalOnProperty(name = "app.minio.enabled", havingValue = "true")
     public FileManager minioFileManager(MinioClient client) {
-        return new MinioFileManager(client);
+        return new MinioFileManager(client, minioProperties.getBucket());
     }
 
     @Bean
@@ -72,6 +67,6 @@ public class StorageConfig {
     @Bean("fileManager")
     @ConditionalOnMissingBean(FileManager.class)
     public FileManager localFileManager() {
-        return new LocalFileManager();
+        return new LocalFileManager(appProperties.getFlowDir());
     }
 }

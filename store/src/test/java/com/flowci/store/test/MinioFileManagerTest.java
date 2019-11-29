@@ -32,18 +32,20 @@ import java.io.InputStream;
 
 public class MinioFileManagerTest {
 
-    private final Pathable flow = () -> "flowid-test";
+    private final Pathable flow = () -> "1234567890";
 
     private final Pathable job = () -> "10";
 
     private final Pathable logDir = () -> "logs";
+
+    private final String bucket = "flows-test";
 
     private FileManager fileManager;
 
     @Before
     public void init() throws InvalidPortException, InvalidEndpointException {
         MinioClient client = new MinioClient("http://localhost:9000", "minio", "minio123");
-        fileManager = new MinioFileManager(client);
+        fileManager = new MinioFileManager(client, bucket);
     }
 
     @Test
@@ -56,7 +58,7 @@ public class MinioFileManagerTest {
         InputStream data = StringHelper.toInputStream(content);
         String logPath = fileManager.save(fileName, data, dir);
         Assert.assertNotNull(logPath);
-        Assert.assertEquals("flowid-test/10/logs/test.log", logPath);
+        Assert.assertEquals("flows-test/1234567890/10/logs/test.log", logPath);
 
         // then: content should be read
         boolean exist = fileManager.exist(fileName, dir);
