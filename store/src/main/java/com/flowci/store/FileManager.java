@@ -27,7 +27,7 @@ public interface FileManager {
     String create(Pathable... objs) throws IOException;
 
     /**
-     * Save file to storage
+     * Save file to storage, and return the file path
      */
     String save(String fileName, InputStream data, Pathable... objs) throws IOException;
 
@@ -40,6 +40,11 @@ public interface FileManager {
      * Remove file
      */
     String remove(String fileName, Pathable... objs) throws IOException;
+
+    /**
+     * Remove file by file path
+     */
+    String remove(String filePath) throws IOException;
 
     /**
      * Check directory is existed

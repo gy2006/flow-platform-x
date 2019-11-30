@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.core.common.manager.PathManager;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
@@ -48,6 +47,7 @@ import com.flowci.domain.CmdIn;
 import com.flowci.domain.StringVars;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
+import com.flowci.store.FileManager;
 import com.flowci.tree.Node;
 import com.flowci.tree.YmlParser;
 import java.io.IOException;
@@ -112,7 +112,7 @@ public class JobServiceImpl implements JobService {
     private SpringEventManager eventManager;
 
     @Autowired
-    private PathManager pathManager;
+    private FileManager fileManager;
 
     @Autowired
     private AgentService agentService;
@@ -212,7 +212,7 @@ public class JobServiceImpl implements JobService {
 
         // create job workspace
         try {
-            pathManager.create(flow, job);
+            fileManager.create(flow, job);
         } catch (IOException e) {
             jobDao.delete(job);
             throw new StatusException("Cannot create workspace for job");

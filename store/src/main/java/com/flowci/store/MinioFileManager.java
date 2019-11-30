@@ -117,6 +117,16 @@ public class MinioFileManager implements FileManager {
         }
     }
 
+    @Override
+    public String remove(String filePath) throws IOException {
+        try {
+            minioClient.removeObject(bucket, filePath);
+            return filePath;
+        } catch (Exception e) {
+            throw new IOException(e.getMessage());
+        }
+    }
+
     private String initBucket() throws Exception {
         if (!minioClient.bucketExists(bucket)) {
             minioClient.makeBucket(bucket);

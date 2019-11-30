@@ -25,6 +25,7 @@ import com.flowci.core.auth.annotation.Action;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Settings;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +39,7 @@ import java.util.List;
 /**
  * @author yang
  */
+@Log4j2
 @RestController
 @RequestMapping("/agents")
 public class AgentController {
@@ -99,8 +101,8 @@ public class AgentController {
     public void upload(@RequestPart("file") MultipartFile file) {
         try(InputStream stream = file.getInputStream()) {
             loggingService.save(file.getOriginalFilename(), stream);
-        } catch (IOException ignored) {
-
+        } catch (IOException e) {
+            log.warn("Unable to save log, cause {}", e.getMessage());
         }
     }
 }

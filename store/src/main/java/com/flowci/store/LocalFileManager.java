@@ -89,6 +89,13 @@ public class LocalFileManager implements FileManager {
         return target.toString();
     }
 
+    @Override
+    public String remove(String filePath) throws IOException {
+        Path target = Paths.get(filePath);
+        Files.deleteIfExists(target);
+        return filePath;
+    }
+
     private static Path connect(Path base, Pathable... objs) {
         Path path = base;
 

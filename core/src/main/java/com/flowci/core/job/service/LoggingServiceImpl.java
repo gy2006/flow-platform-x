@@ -32,6 +32,15 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.google.common.collect.ImmutableList;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -45,18 +54,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 /**
  * @author yang
  */
@@ -65,9 +62,9 @@ import java.util.stream.Stream;
 public class LoggingServiceImpl implements LoggingService {
 
     private static final Page<String> LogNotFound = new PageImpl<>(
-            ImmutableList.of("Log not available"),
-            PageRequest.of(0, 1),
-            1L
+        ImmutableList.of("Log not available"),
+        PageRequest.of(0, 1),
+        1L
     );
 
     private static final int FileBufferSize = 8000; // ~8k
@@ -75,7 +72,7 @@ public class LoggingServiceImpl implements LoggingService {
     private static final Pathable LogPath = () -> "logs";
 
     private Cache<String, BufferedReader> logReaderCache =
-            CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
+        CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
 
     @Autowired
     private String topicForLogs;
@@ -133,8 +130,8 @@ public class LoggingServiceImpl implements LoggingService {
             int i = pageable.getPageNumber() * pageable.getPageSize();
 
             List<String> logs = lines.skip(i)
-                    .limit(pageable.getPageSize())
-                    .collect(Collectors.toList());
+                .limit(pageable.getPageSize())
+                .collect(Collectors.toList());
 
             return new PageImpl<>(logs, pageable, cmd.getLogSize());
         } finally {
@@ -148,16 +145,10 @@ public class LoggingServiceImpl implements LoggingService {
     }
 
     @Override
-    public Path save(String fileName, InputStream stream) {
-        try {
-            String cmdId = FileHelper.getName(fileName);
-            Pathable[] logDir = getLogDir(cmdId);
-            String path = fileManager.save(fileName, stream, logDir);
-            return Paths.get(path);
-        } catch (IOException e) {
-            log.warn("Unable to create log dir", e);
-            return null;
-        }
+    public String save(String fileName, InputStream stream) throws IOException {
+        String cmdId = FileHelper.getName(fileName);
+        Pathable[] logDir = getLogDir(cmdId);
+        return fileManager.save(fileName, stream, logDir);
     }
 
     @Override
@@ -190,9 +181,9 @@ public class LoggingServiceImpl implements LoggingService {
         ExecutedCmd cmd = stepService.get(cmdId);
 
         return new Pathable[]{
-                Flow.path(cmd.getFlowId()),
-                Job.path(cmd.getBuildNumber()),
-                LogPath
+            Flow.path(cmd.getFlowId()),
+            Job.path(cmd.getBuildNumber()),
+            LogPath
         };
     }
 

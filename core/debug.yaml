@@ -26,8 +26,6 @@ services:
   minio:
     image: minio/minio
     container_name: flowci-debug-minio
-    volumes:
-      - "${HOME}/.flow.ci/flows:/data"
     environment:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: minio123
