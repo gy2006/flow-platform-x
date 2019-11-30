@@ -17,7 +17,7 @@
 
 package com.flowci.core.api.service;
 
-import com.flowci.core.api.domain.CreateJobSummary;
+import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.flow.domain.StatsCounter;
 import com.flowci.core.user.domain.User;
@@ -39,7 +39,7 @@ public interface OpenRestService {
     /**
      * Save summary report for job
      */
-    void saveJobSummary(String flowName, long buildNumber, CreateJobSummary body);
+    void saveJobReport(String flowName, long buildNumber, CreateJobReport body);
 
     /**
      * Add env vars to job context

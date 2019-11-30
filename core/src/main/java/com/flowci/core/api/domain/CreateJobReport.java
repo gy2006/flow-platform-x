@@ -14,12 +14,25 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.dao;
+package com.flowci.core.api.domain;
 
-import com.flowci.core.job.domain.JobSummary;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import javax.validation.constraints.NotEmpty;
+import lombok.Getter;
+import lombok.Setter;
 
-@Repository
-public interface JobSummaryDao extends MongoRepository<JobSummary, String> {
+/**
+ * @author yang
+ */
+@Getter
+@Setter
+public class CreateJobReport {
+
+    @NotEmpty
+    private String name;
+
+    @NotEmpty
+    private String type; // for JobSummary.Type
+
+    @NotEmpty
+    private String data; // base64 encoded
 }

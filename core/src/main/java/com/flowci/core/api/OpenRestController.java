@@ -18,7 +18,7 @@
 package com.flowci.core.api;
 
 import com.flowci.core.api.domain.AddStatsItem;
-import com.flowci.core.api.domain.CreateJobSummary;
+import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.api.service.OpenRestService;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
@@ -72,8 +72,8 @@ public class OpenRestController {
     @PostMapping("/flow/{name}/job/{number}/summary")
     public void createJobSummary(@PathVariable String name,
                                  @PathVariable long number,
-                                 @Validated @RequestBody CreateJobSummary body) {
-        openRestService.saveJobSummary(name, number, body);
+                                 @Validated @RequestBody CreateJobReport body) {
+        openRestService.saveJobReport(name, number, body);
     }
 
     @PostMapping("/flow/{name}/job/{number}/context")

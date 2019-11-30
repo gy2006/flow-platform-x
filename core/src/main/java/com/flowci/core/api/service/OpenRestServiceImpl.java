@@ -17,7 +17,7 @@
 
 package com.flowci.core.api.service;
 
-import com.flowci.core.api.domain.CreateJobSummary;
+import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.credential.dao.CredentialDao;
 import com.flowci.core.credential.domain.Credential;
@@ -27,15 +27,23 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.StatsCounter;
 import com.flowci.core.flow.service.StatsService;
 import com.flowci.core.job.dao.JobDao;
-import com.flowci.core.job.dao.JobSummaryDao;
+import com.flowci.core.job.dao.JobReportDao;
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.domain.JobSummary;
+import com.flowci.core.job.domain.JobReport;
+import com.flowci.core.job.domain.JobReport.Type;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
+import com.flowci.domain.ObjectWrapper;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
+import com.flowci.store.FileManager;
+import com.flowci.store.Pathable;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -63,10 +71,13 @@ public class OpenRestServiceImpl implements OpenRestService {
     private JobDao jobDao;
 
     @Autowired
+    private JobReportDao jobReportDao;
+
+    @Autowired
     private UserDao userDao;
 
     @Autowired
-    private JobSummaryDao jobSummaryDao;
+    private FileManager fileManager;
 
     @Autowired
     private StatsService statsService;
@@ -90,20 +101,35 @@ public class OpenRestServiceImpl implements OpenRestService {
     }
 
     @Override
-    public void saveJobSummary(String flowName, long buildNumber, CreateJobSummary body) {
+    public void saveJobReport(String flowName, long buildNumber, CreateJobReport body) {
         Job job = getJob(flowName, buildNumber);
+        Pathable flow = job::getFlowId;
+        Pathable[] reportPath = {flow, job, JobReport.ReportPath};
 
-        JobSummary summary = new JobSummary()
-            .setJobId(job.getId())
-            .setName(body.getName())
-            .setType(JobSummary.Type.valueOf(body.getType()))
-            .setData(body.getData());
+        Type reportType = Type.valueOf(body.getType());
+        ObjectWrapper<String> path = new ObjectWrapper<>();
 
-        try {
-            jobSummaryDao.save(summary);
+        try (InputStream reportRaw = fromB64String(body.getData())) {
+            path.setValue(fileManager.save(body.getName(), reportRaw, reportPath));
+
+            jobReportDao.save(new JobReport()
+                .setJobId(job.getId())
+                .setName(body.getName())
+                .setType(reportType)
+                .setPath(path.getValue()));
+
         } catch (DuplicateKeyException e) {
+            if (path.hasValue()) {
+                try {
+                    fileManager.remove(path.getValue());
+                } catch (IOException ignore) {
+                }
+            }
+
             log.warn("Duplicate job summary key");
             throw new DuplicateException("The job summary duplicated");
+        } catch (IOException e) {
+            throw new ArgumentException("Invalid report data");
         }
     }
 
@@ -142,5 +168,10 @@ public class OpenRestServiceImpl implements OpenRestService {
             throw new ArgumentException("Invalid flow name");
         }
         return flow;
+    }
+
+    private static InputStream fromB64String(String val) {
+        byte[] bytes = Base64.getDecoder().decode(val);
+        return new ByteArrayInputStream(bytes);
     }
 }
