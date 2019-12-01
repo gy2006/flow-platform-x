@@ -30,7 +30,6 @@ import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobReportDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobReport;
-import com.flowci.core.job.domain.JobReport.Type;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
@@ -40,10 +39,9 @@ import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.store.FileManager;
 import com.flowci.store.Pathable;
-import java.io.ByteArrayInputStream;
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +51,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Log4j2
 @Service
@@ -101,22 +100,28 @@ public class OpenRestServiceImpl implements OpenRestService {
     }
 
     @Override
-    public void saveJobReport(String flowName, long buildNumber, CreateJobReport body) {
+    public void saveJobReport(String flowName, long buildNumber, CreateJobReport report, MultipartFile file) {
         Job job = getJob(flowName, buildNumber);
         Pathable flow = job::getFlowId;
         Pathable[] reportPath = {flow, job, JobReport.ReportPath};
-
-        Type reportType = Type.valueOf(body.getType());
         ObjectWrapper<String> path = new ObjectWrapper<>();
 
-        try (InputStream reportRaw = fromB64String(body.getData())) {
-            path.setValue(fileManager.save(body.getName(), reportRaw, reportPath));
+        try (InputStream reportRaw = file.getInputStream()) {
 
-            jobReportDao.save(new JobReport()
-                .setJobId(job.getId())
-                .setName(body.getName())
-                .setType(reportType)
-                .setPath(path.getValue()));
+            // save to file manager by unique report name
+            path.setValue(fileManager.save(report.getName(), reportRaw, reportPath));
+
+            // save to job report db
+            JobReport r = new JobReport();
+            r.setName(report.getName());
+            r.setJobId(job.getId());
+            r.setFileName(file.getOriginalFilename());
+            r.setContentType(Sets.newHashSet(report.getTypes()));
+            r.setContentSize(file.getSize());
+            r.setPath(path.getValue());
+            r.setCreatedAt(new Date());
+
+            jobReportDao.save(r);
 
         } catch (DuplicateKeyException e) {
             if (path.hasValue()) {
@@ -168,10 +173,5 @@ public class OpenRestServiceImpl implements OpenRestService {
             throw new ArgumentException("Invalid flow name");
         }
         return flow;
-    }
-
-    private static InputStream fromB64String(String val) {
-        byte[] bytes = Base64.getDecoder().decode(val);
-        return new ByteArrayInputStream(bytes);
     }
 }

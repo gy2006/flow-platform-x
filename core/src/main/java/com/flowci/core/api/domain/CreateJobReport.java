@@ -16,23 +16,24 @@
 
 package com.flowci.core.api.domain;
 
+import java.util.List;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
  * @author yang
  */
 @Getter
 @Setter
+@Accessors(chain = true)
 public class CreateJobReport {
 
     @NotEmpty
-    private String name;
+    private String name; // report name
 
     @NotEmpty
-    private String type; // for JobSummary.Type
-
-    @NotEmpty
-    private String data; // base64 encoded
+    private List<String> types; // for JobSummary.Type
 }

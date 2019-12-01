@@ -17,14 +17,10 @@
 package com.flowci.core.job.domain;
 
 import com.flowci.store.Pathable;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
@@ -32,35 +28,17 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Setter
 @Getter
-@EqualsAndHashCode(of = "id")
-@Accessors(chain = true)
+@EqualsAndHashCode(callSuper = true)
 @Document(collection = "job_report")
 @CompoundIndex(
-    name = "index_job_summary_id_name_type",
+    name = "index_job_report_id_name_type",
     def = "{'jobId': 1, 'name': 1, 'type': 1}",
     unique = true
 )
-public class JobReport {
+public class JobReport extends JobOutput {
 
     public static final Pathable ReportPath = () -> "reports";
 
-    public enum Type {
+    private String name; // report name
 
-        JSON,
-
-        HTML
-    }
-
-    @Id
-    private String id;
-
-    @Indexed(name = "index_job_summary_jobid")
-    private String jobId;
-
-    private String name;
-
-    private Type type;
-
-    // path for FileManager
-    private String path;
 }

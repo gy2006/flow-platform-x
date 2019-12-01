@@ -17,11 +17,14 @@
 package com.flowci.core.job.dao;
 
 import com.flowci.core.job.domain.JobReport;
+import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 /**
  * @author yang
  */
 public interface JobReportDao extends MongoRepository<JobReport, String> {
+
+    List<JobReport> findAllByJobId(String jobId);
 
 }

@@ -16,36 +16,42 @@
 
 package com.flowci.core.test.api;
 
-import com.flowci.core.api.domain.Step;
+import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.api.service.OpenRestService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.service.FlowService;
-import com.flowci.core.job.dao.ExecutedCmdDao;
+import com.flowci.core.job.dao.JobDao;
+import com.flowci.core.job.dao.JobReportDao;
+import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.domain.JobOutput;
+import com.flowci.core.job.domain.JobOutput.ContentType;
+import com.flowci.core.job.domain.JobReport;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
-import com.flowci.domain.CmdId;
-import com.flowci.domain.ExecutedCmd;
-import com.google.common.collect.Lists;
+import java.util.List;
+import java.util.Optional;
+import org.assertj.core.util.Lists;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.mock.web.MockMultipartFile;
 
 public class OpenRestServiceTest extends SpringScenario {
+
+    @MockBean
+    private JobDao jobDao;
+
+    @Autowired
+    private JobReportDao jobReportDao;
 
     @Autowired
     private FlowService flowService;
 
     @Autowired
     private OpenRestService openRestService;
-
-    @MockBean
-    private ExecutedCmdDao executedCmdDao;
 
     @Before
     public void login() {
@@ -69,5 +75,31 @@ public class OpenRestServiceTest extends SpringScenario {
         Assert.assertNull(user.getCreatedBy());
         Assert.assertNull(user.getUpdatedAt());
         Assert.assertNull(user.getUpdatedBy());
+    }
+
+    @Test
+    public void should_save_job_report() {
+        // given:
+        Flow flow = flowService.create("user-test");
+
+        Job job = new Job();
+        job.setId("12345");
+        job.setFlowId(flow.getId());
+        job.setBuildNumber(1L);
+        Mockito.when(jobDao.findByKey(Mockito.any())).thenReturn(Optional.of(job));
+
+        MockMultipartFile uploadFile = new MockMultipartFile("jacoco-report.zip", "content".getBytes());
+
+        CreateJobReport report = new CreateJobReport()
+            .setName("jacoco")
+            .setTypes(Lists.newArrayList(JobOutput.ContentType.ZIP, ContentType.HTML));
+
+        // when:
+        openRestService.saveJobReport(flow.getName(), job.getBuildNumber(), report, uploadFile);
+
+        // then:
+        List<JobReport> reports = jobReportDao.findAllByJobId(job.getId());
+        Assert.assertNotNull(reports);
+        Assert.assertEquals(1, reports.size());
     }
 }

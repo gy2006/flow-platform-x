@@ -23,6 +23,7 @@ import com.flowci.core.flow.domain.StatsCounter;
 import com.flowci.core.user.domain.User;
 import java.util.List;
 import java.util.Map;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface OpenRestService {
 
@@ -37,9 +38,9 @@ public interface OpenRestService {
     void saveStatsForFlow(String flowName, String statsType, StatsCounter counter);
 
     /**
-     * Save summary report for job
+     * Save job report with file
      */
-    void saveJobReport(String flowName, long buildNumber, CreateJobReport body);
+    void saveJobReport(String flowName, long buildNumber, CreateJobReport report, MultipartFile file);
 
     /**
      * Add env vars to job context
