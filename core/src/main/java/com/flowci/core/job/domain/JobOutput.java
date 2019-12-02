@@ -32,15 +32,15 @@ public abstract class JobOutput extends Mongoable {
 
     public static abstract class ContentType {
 
-        public static final String ZIP = "application/zip";
+        public static final String ZIP = "zip";
 
-        public static final String GZIP = "application/x-gzip";
+        public static final String GZIP = "gzip";
 
-        public static final String JSON = "application/json";
+        public static final String JSON = "json";
 
-        public static final String XML = "application/xml";
+        public static final String XML = "xml";
 
-        public static final String HTML = "text/html";
+        public static final String HTML = "html";
     }
 
 
