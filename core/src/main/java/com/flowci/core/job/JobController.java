@@ -22,14 +22,11 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.service.YmlService;
+import com.flowci.core.job.domain.*;
+import com.flowci.core.job.service.ReportService;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.CmdId;
-import com.flowci.core.job.domain.CreateJob;
-import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
-import com.flowci.core.job.domain.JobAction;
-import com.flowci.core.job.domain.JobItem;
-import com.flowci.core.job.domain.JobYml;
 import com.flowci.core.job.service.JobService;
 import com.flowci.core.job.service.LoggingService;
 import com.flowci.core.job.service.StepService;
@@ -86,6 +83,9 @@ public class JobController {
 
     @Autowired
     private LoggingService loggingService;
+
+    @Autowired
+    private ReportService reportService;
 
     @Autowired
     private ThreadPoolTaskExecutor jobRunExecutor;
@@ -189,5 +189,12 @@ public class JobController {
     public Job cancel(@PathVariable String flow, @PathVariable String buildNumber) {
         Job job = get(flow, buildNumber);
         return jobService.cancel(job);
+    }
+
+    @GetMapping("/{flow}/{buildNumber}/reports")
+    @Action(JobAction.LIST_REPORTS)
+    public List<JobReport> listReports(@PathVariable String flow, @PathVariable String buildNumber) {
+        Job job = get(flow, buildNumber);
+        return reportService.list(job);
     }
 }

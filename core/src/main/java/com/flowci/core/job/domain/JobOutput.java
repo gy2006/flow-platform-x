@@ -16,6 +16,7 @@
 
 package com.flowci.core.job.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,11 +44,11 @@ public abstract class JobOutput extends Mongoable {
         public static final String HTML = "html";
     }
 
-
     @Indexed(name = "index_job_report_jobid")
     private String jobId;
 
     // path for FileManager
+    @JsonIgnore
     protected String path;
 
     protected String fileName;

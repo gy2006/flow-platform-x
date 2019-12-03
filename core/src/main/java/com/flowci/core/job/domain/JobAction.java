@@ -37,15 +37,18 @@ public abstract class JobAction {
 
     public static final String CANCEL = "cancel_job";
 
+    public static final String LIST_REPORTS = "list_job_reports";
+
     public static final String[] ALL = {
-      LIST,
-      GET,
-      GET_YML,
-      LIST_STEPS,
-      GET_STEP_LOG,
-      DOWNLOAD_STEP_LOG,
-      CREATE,
-      RUN,
-      CANCEL
+            LIST,
+            GET,
+            GET_YML,
+            LIST_STEPS,
+            GET_STEP_LOG,
+            DOWNLOAD_STEP_LOG,
+            CREATE,
+            RUN,
+            CANCEL,
+            LIST_REPORTS
     };
 }
