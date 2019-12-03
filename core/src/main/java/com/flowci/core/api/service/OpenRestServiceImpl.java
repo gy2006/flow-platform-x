@@ -131,8 +131,8 @@ public class OpenRestServiceImpl implements OpenRestService {
                 }
             }
 
-            log.warn("Duplicate job summary key");
-            throw new DuplicateException("The job summary duplicated");
+            log.warn("The job report duplicated");
+            throw new DuplicateException("The job report duplicated");
         } catch (IOException e) {
             throw new ArgumentException("Invalid report data");
         }
