@@ -21,9 +21,15 @@ import com.flowci.core.common.domain.SyncEvent;
 import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.common.helper.JacksonHelper;
 import com.flowci.util.FileHelper;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.cache.annotation.EnableCaching;
@@ -34,88 +40,93 @@ import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-/**
- * @author yang
- */
+/** @author yang */
 @Log4j2
 @Configuration
 @EnableScheduling
 @EnableCaching
 public class AppConfig {
 
-    @Autowired
-    private Environment env;
+  @Autowired private Environment env;
 
-    @Autowired
-    private ServerProperties serverProperties;
+  @Autowired private ServerProperties serverProperties;
 
-    @Autowired
-    private MultipartProperties multipartProperties;
+  @Autowired private MultipartProperties multipartProperties;
 
-    @Autowired
-    private ConfigProperties appProperties;
+  @Autowired private ConfigProperties appProperties;
 
-    @PostConstruct
-    private void initWorkspace() throws IOException {
-        Path path = appProperties.getWorkspace();
-        FileHelper.createDirectory(path);
-        FileHelper.createDirectory(tmpDir());
+  @Autowired private ResourceProperties resourceProperties;
+
+  @PostConstruct
+  private void initWorkspace() throws IOException {
+    Path path = appProperties.getWorkspace();
+    FileHelper.createDirectory(path);
+    FileHelper.createDirectory(tmpDir());
+  }
+
+  @PostConstruct
+  public void initUploadDir() throws IOException {
+    Path path = Paths.get(multipartProperties.getLocation());
+    FileHelper.createDirectory(path);
+  }
+
+  @PostConstruct
+  public void initStaticResourceDir() throws IOException {
+    for (String location : resourceProperties.getStaticLocations()) {
+      if (location.startsWith("file:/")) {
+        String path = location.substring(6);
+        FileHelper.createDirectory(Paths.get(path));
+      }
     }
+  }
 
-    @PostConstruct
-    public void initUploadDir() throws IOException {
-        Path path = Paths.get(multipartProperties.getLocation());
-        FileHelper.createDirectory(path);
-    }
+  @Bean("serverAddress")
+  public String serverAddress() throws URISyntaxException {
+    String host = env.getProperty(App.Host, serverProperties.getAddress().toString());
+    return new URIBuilder()
+        .setScheme("http")
+        .setHost(host)
+        .setPort(serverProperties.getPort())
+        .build()
+        .toString();
+  }
 
-    @Bean("serverAddress")
-    public String serverAddress() throws URISyntaxException {
-        String host = env.getProperty(App.Host, serverProperties.getAddress().toString());
-        return new URIBuilder().setScheme("http")
-                .setHost(host).setPort(serverProperties.getPort())
-                .build()
-                .toString();
-    }
+  @Bean("tmpDir")
+  public Path tmpDir() {
+    return Paths.get(appProperties.getWorkspace().toString(), "tmp");
+  }
 
-    @Bean("tmpDir")
-    public Path tmpDir() {
-        return Paths.get(appProperties.getWorkspace().toString(), "tmp");
-    }
+  @Bean("objectMapper")
+  public ObjectMapper objectMapper() {
+    return JacksonHelper.create();
+  }
 
-    @Bean("objectMapper")
-    public ObjectMapper objectMapper() {
-        return JacksonHelper.create();
-    }
+  @Bean(name = "applicationEventMulticaster")
+  public ApplicationEventMulticaster simpleApplicationEventMulticaster() {
+    SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("s-event-");
 
-    @Bean(name = "applicationEventMulticaster")
-    public ApplicationEventMulticaster simpleApplicationEventMulticaster() {
-        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("s-event-");
+    return new SimpleApplicationEventMulticaster() {
 
-        return new SimpleApplicationEventMulticaster() {
+      @Override
+      public void multicastEvent(ApplicationEvent event, ResolvableType eventType) {
+        ResolvableType resolvableType = ResolvableType.forInstance(event);
+        ResolvableType type = (eventType != null ? eventType : resolvableType);
 
-            @Override
-            public void multicastEvent(ApplicationEvent event, ResolvableType eventType) {
-                ResolvableType resolvableType = ResolvableType.forInstance(event);
-                ResolvableType type = (eventType != null ? eventType : resolvableType);
+        if (event instanceof SyncEvent) {
+          getApplicationListeners(event, type).forEach(listener -> invokeListener(listener, event));
+          return;
+        }
 
-                if (event instanceof SyncEvent) {
-                    getApplicationListeners(event, type).forEach(listener -> invokeListener(listener, event));
-                    return;
-                }
-
-                getApplicationListeners(event, type).forEach(listener -> {
-                    executor.execute(() -> invokeListener(listener, event));
+        getApplicationListeners(event, type)
+            .forEach(
+                listener -> {
+                  executor.execute(() -> invokeListener(listener, event));
                 });
-            }
-        };
-    }
+      }
+    };
+  }
 }
