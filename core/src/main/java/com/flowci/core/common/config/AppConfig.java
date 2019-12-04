@@ -24,7 +24,6 @@ import com.flowci.util.FileHelper;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.cache.annotation.EnableCaching;
@@ -65,9 +64,6 @@ public class AppConfig {
     @Autowired
     private ConfigProperties appProperties;
 
-    @Autowired
-    private ResourceProperties resourceProperties;
-
     @PostConstruct
     private void initWorkspace() throws IOException {
         Path path = appProperties.getWorkspace();
@@ -79,16 +75,6 @@ public class AppConfig {
     public void initUploadDir() throws IOException {
         Path path = Paths.get(multipartProperties.getLocation());
         FileHelper.createDirectory(path);
-    }
-
-    @PostConstruct
-    public void initStaticResourceDir() throws IOException {
-        for (String location : resourceProperties.getStaticLocations()) {
-            if (location.startsWith("file:/")) {
-                String path = location.substring(6);
-                FileHelper.createDirectory(Paths.get(path));
-            }
-        }
     }
 
     @Bean("serverAddress")

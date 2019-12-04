@@ -21,8 +21,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.helper.JacksonHelper;
 import com.flowci.domain.Vars;
+import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
@@ -34,6 +36,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Configuration
@@ -47,6 +52,21 @@ public class WebConfig {
 
     @Autowired
     private HandlerInterceptor webAuth;
+
+    @Autowired
+    private ResourceProperties resourceProperties;
+
+    @Bean("staticResourceDir")
+    public String staticResourceDir() throws IOException {
+        for (String location : resourceProperties.getStaticLocations()) {
+            if (location.startsWith("file:/")) {
+                String path = location.substring(6);
+                FileHelper.createDirectory(Paths.get(path));
+                return path;
+            }
+        }
+        throw new IOException("Static resource dir not available");
+    }
 
     @Bean
     public Class<?> httpJacksonMixin() {

@@ -28,7 +28,6 @@ import com.flowci.store.Pathable;
 import com.flowci.util.FileHelper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,13 +46,13 @@ import java.util.Optional;
 public class ReportServiceImpl implements ReportService {
 
     @Autowired
+    private String staticResourceDir;
+
+    @Autowired
     private JobReportDao jobReportDao;
 
     @Autowired
     private FileManager fileManager;
-
-    @Autowired
-    private ResourceProperties resourceProperties;
 
     @Override
     public List<JobReport> list(Job job) {
@@ -108,7 +107,7 @@ public class ReportServiceImpl implements ReportService {
         JobReport report = optional.get();
 
         // write to static site folder
-        try (InputStream stream = fileManager.read(report.getFileName(), getReportPath(job))) {
+        try (InputStream stream = fileManager.read(report.getName(), getReportPath(job))) {
 
             // unzip to static resource dir
             if (report.isZipped()) {
@@ -128,8 +127,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private Path getStaticResourcePath(JobReport report) throws IOException {
-        String[] locations = resourceProperties.getStaticLocations();
-        Path path = Paths.get(locations[0], "jobs", report.getJobId(), "reports", report.getId());
+        Path path = Paths.get(staticResourceDir, "jobs", report.getJobId(), "reports", report.getId());
         FileHelper.createDirectory(path);
         return path;
     }
