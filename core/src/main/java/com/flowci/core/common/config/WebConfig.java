@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.helper.JacksonHelper;
-import com.flowci.core.user.domain.User;
 import com.flowci.domain.Vars;
 import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,11 +47,6 @@ public class WebConfig {
 
     @Autowired
     private HandlerInterceptor webAuth;
-
-    @Bean
-    public ThreadLocal<User> currentUser() {
-        return new ThreadLocal<>();
-    }
 
     @Bean
     public Class<?> httpJacksonMixin() {
