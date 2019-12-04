@@ -26,12 +26,14 @@ import com.flowci.exception.NotFoundException;
 import com.flowci.store.FileManager;
 import com.flowci.store.Pathable;
 import com.flowci.util.FileHelper;
+import com.flowci.util.StringHelper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -46,7 +48,7 @@ import java.util.Optional;
 public class ReportServiceImpl implements ReportService {
 
     @Autowired
-    private String staticResourceDir;
+    private Path staticResourceDir;
 
     @Autowired
     private JobReportDao jobReportDao;
@@ -106,20 +108,31 @@ public class ReportServiceImpl implements ReportService {
 
         JobReport report = optional.get();
 
+        Path destDir;
+        try {
+            destDir = getStaticResourcePath(report);
+        } catch (IOException e) {
+            throw new NotAvailableException("Unable to create static resource path");
+        }
+
         // write to static site folder
         try (InputStream stream = fileManager.read(report.getName(), getReportPath(job))) {
-
             // unzip to static resource dir
             if (report.isZipped()) {
-                Path destDir = getStaticResourcePath(report);
-                FileHelper.unzip(stream, destDir);
-                return destDir.toString();
+                Path destFile = Paths.get(destDir.toString(), report.getName());
+                if (!Files.exists(destFile)) {
+                    FileHelper.unzip(stream, destFile);
+                }
+                return destFile.toString().replace(staticResourceDir.toString(), StringHelper.EMPTY);
             }
 
-            Path destFile = Paths.get(getStaticResourcePath(report) + "." + report.getContentType());
-            Files.createFile(destFile);
-            FileHelper.writeToFile(stream, destFile);
-            return destFile.toString();
+            Path destFile = Paths.get(destDir.toString(), report.getFileName());
+
+            if (!Files.exists(destFile)) {
+                Files.createFile(destFile);
+                FileHelper.writeToFile(stream, destFile);
+            }
+            return destFile.toString().replace(staticResourceDir.toString(), StringHelper.EMPTY);
 
         } catch (IOException e) {
             throw new NotAvailableException("Invalid report");
@@ -127,14 +140,13 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private Path getStaticResourcePath(JobReport report) throws IOException {
-        Path path = Paths.get(staticResourceDir, "jobs", report.getJobId(), "reports", report.getId());
+        Path path = Paths.get(staticResourceDir.toString(), "jobs", report.getJobId(), "reports", report.getId());
         FileHelper.createDirectory(path);
         return path;
     }
 
     private static Pathable[] getReportPath(Job job) {
         Pathable flow = job::getFlowId;
-        Pathable[] reportPath = {flow, job, JobReport.ReportPath};
-        return reportPath;
+        return new Pathable[]{flow, job, JobReport.ReportPath};
     }
 }

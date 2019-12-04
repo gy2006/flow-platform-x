@@ -24,7 +24,6 @@ import com.flowci.domain.Vars;
 import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
@@ -33,14 +32,16 @@ import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.List;
 
+@EnableWebMvc
 @Configuration
 public class WebConfig {
 
@@ -54,18 +55,12 @@ public class WebConfig {
     private HandlerInterceptor webAuth;
 
     @Autowired
-    private ResourceProperties resourceProperties;
+    private ConfigProperties appProperties;
 
     @Bean("staticResourceDir")
-    public String staticResourceDir() throws IOException {
-        for (String location : resourceProperties.getStaticLocations()) {
-            if (location.startsWith("file:/")) {
-                String path = location.substring(6);
-                FileHelper.createDirectory(Paths.get(path));
-                return path;
-            }
-        }
-        throw new IOException("Static resource dir not available");
+    public Path staticResourceDir() throws IOException {
+        FileHelper.createDirectory(appProperties.getSiteDir());
+        return appProperties.getSiteDir();
     }
 
     @Bean
@@ -117,6 +112,13 @@ public class WebConfig {
                 );
 
                 converters.addAll(DefaultConverters);
+            }
+
+            @Override
+            public void addResourceHandlers(ResourceHandlerRegistry registry) {
+                Path dir = appProperties.getSiteDir();
+                registry.addResourceHandler("/static/**")
+                        .addResourceLocations(dir.toFile().toURI().toString());
             }
         };
     }

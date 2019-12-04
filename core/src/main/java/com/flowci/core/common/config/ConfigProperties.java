@@ -44,6 +44,9 @@ public class ConfigProperties {
 
     private Path flowDir;
 
+    // static site resource
+    private Path siteDir;
+
     @NotBlank
     private String serverAddress;
 
