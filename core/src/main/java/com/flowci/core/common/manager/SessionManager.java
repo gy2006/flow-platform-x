@@ -22,6 +22,8 @@ import com.flowci.exception.AuthenticationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
 @Component
 public class SessionManager {
 
@@ -51,6 +53,9 @@ public class SessionManager {
     }
 
     public boolean exist() {
+        if (Objects.isNull(currentUser)) {
+            return false;
+        }
         return currentUser.get() != null;
     }
 }

@@ -18,10 +18,21 @@ package com.flowci.core.job.service;
 
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobReport;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Set;
 
 public interface ReportService {
 
     List<JobReport> list(Job job);
+
+    /**
+     * Save report to file store
+     * @param name report name
+     * @param types report types
+     * @param job related job
+     * @param file raw file uploaded
+     */
+    void save(String name, Set<String> types, Job job, MultipartFile file);
 }
