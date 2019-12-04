@@ -20,22 +20,27 @@ import com.flowci.core.job.dao.JobReportDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobReport;
 import com.flowci.domain.ObjectWrapper;
-import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
+import com.flowci.exception.NotAvailableException;
+import com.flowci.exception.NotFoundException;
 import com.flowci.store.FileManager;
 import com.flowci.store.Pathable;
-import com.google.common.collect.Sets;
+import com.flowci.util.FileHelper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
 @Log4j2
 @Service
@@ -47,15 +52,17 @@ public class ReportServiceImpl implements ReportService {
     @Autowired
     private FileManager fileManager;
 
+    @Autowired
+    private ResourceProperties resourceProperties;
+
     @Override
     public List<JobReport> list(Job job) {
         return jobReportDao.findAllByJobId(job.getId());
     }
 
     @Override
-    public void save(String name, Set<String> types, Job job, MultipartFile file) {
-        Pathable flow = job::getFlowId;
-        Pathable[] reportPath = {flow, job, JobReport.ReportPath};
+    public void save(String name, String type, boolean zipped, Job job, MultipartFile file) {
+        Pathable[] reportPath = getReportPath(job);
         ObjectWrapper<String> path = new ObjectWrapper<>();
 
         try (InputStream reportRaw = file.getInputStream()) {
@@ -68,7 +75,8 @@ public class ReportServiceImpl implements ReportService {
             r.setName(name);
             r.setJobId(job.getId());
             r.setFileName(file.getOriginalFilename());
-            r.setContentType(types);
+            r.setZipped(zipped);
+            r.setContentType(type);
             r.setContentSize(file.getSize());
             r.setPath(path.getValue());
             r.setCreatedAt(new Date());
@@ -86,7 +94,49 @@ public class ReportServiceImpl implements ReportService {
             log.warn("The job report duplicated");
             throw new DuplicateException("The job report duplicated");
         } catch (IOException e) {
-            throw new ArgumentException("Invalid report data");
+            throw new NotAvailableException("Invalid report data");
         }
+    }
+
+    @Override
+    public String fetch(Job job, String reportId) {
+        Optional<JobReport> optional = jobReportDao.findById(reportId);
+        if (!optional.isPresent()) {
+            throw new NotFoundException("The job report not available");
+        }
+
+        JobReport report = optional.get();
+
+        // write to static site folder
+        try (InputStream stream = fileManager.read(report.getFileName(), getReportPath(job))) {
+
+            // unzip to static resource dir
+            if (report.isZipped()) {
+                Path destDir = getStaticResourcePath(report);
+                FileHelper.unzip(stream, destDir);
+                return destDir.toString();
+            }
+
+            Path destFile = Paths.get(getStaticResourcePath(report) + "." + report.getContentType());
+            Files.createFile(destFile);
+            FileHelper.writeToFile(stream, destFile);
+            return destFile.toString();
+
+        } catch (IOException e) {
+            throw new NotAvailableException("Invalid report");
+        }
+    }
+
+    private Path getStaticResourcePath(JobReport report) throws IOException {
+        String[] locations = resourceProperties.getStaticLocations();
+        Path path = Paths.get(locations[0], "jobs", report.getJobId(), "reports", report.getId());
+        FileHelper.createDirectory(path);
+        return path;
+    }
+
+    private static Pathable[] getReportPath(Job job) {
+        Pathable flow = job::getFlowId;
+        Pathable[] reportPath = {flow, job, JobReport.ReportPath};
+        return reportPath;
     }
 }

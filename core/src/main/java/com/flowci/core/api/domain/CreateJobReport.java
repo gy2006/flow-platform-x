@@ -16,12 +16,12 @@
 
 package com.flowci.core.api.domain;
 
-import java.util.List;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author yang
@@ -34,6 +34,9 @@ public class CreateJobReport {
     @NotEmpty
     private String name; // report name
 
+    @NotNull
+    private Boolean zipped;
+
     @NotEmpty
-    private List<String> types; // for JobSummary.Type
+    private String type; // for JobOutput.Type
 }

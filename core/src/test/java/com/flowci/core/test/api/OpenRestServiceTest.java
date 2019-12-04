@@ -23,14 +23,10 @@ import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobReportDao;
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.domain.JobOutput;
 import com.flowci.core.job.domain.JobOutput.ContentType;
 import com.flowci.core.job.domain.JobReport;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.core.user.domain.User;
-import java.util.List;
-import java.util.Optional;
-import org.assertj.core.util.Lists;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +34,9 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockMultipartFile;
+
+import java.util.List;
+import java.util.Optional;
 
 public class OpenRestServiceTest extends SpringScenario {
 
@@ -91,8 +90,9 @@ public class OpenRestServiceTest extends SpringScenario {
         MockMultipartFile uploadFile = new MockMultipartFile("jacoco-report.zip", "content".getBytes());
 
         CreateJobReport report = new CreateJobReport()
-            .setName("jacoco")
-            .setTypes(Lists.newArrayList(JobOutput.ContentType.ZIP, ContentType.HTML));
+                .setName("jacoco")
+                .setZipped(true)
+                .setType(ContentType.HTML);
 
         // when:
         openRestService.saveJobReport(flow.getName(), job.getBuildNumber(), report, uploadFile);

@@ -21,7 +21,6 @@ import com.flowci.core.job.domain.JobReport;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Set;
 
 public interface ReportService {
 
@@ -29,10 +28,21 @@ public interface ReportService {
 
     /**
      * Save report to file store
-     * @param name report name
-     * @param types report types
-     * @param job related job
-     * @param file raw file uploaded
+     *
+     * @param name   report name
+     * @param type   report type
+     * @param zipped is zipped package
+     * @param job    related job
+     * @param file   raw file uploaded
      */
-    void save(String name, Set<String> types, Job job, MultipartFile file);
+    void save(String name, String type, boolean zipped, Job job, MultipartFile file);
+
+    /**
+     * Fetch report from file store
+     *
+     * @param job      target job instance
+     * @param reportId report db id
+     * @return http access path
+     */
+    String fetch(Job job, String reportId);
 }

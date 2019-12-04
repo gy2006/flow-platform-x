@@ -18,11 +18,12 @@ package com.flowci.core.job.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
-import java.util.HashSet;
-import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author yang
@@ -44,6 +45,7 @@ public abstract class JobOutput extends Mongoable {
         public static final String HTML = "html";
     }
 
+    @JsonIgnore
     @Indexed(name = "index_job_report_jobid")
     private String jobId;
 
@@ -51,9 +53,14 @@ public abstract class JobOutput extends Mongoable {
     @JsonIgnore
     protected String path;
 
+    @JsonIgnore
     protected String fileName;
 
-    protected Set<String> contentType = new HashSet<>();
+    @JsonIgnore
+    protected boolean zipped;
 
+    protected String contentType;
+
+    @JsonIgnore
     protected Long contentSize = 0L;
 }
