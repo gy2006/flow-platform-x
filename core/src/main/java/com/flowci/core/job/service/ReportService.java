@@ -32,10 +32,11 @@ public interface ReportService {
      * @param name   report name
      * @param type   report type
      * @param zipped is zipped package
+     * @param entryFile zipped package entry file
      * @param job    related job
      * @param file   raw file uploaded
      */
-    void save(String name, String type, boolean zipped, Job job, MultipartFile file);
+    void save(String name, String type, boolean zipped, String entryFile, Job job, MultipartFile file);
 
     /**
      * Fetch report from file store

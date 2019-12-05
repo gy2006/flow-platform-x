@@ -83,7 +83,7 @@ public class OpenRestServiceImpl implements OpenRestService {
     @Override
     public void saveJobReport(String flowName, long buildNumber, CreateJobReport report, MultipartFile file) {
         Job job = getJob(flowName, buildNumber);
-        reportService.save(report.getName(), report.getType(), report.getZipped(), job, file);
+        reportService.save(report.getName(), report.getType(), report.getZipped(), report.getEntryFile(), job, file);
     }
 
     @Override

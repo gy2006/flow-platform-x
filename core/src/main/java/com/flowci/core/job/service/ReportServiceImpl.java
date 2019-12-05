@@ -62,7 +62,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public void save(String name, String type, boolean zipped, Job job, MultipartFile file) {
+    public void save(String name, String type, boolean zipped, String entryFile, Job job, MultipartFile file) {
         Pathable[] reportPath = getReportPath(job);
         ObjectWrapper<String> path = new ObjectWrapper<>();
 
@@ -77,6 +77,7 @@ public class ReportServiceImpl implements ReportService {
             r.setJobId(job.getId());
             r.setFileName(file.getOriginalFilename());
             r.setZipped(zipped);
+            r.setEntryFile(entryFile);
             r.setContentType(type);
             r.setContentSize(file.getSize());
             r.setPath(path.getValue());
@@ -123,7 +124,9 @@ public class ReportServiceImpl implements ReportService {
                 if (!Files.exists(destFile)) {
                     FileHelper.unzip(stream, destFile);
                 }
-                return destFile.toString().replace(staticResourceDir.toString(), StringHelper.EMPTY);
+
+                Path entry = Paths.get(destFile.toString(), report.getEntryFile());
+                return entry.toString().replace(staticResourceDir.toString(), StringHelper.EMPTY);
             }
 
             Path destFile = Paths.get(destDir.toString(), report.getFileName());

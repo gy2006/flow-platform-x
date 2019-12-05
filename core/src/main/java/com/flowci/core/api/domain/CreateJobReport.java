@@ -39,4 +39,6 @@ public class CreateJobReport {
 
     @NotEmpty
     private String type; // for JobOutput.Type
+
+    private String entryFile;
 }

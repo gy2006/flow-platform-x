@@ -39,6 +39,13 @@ public class JobReport extends JobOutput {
 
     public static final Pathable ReportPath = () -> "reports";
 
-    private String name; // report name
+    /**
+     * Report name
+     */
+    private String name;
 
+    /**
+     * the entry file for zipped report, ex index.html
+     */
+    private String entryFile;
 }
