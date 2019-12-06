@@ -33,4 +33,8 @@ public final class ObjectWrapper<T> {
     public ObjectWrapper(T value) {
         this.value = value;
     }
+
+    public boolean hasValue() {
+        return value != null;
+    }
 }

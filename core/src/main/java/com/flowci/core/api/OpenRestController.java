@@ -18,7 +18,7 @@
 package com.flowci.core.api;
 
 import com.flowci.core.api.domain.AddStatsItem;
-import com.flowci.core.api.domain.CreateJobSummary;
+import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.api.service.OpenRestService;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.RSACredential;
@@ -33,7 +33,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Provides API which calling from agent plugin
@@ -69,11 +71,13 @@ public class OpenRestController {
         openRestService.saveStatsForFlow(name, body.getType(), StatsCounter.from(body.getData()));
     }
 
-    @PostMapping("/flow/{name}/job/{number}/summary")
-    public void createJobSummary(@PathVariable String name,
-                                 @PathVariable long number,
-                                 @Validated @RequestBody CreateJobSummary body) {
-        openRestService.saveJobSummary(name, number, body);
+    @PostMapping("/flow/{name}/job/{number}/report")
+    public void saveJobReport(@PathVariable String name,
+                              @PathVariable long number,
+                              @Validated @RequestPart("body") CreateJobReport body,
+                              @RequestPart("file") MultipartFile file) {
+
+        openRestService.saveJobReport(name, number, body, file);
     }
 
     @PostMapping("/flow/{name}/job/{number}/context")

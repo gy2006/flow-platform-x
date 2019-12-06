@@ -14,24 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.core.api.domain;
-
-import javax.validation.constraints.NotEmpty;
-import lombok.Getter;
-import lombok.Setter;
+package com.flowci.store;
 
 /**
+ * Support path for storage
+ *
  * @author yang
  */
-@Getter
-@Setter
-public class CreateJobSummary {
+public interface Pathable {
 
-    @NotEmpty
-    private String name;
+    String pathName();
 
-    @NotEmpty
-    private String type; // for JobSummary.Type
-
-    private String data; // base64 encoded
 }

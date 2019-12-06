@@ -161,8 +161,11 @@ public class StatsServiceImpl implements StatsService {
     @Override
     public StatsItem add(String flowId, int day, String type, StatsCounter counter) {
         synchronized (statsSync) {
-            StatsItem dayItem = getItem(flowId, day, type, counter);
             StatsItem totalItem = getItem(flowId, StatsItem.ZERO_DAY, type, counter);
+
+            StatsItem dayItem = getItem(flowId, day, type, counter);
+            dayItem.setTotal(totalItem.getTotal());
+
             statsItemDao.saveAll(Arrays.asList(dayItem, totalItem));
             return dayItem;
         }

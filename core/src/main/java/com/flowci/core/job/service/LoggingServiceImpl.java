@@ -16,9 +16,7 @@
 
 package com.flowci.core.job.service;
 
-import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.helper.CacheHelper;
-import com.flowci.core.common.manager.PathManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.rabbit.RabbitOperation;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
@@ -27,37 +25,34 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.LogItem;
 import com.flowci.exception.NotFoundException;
+import com.flowci.store.FileManager;
+import com.flowci.store.Pathable;
 import com.flowci.util.FileHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.google.common.collect.ImmutableList;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author yang
@@ -67,15 +62,17 @@ import java.util.stream.Stream;
 public class LoggingServiceImpl implements LoggingService {
 
     private static final Page<String> LogNotFound = new PageImpl<>(
-            ImmutableList.of("Log not available"),
-            PageRequest.of(0, 1),
-            1L
+        ImmutableList.of("Log not available"),
+        PageRequest.of(0, 1),
+        1L
     );
 
     private static final int FileBufferSize = 8000; // ~8k
 
+    private static final Pathable LogPath = () -> "logs";
+
     private Cache<String, BufferedReader> logReaderCache =
-            CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
+        CacheHelper.createLocalCache(10, 60, new ReaderCleanUp());
 
     @Autowired
     private String topicForLogs;
@@ -84,7 +81,7 @@ public class LoggingServiceImpl implements LoggingService {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
-    private PathManager pathManager;
+    private FileManager fileManager;
 
     @Autowired
     private RabbitQueueOperation loggingQueueManager;
@@ -133,8 +130,8 @@ public class LoggingServiceImpl implements LoggingService {
             int i = pageable.getPageNumber() * pageable.getPageSize();
 
             List<String> logs = lines.skip(i)
-                    .limit(pageable.getPageSize())
-                    .collect(Collectors.toList());
+                .limit(pageable.getPageSize())
+                .collect(Collectors.toList());
 
             return new PageImpl<>(logs, pageable, cmd.getLogSize());
         } finally {
@@ -148,30 +145,18 @@ public class LoggingServiceImpl implements LoggingService {
     }
 
     @Override
-    public Path save(String fileName, InputStream stream) {
+    public String save(String fileName, InputStream stream) throws IOException {
         String cmdId = FileHelper.getName(fileName);
-
-        try {
-            Path logDir = getLogDir(cmdId);
-            Path target = Paths.get(logDir.toString(), fileName);
-            Files.copy(stream, target, StandardCopyOption.REPLACE_EXISTING);
-            return target;
-        } catch (IOException e) {
-            log.warn("Unable to create log dir", e);
-            return null;
-        }
+        Pathable[] logDir = getLogDir(cmdId);
+        return fileManager.save(fileName, stream, logDir);
     }
 
     @Override
-    public Resource get(String cmdId, boolean isRaw) {
+    public Resource get(String cmdId) {
         try {
-            Path logPath = isRaw ? getRawFile(cmdId) : getLogFile(cmdId);
-            Resource resource = new UrlResource(logPath.toUri());
-            if (resource.exists()) {
-                return resource;
-            }
-
-            throw new NotFoundException("Log not available");
+            String fileName = getLogFile(cmdId);
+            InputStream stream = fileManager.read(fileName, getLogDir(cmdId));
+            return new InputStreamResource(stream);
         } catch (IOException e) {
             throw new NotFoundException("Log not available");
         }
@@ -180,8 +165,10 @@ public class LoggingServiceImpl implements LoggingService {
     private BufferedReader getReader(String cmdId) {
         return logReaderCache.get(cmdId, key -> {
             try {
-                Path target = getRawFile(cmdId);
-                BufferedReader reader = new BufferedReader(new FileReader(target.toFile()), FileBufferSize);
+                String fileName = getLogFile(cmdId);
+                InputStream stream = fileManager.read(fileName, getLogDir(cmdId));
+                InputStreamReader streamReader = new InputStreamReader(stream);
+                BufferedReader reader = new BufferedReader(streamReader, FileBufferSize);
                 reader.mark(1);
                 return reader;
             } catch (IOException e) {
@@ -190,28 +177,21 @@ public class LoggingServiceImpl implements LoggingService {
         });
     }
 
-    private Path getLogDir(String cmdId) throws IOException {
+    private Pathable[] getLogDir(String cmdId) {
         ExecutedCmd cmd = stepService.get(cmdId);
 
-        Pathable[] workPath = new Pathable[]{
-                Flow.path(cmd.getFlowId()),
-                Job.path(cmd.getBuildNumber())
+        return new Pathable[]{
+            Flow.path(cmd.getFlowId()),
+            Job.path(cmd.getBuildNumber()),
+            LogPath
         };
-
-        return pathManager.log(workPath);
     }
 
-    private Path getRawFile(String cmdId) throws IOException {
-        Path logDir = getLogDir(cmdId);
-        return Paths.get(logDir.toString(), cmdId + ".raw.log");
+    private String getLogFile(String cmdId) {
+        return cmdId + ".log";
     }
 
-    private Path getLogFile(String cmdId) throws IOException {
-        Path logDir = getLogDir(cmdId);
-        return Paths.get(logDir.toString(), cmdId + ".log");
-    }
-
-    private class ReaderCleanUp implements RemovalListener<String, BufferedReader> {
+    private static class ReaderCleanUp implements RemovalListener<String, BufferedReader> {
 
         @Override
         public void onRemoval(String key, BufferedReader reader, RemovalCause cause) {

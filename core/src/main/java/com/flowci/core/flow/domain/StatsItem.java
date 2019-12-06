@@ -56,5 +56,13 @@ public class StatsItem {
      */
     private String type;
 
+    /**
+     * Current day counter
+     */
     private StatsCounter counter = new StatsCounter();
+
+    /**
+     * Counter in total
+     */
+    private StatsCounter total = new StatsCounter();
 }

@@ -16,48 +16,36 @@
 
 package com.flowci.core.job.domain;
 
+import com.flowci.store.Pathable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
- * To describe job summary data
+ * @author yang
  */
-
 @Setter
 @Getter
-@EqualsAndHashCode(of = "jobId")
-@Accessors(chain = true)
-@Document(collection = "job_summary")
+@EqualsAndHashCode(callSuper = true)
+@Document(collection = "job_report")
 @CompoundIndex(
-        name = "index_job_summary_id_name_type",
-        def = "{'jobId': 1, 'name': 1, 'type': 1}",
-        unique = true
+    name = "index_job_report_id_name_type",
+    def = "{'jobId': 1, 'name': 1, 'type': 1}",
+    unique = true
 )
-public class JobSummary {
+public class JobReport extends JobOutput {
 
-    public enum Type {
+    public static final Pathable ReportPath = () -> "reports";
 
-        JSON,
-
-        STRING
-    }
-
-    @Id
-    private String id;
-
-    @Indexed(name = "index_job_summary_jobid")
-    private String jobId;
-
+    /**
+     * Report name
+     */
     private String name;
 
-    private Type type;
-
-    // base64 encoded data
-    private String data;
+    /**
+     * the entry file for zipped report, ex index.html
+     */
+    private String entryFile;
 }

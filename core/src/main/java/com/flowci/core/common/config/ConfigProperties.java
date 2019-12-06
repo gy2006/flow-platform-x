@@ -17,12 +17,14 @@
 package com.flowci.core.common.config;
 
 import java.net.URI;
+import java.net.URL;
 import java.nio.file.Path;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.Email;
@@ -35,11 +37,15 @@ import javax.validation.constraints.NotBlank;
 @Validated
 @Configuration
 @ConfigurationProperties(prefix = "app")
+@PropertySource("classpath:flow.properties")
 public class ConfigProperties {
 
     private Path workspace;
 
     private Path flowDir;
+
+    // static site resource
+    private Path siteDir;
 
     @NotBlank
     private String serverAddress;
@@ -84,6 +90,12 @@ public class ConfigProperties {
         return new Auth();
     }
 
+    @Bean("minioProperties")
+    @ConfigurationProperties(prefix = "app.minio")
+    public Minio minio() {
+        return new Minio();
+    }
+
     @Data
     @Validated
     public static class Admin {
@@ -111,7 +123,6 @@ public class ConfigProperties {
 
         private Boolean autoUpdate;
     }
-
 
     @Data
     public static class Zookeeper {
@@ -151,5 +162,19 @@ public class ConfigProperties {
 
         // expired for refresh token
         private Integer refreshExpiredSeconds;
+    }
+
+    @Data
+    public static class Minio {
+
+        private Boolean enabled;
+
+        private String bucket;
+
+        private URL endpoint;
+
+        private String key;
+
+        private String secret;
     }
 }
