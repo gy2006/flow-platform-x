@@ -60,6 +60,11 @@ public class StatsServiceTest extends SpringScenario {
         Assert.assertEquals(new Float(0.0F), item.getCounter().get("FAILURE"));
         Assert.assertEquals(new Float(0.0F), item.getCounter().get("CANCELLED"));
         Assert.assertEquals(new Float(0.0F), item.getCounter().get("TIMEOUT"));
+
+        Assert.assertEquals(new Float(1.0F), item.getTotal().get("SUCCESS"));
+        Assert.assertEquals(new Float(0.0F), item.getTotal().get("FAILURE"));
+        Assert.assertEquals(new Float(0.0F), item.getTotal().get("CANCELLED"));
+        Assert.assertEquals(new Float(0.0F), item.getTotal().get("TIMEOUT"));
     }
 
     @Test

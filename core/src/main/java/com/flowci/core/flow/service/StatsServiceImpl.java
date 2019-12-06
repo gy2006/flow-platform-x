@@ -164,7 +164,7 @@ public class StatsServiceImpl implements StatsService {
             StatsItem totalItem = getItem(flowId, StatsItem.ZERO_DAY, type, counter);
 
             StatsItem dayItem = getItem(flowId, day, type, counter);
-            dayItem.setTotal(totalItem.getTotal());
+            dayItem.setTotal(totalItem.getCounter());
 
             statsItemDao.saveAll(Arrays.asList(dayItem, totalItem));
             return dayItem;
