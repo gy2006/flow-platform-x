@@ -34,11 +34,11 @@ public class RabbitQueueOperation extends RabbitOperation {
         this.queueName = queueName;
     }
 
-    public String declare(boolean durable) {
+    public String declare(boolean durable) throws IOException {
         return super.declare(queueName, durable);
     }
 
-    public String declare(boolean durable, Integer maxPriority) {
+    public String declare(boolean durable, Integer maxPriority) throws IOException {
         return super.declare(queueName, durable, maxPriority);
     }
 

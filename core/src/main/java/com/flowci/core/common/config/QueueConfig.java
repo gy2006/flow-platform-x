@@ -37,6 +37,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -45,8 +47,6 @@ import java.util.concurrent.TimeoutException;
 @Log4j2
 @Configuration
 public class QueueConfig {
-
-    public final static String LoggingExchange = "cmd.logs";
 
     @Autowired
     private ConfigProperties.RabbitMQ rabbitProperties;
@@ -69,7 +69,7 @@ public class QueueConfig {
 
     @Bean
     public RabbitQueueOperation callbackQueueManager(Connection rabbitConnection) throws IOException {
-        String name = rabbitProperties.getCallbackQueueName();
+        String name = rabbitProperties.getCallbackQueue();
         RabbitQueueOperation manager = new RabbitQueueOperation(rabbitConnection, 10, name);
         manager.declare(true);
         return manager;
@@ -77,13 +77,33 @@ public class QueueConfig {
 
     @Bean
     public RabbitQueueOperation loggingQueueManager(Connection rabbitConnection) throws IOException {
-        String name = rabbitProperties.getLoggingQueueName();
+        String name = rabbitProperties.getLoggingQueue();
+        String exchange = rabbitProperties.getLoggingExchange();
+
         RabbitQueueOperation manager = new RabbitQueueOperation(rabbitConnection, 10, name);
         manager.declare(false);
 
         Channel channel = manager.getChannel();
-        channel.exchangeDeclare(LoggingExchange, BuiltinExchangeType.FANOUT);
-        channel.queueBind(manager.getQueueName(), LoggingExchange, StringHelper.EMPTY);
+        channel.exchangeDeclare(exchange, BuiltinExchangeType.FANOUT);
+        channel.queueBind(manager.getQueueName(), exchange, StringHelper.EMPTY);
+
+        return manager;
+    }
+
+    @Bean
+    public RabbitQueueOperation delayedQueueManager(Connection rabbitConnection) throws IOException {
+        String name = rabbitProperties.getJobDelayQueue();
+        String exchange = rabbitProperties.getJobDelayExchange();
+
+        RabbitQueueOperation manager = new RabbitQueueOperation(rabbitConnection, 1, name);
+        manager.declare(true);
+
+        Map<String, Object> props = new HashMap<>(1);
+        props.put("x-delayed-message", "topic");
+
+        Channel channel = manager.getChannel();
+        channel.exchangeDeclare(exchange, BuiltinExchangeType.TOPIC, true, false, props);
+        channel.queueBind(manager.getQueueName(), exchange, "delay.#");
 
         return manager;
     }

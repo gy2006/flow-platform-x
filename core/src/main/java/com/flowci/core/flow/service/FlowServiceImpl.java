@@ -387,7 +387,11 @@ public class FlowServiceImpl implements FlowService {
     }
 
     private void createFlowJobQueue(Flow flow) {
-        jobQueueManager.declare(flow.getQueueName(), true, 255);
+        try {
+            jobQueueManager.declare(flow.getQueueName(), true, 255);
+        } catch (IOException e) {
+            log.warn(e.getMessage());
+        }
     }
 
     private void removeFlowJobQueue(Flow flow) {

@@ -81,7 +81,7 @@ public final class Flow extends Mongoable implements Pathable {
 
     @JsonIgnore
     public String getQueueName() {
-        return "queue.flow." + id + ".job";
+        return "flow.q." + id + ".job";
     }
 
     @JsonIgnore

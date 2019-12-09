@@ -147,9 +147,15 @@ public class ConfigProperties {
 
         private URI uri;
 
-        private String callbackQueueName;
+        private String callbackQueue;
 
-        private String loggingQueueName;
+        private String loggingQueue;
+
+        private String loggingExchange;
+
+        private String jobDelayQueue;
+
+        private String jobDelayExchange;
     }
 
     @Data
