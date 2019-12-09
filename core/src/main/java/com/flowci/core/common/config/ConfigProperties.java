@@ -111,7 +111,9 @@ public class ConfigProperties {
     @Data
     public static class Job {
 
-        private Long expireInSeconds;
+        private Long timeoutInSeconds; // job execution timeout
+
+        private Long expireInSeconds; // job queue up timeout
 
         private Long retryWaitingSeconds;
     }

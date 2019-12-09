@@ -61,10 +61,10 @@ public abstract class RabbitOperation implements AutoCloseable {
         return this.channel.queueDeclare(queue, durable, false, false, null).getQueue();
     }
 
-    public String declare(String queue, boolean durable, Integer maxPriority, String dlxExName) throws IOException {
+    public String declare(String queue, boolean durable, Integer maxPriority, String dlExName) throws IOException {
         Map<String, Object> props = new HashMap<>(1);
         props.put("x-max-priority", maxPriority);
-        props.put("x-dead-letter-exchange", dlxExName);
+        props.put("x-dead-letter-exchange", dlExName);
 
         return this.channel.queueDeclare(queue, durable, false, false, props).getQueue();
     }
@@ -106,6 +106,7 @@ public abstract class RabbitOperation implements AutoCloseable {
         try {
             AMQP.BasicProperties.Builder basicProps = new AMQP.BasicProperties.Builder();
             basicProps.priority(priority);
+            basicProps.expiration("50000");
 
             this.channel.basicPublish(StringHelper.EMPTY, routingKey, basicProps.build(), body);
             return true;
@@ -170,9 +171,9 @@ public abstract class RabbitOperation implements AutoCloseable {
             });
         }
 
-        public String start(boolean ack) {
+        public String start(boolean autoAck) {
             try {
-                String tag = getChannel().basicConsume(queue, ack, this);
+                String tag = getChannel().basicConsume(queue, autoAck, this);
                 log.info("[Consumer STARTED] queue {} with tag {}", queue, tag);
                 return tag;
             } catch (IOException e) {

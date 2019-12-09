@@ -38,10 +38,6 @@ public class RabbitQueueOperation extends RabbitOperation {
         return super.declare(queueName, durable);
     }
 
-    public String declare(boolean durable, Integer maxPriority, String dlxExName) throws IOException {
-        return super.declare(queueName, durable, maxPriority, dlxExName);
-    }
-
     public boolean delete() {
         removeConsumer();
         return super.delete(queueName);
