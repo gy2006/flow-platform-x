@@ -153,9 +153,9 @@ public class ConfigProperties {
 
         private String loggingExchange;
 
-        private String jobDelayQueue;
+        private String jobDlQueue; // job dead letter queue
 
-        private String jobDelayExchange;
+        private String jobDlExchange; // job dead letter exchange
     }
 
     @Data

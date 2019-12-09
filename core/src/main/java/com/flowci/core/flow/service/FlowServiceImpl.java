@@ -16,6 +16,7 @@
 
 package com.flowci.core.flow.service;
 
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
@@ -82,6 +83,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private String serverAddress;
+
+    @Autowired
+    private ConfigProperties.RabbitMQ rabbitProperties;
 
     @Autowired
     private FlowDao flowDao;
@@ -388,7 +392,7 @@ public class FlowServiceImpl implements FlowService {
 
     private void createFlowJobQueue(Flow flow) {
         try {
-            jobQueueManager.declare(flow.getQueueName(), true, 255);
+            jobQueueManager.declare(flow.getQueueName(), true, 255, rabbitProperties.getJobDlExchange());
         } catch (IOException e) {
             log.warn(e.getMessage());
         }

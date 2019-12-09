@@ -24,8 +24,6 @@ import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.ShutdownListener;
-import com.rabbitmq.client.ShutdownSignalException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -33,13 +31,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author yang
@@ -91,19 +84,17 @@ public class QueueConfig {
     }
 
     @Bean
-    public RabbitQueueOperation delayedQueueManager(Connection rabbitConnection) throws IOException {
-        String name = rabbitProperties.getJobDelayQueue();
-        String exchange = rabbitProperties.getJobDelayExchange();
+    public RabbitQueueOperation deadLetterQueueManager(Connection rabbitConnection) throws IOException {
+        String name = rabbitProperties.getJobDlExchange();
+        String exchange = rabbitProperties.getJobDlExchange();
 
         RabbitQueueOperation manager = new RabbitQueueOperation(rabbitConnection, 1, name);
         manager.declare(true);
 
-        Map<String, Object> props = new HashMap<>(1);
-        props.put("x-delayed-message", "topic");
-
+        Map<String, Object> props = new HashMap<>(0);
         Channel channel = manager.getChannel();
-        channel.exchangeDeclare(exchange, BuiltinExchangeType.TOPIC, true, false, props);
-        channel.queueBind(manager.getQueueName(), exchange, "delay.#");
+        channel.exchangeDeclare(exchange, BuiltinExchangeType.FANOUT, true, false, props);
+        channel.queueBind(manager.getQueueName(), exchange, StringHelper.EMPTY);
 
         return manager;
     }

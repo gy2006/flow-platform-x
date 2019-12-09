@@ -61,9 +61,10 @@ public abstract class RabbitOperation implements AutoCloseable {
         return this.channel.queueDeclare(queue, durable, false, false, null).getQueue();
     }
 
-    public String declare(String queue, boolean durable, Integer maxPriority) throws IOException {
+    public String declare(String queue, boolean durable, Integer maxPriority, String dlxExName) throws IOException {
         Map<String, Object> props = new HashMap<>(1);
         props.put("x-max-priority", maxPriority);
+        props.put("x-dead-letter-exchange", dlxExName);
 
         return this.channel.queueDeclare(queue, durable, false, false, props).getQueue();
     }
