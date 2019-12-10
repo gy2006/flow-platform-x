@@ -17,33 +17,29 @@
 package com.flowci.core.job.service;
 
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.domain.JobReport;
+import com.flowci.core.job.domain.JobArtifact;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-public interface ReportService {
+public interface ArtifactService {
 
-    List<JobReport> list(Job job);
+    List<JobArtifact> list(Job job);
 
     /**
      * Save report to file store
      *
-     * @param name   report name
-     * @param type   report content type
-     * @param zipped is zipped package
-     * @param entryFile zipped package entry file
-     * @param job    related job
-     * @param file   raw file uploaded
+     * @param job  related job
+     * @param file raw file uploaded
      */
-    void save(String name, String type, boolean zipped, String entryFile, Job job, MultipartFile file);
+    void save(Job job, MultipartFile file);
 
     /**
      * Fetch report from file store
      *
-     * @param job      target job instance
-     * @param reportId report db id
+     * @param job        target job instance
+     * @param artifactId artifact db id
      * @return http access path
      */
-    String fetch(Job job, String reportId);
+    String fetch(Job job, String artifactId);
 }

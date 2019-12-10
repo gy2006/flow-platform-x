@@ -16,36 +16,11 @@
 
 package com.flowci.core.job.domain;
 
-import com.flowci.store.Pathable;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-/**
- * @author yang
- */
-@Setter
-@Getter
 @EqualsAndHashCode(callSuper = true)
-@Document(collection = "job_report")
-@CompoundIndex(
-    name = "index_job_report_id_name",
-    def = "{'jobId': 1, 'name': 1}",
-    unique = true
-)
-public class JobReport extends JobOutput {
+@Document(collection = "job_artifact")
+public class JobArtifact extends JobOutput {
 
-    public static final Pathable ReportPath = () -> "reports";
-
-    /**
-     * Report name
-     */
-    private String name;
-
-    /**
-     * the entry file for zipped report, ex index.html
-     */
-    private String entryFile;
 }
