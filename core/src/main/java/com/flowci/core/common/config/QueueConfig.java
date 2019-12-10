@@ -41,6 +41,8 @@ import java.util.Map;
 @Configuration
 public class QueueConfig {
 
+    public static final String JobDlRoutingKey = "jobtimeout";
+
     @Autowired
     private ConfigProperties.RabbitMQ rabbitProperties;
 
@@ -85,16 +87,17 @@ public class QueueConfig {
 
     @Bean
     public RabbitQueueOperation deadLetterQueueManager(Connection rabbitConnection) throws IOException {
-        String name = rabbitProperties.getJobDlExchange();
+        String name = rabbitProperties.getJobDlQueue();
         String exchange = rabbitProperties.getJobDlExchange();
 
         RabbitQueueOperation manager = new RabbitQueueOperation(rabbitConnection, 1, name);
         manager.declare(true);
 
         Map<String, Object> props = new HashMap<>(0);
+
         Channel channel = manager.getChannel();
-        channel.exchangeDeclare(exchange, BuiltinExchangeType.FANOUT, true, false, props);
-        channel.queueBind(manager.getQueueName(), exchange, StringHelper.EMPTY);
+        channel.exchangeDeclare(exchange, BuiltinExchangeType.DIRECT, true, false, props);
+        channel.queueBind(manager.getQueueName(), exchange, JobDlRoutingKey);
 
         return manager;
     }

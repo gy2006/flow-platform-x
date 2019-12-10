@@ -175,8 +175,6 @@ public class Job extends Mongoable implements Pathable {
 
     private Status status = Status.PENDING;
 
-    private Date expireAt;
-
     private Selector agentSelector;
 
     private String agentId;
@@ -190,6 +188,21 @@ public class Job extends Mongoable implements Pathable {
     private String message;
 
     private Integer priority = MinPriority;
+
+    /**
+     * Execution timeout in seconds
+     */
+    private Long timeout = 1800L;
+
+    /**
+     * Expire while queue up
+     */
+    private Long expire = 1800L;
+
+    /**
+     * Total expire from expire and timeout
+     */
+    private Date expireAt;
 
     /**
      * Real execution start at

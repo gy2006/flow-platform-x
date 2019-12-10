@@ -51,8 +51,8 @@ public class RabbitQueueOperation extends RabbitOperation {
         return super.send(queueName, body);
     }
 
-    public boolean send(byte[] body, Integer priority) {
-        return super.send(queueName, body, priority);
+    public boolean send(byte[] body, Integer priority, Long expireInSeconds) {
+        return super.send(queueName, body, priority, expireInSeconds);
     }
 
     public QueueConsumer getConsumer() {

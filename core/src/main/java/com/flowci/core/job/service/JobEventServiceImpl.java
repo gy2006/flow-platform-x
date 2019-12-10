@@ -140,7 +140,7 @@ public class JobEventServiceImpl implements JobEventService {
                 return true;
             }
 
-            jobService.setJobStatusAndSave(optional.get(), Job.Status.TIMEOUT, "timeout while queued up");
+            jobService.setJobStatusAndSave(optional.get(), Job.Status.TIMEOUT, "expired while queued up");
             return true;
         });
 
@@ -512,7 +512,7 @@ public class JobEventServiceImpl implements JobEventService {
                 }
 
                 if (jobService.isExpired(job)) {
-                    jobService.setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
+                    jobService.setJobStatusAndSave(job, Job.Status.TIMEOUT, "expired while waiting for agent");
                     logInfo(job, "expired");
                     return false;
                 }

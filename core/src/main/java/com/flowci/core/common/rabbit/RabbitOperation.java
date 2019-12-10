@@ -17,6 +17,7 @@
 
 package com.flowci.core.common.rabbit;
 
+import com.flowci.core.common.config.QueueConfig;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.util.StringHelper;
 import com.rabbitmq.client.*;
@@ -65,6 +66,7 @@ public abstract class RabbitOperation implements AutoCloseable {
         Map<String, Object> props = new HashMap<>(1);
         props.put("x-max-priority", maxPriority);
         props.put("x-dead-letter-exchange", dlExName);
+        props.put("x-dead-letter-routing-key", QueueConfig.JobDlRoutingKey);
 
         return this.channel.queueDeclare(queue, durable, false, false, props).getQueue();
     }
@@ -102,13 +104,14 @@ public abstract class RabbitOperation implements AutoCloseable {
     /**
      * Send to routing key with default exchange and priority
      */
-    public boolean send(String routingKey, byte[] body, Integer priority) {
+    public boolean send(String routingKey, byte[] body, Integer priority, Long expireInSecond) {
         try {
-            AMQP.BasicProperties.Builder basicProps = new AMQP.BasicProperties.Builder();
-            basicProps.priority(priority);
-            basicProps.expiration("50000");
+            AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
+                    .priority(priority)
+                    .expiration(Long.toString(expireInSecond * 1000))
+                    .build();
 
-            this.channel.basicPublish(StringHelper.EMPTY, routingKey, basicProps.build(), body);
+            this.channel.basicPublish(StringHelper.EMPTY, routingKey, props, body);
             return true;
         } catch (IOException e) {
             return false;

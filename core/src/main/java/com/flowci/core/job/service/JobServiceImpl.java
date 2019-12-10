@@ -191,6 +191,8 @@ public class JobServiceImpl implements JobService {
         job.setCurrentPath(root.getPathAsString());
         job.setAgentSelector(root.getSelector());
         job.setCreatedAt(Date.from(Instant.now()));
+        job.setTimeout(jobProperties.getTimeoutInSeconds());
+        job.setExpire(jobProperties.getExpireInSeconds());
 
         // init job context
         initJobContext(job, flow, input);
@@ -205,9 +207,11 @@ public class JobServiceImpl implements JobService {
             job.getContext().put(Variables.Job.TriggerBy, createdBy);
         }
 
-        // set expire at
-        Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
+        long totalExpire = job.getExpire() + job.getTimeout();
+        Instant expireAt = Instant.now().plus(totalExpire, ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
+
+        // save
         jobDao.insert(job);
 
         // create job workspace
@@ -278,7 +282,7 @@ public class JobServiceImpl implements JobService {
     @Override
     public boolean isExpired(Job job) {
         Instant expireAt = job.getExpireAt().toInstant();
-        return Instant.now().compareTo(expireAt) == 1;
+        return Instant.now().compareTo(expireAt) > 0;
     }
 
     @Override
@@ -323,7 +327,7 @@ public class JobServiceImpl implements JobService {
 
     private Job enqueue(Job job) {
         if (isExpired(job)) {
-            setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
+            setJobStatusAndSave(job, Job.Status.TIMEOUT, "expired before enqueue");
             log.debug("[Job: Timeout] {} has expired", job.getKey());
             return job;
         }
@@ -334,7 +338,7 @@ public class JobServiceImpl implements JobService {
             setJobStatusAndSave(job, Job.Status.QUEUED, null);
             byte[] body = objectMapper.writeValueAsBytes(job);
 
-            manager.send(body, job.getPriority());
+            manager.send(body, job.getPriority(), job.getExpire());
             logInfo(job, "enqueue");
 
             return job;
