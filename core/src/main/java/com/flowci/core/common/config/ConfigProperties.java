@@ -111,7 +111,9 @@ public class ConfigProperties {
     @Data
     public static class Job {
 
-        private Long expireInSeconds;
+        private Long timeoutInSeconds; // job execution timeout
+
+        private Long expireInSeconds; // job queue up timeout
 
         private Long retryWaitingSeconds;
     }
@@ -147,9 +149,15 @@ public class ConfigProperties {
 
         private URI uri;
 
-        private String callbackQueueName;
+        private String callbackQueue;
 
-        private String loggingQueueName;
+        private String loggingQueue;
+
+        private String loggingExchange;
+
+        private String jobDlQueue; // job dead letter queue
+
+        private String jobDlExchange; // job dead letter exchange
     }
 
     @Data

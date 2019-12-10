@@ -34,12 +34,8 @@ public class RabbitQueueOperation extends RabbitOperation {
         this.queueName = queueName;
     }
 
-    public String declare(boolean durable) {
+    public String declare(boolean durable) throws IOException {
         return super.declare(queueName, durable);
-    }
-
-    public String declare(boolean durable, Integer maxPriority) {
-        return super.declare(queueName, durable, maxPriority);
     }
 
     public boolean delete() {
@@ -55,8 +51,8 @@ public class RabbitQueueOperation extends RabbitOperation {
         return super.send(queueName, body);
     }
 
-    public boolean send(byte[] body, Integer priority) {
-        return super.send(queueName, body, priority);
+    public boolean send(byte[] body, Integer priority, Long expireInSeconds) {
+        return super.send(queueName, body, priority, expireInSeconds);
     }
 
     public QueueConsumer getConsumer() {
