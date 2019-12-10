@@ -16,11 +16,25 @@
 
 package com.flowci.core.job.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.flowci.store.Pathable;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.io.InputStream;
+
+@Getter
+@Setter
 @EqualsAndHashCode(callSuper = true)
 @Document(collection = "job_artifact")
 public class JobArtifact extends JobOutput {
 
+    public static final Pathable ArtifactPath = () -> "artifacts";
+
+    @JsonIgnore
+    @Transient
+    private InputStream src;
 }

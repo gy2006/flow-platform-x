@@ -41,5 +41,5 @@ public interface ArtifactService {
      * @param artifactId artifact db id
      * @return http access path
      */
-    String fetch(Job job, String artifactId);
+    JobArtifact fetch(Job job, String artifactId);
 }
