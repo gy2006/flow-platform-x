@@ -57,6 +57,5 @@ public abstract class JobOutput extends Mongoable {
 
     protected String contentType;
 
-    @JsonIgnore
     protected Long contentSize = 0L;
 }
