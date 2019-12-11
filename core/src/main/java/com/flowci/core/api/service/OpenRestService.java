@@ -38,9 +38,14 @@ public interface OpenRestService {
     void saveStatsForFlow(String flowName, String statsType, StatsCounter counter);
 
     /**
-     * Save job report with file
+     * Save uploaded job report with file
      */
     void saveJobReport(String flowName, long buildNumber, CreateJobReport report, MultipartFile file);
+
+    /**
+     * Save uploaded job artifact
+     */
+    void saveJobArtifact(String flowName, long buildNumber, MultipartFile file);
 
     /**
      * Add env vars to job context
@@ -52,3 +57,4 @@ public interface OpenRestService {
      */
     List<User> users(String flowName);
 }
+

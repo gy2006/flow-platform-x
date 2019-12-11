@@ -28,6 +28,7 @@ import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.service.StatsService;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.service.ArtifactService;
 import com.flowci.core.job.service.ReportService;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.user.dao.UserDao;
@@ -68,6 +69,9 @@ public class OpenRestServiceImpl implements OpenRestService {
     @Autowired
     private ReportService reportService;
 
+    @Autowired
+    private ArtifactService artifactService;
+
     @Override
     public Credential getCredential(String name) {
         return credentialService.get(name);
@@ -84,6 +88,12 @@ public class OpenRestServiceImpl implements OpenRestService {
     public void saveJobReport(String flowName, long buildNumber, CreateJobReport report, MultipartFile file) {
         Job job = getJob(flowName, buildNumber);
         reportService.save(report.getName(), report.getType(), report.getZipped(), report.getEntryFile(), job, file);
+    }
+
+    @Override
+    public void saveJobArtifact(String flowName, long buildNumber, MultipartFile file) {
+        Job job = getJob(flowName, buildNumber);
+        artifactService.save(job, file);
     }
 
     @Override
