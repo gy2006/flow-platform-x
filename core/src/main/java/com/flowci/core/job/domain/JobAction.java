@@ -39,6 +39,12 @@ public abstract class JobAction {
 
     public static final String LIST_REPORTS = "list_job_reports";
 
+    public static final String FETCH_REPORT = "fetch_job_report";
+
+    public static final String LIST_ARTIFACTS = "list_job_artifacts";
+
+    public static final String DOWNLOAD_ARTIFACT = "fetch_job_artifact";
+
     public static final String[] ALL = {
             LIST,
             GET,
@@ -49,6 +55,9 @@ public abstract class JobAction {
             CREATE,
             RUN,
             CANCEL,
-            LIST_REPORTS
+            LIST_REPORTS,
+            FETCH_REPORT,
+            LIST_ARTIFACTS,
+            DOWNLOAD_ARTIFACT
     };
 }
