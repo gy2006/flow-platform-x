@@ -53,7 +53,7 @@ public class ArtifactServiceImpl implements ArtifactService {
 
     @Override
     public void save(Job job, MultipartFile file) {
-        Pathable[] reportPath = getReportPath(job);
+        Pathable[] reportPath = getArtifactPath(job);
 
         try (InputStream reportRaw = file.getInputStream()) {
             // save to file manager by file name
@@ -82,7 +82,7 @@ public class ArtifactServiceImpl implements ArtifactService {
 
         try {
             JobArtifact artifact = optional.get();
-            InputStream stream = fileManager.read(artifact.getFileName(), getReportPath(job));
+            InputStream stream = fileManager.read(artifact.getFileName(), getArtifactPath(job));
             artifact.setSrc(stream);
             return artifact;
         } catch (IOException e) {
@@ -90,7 +90,7 @@ public class ArtifactServiceImpl implements ArtifactService {
         }
     }
 
-    private static Pathable[] getReportPath(Job job) {
+    private static Pathable[] getArtifactPath(Job job) {
         Pathable flow = job::getFlowId;
         return new Pathable[]{flow, job, JobArtifact.ArtifactPath};
     }
