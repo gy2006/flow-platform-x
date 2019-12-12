@@ -54,11 +54,12 @@ public class ArtifactServiceImpl implements ArtifactService {
 
     @Override
     public void save(Job job, String srcDir, MultipartFile file) {
-        Pathable[] reportPath = getArtifactPath(job);
+        srcDir = formatSrcDir(srcDir);
+        Pathable[] artifactPath = getArtifactPath(job, srcDir);
 
         try (InputStream reportRaw = file.getInputStream()) {
             // save to file manager by file name
-            String path = fileManager.save(file.getOriginalFilename(), reportRaw, reportPath);
+            String path = fileManager.save(file.getOriginalFilename(), reportRaw, artifactPath);
 
             JobArtifact artifact = new JobArtifact();
             artifact.setJobId(job.getId());
@@ -66,7 +67,7 @@ public class ArtifactServiceImpl implements ArtifactService {
             artifact.setContentType(file.getContentType());
             artifact.setContentSize(file.getSize());
             artifact.setPath(path);
-            artifact.setSrcDir(formatSrcDir(srcDir));
+            artifact.setSrcDir(srcDir);
             artifact.setCreatedAt(new Date());
 
             jobArtifactDao.save(artifact);
@@ -84,7 +85,8 @@ public class ArtifactServiceImpl implements ArtifactService {
 
         try {
             JobArtifact artifact = optional.get();
-            InputStream stream = fileManager.read(artifact.getFileName(), getArtifactPath(job));
+            Pathable[] artifactPath = getArtifactPath(job, artifact.getSrcDir());
+            InputStream stream = fileManager.read(artifact.getFileName(), artifactPath);
             artifact.setSrc(stream);
             return artifact;
         } catch (IOException e) {
@@ -92,9 +94,9 @@ public class ArtifactServiceImpl implements ArtifactService {
         }
     }
 
-    private static Pathable[] getArtifactPath(Job job) {
+    private static Pathable[] getArtifactPath(Job job, String srcDir) {
         Pathable flow = job::getFlowId;
-        return new Pathable[]{flow, job, JobArtifact.ArtifactPath};
+        return new Pathable[]{flow, job, JobArtifact.ArtifactPath, () -> srcDir};
     }
 
     private static String formatSrcDir(String dir) {

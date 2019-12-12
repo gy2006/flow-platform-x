@@ -59,7 +59,7 @@ public class ArtifactServiceTest extends SpringScenario {
                 .thenReturn(content);
 
         // when: save artifact
-        artifactService.save(job, null, file);
+        artifactService.save(job, "foo/boo", file);
 
         // then: fetch
         List<JobArtifact> list = artifactService.list(job);
