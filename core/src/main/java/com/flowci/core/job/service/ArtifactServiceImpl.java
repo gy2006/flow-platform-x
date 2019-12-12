@@ -19,14 +19,18 @@ package com.flowci.core.job.service;
 import com.flowci.core.job.dao.JobArtifactDao;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.JobArtifact;
+import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotAvailableException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.store.FileManager;
 import com.flowci.store.Pathable;
+import com.flowci.store.StringPath;
 import com.flowci.util.StringHelper;
+import com.google.api.client.util.Lists;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -39,6 +43,8 @@ import java.util.Optional;
 @Log4j2
 @Service
 public class ArtifactServiceImpl implements ArtifactService {
+
+    private static final String Separator = "/";
 
     @Autowired
     private JobArtifactDao jobArtifactDao;
@@ -53,7 +59,7 @@ public class ArtifactServiceImpl implements ArtifactService {
     }
 
     @Override
-    public void save(Job job, String srcDir, MultipartFile file) {
+    public void save(Job job, String srcDir, String md5, MultipartFile file) {
         srcDir = formatSrcDir(srcDir);
         Pathable[] artifactPath = getArtifactPath(job, srcDir);
 
@@ -68,11 +74,14 @@ public class ArtifactServiceImpl implements ArtifactService {
             artifact.setContentSize(file.getSize());
             artifact.setPath(path);
             artifact.setSrcDir(srcDir);
+            artifact.setMd5(md5);
             artifact.setCreatedAt(new Date());
 
             jobArtifactDao.save(artifact);
         } catch (IOException e) {
             throw new NotAvailableException("Invalid artifact data");
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateException("Duplicate job artifact");
         }
     }
 
@@ -95,8 +104,18 @@ public class ArtifactServiceImpl implements ArtifactService {
     }
 
     private static Pathable[] getArtifactPath(Job job, String srcDir) {
-        Pathable flow = job::getFlowId;
-        return new Pathable[]{flow, job, JobArtifact.ArtifactPath, () -> srcDir};
+        String[] split = srcDir.split(Separator);
+        List<Pathable> list = Lists.newArrayListWithCapacity(split.length + 3);
+
+        list.add(job::getFlowId);
+        list.add(job);
+        list.add(JobArtifact.ArtifactPath);
+
+        for (String dir : split) {
+            list.add(new StringPath(dir));
+        }
+
+        return list.toArray(new Pathable[0]);
     }
 
     private static String formatSrcDir(String dir) {
@@ -104,11 +123,11 @@ public class ArtifactServiceImpl implements ArtifactService {
             return StringHelper.EMPTY;
         }
 
-        if (dir.startsWith("/")) {
+        if (dir.startsWith(Separator)) {
             dir = dir.substring(1);
         }
 
-        if (dir.endsWith("/")) {
+        if (dir.endsWith(Separator)) {
             dir = dir.substring(0, dir.length() - 2);
         }
 

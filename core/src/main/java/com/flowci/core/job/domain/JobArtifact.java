@@ -22,6 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.InputStream;
@@ -30,11 +31,21 @@ import java.io.InputStream;
 @Setter
 @EqualsAndHashCode(callSuper = true)
 @Document(collection = "job_artifact")
+@CompoundIndex(
+        name = "index_job_artifact_id_md5",
+        def = "{'jobId': 1, 'md5': 1}",
+        unique = true
+)
 public class JobArtifact extends JobOutput {
 
     public static final Pathable ArtifactPath = () -> "artifacts";
 
     private String srcDir;
+
+    /**
+     * File md5
+     */
+    private String md5;
 
     @JsonIgnore
     @Transient

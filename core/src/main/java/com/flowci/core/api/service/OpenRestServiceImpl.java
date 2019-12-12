@@ -35,15 +35,13 @@ import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
 import com.flowci.exception.NotFoundException;
+import com.flowci.util.StringHelper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Log4j2
 @Service
@@ -94,7 +92,7 @@ public class OpenRestServiceImpl implements OpenRestService {
     @Override
     public void saveJobArtifact(String flowName, long buildNumber, CreateJobArtifact meta, MultipartFile file) {
         Job job = getJob(flowName, buildNumber);
-        artifactService.save(job, meta.getSrcDir(), file);
+        artifactService.save(job, meta.getSrcDir(), meta.getMd5(), file);
     }
 
     @Override

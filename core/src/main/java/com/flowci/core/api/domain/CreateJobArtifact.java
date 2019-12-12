@@ -18,6 +18,8 @@ package com.flowci.core.api.domain;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotEmpty;
+
 @Data
 public class CreateJobArtifact {
 
@@ -25,4 +27,7 @@ public class CreateJobArtifact {
      * Indicate origin source relevant direction path
      */
     private String srcDir;
+
+    @NotEmpty
+    private String md5;
 }

@@ -91,7 +91,7 @@ public class OpenRestController {
     @PostMapping("/flow/{name}/job/{number}/artifact")
     public void uploadJobArtifact(@PathVariable String name,
                                   @PathVariable long number,
-                                  @RequestPart(value = "body", required = false) CreateJobArtifact meta,
+                                  @Validated @RequestPart("body") CreateJobArtifact meta,
                                   @RequestPart("file") MultipartFile file) {
         openRestService.saveJobArtifact(name, number, meta, file);
     }
