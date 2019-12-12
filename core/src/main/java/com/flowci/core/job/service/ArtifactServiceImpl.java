@@ -23,6 +23,7 @@ import com.flowci.exception.NotAvailableException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.store.FileManager;
 import com.flowci.store.Pathable;
+import com.flowci.util.StringHelper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -65,7 +66,7 @@ public class ArtifactServiceImpl implements ArtifactService {
             artifact.setContentType(file.getContentType());
             artifact.setContentSize(file.getSize());
             artifact.setPath(path);
-            artifact.setSrcDir(srcDir);
+            artifact.setSrcDir(formatSrcDir(srcDir));
             artifact.setCreatedAt(new Date());
 
             jobArtifactDao.save(artifact);
@@ -94,5 +95,21 @@ public class ArtifactServiceImpl implements ArtifactService {
     private static Pathable[] getArtifactPath(Job job) {
         Pathable flow = job::getFlowId;
         return new Pathable[]{flow, job, JobArtifact.ArtifactPath};
+    }
+
+    private static String formatSrcDir(String dir) {
+        if (!StringHelper.hasValue(dir)) {
+            return StringHelper.EMPTY;
+        }
+
+        if (dir.startsWith("/")) {
+            dir = dir.substring(1);
+        }
+
+        if (dir.endsWith("/")) {
+            dir = dir.substring(0, dir.length() - 2);
+        }
+
+        return dir;
     }
 }
