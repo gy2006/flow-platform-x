@@ -52,7 +52,7 @@ public class ArtifactServiceImpl implements ArtifactService {
     }
 
     @Override
-    public void save(Job job, MultipartFile file) {
+    public void save(Job job, String srcDir, MultipartFile file) {
         Pathable[] reportPath = getArtifactPath(job);
 
         try (InputStream reportRaw = file.getInputStream()) {
@@ -65,6 +65,7 @@ public class ArtifactServiceImpl implements ArtifactService {
             artifact.setContentType(file.getContentType());
             artifact.setContentSize(file.getSize());
             artifact.setPath(path);
+            artifact.setSrcDir(srcDir);
             artifact.setCreatedAt(new Date());
 
             jobArtifactDao.save(artifact);

@@ -30,9 +30,10 @@ public interface ArtifactService {
      * Save report to file store
      *
      * @param job  related job
+     * @param srcDir source relevant directory path
      * @param file raw file uploaded
      */
-    void save(Job job, MultipartFile file);
+    void save(Job job, String srcDir, MultipartFile file);
 
     /**
      * Fetch report from file store

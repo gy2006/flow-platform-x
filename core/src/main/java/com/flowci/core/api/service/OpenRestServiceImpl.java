@@ -17,6 +17,7 @@
 
 package com.flowci.core.api.service;
 
+import com.flowci.core.api.domain.CreateJobArtifact;
 import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.credential.domain.Credential;
@@ -85,15 +86,15 @@ public class OpenRestServiceImpl implements OpenRestService {
     }
 
     @Override
-    public void saveJobReport(String flowName, long buildNumber, CreateJobReport report, MultipartFile file) {
+    public void saveJobReport(String flowName, long buildNumber, CreateJobReport meta, MultipartFile file) {
         Job job = getJob(flowName, buildNumber);
-        reportService.save(report.getName(), report.getType(), report.getZipped(), report.getEntryFile(), job, file);
+        reportService.save(meta.getName(), meta.getType(), meta.getZipped(), meta.getEntryFile(), job, file);
     }
 
     @Override
-    public void saveJobArtifact(String flowName, long buildNumber, MultipartFile file) {
+    public void saveJobArtifact(String flowName, long buildNumber, CreateJobArtifact meta, MultipartFile file) {
         Job job = getJob(flowName, buildNumber);
-        artifactService.save(job, file);
+        artifactService.save(job, meta.getSrcDir(), file);
     }
 
     @Override
