@@ -28,6 +28,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.zookeeper.data.Stat;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +60,11 @@ public class StatsServiceTest extends SpringScenario {
         Assert.assertEquals(new Float(0.0F), item.getCounter().get("FAILURE"));
         Assert.assertEquals(new Float(0.0F), item.getCounter().get("CANCELLED"));
         Assert.assertEquals(new Float(0.0F), item.getCounter().get("TIMEOUT"));
+
+        Assert.assertEquals(new Float(1.0F), item.getTotal().get("SUCCESS"));
+        Assert.assertEquals(new Float(0.0F), item.getTotal().get("FAILURE"));
+        Assert.assertEquals(new Float(0.0F), item.getTotal().get("CANCELLED"));
+        Assert.assertEquals(new Float(0.0F), item.getTotal().get("TIMEOUT"));
     }
 
     @Test
@@ -65,19 +72,18 @@ public class StatsServiceTest extends SpringScenario {
         String flowId = "11123123";
 
         Date yesterday = Date.from(Instant.now().minus(1, ChronoUnit.DAYS));
-        Date today = Date.from(Instant.now());
-        Date tomorrow = Date.from(Instant.now().plus(1, ChronoUnit.DAYS));
-
         Job job1 = new Job();
         job1.setFlowId(flowId);
         job1.setCreatedAt(yesterday);
         job1.setStatus(Job.Status.SUCCESS);
 
+        Date today = Date.from(Instant.now());
         Job job2 = new Job();
         job2.setFlowId(flowId);
         job2.setCreatedAt(today);
         job2.setStatus(Job.Status.SUCCESS);
 
+        Date tomorrow = Date.from(Instant.now().plus(1, ChronoUnit.DAYS));
         Job job3 = new Job();
         job3.setFlowId(flowId);
         job3.setCreatedAt(tomorrow);
@@ -93,5 +99,12 @@ public class StatsServiceTest extends SpringScenario {
         List<StatsItem> list = statsService.list(flowId, StatsType.JOB_STATUS, fromDay, toDay);
         Assert.assertNotNull(list);
         Assert.assertEquals(3, list.size());
+
+        StatsItem total = statsService.get(flowId, StatsType.JOB_STATUS, StatsItem.ZERO_DAY);
+        Assert.assertNotNull(total);
+        Assert.assertEquals(2.0F, total.getCounter().get("SUCCESS"), 0.0);
+        Assert.assertEquals(1.0F, total.getCounter().get("FAILURE"), 0.0);
+        Assert.assertEquals(0.0F, total.getCounter().get("CANCELLED"), 0.0);
+        Assert.assertEquals(0.0F, total.getCounter().get("TIMEOUT"), 0.0);
     }
 }

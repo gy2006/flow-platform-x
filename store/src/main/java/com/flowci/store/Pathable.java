@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.dao;
+package com.flowci.store;
 
-import com.flowci.core.job.domain.JobSummary;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+/**
+ * Support path for storage
+ *
+ * @author yang
+ */
+public interface Pathable {
 
-@Repository
-public interface JobSummaryDao extends MongoRepository<JobSummary, String> {
+    String pathName();
+
 }

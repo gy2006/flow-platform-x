@@ -43,6 +43,8 @@ public final class GitPushTrigger extends GitTrigger {
 
     private String commitUrl;
 
+    private int numOfCommit;
+
     @Override
     public StringVars toVariableMap() {
         StringVars map = super.toVariableMap();
@@ -54,6 +56,7 @@ public final class GitPushTrigger extends GitTrigger {
         map.put(Variables.GIT_COMMIT_MESSAGE, message);
         map.put(Variables.GIT_COMMIT_TIME, time);
         map.put(Variables.GIT_COMMIT_URL, commitUrl);
+        map.put(Variables.GIT_COMMIT_NUM, Integer.toString(numOfCommit));
         return map;
     }
 }

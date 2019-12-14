@@ -18,16 +18,11 @@ package com.flowci.core.common.config;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.agent.AgentAuth;
-import com.flowci.core.api.adviser.ApiAuth;
-import com.flowci.core.auth.WebAuth;
 import com.flowci.core.common.adviser.CrosInterceptor;
 import com.flowci.core.common.helper.JacksonHelper;
-import com.flowci.core.user.domain.User;
 import com.flowci.domain.Vars;
+import com.flowci.util.FileHelper;
 import com.google.common.collect.ImmutableList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,9 +32,16 @@ import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+
+@EnableWebMvc
 @Configuration
 public class WebConfig {
 
@@ -52,9 +54,13 @@ public class WebConfig {
     @Autowired
     private HandlerInterceptor webAuth;
 
-    @Bean
-    public ThreadLocal<User> currentUser() {
-        return new ThreadLocal<>();
+    @Autowired
+    private ConfigProperties appProperties;
+
+    @Bean("staticResourceDir")
+    public Path staticResourceDir() throws IOException {
+        FileHelper.createDirectory(appProperties.getSiteDir());
+        return appProperties.getSiteDir();
     }
 
     @Bean
@@ -70,17 +76,17 @@ public class WebConfig {
                 registry.addInterceptor(new CrosInterceptor());
 
                 registry.addInterceptor(webAuth)
-                    .addPathPatterns("/users/**")
-                    .addPathPatterns("/flows/**")
-                    .addPathPatterns("/jobs/**")
-                    .addPathPatterns("/agents/**")
-                    .addPathPatterns("/stats/**")
-                    .addPathPatterns("/plugins/**")
-                    .addPathPatterns("/credentials/**")
-                    .addPathPatterns("/auth/logout")
-                    .excludePathPatterns("/agents/connect")
-                    .excludePathPatterns("/agents/resource")
-                    .excludePathPatterns("/agents/logs/upload");
+                        .addPathPatterns("/users/**")
+                        .addPathPatterns("/flows/**")
+                        .addPathPatterns("/jobs/**")
+                        .addPathPatterns("/agents/**")
+                        .addPathPatterns("/stats/**")
+                        .addPathPatterns("/plugins/**")
+                        .addPathPatterns("/credentials/**")
+                        .addPathPatterns("/auth/logout")
+                        .excludePathPatterns("/agents/connect")
+                        .excludePathPatterns("/agents/resource")
+                        .excludePathPatterns("/agents/logs/upload");
 
                 registry.addInterceptor(apiAuth)
                         .addPathPatterns("/api/**");
@@ -99,13 +105,20 @@ public class WebConfig {
                 mapperForHttp.addMixIn(Vars.class, httpJacksonMixin());
 
                 final List<HttpMessageConverter<?>> DefaultConverters = ImmutableList.of(
-                    new ByteArrayHttpMessageConverter(),
-                    new MappingJackson2HttpMessageConverter(mapperForHttp),
-                    new ResourceHttpMessageConverter(),
-                    new AllEncompassingFormHttpMessageConverter()
+                        new ByteArrayHttpMessageConverter(),
+                        new MappingJackson2HttpMessageConverter(mapperForHttp),
+                        new ResourceHttpMessageConverter(),
+                        new AllEncompassingFormHttpMessageConverter()
                 );
 
                 converters.addAll(DefaultConverters);
+            }
+
+            @Override
+            public void addResourceHandlers(ResourceHandlerRegistry registry) {
+                Path dir = appProperties.getSiteDir();
+                registry.addResourceHandler("/static/**")
+                        .addResourceLocations(dir.toFile().toURI().toString());
             }
         };
     }

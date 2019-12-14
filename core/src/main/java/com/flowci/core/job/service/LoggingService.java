@@ -17,6 +17,7 @@
 package com.flowci.core.job.service;
 
 import com.flowci.domain.ExecutedCmd;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import org.springframework.core.io.Resource;
@@ -39,20 +40,19 @@ public interface LoggingService {
     Page<String> read(ExecutedCmd cmd, Pageable pageable);
 
     /**
-     * Save log into file system
+     * Save log into file system, return the id of file
      *
      * @param fileName {cmd id}.log
      * @param stream file stream
      */
-    Path save(String fileName, InputStream stream);
+    String save(String fileName, InputStream stream) throws IOException;
 
     /**
      * Get log resource
      *
      * @param cmdId cmd id
-     * @param isRaw indicated to get raw log data or not
      * @return file resource
      */
-    Resource get(String cmdId, boolean isRaw);
+    Resource get(String cmdId);
 
 }

@@ -14,15 +14,31 @@
  * limitations under the License.
  */
 
-package com.flowci.core.common.domain;
+package com.flowci.core.api.domain;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 /**
- * Support path for storage
- *
  * @author yang
  */
-public interface Pathable {
+@Getter
+@Setter
+@Accessors(chain = true)
+public class CreateJobReport {
 
-    String pathName();
+    @NotEmpty
+    private String name; // report name
 
+    @NotNull
+    private Boolean zipped;
+
+    @NotEmpty
+    private String type; // for JobOutput.Type
+
+    private String entryFile;
 }

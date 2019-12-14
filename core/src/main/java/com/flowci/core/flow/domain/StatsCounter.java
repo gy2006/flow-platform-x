@@ -32,8 +32,9 @@ public class StatsCounter extends HashMap<String, Float> {
 
     public void add(StatsCounter another) {
         for (Map.Entry<String, Float> entry : another.entrySet()) {
-            Float localValue = this.getOrDefault(entry.getKey(), 0.0F);
-            this.put(entry.getKey(), localValue + entry.getValue());
+            String key = entry.getKey();
+            Float localValue = this.getOrDefault(key, 0.0F);
+            this.put(key, localValue + entry.getValue());
         }
     }
 }

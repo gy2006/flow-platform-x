@@ -16,8 +16,8 @@
 
 package com.flowci.core.flow.service;
 
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.core.common.manager.PathManager;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
@@ -51,6 +51,7 @@ import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
+import com.flowci.store.FileManager;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.TriggerFilter;
@@ -84,6 +85,9 @@ public class FlowServiceImpl implements FlowService {
     private String serverAddress;
 
     @Autowired
+    private ConfigProperties.RabbitMQ rabbitProperties;
+
+    @Autowired
     private FlowDao flowDao;
 
     @Autowired
@@ -99,7 +103,7 @@ public class FlowServiceImpl implements FlowService {
     private SpringEventManager eventManager;
 
     @Autowired
-    private PathManager pathManager;
+    private FileManager fileManager;
 
     @Autowired
     private CredentialService credentialService;
@@ -186,8 +190,8 @@ public class FlowServiceImpl implements FlowService {
 
         try {
             flowDao.save(flow);
-            pathManager.create(flow);
             flowUserDao.create(flow.getId());
+            fileManager.create(flow);
 
             addUsers(flow, flow.getCreatedBy());
             createFlowJobQueue(flow);
@@ -197,6 +201,7 @@ public class FlowServiceImpl implements FlowService {
             throw new DuplicateException("Flow {0} already exists", name);
         } catch (IOException e) {
             flowDao.delete(flow);
+            flowUserDao.delete(flow.getId());
             throw new StatusException("Cannot create flow workspace");
         }
 
@@ -386,7 +391,11 @@ public class FlowServiceImpl implements FlowService {
     }
 
     private void createFlowJobQueue(Flow flow) {
-        jobQueueManager.declare(flow.getQueueName(), true, 255);
+        try {
+            jobQueueManager.declare(flow.getQueueName(), true, 255, rabbitProperties.getJobDlExchange());
+        } catch (IOException e) {
+            log.warn(e.getMessage());
+        }
     }
 
     private void removeFlowJobQueue(Flow flow) {

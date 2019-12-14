@@ -18,12 +18,12 @@ package com.flowci.core.flow.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
-import com.flowci.core.common.domain.Pathable;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.domain.StringVars;
 import com.flowci.domain.TypedVars;
 import com.flowci.domain.VarValue;
 import com.flowci.domain.Vars;
+import com.flowci.store.Pathable;
 import com.flowci.util.StringHelper;
 import java.util.Objects;
 import java.util.Set;
@@ -81,7 +81,7 @@ public final class Flow extends Mongoable implements Pathable {
 
     @JsonIgnore
     public String getQueueName() {
-        return "queue.flow." + id + ".job";
+        return "flow.q." + id + ".job";
     }
 
     @JsonIgnore

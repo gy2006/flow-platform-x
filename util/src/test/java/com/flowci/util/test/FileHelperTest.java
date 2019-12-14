@@ -19,13 +19,34 @@ package com.flowci.util.test;
 
 import com.flowci.util.FileHelper;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class FileHelperTest {
+
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
 
     @Test
     public void should_get_file_name_without_type() {
         String name = FileHelper.getName("hello.log.raw");
         Assert.assertEquals("hello", name);
+    }
+
+    @Test
+    public void should_unzip_file() throws IOException {
+        InputStream src = this.getClass().getClassLoader().getResourceAsStream("jacoco-report.zip");
+        Assert.assertNotNull(src);
+
+        Path destDir = folder.newFolder("jacoco-report").toPath();
+        FileHelper.unzip(src, destDir);
+
+        Assert.assertTrue(Files.exists(destDir));
     }
 }

@@ -23,6 +23,7 @@ import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author yang
@@ -36,7 +37,7 @@ public interface StatsItemDao extends MongoRepository<StatsItem, String> {
     @Query("{'flowId':?0, 'day' : {$gte : ?1, $lte : ?2}}")
     List<StatsItem> findByFlowIdDayBetween(String flowId, int dayGT, int dayLT, Sort sort);
 
-    StatsItem findByFlowIdAndDayAndType(String flowId, int day, String type);
+    Optional<StatsItem> findByFlowIdAndDayAndType(String flowId, int day, String type);
 
     void deleteByFlowId(String flowId);
 }

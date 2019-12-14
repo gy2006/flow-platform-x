@@ -38,6 +38,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 )
 public class StatsItem {
 
+    // zero day used for total
+    public static final int ZERO_DAY = 0;
+
     @Id
     private String id; // auto id
 
@@ -53,5 +56,13 @@ public class StatsItem {
      */
     private String type;
 
+    /**
+     * Current day counter
+     */
     private StatsCounter counter = new StatsCounter();
+
+    /**
+     * Counter in total
+     */
+    private StatsCounter total = new StatsCounter();
 }

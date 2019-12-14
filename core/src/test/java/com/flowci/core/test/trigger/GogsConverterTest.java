@@ -52,6 +52,7 @@ public class GogsConverterTest extends SpringScenario {
                 "http://localhost:3000/test/my-first-repo/commit/62f02963619d8fa1a03afb65ad3ed6b8d3c0fd69",
                 trigger.getCommitUrl());
         Assert.assertEquals("2019-10-03T10:44:15Z", trigger.getTime());
+        Assert.assertEquals(1, trigger.getNumOfCommit());
 
         GitUser pusher = trigger.getAuthor();
         Assert.assertEquals("benqyang_2006@gogs.test", pusher.getEmail());
@@ -78,6 +79,7 @@ public class GogsConverterTest extends SpringScenario {
         Assert.assertEquals("2019-10-03T12:46:57Z", tag.getTime());
         Assert.assertEquals("title for v4.0", tag.getMessage());
         Assert.assertEquals("", tag.getCommitUrl());
+        Assert.assertEquals(0, tag.getNumOfCommit());
 
         GitUser author = tag.getAuthor();
         Assert.assertEquals("test", author.getUsername());

@@ -40,9 +40,9 @@ public interface StatsService {
      */
     List<StatsType> getStatsType(Flow flow);
 
-    /**
-     * List statistic by range
-     */
+        /**
+         * List statistic by range
+         */
     List<StatsItem> list(String flowId, String type, int fromDay, int toDay);
 
     /**

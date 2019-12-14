@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-package com.flowci.core.api.domain;
+package com.flowci.core.job.dao;
 
-import javax.validation.constraints.NotEmpty;
-import lombok.Getter;
-import lombok.Setter;
+import com.flowci.core.job.domain.JobArtifact;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
-/**
- * @author yang
- */
-@Getter
-@Setter
-public class CreateJobSummary {
+import java.util.List;
 
-    @NotEmpty
-    private String name;
+@Repository
+public interface JobArtifactDao extends MongoRepository<JobArtifact, String> {
 
-    @NotEmpty
-    private String type; // for JobSummary.Type
-
-    private String data; // base64 encoded
+    List<JobArtifact> findAllByJobId(String jobId);
 }

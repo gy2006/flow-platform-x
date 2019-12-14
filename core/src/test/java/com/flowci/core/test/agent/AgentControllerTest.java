@@ -148,7 +148,7 @@ public class AgentControllerTest extends SpringScenario {
 
         // then:
         Settings settings = settingsR.getData();
-        Assert.assertEquals(rabbitConfig.getCallbackQueueName(), settings.getQueue().getCallback());
+        Assert.assertEquals(rabbitConfig.getCallbackQueue(), settings.getQueue().getCallback());
 
         Assert.assertEquals("/flow-agents-test", settings.getZookeeper().getRoot());
         Assert.assertEquals("127.0.0.1:2181", settings.getZookeeper().getHost());

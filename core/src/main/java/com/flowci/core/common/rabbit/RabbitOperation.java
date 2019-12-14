@@ -17,22 +17,20 @@
 
 package com.flowci.core.common.rabbit;
 
+import com.flowci.core.common.config.QueueConfig;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.util.StringHelper;
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.DefaultConsumer;
-import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.*;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Log4j2
 @Getter
@@ -60,23 +58,17 @@ public abstract class RabbitOperation implements AutoCloseable {
         this.executor = ThreadHelper.createTaskExecutor(concurrency, concurrency, 1000, name + "-");
     }
 
-    public String declare(String queue, boolean durable) {
-        try {
-            return this.channel.queueDeclare(queue, durable, false, false, null).getQueue();
-        } catch (IOException e) {
-            return null;
-        }
+    public String declare(String queue, boolean durable) throws IOException {
+        return this.channel.queueDeclare(queue, durable, false, false, null).getQueue();
     }
 
-    public String declare(String queue, boolean durable, Integer maxPriority) {
-        try {
-            Map<String, Object> props = new HashMap<>(1);
-            props.put("x-max-priority", maxPriority);
+    public String declare(String queue, boolean durable, Integer maxPriority, String dlExName) throws IOException {
+        Map<String, Object> props = new HashMap<>(1);
+        props.put("x-max-priority", maxPriority);
+        props.put("x-dead-letter-exchange", dlExName);
+        props.put("x-dead-letter-routing-key", QueueConfig.JobDlRoutingKey);
 
-            return this.channel.queueDeclare(queue, durable, false, false, props).getQueue();
-        } catch (IOException e) {
-            return null;
-        }
+        return this.channel.queueDeclare(queue, durable, false, false, props).getQueue();
     }
 
     public boolean delete(String queue) {
@@ -112,12 +104,14 @@ public abstract class RabbitOperation implements AutoCloseable {
     /**
      * Send to routing key with default exchange and priority
      */
-    public boolean send(String routingKey, byte[] body, Integer priority) {
+    public boolean send(String routingKey, byte[] body, Integer priority, Long expireInSecond) {
         try {
-            AMQP.BasicProperties.Builder basicProps = new AMQP.BasicProperties.Builder();
-            basicProps.priority(priority);
+            AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
+                    .priority(priority)
+                    .expiration(Long.toString(expireInSecond * 1000))
+                    .build();
 
-            this.channel.basicPublish(StringHelper.EMPTY, routingKey, basicProps.build(), body);
+            this.channel.basicPublish(StringHelper.EMPTY, routingKey, props, body);
             return true;
         } catch (IOException e) {
             return false;
@@ -146,6 +140,7 @@ public abstract class RabbitOperation implements AutoCloseable {
 
     /**
      * It will be called when spring context stop
+     *
      * @throws Exception
      */
     @Override
@@ -169,7 +164,7 @@ public abstract class RabbitOperation implements AutoCloseable {
 
         @Override
         public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
-            throws IOException {
+                throws IOException {
             consume(body, envelope);
         }
 
@@ -179,9 +174,9 @@ public abstract class RabbitOperation implements AutoCloseable {
             });
         }
 
-        public String start(boolean ack) {
+        public String start(boolean autoAck) {
             try {
-                String tag = getChannel().basicConsume(queue, ack, this);
+                String tag = getChannel().basicConsume(queue, autoAck, this);
                 log.info("[Consumer STARTED] queue {} with tag {}", queue, tag);
                 return tag;
             } catch (IOException e) {

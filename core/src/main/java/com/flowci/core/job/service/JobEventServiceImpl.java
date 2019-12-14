@@ -80,6 +80,9 @@ public class JobEventServiceImpl implements JobEventService {
     private RabbitQueueOperation callbackQueueManager;
 
     @Autowired
+    private RabbitQueueOperation deadLetterQueueManager;
+
+    @Autowired
     private JobService jobService;
 
     @Autowired
@@ -122,6 +125,26 @@ public class JobEventServiceImpl implements JobEventService {
         }));
 
         consumer.start(false);
+    }
+
+    @EventListener(value = ContextRefreshedEvent.class)
+    public void startJobTimeoutQueueConsumer(ContextRefreshedEvent e) {
+        RabbitOperation.QueueConsumer consumer = deadLetterQueueManager.createConsumer(message -> {
+            if (message == RabbitOperation.Message.STOP_SIGN) {
+                log.info("[Job Timeout Consumer] will be stopped");
+                return true;
+            }
+
+            Optional<Job> optional = convert(objectMapper, message);
+            if (!optional.isPresent()) {
+                return true;
+            }
+
+            jobService.setJobStatusAndSave(optional.get(), Job.Status.TIMEOUT, "expired while queued up");
+            return true;
+        });
+
+        consumer.start(true);
     }
 
     @EventListener
@@ -461,7 +484,7 @@ public class JobEventServiceImpl implements JobEventService {
                 return true;
             }
 
-            Optional<Job> optional = convert(message);
+            Optional<Job> optional = convert(objectMapper, message);
             if (!optional.isPresent()) {
                 return true;
             }
@@ -489,7 +512,7 @@ public class JobEventServiceImpl implements JobEventService {
                 }
 
                 if (jobService.isExpired(job)) {
-                    jobService.setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
+                    jobService.setJobStatusAndSave(job, Job.Status.TIMEOUT, "expired while waiting for agent");
                     logInfo(job, "expired");
                     return false;
                 }
@@ -504,13 +527,13 @@ public class JobEventServiceImpl implements JobEventService {
                 lock.notifyAll();
             }
         }
+    }
 
-        private Optional<Job> convert(RabbitChannelOperation.Message message) {
-            try {
-                return Optional.of(objectMapper.readValue(message.getBody(), Job.class));
-            } catch (IOException e) {
-                return Optional.empty();
-            }
+    private static Optional<Job> convert(ObjectMapper mapper, RabbitChannelOperation.Message message) {
+        try {
+            return Optional.of(mapper.readValue(message.getBody(), Job.class));
+        } catch (IOException e) {
+            return Optional.empty();
         }
     }
 }

@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.core.common.manager.PathManager;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
@@ -48,6 +47,7 @@ import com.flowci.domain.CmdIn;
 import com.flowci.domain.StringVars;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
+import com.flowci.store.FileManager;
 import com.flowci.tree.Node;
 import com.flowci.tree.YmlParser;
 import java.io.IOException;
@@ -58,6 +58,7 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -111,8 +112,9 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private SpringEventManager eventManager;
 
+    @Qualifier("fileManager")
     @Autowired
-    private PathManager pathManager;
+    private FileManager fileManager;
 
     @Autowired
     private AgentService agentService;
@@ -191,6 +193,8 @@ public class JobServiceImpl implements JobService {
         job.setCurrentPath(root.getPathAsString());
         job.setAgentSelector(root.getSelector());
         job.setCreatedAt(Date.from(Instant.now()));
+        job.setTimeout(jobProperties.getTimeoutInSeconds());
+        job.setExpire(jobProperties.getExpireInSeconds());
 
         // init job context
         initJobContext(job, flow, input);
@@ -205,14 +209,16 @@ public class JobServiceImpl implements JobService {
             job.getContext().put(Variables.Job.TriggerBy, createdBy);
         }
 
-        // set expire at
-        Instant expireAt = Instant.now().plus(jobProperties.getExpireInSeconds(), ChronoUnit.SECONDS);
+        long totalExpire = job.getExpire() + job.getTimeout();
+        Instant expireAt = Instant.now().plus(totalExpire, ChronoUnit.SECONDS);
         job.setExpireAt(Date.from(expireAt));
+
+        // save
         jobDao.insert(job);
 
-        // create job workspace
+        // create job file space
         try {
-            pathManager.create(flow, job);
+            fileManager.create(flow, job);
         } catch (IOException e) {
             jobDao.delete(job);
             throw new StatusException("Cannot create workspace for job");
@@ -278,7 +284,7 @@ public class JobServiceImpl implements JobService {
     @Override
     public boolean isExpired(Job job) {
         Instant expireAt = job.getExpireAt().toInstant();
-        return Instant.now().compareTo(expireAt) == 1;
+        return Instant.now().compareTo(expireAt) > 0;
     }
 
     @Override
@@ -323,7 +329,7 @@ public class JobServiceImpl implements JobService {
 
     private Job enqueue(Job job) {
         if (isExpired(job)) {
-            setJobStatusAndSave(job, Job.Status.TIMEOUT, null);
+            setJobStatusAndSave(job, Job.Status.TIMEOUT, "expired before enqueue");
             log.debug("[Job: Timeout] {} has expired", job.getKey());
             return job;
         }
@@ -334,7 +340,7 @@ public class JobServiceImpl implements JobService {
             setJobStatusAndSave(job, Job.Status.QUEUED, null);
             byte[] body = objectMapper.writeValueAsBytes(job);
 
-            manager.send(body, job.getPriority());
+            manager.send(body, job.getPriority(), job.getExpire());
             logInfo(job, "enqueue");
 
             return job;

@@ -31,6 +31,11 @@
 
     <dependency>
       <groupId>com.flowci</groupId>
+      <artifactId>store</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.flowci</groupId>
       <artifactId>exception</artifactId>
     </dependency>
 
@@ -42,6 +47,11 @@
     <dependency>
       <groupId>com.auth0</groupId>
       <artifactId>java-jwt</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.minio</groupId>
+      <artifactId>minio</artifactId>
     </dependency>
 
     <dependency>

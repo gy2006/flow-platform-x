@@ -22,11 +22,12 @@ import com.flowci.exception.AuthenticationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
 @Component
 public class SessionManager {
 
-    @Autowired
-    private ThreadLocal<User> currentUser;
+    private final ThreadLocal<User> currentUser = new ThreadLocal<>();
 
     public User get() {
         User user = currentUser.get();

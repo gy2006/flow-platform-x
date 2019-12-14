@@ -36,6 +36,8 @@ import com.flowci.util.ObjectsHelper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -265,6 +267,9 @@ public class AgentServiceImpl implements AgentService {
             return agent;
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Agent name {0} is already defined", name);
+        } catch (IOException e) {
+            log.warn("Unable to declare agent queue, cause {}", e.getMessage());
+            return agent;
         }
     }
 
