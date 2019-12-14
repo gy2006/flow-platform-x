@@ -18,6 +18,7 @@
 package com.flowci.core.api;
 
 import com.flowci.core.api.domain.AddStatsItem;
+import com.flowci.core.api.domain.CreateJobArtifact;
 import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.api.service.OpenRestService;
 import com.flowci.core.credential.domain.Credential;
@@ -71,19 +72,27 @@ public class OpenRestController {
         openRestService.saveStatsForFlow(name, body.getType(), StatsCounter.from(body.getData()));
     }
 
-    @PostMapping("/flow/{name}/job/{number}/report")
-    public void saveJobReport(@PathVariable String name,
-                              @PathVariable long number,
-                              @Validated @RequestPart("body") CreateJobReport body,
-                              @RequestPart("file") MultipartFile file) {
-
-        openRestService.saveJobReport(name, number, body, file);
-    }
-
     @PostMapping("/flow/{name}/job/{number}/context")
     public void addJobContext(@PathVariable String name,
                               @PathVariable long number,
                               @RequestBody Map<String, String> vars) {
         openRestService.addToJobContext(name, number, vars);
+    }
+
+    @PostMapping("/flow/{name}/job/{number}/report")
+    public void uploadJobReport(@PathVariable String name,
+                                @PathVariable long number,
+                                @Validated @RequestPart("body") CreateJobReport meta,
+                                @RequestPart("file") MultipartFile file) {
+
+        openRestService.saveJobReport(name, number, meta, file);
+    }
+
+    @PostMapping("/flow/{name}/job/{number}/artifact")
+    public void uploadJobArtifact(@PathVariable String name,
+                                  @PathVariable long number,
+                                  @Validated @RequestPart("body") CreateJobArtifact meta,
+                                  @RequestPart("file") MultipartFile file) {
+        openRestService.saveJobArtifact(name, number, meta, file);
     }
 }

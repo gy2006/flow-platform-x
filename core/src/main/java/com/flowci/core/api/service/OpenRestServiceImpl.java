@@ -17,6 +17,7 @@
 
 package com.flowci.core.api.service;
 
+import com.flowci.core.api.domain.CreateJobArtifact;
 import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.credential.domain.Credential;
@@ -28,20 +29,19 @@ import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.service.StatsService;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.service.ArtifactService;
 import com.flowci.core.job.service.ReportService;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.core.user.dao.UserDao;
 import com.flowci.core.user.domain.User;
 import com.flowci.exception.NotFoundException;
+import com.flowci.util.StringHelper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Log4j2
 @Service
@@ -68,6 +68,9 @@ public class OpenRestServiceImpl implements OpenRestService {
     @Autowired
     private ReportService reportService;
 
+    @Autowired
+    private ArtifactService artifactService;
+
     @Override
     public Credential getCredential(String name) {
         return credentialService.get(name);
@@ -81,9 +84,15 @@ public class OpenRestServiceImpl implements OpenRestService {
     }
 
     @Override
-    public void saveJobReport(String flowName, long buildNumber, CreateJobReport report, MultipartFile file) {
+    public void saveJobReport(String flowName, long buildNumber, CreateJobReport meta, MultipartFile file) {
         Job job = getJob(flowName, buildNumber);
-        reportService.save(report.getName(), report.getType(), report.getZipped(), report.getEntryFile(), job, file);
+        reportService.save(meta.getName(), meta.getType(), meta.getZipped(), meta.getEntryFile(), job, file);
+    }
+
+    @Override
+    public void saveJobArtifact(String flowName, long buildNumber, CreateJobArtifact meta, MultipartFile file) {
+        Job job = getJob(flowName, buildNumber);
+        artifactService.save(job, meta.getSrcDir(), meta.getMd5(), file);
     }
 
     @Override

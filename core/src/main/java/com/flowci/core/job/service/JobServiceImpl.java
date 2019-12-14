@@ -58,6 +58,7 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -111,6 +112,7 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private SpringEventManager eventManager;
 
+    @Qualifier("fileManager")
     @Autowired
     private FileManager fileManager;
 
@@ -214,7 +216,7 @@ public class JobServiceImpl implements JobService {
         // save
         jobDao.insert(job);
 
-        // create job workspace
+        // create job file space
         try {
             fileManager.create(flow, job);
         } catch (IOException e) {

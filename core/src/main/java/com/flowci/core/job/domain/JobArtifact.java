@@ -16,36 +16,38 @@
 
 package com.flowci.core.job.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.store.Pathable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-/**
- * @author yang
- */
-@Setter
+import java.io.InputStream;
+
 @Getter
+@Setter
 @EqualsAndHashCode(callSuper = true)
-@Document(collection = "job_report")
+@Document(collection = "job_artifact")
 @CompoundIndex(
-    name = "index_job_report_id_name",
-    def = "{'jobId': 1, 'name': 1}",
-    unique = true
+        name = "index_job_artifact_id_md5",
+        def = "{'jobId': 1, 'md5': 1}",
+        unique = true
 )
-public class JobReport extends JobOutput {
+public class JobArtifact extends JobOutput {
 
-    public static final Pathable ReportPath = () -> "reports";
+    public static final Pathable ArtifactPath = () -> "artifacts";
 
-    /**
-     * Report name
-     */
-    private String name;
+    private String srcDir;
 
     /**
-     * the entry file for zipped report, ex index.html
+     * File md5
      */
-    private String entryFile;
+    private String md5;
+
+    @JsonIgnore
+    @Transient
+    private InputStream src;
 }

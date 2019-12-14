@@ -17,6 +17,7 @@
 
 package com.flowci.core.api.service;
 
+import com.flowci.core.api.domain.CreateJobArtifact;
 import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.flow.domain.StatsCounter;
@@ -38,9 +39,14 @@ public interface OpenRestService {
     void saveStatsForFlow(String flowName, String statsType, StatsCounter counter);
 
     /**
-     * Save job report with file
+     * Save uploaded job report with file
      */
-    void saveJobReport(String flowName, long buildNumber, CreateJobReport report, MultipartFile file);
+    void saveJobReport(String flowName, long buildNumber, CreateJobReport meta, MultipartFile file);
+
+    /**
+     * Save uploaded job artifact
+     */
+    void saveJobArtifact(String flowName, long buildNumber, CreateJobArtifact meta, MultipartFile file);
 
     /**
      * Add env vars to job context
@@ -52,3 +58,4 @@ public interface OpenRestService {
      */
     List<User> users(String flowName);
 }
+

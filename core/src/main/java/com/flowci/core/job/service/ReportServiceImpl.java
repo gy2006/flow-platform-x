@@ -29,6 +29,7 @@ import com.flowci.util.FileHelper;
 import com.flowci.util.StringHelper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -53,6 +54,7 @@ public class ReportServiceImpl implements ReportService {
     @Autowired
     private JobReportDao jobReportDao;
 
+    @Qualifier("fileManager")
     @Autowired
     private FileManager fileManager;
 

@@ -50,7 +50,6 @@ public abstract class JobOutput extends Mongoable {
     @JsonIgnore
     protected String path;
 
-    @JsonIgnore
     protected String fileName;
 
     @JsonIgnore
@@ -58,6 +57,5 @@ public abstract class JobOutput extends Mongoable {
 
     protected String contentType;
 
-    @JsonIgnore
     protected Long contentSize = 0L;
 }

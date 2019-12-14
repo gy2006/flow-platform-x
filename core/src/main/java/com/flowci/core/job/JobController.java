@@ -24,16 +24,14 @@ import com.flowci.core.flow.service.FlowService;
 import com.flowci.core.flow.service.YmlService;
 import com.flowci.core.job.domain.*;
 import com.flowci.core.job.domain.Job.Trigger;
-import com.flowci.core.job.service.JobService;
-import com.flowci.core.job.service.LoggingService;
-import com.flowci.core.job.service.ReportService;
-import com.flowci.core.job.service.StepService;
+import com.flowci.core.job.service.*;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.CmdId;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.NodePath;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -81,6 +79,9 @@ public class JobController {
 
     @Autowired
     private ReportService reportService;
+
+    @Autowired
+    private ArtifactService artifactService;
 
     @Autowired
     private ThreadPoolTaskExecutor jobRunExecutor;
@@ -194,11 +195,32 @@ public class JobController {
     }
 
     @GetMapping(value = "/{flow}/{buildNumber}/reports/{reportId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Action(JobAction.LIST_REPORTS)
+    @Action(JobAction.FETCH_REPORT)
     public String fetchReport(@PathVariable String flow,
                               @PathVariable String buildNumber,
                               @PathVariable String reportId) {
         Job job = get(flow, buildNumber);
         return reportService.fetch(job, reportId);
+    }
+
+    @GetMapping("/{flow}/{buildNumber}/artifacts")
+    @Action(JobAction.LIST_ARTIFACTS)
+    public List<JobArtifact> listArtifact(@PathVariable String flow, @PathVariable String buildNumber) {
+        Job job = get(flow, buildNumber);
+        return artifactService.list(job);
+    }
+
+    @GetMapping(value = "/{flow}/{buildNumber}/artifacts/{artifactId}")
+    @Action(JobAction.DOWNLOAD_ARTIFACT)
+    public ResponseEntity<Resource> downloadArtifact(@PathVariable String flow,
+                                @PathVariable String buildNumber,
+                                @PathVariable String artifactId) {
+        Job job = get(flow, buildNumber);
+        JobArtifact artifact = artifactService.fetch(job, artifactId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + artifact.getFileName() + "\"")
+                .body(new InputStreamResource(artifact.getSrc()));
     }
 }
