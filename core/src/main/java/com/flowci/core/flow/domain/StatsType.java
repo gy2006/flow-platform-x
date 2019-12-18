@@ -35,6 +35,11 @@ public class StatsType {
 
     private String desc;
 
+    /**
+     * data is percentage based or not
+     */
+    private boolean percent;
+
     // stats fields that applied in counter as key
     private List<String> fields = new LinkedList<>();
 

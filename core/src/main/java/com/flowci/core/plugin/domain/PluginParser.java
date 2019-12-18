@@ -21,14 +21,14 @@ import com.flowci.domain.VarType;
 import com.flowci.domain.Version;
 import com.flowci.util.ObjectsHelper;
 import com.flowci.util.YamlHelper;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import org.yaml.snakeyaml.Yaml;
+
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import org.yaml.snakeyaml.Yaml;
 
 /**
  * @author yang
@@ -92,13 +92,16 @@ public class PluginParser {
 
         public String desc;
 
+        public boolean percent;
+
         public List<String> fields = new LinkedList<>();
 
         public StatsType toStatsType() {
             return new StatsType()
-                .setName(name)
-                .setDesc(desc)
-                .setFields(fields);
+                    .setName(name)
+                    .setDesc(desc)
+                    .setPercent(percent)
+                    .setFields(fields);
         }
     }
 
