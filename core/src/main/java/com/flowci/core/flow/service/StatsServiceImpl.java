@@ -162,13 +162,15 @@ public class StatsServiceImpl implements StatsService {
     public StatsItem add(String flowId, int day, String type, StatsCounter counter) {
         synchronized (statsSync) {
             StatsItem totalItem = getItem(flowId, StatsItem.ZERO_DAY, type);
-            totalItem.addDayCounter(counter);
+            totalItem.plusDayCounter(counter);
             totalItem.plusOneToday();
 
             StatsItem dayItem = getItem(flowId, day, type);
-            dayItem.setTotal(totalItem.getCounter());
-            dayItem.addDayCounter(counter);
+            dayItem.plusDayCounter(counter);
             dayItem.plusOneToday();
+
+            dayItem.setTotal(totalItem.getCounter());
+            dayItem.setNumOfTotal(totalItem.getNumOfToday());
 
             statsItemDao.saveAll(Arrays.asList(dayItem, totalItem));
             return dayItem;
