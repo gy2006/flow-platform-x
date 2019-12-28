@@ -57,6 +57,16 @@ public class StatsItem {
     private String type;
 
     /**
+     * Num of stats item counted today
+     */
+    private int numOfToday;
+
+    /**
+     * Num of stats item counted in total
+     */
+    private int numOfTotal;
+
+    /**
      * Current day counter
      */
     private StatsCounter counter = new StatsCounter();
@@ -65,4 +75,12 @@ public class StatsItem {
      * Counter in total
      */
     private StatsCounter total = new StatsCounter();
+
+    public void plusOneToday() {
+        numOfToday++;
+    }
+
+    public void plusDayCounter(StatsCounter other) {
+        counter.add(other);
+    }
 }

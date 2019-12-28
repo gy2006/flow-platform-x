@@ -161,29 +161,28 @@ public class StatsServiceImpl implements StatsService {
     @Override
     public StatsItem add(String flowId, int day, String type, StatsCounter counter) {
         synchronized (statsSync) {
-            StatsItem totalItem = getItem(flowId, StatsItem.ZERO_DAY, type, counter);
+            StatsItem totalItem = getItem(flowId, StatsItem.ZERO_DAY, type);
+            totalItem.plusDayCounter(counter);
+            totalItem.plusOneToday();
 
-            StatsItem dayItem = getItem(flowId, day, type, counter);
+            StatsItem dayItem = getItem(flowId, day, type);
+            dayItem.plusDayCounter(counter);
+            dayItem.plusOneToday();
+
             dayItem.setTotal(totalItem.getCounter());
+            dayItem.setNumOfTotal(totalItem.getNumOfToday());
 
             statsItemDao.saveAll(Arrays.asList(dayItem, totalItem));
             return dayItem;
         }
     }
 
-    private StatsItem getItem(String flowId, int day, String type, StatsCounter counter) {
+    private StatsItem getItem(String flowId, int day, String type) {
         Optional<StatsItem> optional = statsItemDao.findByFlowIdAndDayAndType(flowId, day, type);
 
-        if (optional.isPresent()) {
-            StatsItem item = optional.get();
-            item.getCounter().add(counter);
-            return item;
-        }
-
-        return new StatsItem()
+        return optional.orElseGet(() -> new StatsItem()
                 .setDay(day)
                 .setFlowId(flowId)
-                .setType(type)
-                .setCounter(counter);
+                .setType(type));
     }
 }
