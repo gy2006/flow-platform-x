@@ -23,6 +23,7 @@ import com.flowci.core.plugin.service.PluginService;
 import com.flowci.domain.*;
 import com.flowci.exception.ArgumentException;
 import com.flowci.tree.Node;
+import com.flowci.util.ObjectsHelper;
 import com.flowci.util.StringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -62,8 +63,11 @@ public class CmdManagerImpl implements CmdManager {
             verifyPluginInput(inputs, plugin);
 
             script = plugin.getScript();
-            allowFailure = plugin.isAllowFailure();
             exports.addAll(plugin.getExports());
+
+            if (plugin.getAllowFailure() != null) {
+                allowFailure = plugin.getAllowFailure();
+            }
         }
 
         // create cmd based on plugin
