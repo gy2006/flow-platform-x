@@ -81,7 +81,7 @@ public class YmlParser {
                 }
 
                 if (!stepNames.add(node.name)) {
-                    throw new YmlException("Duplicate step name {}", node.name);
+                    throw new YmlException("Duplicate step name {0}", node.name);
                 }
             }
 
