@@ -43,7 +43,7 @@ public abstract class Variables {
 
         public static final String GitBranch = "FLOWCI_GIT_BRANCH"; // set
 
-        public static final String CREDENTIAL_NAME = "FLOWCI_CREDENTIAL_NAME"; // set
+        public static final String GitCredential = "FLOWCI_GIT_CREDENTIAL"; // set
     }
 
     public abstract static class Job {

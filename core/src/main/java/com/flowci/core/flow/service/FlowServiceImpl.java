@@ -221,7 +221,7 @@ public class FlowServiceImpl implements FlowService {
         }
 
         if (StringHelper.hasValue(credential)) {
-            flow.getLocally().put(Variables.Flow.CREDENTIAL_NAME, VarValue.of(credential, VarType.STRING, true));
+            flow.getLocally().put(Variables.Flow.GitCredential, VarValue.of(credential, VarType.STRING, true));
         }
 
         flow.setStatus(Status.CONFIRMED);
