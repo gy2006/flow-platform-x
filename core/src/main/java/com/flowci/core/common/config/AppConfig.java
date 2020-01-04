@@ -16,15 +16,20 @@
 
 package com.flowci.core.common.config;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.annotation.PostConstruct;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.SyncEvent;
-import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.common.helper.JacksonHelper;
 import com.flowci.util.FileHelper;
-import lombok.extern.log4j.Log4j2;
+
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationEvent;
@@ -33,15 +38,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.env.Environment;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * @author yang
@@ -51,12 +51,6 @@ import java.nio.file.Paths;
 @EnableScheduling
 @EnableCaching
 public class AppConfig {
-
-    @Autowired
-    private Environment env;
-
-    @Autowired
-    private ServerProperties serverProperties;
 
     @Autowired
     private MultipartProperties multipartProperties;
@@ -77,15 +71,14 @@ public class AppConfig {
         FileHelper.createDirectory(path);
     }
 
-    @Bean("serverAddress")
-    public String serverAddress() throws URISyntaxException {
-        String host = env.getProperty(App.Host, serverProperties.getAddress().toString());
-        return new URIBuilder()
-                .setScheme("http")
-                .setHost(host)
-                .setPort(serverProperties.getPort())
-                .build()
-                .toString();
+    @Bean("serverUrl")
+    public String serverUrl() throws URISyntaxException {
+        URIBuilder builder = new URIBuilder(appProperties.getUrl());
+        String url = builder.toString();
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        return url;
     }
 
     @Bean("tmpDir")

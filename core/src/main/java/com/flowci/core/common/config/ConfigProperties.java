@@ -48,7 +48,7 @@ public class ConfigProperties {
     private Path siteDir;
 
     @NotBlank
-    private String serverAddress;
+    private String url;
 
     @NotBlank
     @Length(max = 16, min = 16)

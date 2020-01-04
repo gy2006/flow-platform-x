@@ -80,7 +80,7 @@ public class JobServiceImpl implements JobService {
     //====================================================================
 
     @Autowired
-    private String serverAddress;
+    private String serverUrl;
 
     @Autowired
     private ConfigProperties.Job jobProperties;
@@ -309,7 +309,7 @@ public class JobServiceImpl implements JobService {
         StringVars context = new StringVars(flow.getVariables());
         context.mergeFromTypedVars(flow.getLocally());
 
-        context.put(Variables.App.Url, serverAddress);
+        context.put(Variables.App.Url, serverUrl);
         context.put(Variables.Flow.Name, flow.getName());
 
         context.put(Variables.Job.Status, Job.Status.PENDING.name());
