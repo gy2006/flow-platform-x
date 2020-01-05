@@ -50,6 +50,11 @@ public interface CredentialService {
     Credential delete(String name);
 
     /**
+     * Generate RSA key pair
+     */
+    SimpleKeyPair genRSA();
+
+    /**
      * Create rsa key pair which is generated automatically
      */
     RSACredential createRSA(String name);

@@ -83,8 +83,8 @@ public class CredentialController {
 
     @PostMapping("/rsa/gen")
     @Action(CredentialAction.GENERATE_RSA)
-    public SimpleKeyPair genByEmail(@Validated @RequestBody GenRSA body) {
-        return CipherHelper.RSA.gen(body.getEmail());
+    public SimpleKeyPair genByEmail() {
+        return credentialService.genRSA();
     }
 
     @DeleteMapping("/{name}")
