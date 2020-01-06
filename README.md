@@ -15,4 +15,4 @@ execute on agent from binary, inside docker or k8s.
 - [Sample YAML configuration](https://github.com/FlowCI/templates)
 
 
-![](https://github.com/FlowCI/files/blob/master/imgs/trigger_from_github.gif)
+![](https://github.com/FlowCI/docs/raw/master/v1.0/img/trigger_from_github.gif)
