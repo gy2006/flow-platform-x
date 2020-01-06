@@ -82,7 +82,7 @@ import org.springframework.stereotype.Service;
 public class FlowServiceImpl implements FlowService {
 
     @Autowired
-    private String serverAddress;
+    private String serverUrl;
 
     @Autowired
     private ConfigProperties.RabbitMQ rabbitProperties;
@@ -111,9 +111,9 @@ public class FlowServiceImpl implements FlowService {
     @Autowired
     private RabbitChannelOperation jobQueueManager;
 
-    //====================================================================
-    //        %% Public function
-    //====================================================================
+    // ====================================================================
+    // %% Public function
+    // ====================================================================
 
     @Override
     public List<Flow> list(Status status) {
@@ -128,7 +128,7 @@ public class FlowServiceImpl implements FlowService {
         List<Flow> list = list(Status.CONFIRMED);
         Iterator<Flow> iter = list.iterator();
 
-        for (; iter.hasNext(); ) {
+        for (; iter.hasNext();) {
             Flow flow = iter.next();
             if (Objects.equals(flow.getCredentialName(), credential.getName())) {
                 continue;
@@ -221,7 +221,7 @@ public class FlowServiceImpl implements FlowService {
         }
 
         if (StringHelper.hasValue(credential)) {
-            flow.getLocally().put(Variables.Flow.CREDENTIAL_NAME, VarValue.of(credential, VarType.STRING, true));
+            flow.getLocally().put(Variables.Flow.GitCredential, VarValue.of(credential, VarType.STRING, true));
         }
 
         flow.setStatus(Status.CONFIRMED);
@@ -313,9 +313,9 @@ public class FlowServiceImpl implements FlowService {
         flowUserDao.remove(flow.getId(), idSet);
     }
 
-    //====================================================================
-    //        %% Internal events
-    //====================================================================
+    // ====================================================================
+    // %% Internal events
+    // ====================================================================
 
     @EventListener
     public void initJobQueueForFlow(ContextRefreshedEvent ignore) {
@@ -370,9 +370,9 @@ public class FlowServiceImpl implements FlowService {
         }
     }
 
-    //====================================================================
-    //        %% Utils
-    //====================================================================
+    // ====================================================================
+    // %% Utils
+    // ====================================================================
 
     private boolean canStartJob(Node root, GitTrigger trigger) {
         TriggerFilter condition = root.getTrigger();
@@ -403,6 +403,6 @@ public class FlowServiceImpl implements FlowService {
     }
 
     private String getWebhook(String name) {
-        return serverAddress + "/webhooks/" + name;
+        return serverUrl + "/webhooks/" + name;
     }
 }

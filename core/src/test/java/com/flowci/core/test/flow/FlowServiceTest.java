@@ -77,7 +77,7 @@ public class FlowServiceTest extends SpringScenario {
     private CredentialService credentialService;
 
     @Autowired
-    private String serverAddress;
+    private String serverUrl;
 
     @Before
     public void login() {
@@ -94,7 +94,7 @@ public class FlowServiceTest extends SpringScenario {
         Assert.assertFalse(nameVar.isEditable());
 
         VarValue webhookVar = flow.getLocally().get(Variables.Flow.Webhook);
-        Assert.assertEquals(serverAddress + "/webhooks/" + flow.getName(), webhookVar.getData());
+        Assert.assertEquals(serverUrl + "/webhooks/" + flow.getName(), webhookVar.getData());
         Assert.assertFalse(webhookVar.isEditable());
     }
 
@@ -158,7 +158,7 @@ public class FlowServiceTest extends SpringScenario {
 
         Node root = YmlParser.load("test", yml.getRaw());
         Assert.assertNull(root.getEnv(Variables.Flow.GitUrl));
-        Assert.assertNull(root.getEnv(Variables.Flow.CREDENTIAL_NAME));
+        Assert.assertNull(root.getEnv(Variables.Flow.GitCredential));
     }
 
     @Test
@@ -174,7 +174,7 @@ public class FlowServiceTest extends SpringScenario {
         flowService.confirm(flow.getName(), null, credentialName);
 
         Vars<VarValue> variables = flowService.get(flow.getName()).getLocally();
-        Assert.assertEquals(credentialName, variables.get(Variables.Flow.CREDENTIAL_NAME).getData());
+        Assert.assertEquals(credentialName, variables.get(Variables.Flow.GitCredential).getData());
 
         // when:
         List<Flow> flows = flowService.listByCredential(credentialName);

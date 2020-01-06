@@ -3,8 +3,7 @@ flow-platform-x
 
 [![LICENSE](https://img.shields.io/github/license/pingcap/tidb.svg)](https://github.com/pingcap/tidb/blob/master/LICENSE)  
 
-flow.ci is a Continuous Delivery platform, uses YAML configuration file to define flow, 
-execute on agent from binary, inside docker or k8s.
+A open-source continues integration server that makes CI/CD easier
 
 ## Getting Started
 
@@ -14,5 +13,6 @@ execute on agent from binary, inside docker or k8s.
 
 - [Sample YAML configuration](https://github.com/FlowCI/templates)
 
+## Demo
 
-![](https://github.com/FlowCI/docs/raw/master/v1.0/img/trigger_from_github.gif)
+![](https://github.com/FlowCI/docs/raw/master/v1.0/img/demo.gif)

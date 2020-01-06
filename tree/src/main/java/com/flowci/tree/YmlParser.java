@@ -24,10 +24,8 @@ import com.flowci.util.YamlHelper;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
 import org.yaml.snakeyaml.DumperOptions.LineBreak;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -75,9 +73,15 @@ public class YmlParser {
                 throw new YmlException("The 'steps' must be defined");
             }
 
+            Set<String> stepNames = new HashSet<>(steps.size());
+
             for (StepNode node : steps) {
                 if (StringHelper.hasValue(node.getName()) && !NodePath.validate(node.getName())) {
                     throw new YmlException("Invalid name '{0}'", node.name);
+                }
+
+                if (!stepNames.add(node.name)) {
+                    throw new YmlException("Duplicate step name {0}", node.name);
                 }
             }
 
