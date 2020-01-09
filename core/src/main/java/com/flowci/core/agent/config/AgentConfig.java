@@ -17,7 +17,6 @@
 package com.flowci.core.agent.config;
 
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.common.config.QueueConfig;
 import com.flowci.core.common.domain.Variables.App;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.domain.Settings;
