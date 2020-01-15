@@ -23,13 +23,33 @@ import com.flowci.pool.exception.PoolException;
  * 
  * @author yang
  */
-public interface PoolService<Context extends PoolContext> {
+public interface PoolService<Context extends PoolContext> extends AutoCloseable {
 
+    /**
+     * Set pool size
+     */
+    void setSize(int size);
+
+    /**
+     * Init pool service setting
+     * @param context
+     */
+    void init(Context context) throws Exception;
+
+    /**
+     * Start an agent
+     */
     void start(Context context) throws PoolException;
 
-    void status(Context context) throws PoolException;
-
+    /**
+     * Stop an agent
+     * @param context
+     * @throws PoolException
+     */
     void stop(Context context) throws PoolException;
 
+    /**
+     * Remove an agent
+     */
     void remove(Context context) throws PoolException;
 }

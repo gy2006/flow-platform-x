@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-package com.flowci.pool.test;
+package com.flowci.pool.ssh;
 
-import java.io.InputStream;
+import com.flowci.pool.PoolContext;
 
-/**
- * @author yang
- */
-public abstract class PoolScenario {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-    protected InputStream load(String resource) {
-        return PoolScenario.class.getClassLoader().getResourceAsStream(resource);
-    }
+
+@Getter
+@AllArgsConstructor(staticName = "of")
+public class SshContext extends PoolContext {
+    
+    /**
+     * Private rsa key for remote host access
+     */
+    private final String privateKey;
+
+    private final String remoteHost;
+
+    private final String remoteUser;
 }

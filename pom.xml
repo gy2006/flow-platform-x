@@ -33,6 +33,7 @@
     <wiremock.version>2.18.0</wiremock.version>
     <swagger2.version>2.7.0</swagger2.version>
     <jgit.version>5.0.3.201809091024-r</jgit.version>
+    <jsch.version>0.1.55</jsch.version>
     <groovy-all.version>2.4.12</groovy-all.version>
     <docker-java.version>3.0.14</docker-java.version>
     <cron-utils.version>7.0.5</cron-utils.version>
@@ -229,6 +230,18 @@
         <groupId>org.eclipse.jgit</groupId>
         <artifactId>org.eclipse.jgit.http.server</artifactId>
         <version>${jgit.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.jcraft</groupId>
+        <artifactId>jsch</artifactId>
+        <version>${jsch.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.github.docker-java</groupId>
+        <artifactId>docker-java</artifactId>
+        <version>${docker-java.version}</version>
       </dependency>
 
       <dependency>
