@@ -41,7 +41,7 @@ public abstract class PoolContext implements Serializable {
 
     }
 
-    private URI serverUri;
+    private URI serverUrl;
 
     private String token;
 

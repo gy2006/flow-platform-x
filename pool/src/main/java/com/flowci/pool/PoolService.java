@@ -16,16 +16,20 @@
 
 package com.flowci.pool;
 
+import com.flowci.pool.exception.PoolException;
+
 /**
+ * Automatic manage agents
+ * 
  * @author yang
  */
 public interface PoolService<Context extends PoolContext> {
 
-    void start(Context context);
+    void start(Context context) throws PoolException;
 
-    void status(Context context);
+    void status(Context context) throws PoolException;
 
-    void stop(Context context);
+    void stop(Context context) throws PoolException;
 
-    void remove(Context context);
+    void remove(Context context) throws PoolException;
 }

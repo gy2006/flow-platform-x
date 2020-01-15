@@ -1,5 +1,6 @@
+
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +15,13 @@
  * limitations under the License.
  */
 
-package com.flowci.pool.docker;
+package com.flowci.pool.exception;
 
-/**
- * @author yang
- */
-public abstract class Network {
+import static java.text.MessageFormat.format;
 
-    public static final String Host = "host";
-
-    public static final String Bridge = "bridge";
-
-    public static final String None = "none";
-
+public class PoolException extends Exception {
+    
+    public PoolException(final String message, final String... params) {
+        super(format(message, params));
+    }
 }
