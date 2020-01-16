@@ -20,13 +20,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Objects;
 
 import com.flowci.pool.PoolService;
 import com.flowci.pool.exception.PoolException;
+import com.flowci.util.StringHelper;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
@@ -36,6 +36,25 @@ import com.jcraft.jsch.Session;
 public class SshPoolServiceImpl implements PoolService<SshContext> {
 
 	private static final int ConnectionTimeOut = 10 * 1000;
+
+	private static final String Image = "flowci/agent:latest";
+
+	private static abstract class DockerStatus {
+
+		static final String Created = "created";
+
+		static final String Restarting = "restarting";
+
+		static final String Running = "running";
+
+		static final String Removing = "removing";
+
+		static final String Paused = "paused";
+
+		static final String Exited = "exited";
+
+		static final String Dead = "dead";
+	}
 
 	private JSch jsch = new JSch();
 
@@ -63,17 +82,23 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 
 	@Override
 	public void start(SshContext context) throws PoolException {
-		final String containerName = "remote-helloworld";
+		final String container = "remote-helloworld";
 
 		try {
-			String output = runCmd("echo hello");
-			System.out.println(output);
+			if (hasContainer(container)) {
+				if (containerInStatus(container, DockerStatus.Running)) {
+					return;
+				}
 
-			output = runCmd("echo hello");
-			System.out.println(output);
+				if (containerInStatus(container, DockerStatus.Exited)) {
+					runCmd("docker start " + container);
+					return;
+				}
 
-			output = runCmd("echo hello");
-			System.out.println(output);
+				throw new PoolException("Unhandled docker status");
+			}
+
+			runCmd("docker run -d --name " + container + " " + Image);
 
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
@@ -119,6 +144,19 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 				channel.disconnect();
 			}
 		}
+	}
+
+	private boolean containerInStatus(String container, String status) throws JSchException, IOException {
+		final String cmd = "docker ps -a " + "--filter name=" + container + " " + "--filter status=" + status + " "
+				+ "--format '{{.Names}}'";
+		final String content = runCmd(cmd);
+		return StringHelper.hasValue(content);
+	}
+
+	private boolean hasContainer(String container) throws JSchException, IOException {
+		final String cmd = "docker ps -a --filter name=" + container + " --format '{{.Names}}'";
+		final String content = runCmd(cmd);
+		return StringHelper.hasValue(content);
 	}
 
 	private static StringBuilder collectOutput(InputStream in) throws IOException {
