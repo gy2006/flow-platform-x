@@ -24,16 +24,18 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Objects;
-import java.util.UUID;
 
 import com.flowci.pool.PoolService;
 import com.flowci.pool.exception.PoolException;
 import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
 public class SshPoolServiceImpl implements PoolService<SshContext> {
+
+	private static final int ConnectionTimeOut = 10 * 1000;
 
 	private JSch jsch = new JSch();
 
@@ -52,7 +54,7 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 
 			session = jsch.getSession(context.getRemoteUser(), context.getRemoteHost(), 22);
 			session.setConfig("StrictHostKeyChecking", "no");
-			session.connect();
+			session.connect(ConnectionTimeOut);
 		} catch (JSchException e) {
 			this.close();
 			throw new PoolException("Ssh connection error: {0}", e.getMessage());
@@ -62,19 +64,17 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 	@Override
 	public void start(SshContext context) throws PoolException {
 		final String containerName = "remote-helloworld";
-		final String startFlag = startCmdFlag();
-		final String endFlag = endCmdFlag();
 
 		try {
-			runCommand((channle, in, out) -> {
-				in.write(toBytes("docker run -d --name " + containerName + " hello-world"));
-				in.write(toBytes("echo " + startFlag));
-				in.write(toBytes("docker inspect " + containerName));
-				in.write(toBytes("exit"));
-				
-				String content = fetchContent(startFlag, endFlag, out).toString();
-				System.out.println(content);
-			});
+			String output = runCmd("echo hello");
+			System.out.println(output);
+
+			output = runCmd("echo hello");
+			System.out.println(output);
+
+			output = runCmd("echo hello");
+			System.out.println(output);
+
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
 		}
@@ -92,23 +92,6 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 
 	}
 
-	private void runCommand(CmdRunner runner) throws JSchException, IOException {
-		if (Objects.isNull(session)) {
-			throw new IllegalStateException("Please call init in the beginning");
-		}
-
-		Channel channel = this.session.openChannel("shell");
-
-		PipedOutputStream in = new PipedOutputStream();
-		PipedInputStream out = new PipedInputStream();
-
-		channel.setInputStream(new PipedInputStream(in));
-		channel.setOutputStream(new PipedOutputStream(out));
-		channel.connect();
-
-		runner.onRun(channel, in, out);
-	}
-
 	@Override
 	public void close() throws Exception {
 		if (session != null) {
@@ -116,41 +99,38 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 		}
 	}
 
-	private static String startCmdFlag() {
-		return "[START]" + UUID.randomUUID() + "[/START]";
+	private String runCmd(String bash) throws JSchException, IOException {
+		if (Objects.isNull(session)) {
+			throw new IllegalStateException("Please call init in the beginning");
+		}
+
+		Channel channel = null;
+
+		try {
+			channel = this.session.openChannel("exec");
+			try (PipedInputStream out = new PipedInputStream()) {
+				((ChannelExec) channel).setCommand(bash);
+				channel.setOutputStream(new PipedOutputStream(out));
+				channel.connect(ConnectionTimeOut);
+				return collectOutput(out).toString();
+			}
+		} finally {
+			if (channel != null) {
+				channel.disconnect();
+			}
+		}
 	}
 
-	private static String endCmdFlag() {
-		return "[END]" + UUID.randomUUID() + "[/END]";
-	}
-
-	private static byte[] toBytes(String cmd) {
-		cmd += "\n";
-		return cmd.getBytes();
-	}
-
-	private static StringBuilder fetchContent(String startFlag, String endFlag, InputStream in) throws IOException {
+	private static StringBuilder collectOutput(InputStream in) throws IOException {
 		try (BufferedReader buffer = new BufferedReader(new InputStreamReader(in))) {
 			String line;
-			StringBuilder builder = null;
+			StringBuilder builder = new StringBuilder();
 
 			while ((line = buffer.readLine()) != null) {
-				if (builder != null) {
-					builder.append(line.trim());
-				}
-
-				else if (line.equals(startFlag)) {
-					line = buffer.readLine();
-					builder = new StringBuilder();
-				}
+				builder.append(line.trim());
 			}
 
 			return builder;
 		}
-	}
-
-	private interface CmdRunner {
-
-		void onRun(Channel channel, OutputStream in, InputStream out) throws IOException;
 	}
 }
