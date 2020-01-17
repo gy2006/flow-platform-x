@@ -17,7 +17,7 @@ public class SshPoolServiceTest extends PoolScenario {
     private final PoolService<SshContext> service = new SshPoolServiceImpl();
 
     @Test
-    @Ignore
+    // @Ignore
     public void should_start_agent_via_ssh() throws Exception {
         // init: context
         InputStream pk = load("test.pk");
@@ -34,5 +34,7 @@ public class SshPoolServiceTest extends PoolScenario {
         service.remove(context);
         status = service.status(context);
         Assert.assertEquals(PoolContext.DockerStatus.None, status);
+
+        service.release(context);
     }
 }

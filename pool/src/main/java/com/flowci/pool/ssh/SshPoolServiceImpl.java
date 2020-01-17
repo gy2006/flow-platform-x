@@ -26,7 +26,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import com.flowci.pool.PoolContext;
 import com.flowci.pool.PoolService;
@@ -45,24 +49,34 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 
 	private static final String Image = "flowci/agent:latest";
 
-	private JSch jsch = new JSch();
+	private Map<String, Session> sessions = new HashMap<>();
 
-	private Session session;
+	private Map<String, Set<String>> agents = new HashMap<>();
+
+	private int max = 10;
 
 	@Override
 	public void setSize(int size) {
-		// TODO Auto-generated method stub
+		if (size < 1) {
+			throw new IllegalArgumentException("Max agent size must be positive integer");
+		}
+		max = size;
 	}
 
 	@Override
-	public void init(SshContext context) throws Exception {
+	public synchronized void init(SshContext context) throws Exception {
+		if (sessions.containsKey(context.getRemoteHost())) {
+			return;
+		}
+
 		try {
-			jsch = new JSch();
+			JSch jsch = new JSch();
 			jsch.addIdentity("name", context.getPrivateKey().getBytes(), null, null);
 
-			session = jsch.getSession(context.getRemoteUser(), context.getRemoteHost(), 22);
+			Session session = jsch.getSession(context.getRemoteUser(), context.getRemoteHost(), 22);
 			session.setConfig("StrictHostKeyChecking", "no");
 			session.connect(ConnectionTimeOut);
+			sessions.put(context.getRemoteHost(), session);
 		} catch (JSchException e) {
 			this.close();
 			throw new PoolException("Ssh connection error: {0}", e.getMessage());
@@ -70,24 +84,40 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 	}
 
 	@Override
+	public synchronized void release(SshContext context) throws Exception {
+		Session session = sessions.get(context.getRemoteHost());
+		if (Objects.isNull(session)) {
+			return;
+		}
+		session.disconnect();
+		sessions.remove(context.getRemoteHost());
+	}
+
+	@Override
 	public void start(SshContext context) throws PoolException {
 		final String container = context.getContainerName();
 
 		try {
-			if (hasContainer(container)) {
-				if (containerInStatus(container, DockerStatus.Running)) {
+			if (hasContainer(context)) {
+				if (containerInStatus(context, DockerStatus.Running)) {
 					return;
 				}
 
-				if (containerInStatus(container, DockerStatus.Exited)) {
-					runCmd("docker start " + container);
+				if (containerInStatus(context, DockerStatus.Exited)) {
+					runCmd(context, "docker start " + container);
 					return;
 				}
 
 				throw new PoolException("Unhandled docker status");
 			}
 
-			runCmd(buildDockerRunScript(context));
+			runCmd(context, buildDockerRunScript(context));
+
+			Set<String> set = agents.computeIfAbsent(context.getRemoteHost(), key -> {
+				return new HashSet<>();
+			});
+
+			set.add(context.getContainerName());
 
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
@@ -97,7 +127,12 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 	@Override
 	public void stop(SshContext context) throws PoolException {
 		try {
-			runCmd(String.format("docker stop %s", context.getContainerName()));
+			runCmd(context, String.format("docker stop %s", context.getContainerName()));
+
+			agents.computeIfPresent(context.getRemoteHost(), (key, val) -> {
+				val.remove(context.getContainerName());
+				return val;
+			});
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
 		}
@@ -106,7 +141,12 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 	@Override
 	public void remove(SshContext context) throws PoolException {
 		try {
-			runCmd(String.format("docker rm -f %s", context.getContainerName()));
+			runCmd(context, String.format("docker rm -f %s", context.getContainerName()));
+
+			agents.computeIfPresent(context.getRemoteHost(), (key, val) -> {
+				val.remove(context.getContainerName());
+				return val;
+			});
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
 		}
@@ -114,42 +154,40 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 
 	@Override
 	public String status(SshContext context) throws PoolException {
-		final String container = context.getContainerName();
-
 		try {
-			if (!hasContainer(container)) {
+			if (!hasContainer(context)) {
 				return DockerStatus.None;
 			}
 
-			if (containerInStatus(container, DockerStatus.Created)) {
+			if (containerInStatus(context, DockerStatus.Created)) {
 				return DockerStatus.Created;
 			}
 
-			if (containerInStatus(container, DockerStatus.Restarting)) {
+			if (containerInStatus(context, DockerStatus.Restarting)) {
 				return DockerStatus.Restarting;
 			}
 
-			if (containerInStatus(container, DockerStatus.Running)) {
+			if (containerInStatus(context, DockerStatus.Running)) {
 				return DockerStatus.Running;
 			}
 
-			if (containerInStatus(container, DockerStatus.Removing)) {
+			if (containerInStatus(context, DockerStatus.Removing)) {
 				return DockerStatus.Removing;
 			}
 
-			if (containerInStatus(container, DockerStatus.Paused)) {
+			if (containerInStatus(context, DockerStatus.Paused)) {
 				return DockerStatus.Paused;
 			}
 
-			if (containerInStatus(container, DockerStatus.Exited)) {
+			if (containerInStatus(context, DockerStatus.Exited)) {
 				return DockerStatus.Exited;
 			}
 
-			if (containerInStatus(container, DockerStatus.Dead)) {
+			if (containerInStatus(context, DockerStatus.Dead)) {
 				return DockerStatus.Dead;
 			}
 
-			throw new PoolException("Unable to get status of container {0}", container);
+			throw new PoolException("Unable to get status of container {0}", context.getContainerName());
 
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
@@ -158,20 +196,24 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 
 	@Override
 	public void close() throws Exception {
-		if (session != null) {
-			session.disconnect();
+		for (Map.Entry<String, Session> entry : this.sessions.entrySet()) {
+			String host = entry.getKey();
+			entry.getValue().disconnect();
+			agents.remove(host);
 		}
 	}
 
-	private String runCmd(String bash) throws JSchException, IOException {
+	private String runCmd(SshContext context, String bash) throws JSchException, IOException {
+		Session session = this.sessions.get(context.getRemoteHost());
+
 		if (Objects.isNull(session)) {
-			throw new IllegalStateException("Please call init in the beginning");
+			throw new IllegalStateException("Please init ssh session first");
 		}
 
 		Channel channel = null;
 
 		try {
-			channel = this.session.openChannel("exec");
+			channel = session.openChannel("exec");
 			try (PipedInputStream out = new PipedInputStream()) {
 				((ChannelExec) channel).setCommand(bash);
 				channel.setOutputStream(new PipedOutputStream(out));
@@ -185,16 +227,16 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 		}
 	}
 
-	private boolean containerInStatus(String container, String status) throws JSchException, IOException {
-		final String cmd = "docker ps -a " + "--filter name=" + container + " " + "--filter status=" + status + " "
+	private boolean containerInStatus(SshContext context, String status) throws JSchException, IOException {
+		final String cmd = "docker ps -a " + "--filter name=" + context.getContainerName() + " " + "--filter status=" + status + " "
 				+ "--format '{{.Names}}'";
-		final String content = runCmd(cmd);
+		final String content = runCmd(context, cmd);
 		return StringHelper.hasValue(content);
 	}
 
-	private boolean hasContainer(String container) throws JSchException, IOException {
-		final String cmd = "docker ps -a --filter name=" + container + " --format '{{.Names}}'";
-		final String content = runCmd(cmd);
+	private boolean hasContainer(SshContext context) throws JSchException, IOException {
+		final String cmd = "docker ps -a --filter name=" + context.getContainerName() + " --format '{{.Names}}'";
+		final String content = runCmd(context, cmd);
 		return StringHelper.hasValue(content);
 	}
 

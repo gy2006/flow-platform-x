@@ -26,7 +26,7 @@ import com.flowci.pool.exception.PoolException;
 public interface PoolService<Context extends PoolContext> extends AutoCloseable {
 
     /**
-     * Set pool size
+     * Set max agnet size
      */
     void setSize(int size);
 
@@ -35,6 +35,12 @@ public interface PoolService<Context extends PoolContext> extends AutoCloseable 
      * @param context
      */
     void init(Context context) throws Exception;
+
+    /**
+     * Release pool service setting
+     * @param context
+     */
+    void release(Context context) throws Exception;
 
     /**
      * Start an agent
