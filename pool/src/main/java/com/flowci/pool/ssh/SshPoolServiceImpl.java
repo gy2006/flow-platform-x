@@ -16,6 +16,10 @@
 
 package com.flowci.pool.ssh;
 
+import static com.flowci.pool.PoolContext.AgentEnvs.SERVER_URL;
+import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_TOKEN;
+import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_LOG_LEVEL;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +28,9 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Objects;
 
+import com.flowci.pool.PoolContext;
 import com.flowci.pool.PoolService;
+import com.flowci.pool.PoolContext.DockerStatus;
 import com.flowci.pool.exception.PoolException;
 import com.flowci.util.StringHelper;
 import com.jcraft.jsch.Channel;
@@ -38,23 +44,6 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 	private static final int ConnectionTimeOut = 10 * 1000;
 
 	private static final String Image = "flowci/agent:latest";
-
-	private static abstract class DockerStatus {
-
-		static final String Created = "created";
-
-		static final String Restarting = "restarting";
-
-		static final String Running = "running";
-
-		static final String Removing = "removing";
-
-		static final String Paused = "paused";
-
-		static final String Exited = "exited";
-
-		static final String Dead = "dead";
-	}
 
 	private JSch jsch = new JSch();
 
@@ -82,7 +71,7 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 
 	@Override
 	public void start(SshContext context) throws PoolException {
-		final String container = "remote-helloworld";
+		final String container = context.getContainerName();
 
 		try {
 			if (hasContainer(container)) {
@@ -98,7 +87,7 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 				throw new PoolException("Unhandled docker status");
 			}
 
-			runCmd("docker run -d --name " + container + " " + Image);
+			runCmd(buildDockerRunScript(context));
 
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
@@ -107,14 +96,64 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 
 	@Override
 	public void stop(SshContext context) throws PoolException {
-		// TODO Auto-generated method stub
-
+		try {
+			runCmd(String.format("docker stop %s", context.getContainerName()));
+		} catch (JSchException | IOException e) {
+			throw new PoolException(e.getMessage());
+		}
 	}
 
 	@Override
 	public void remove(SshContext context) throws PoolException {
-		// TODO Auto-generated method stub
+		try {
+			runCmd(String.format("docker rm -f %s", context.getContainerName()));
+		} catch (JSchException | IOException e) {
+			throw new PoolException(e.getMessage());
+		}
+	}
 
+	@Override
+	public String status(SshContext context) throws PoolException {
+		final String container = context.getContainerName();
+
+		try {
+			if (!hasContainer(container)) {
+				return DockerStatus.None;
+			}
+
+			if (containerInStatus(container, DockerStatus.Created)) {
+				return DockerStatus.Created;
+			}
+
+			if (containerInStatus(container, DockerStatus.Restarting)) {
+				return DockerStatus.Restarting;
+			}
+
+			if (containerInStatus(container, DockerStatus.Running)) {
+				return DockerStatus.Running;
+			}
+
+			if (containerInStatus(container, DockerStatus.Removing)) {
+				return DockerStatus.Removing;
+			}
+
+			if (containerInStatus(container, DockerStatus.Paused)) {
+				return DockerStatus.Paused;
+			}
+
+			if (containerInStatus(container, DockerStatus.Exited)) {
+				return DockerStatus.Exited;
+			}
+
+			if (containerInStatus(container, DockerStatus.Dead)) {
+				return DockerStatus.Dead;
+			}
+
+			throw new PoolException("Unable to get status of container {0}", container);
+
+		} catch (JSchException | IOException e) {
+			throw new PoolException(e.getMessage());
+		}
 	}
 
 	@Override
@@ -157,6 +196,21 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 		final String cmd = "docker ps -a --filter name=" + container + " --format '{{.Names}}'";
 		final String content = runCmd(cmd);
 		return StringHelper.hasValue(content);
+	}
+
+	private static String buildDockerRunScript(PoolContext context) {
+		StringBuilder builder = new StringBuilder();
+
+		builder.append("docker run -d ");
+		builder.append(String.format("--name %s ", context.getContainerName()));
+		builder.append(String.format("-e %s=%s ", SERVER_URL, context.getServerUrl()));
+		builder.append(String.format("-e %s=%s ", AGENT_TOKEN, context.getToken()));
+		builder.append(String.format("-e %s=%s ", AGENT_LOG_LEVEL, context.getLogLevel()));
+		builder.append(String.format("-v %s:/root/.flow.ci.agent ", context.getDirOnHost()));
+		builder.append("-v /var/run/docker.sock:/var/run/docker.sock ");
+		builder.append(Image);
+
+		return builder.toString();
 	}
 
 	private static StringBuilder collectOutput(InputStream in) throws IOException {

@@ -17,9 +17,10 @@
 package com.flowci.pool;
 
 import java.io.Serializable;
-import java.net.URI;
 import java.util.Date;
+
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 /**
@@ -41,15 +42,41 @@ public abstract class PoolContext implements Serializable {
 
     }
 
-    private URI serverUrl;
+	public static abstract class DockerStatus {
 
+        public static final String None = "none";
+
+		public static final String Created = "created";
+
+		public static final String Restarting = "restarting";
+
+		public static final String Running = "running";
+
+		public static final String Removing = "removing";
+
+		public static final String Paused = "paused";
+
+		public static final String Exited = "exited";
+
+		public static final String Dead = "dead";
+	}
+
+    @NonNull
+    private String serverUrl; // ex: http://127.0.0.1:8080
+
+    @NonNull
     private String token;
 
     private Integer port = 8088;
 
+    @NonNull
     private String logLevel = "DEBUG";
 
-    private String status;
+    public String getContainerName() {
+        return String.format("ci-agent-%s", token);
+    }
 
-    private Date startAt;
+    public String getDirOnHost() {
+        return String.format("${HOME}/.flow.agent-%s", token);
+    }
 }

@@ -52,4 +52,9 @@ public interface PoolService<Context extends PoolContext> extends AutoCloseable 
      * Remove an agent
      */
     void remove(Context context) throws PoolException;
+
+    /**
+     * Get docker status
+     */
+    String status(Context context) throws PoolException;
 }
