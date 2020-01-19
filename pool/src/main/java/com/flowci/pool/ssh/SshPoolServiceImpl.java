@@ -26,14 +26,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
+import com.flowci.pool.AbstractPoolService;
 import com.flowci.pool.PoolContext;
-import com.flowci.pool.PoolService;
 import com.flowci.pool.PoolContext.DockerStatus;
 import com.flowci.pool.exception.PoolException;
 import com.flowci.util.StringHelper;
@@ -43,25 +45,13 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
-public class SshPoolServiceImpl implements PoolService<SshContext> {
+public class SshPoolServiceImpl extends AbstractPoolService<SshContext> {
 
 	private static final int ConnectionTimeOut = 10 * 1000;
 
-	private static final String Image = "flowci/agent:latest";
-
 	private Map<String, Session> sessions = new HashMap<>();
 
-	private Map<String, Set<String>> agents = new HashMap<>();
-
-	private int max = 10;
-
-	@Override
-	public void setSize(int size) {
-		if (size < 1) {
-			throw new IllegalArgumentException("Max agent size must be positive integer");
-		}
-		max = size;
-	}
+	private Map<String, Set<String>> agents = new ConcurrentHashMap<>();
 
 	@Override
 	public synchronized void init(SshContext context) throws Exception {
@@ -81,6 +71,10 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 			this.close();
 			throw new PoolException("Ssh connection error: {0}", e.getMessage());
 		}
+	}
+
+	public synchronized Map<String, Set<String>> list() {
+		return Collections.unmodifiableMap(this.agents);
 	}
 
 	@Override
@@ -116,6 +110,10 @@ public class SshPoolServiceImpl implements PoolService<SshContext> {
 			Set<String> set = agents.computeIfAbsent(context.getRemoteHost(), key -> {
 				return new HashSet<>();
 			});
+			
+			if (set.size() > max) {
+				throw new PoolException("Agent size over the max limit");
+			}
 
 			set.add(context.getContainerName());
 
