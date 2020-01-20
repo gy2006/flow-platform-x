@@ -23,12 +23,12 @@ import com.flowci.pool.exception.PoolException;
  * 
  * @author yang
  */
-public interface PoolService<Context extends PoolContext> extends AutoCloseable {
+public interface PoolManager<Context extends PoolContext> extends AutoCloseable {
 
     /**
      * Set max agnet size
      */
-    void setSize(int size);
+    void setLimit(int size);
 
     /**
      * Init pool service setting

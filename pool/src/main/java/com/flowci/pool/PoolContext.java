@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.flowci.pool;
 
 import java.io.Serializable;
-import java.util.Date;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -29,6 +28,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public abstract class PoolContext implements Serializable {
+
+    public static final String ContainerNamePerfix = "ci-agent-";
 
     public static class AgentEnvs {
 
@@ -73,7 +74,7 @@ public abstract class PoolContext implements Serializable {
     private String logLevel = "DEBUG";
 
     public String getContainerName() {
-        return String.format("ci-agent-%s", token);
+        return String.format("%s%s", ContainerNamePerfix, token);
     }
 
     public String getDirOnHost() {

@@ -7,7 +7,7 @@ import java.util.List;
 import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_TOKEN;
 import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_LOG_LEVEL;
 
-import com.flowci.pool.AbstractPoolService;
+import com.flowci.pool.AbstractPoolManager;
 import com.flowci.pool.PoolContext;
 import com.flowci.pool.exception.PoolException;
 import com.github.dockerjava.api.DockerClient;
@@ -19,7 +19,7 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
-public class DockerPoolServiceImpl extends AbstractPoolService<DockerContext> {
+public class DockerPoolManager extends AbstractPoolManager<DockerContext> {
 
     private DockerClient client;
 
@@ -28,10 +28,17 @@ public class DockerPoolServiceImpl extends AbstractPoolService<DockerContext> {
      */
     @Override
     public void init(DockerContext context) throws Exception {
+        // setup client instance
         DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-                .withDockerHost("unix:///var/run/docker.sock").build();
+                .withDockerHost(context.getDockerHost()).build();
 
         client = DockerClientBuilder.getInstance(config).build();
+
+        // fetch existing containers
+        final String nameFilter = PoolContext.ContainerNamePerfix + "*";
+        List<Container> list = client.listContainersCmd().withShowAll(true)
+                .withNameFilter(Lists.newArrayList(nameFilter)).exec();
+        numOfAgent.set(list.size());
     }
 
     @Override
@@ -41,6 +48,10 @@ public class DockerPoolServiceImpl extends AbstractPoolService<DockerContext> {
 
     @Override
     public void start(DockerContext context) throws PoolException {
+        if (numOfAgent.get() > max) {
+            throw new PoolException("Num of agent over the limit {0}", Integer.toString(max));
+        }
+
         List<Container> list = client.listContainersCmd().withShowAll(true)
                 .withNameFilter(Lists.newArrayList(context.getContainerName())).exec();
 
@@ -53,6 +64,7 @@ public class DockerPoolServiceImpl extends AbstractPoolService<DockerContext> {
                     .withVolumes(new Volume("/var/run/docker.sock"), new Volume("/var/run/docker.sock")).exec();
 
             client.startContainerCmd(container.getId()).exec();
+            numOfAgent.incrementAndGet();
             return;
         }
 
@@ -63,6 +75,7 @@ public class DockerPoolServiceImpl extends AbstractPoolService<DockerContext> {
 
         if (Objects.equal(PoolContext.DockerStatus.Exited, exist.getState())) {
             client.startContainerCmd(exist.getId());
+            numOfAgent.incrementAndGet();
             return;
         }
 
@@ -72,18 +85,20 @@ public class DockerPoolServiceImpl extends AbstractPoolService<DockerContext> {
     @Override
     public void stop(DockerContext context) throws PoolException {
         client.stopContainerCmd(findContainer(context.getContainerName()).getId()).exec();
+        numOfAgent.decrementAndGet();
     }
 
     @Override
     public void remove(DockerContext context) throws PoolException {
         client.removeContainerCmd(findContainer(context.getContainerName()).getId()).exec();
+        numOfAgent.decrementAndGet();
     }
 
     @Override
     public String status(DockerContext context) throws PoolException {
         try {
             return findContainer(context.getContainerName()).getState();
-        } catch(PoolException e) {
+        } catch (PoolException e) {
             return PoolContext.DockerStatus.None;
         }
     }

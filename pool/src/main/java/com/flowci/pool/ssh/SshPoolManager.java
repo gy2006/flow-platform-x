@@ -34,7 +34,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.flowci.pool.AbstractPoolService;
+import com.flowci.pool.AbstractPoolManager;
 import com.flowci.pool.PoolContext;
 import com.flowci.pool.PoolContext.DockerStatus;
 import com.flowci.pool.exception.PoolException;
@@ -45,7 +45,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
-public class SshPoolServiceImpl extends AbstractPoolService<SshContext> {
+public class SshPoolManager extends AbstractPoolManager<SshContext> {
 
 	private static final int ConnectionTimeOut = 10 * 1000;
 

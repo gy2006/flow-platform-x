@@ -3,18 +3,18 @@ package com.flowci.pool.test;
 import java.io.InputStream;
 
 import com.flowci.pool.PoolContext;
-import com.flowci.pool.PoolService;
+import com.flowci.pool.PoolManager;
 import com.flowci.pool.ssh.SshContext;
-import com.flowci.pool.ssh.SshPoolServiceImpl;
+import com.flowci.pool.ssh.SshPoolManager;
 import com.flowci.util.StringHelper;
 
 import org.junit.Test;
 import org.junit.Assert;
 import org.junit.Ignore;
 
-public class SshPoolServiceTest extends PoolScenario {
+public class SshPoolManagerTest extends PoolScenario {
 
-    private final PoolService<SshContext> service = new SshPoolServiceImpl();
+    private final PoolManager<SshContext> service = new SshPoolManager();
 
     @Test
     @Ignore
