@@ -42,8 +42,10 @@ public class DockerPoolManager extends AbstractPoolManager<DockerContext> {
     }
 
     @Override
-    public void release(DockerContext context) throws Exception {
-        // Do nothing, sicne only init local docker.sock api currently
+    public void close() throws Exception {
+        if (client != null) {
+            client.close();
+        }
     }
 
     @Override
@@ -100,13 +102,6 @@ public class DockerPoolManager extends AbstractPoolManager<DockerContext> {
             return findContainer(context.getContainerName()).getState();
         } catch (PoolException e) {
             return PoolContext.DockerStatus.None;
-        }
-    }
-
-    @Override
-    public void close() throws Exception {
-        if (client != null) {
-            client.close();
         }
     }
 

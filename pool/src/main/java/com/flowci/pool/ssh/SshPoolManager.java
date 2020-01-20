@@ -16,9 +16,9 @@
 
 package com.flowci.pool.ssh;
 
-import static com.flowci.pool.PoolContext.AgentEnvs.SERVER_URL;
-import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_TOKEN;
 import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_LOG_LEVEL;
+import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_TOKEN;
+import static com.flowci.pool.PoolContext.AgentEnvs.SERVER_URL;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,13 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.flowci.pool.AbstractPoolManager;
 import com.flowci.pool.PoolContext;
@@ -49,46 +43,38 @@ public class SshPoolManager extends AbstractPoolManager<SshContext> {
 
 	private static final int ConnectionTimeOut = 10 * 1000;
 
-	private Map<String, Session> sessions = new HashMap<>();
-
-	private Map<String, Set<String>> agents = new ConcurrentHashMap<>();
+	private Session session;
 
 	@Override
 	public synchronized void init(SshContext context) throws Exception {
-		if (sessions.containsKey(context.getRemoteHost())) {
-			return;
-		}
-
 		try {
 			JSch jsch = new JSch();
 			jsch.addIdentity("name", context.getPrivateKey().getBytes(), null, null);
 
-			Session session = jsch.getSession(context.getRemoteUser(), context.getRemoteHost(), 22);
+			session = jsch.getSession(context.getRemoteUser(), context.getRemoteHost(), 22);
 			session.setConfig("StrictHostKeyChecking", "no");
 			session.connect(ConnectionTimeOut);
-			sessions.put(context.getRemoteHost(), session);
 		} catch (JSchException e) {
 			this.close();
 			throw new PoolException("Ssh connection error: {0}", e.getMessage());
 		}
 	}
 
-	public synchronized Map<String, Set<String>> list() {
-		return Collections.unmodifiableMap(this.agents);
-	}
-
 	@Override
-	public synchronized void release(SshContext context) throws Exception {
-		Session session = sessions.get(context.getRemoteHost());
+	public void close() throws Exception {
 		if (Objects.isNull(session)) {
 			return;
 		}
+
 		session.disconnect();
-		sessions.remove(context.getRemoteHost());
 	}
 
 	@Override
 	public void start(SshContext context) throws PoolException {
+		if (numOfAgent.get() > max) {
+			throw new PoolException("Num of agent over the limit {0}", Integer.toString(max));
+		}
+
 		final String container = context.getContainerName();
 
 		try {
@@ -99,6 +85,7 @@ public class SshPoolManager extends AbstractPoolManager<SshContext> {
 
 				if (containerInStatus(context, DockerStatus.Exited)) {
 					runCmd(context, "docker start " + container);
+					numOfAgent.incrementAndGet();
 					return;
 				}
 
@@ -106,16 +93,7 @@ public class SshPoolManager extends AbstractPoolManager<SshContext> {
 			}
 
 			runCmd(context, buildDockerRunScript(context));
-
-			Set<String> set = agents.computeIfAbsent(context.getRemoteHost(), key -> {
-				return new HashSet<>();
-			});
-			
-			if (set.size() > max) {
-				throw new PoolException("Agent size over the max limit");
-			}
-
-			set.add(context.getContainerName());
+			numOfAgent.incrementAndGet();
 
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
@@ -126,11 +104,7 @@ public class SshPoolManager extends AbstractPoolManager<SshContext> {
 	public void stop(SshContext context) throws PoolException {
 		try {
 			runCmd(context, String.format("docker stop %s", context.getContainerName()));
-
-			agents.computeIfPresent(context.getRemoteHost(), (key, val) -> {
-				val.remove(context.getContainerName());
-				return val;
-			});
+			numOfAgent.decrementAndGet();
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
 		}
@@ -140,11 +114,7 @@ public class SshPoolManager extends AbstractPoolManager<SshContext> {
 	public void remove(SshContext context) throws PoolException {
 		try {
 			runCmd(context, String.format("docker rm -f %s", context.getContainerName()));
-
-			agents.computeIfPresent(context.getRemoteHost(), (key, val) -> {
-				val.remove(context.getContainerName());
-				return val;
-			});
+			numOfAgent.decrementAndGet();
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
 		}
@@ -192,18 +162,7 @@ public class SshPoolManager extends AbstractPoolManager<SshContext> {
 		}
 	}
 
-	@Override
-	public void close() throws Exception {
-		for (Map.Entry<String, Session> entry : this.sessions.entrySet()) {
-			String host = entry.getKey();
-			entry.getValue().disconnect();
-			agents.remove(host);
-		}
-	}
-
 	private String runCmd(SshContext context, String bash) throws JSchException, IOException {
-		Session session = this.sessions.get(context.getRemoteHost());
-
 		if (Objects.isNull(session)) {
 			throw new IllegalStateException("Please init ssh session first");
 		}

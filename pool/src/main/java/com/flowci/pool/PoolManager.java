@@ -37,12 +37,6 @@ public interface PoolManager<Context extends PoolContext> extends AutoCloseable 
     void init(Context context) throws Exception;
 
     /**
-     * Release pool service setting
-     * @param context
-     */
-    void release(Context context) throws Exception;
-
-    /**
      * Start an agent
      */
     void start(Context context) throws PoolException;
