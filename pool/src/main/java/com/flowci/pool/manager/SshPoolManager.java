@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.flowci.pool.ssh;
+package com.flowci.pool.manager;
 
-import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_LOG_LEVEL;
-import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_TOKEN;
-import static com.flowci.pool.PoolContext.AgentEnvs.SERVER_URL;
+import static com.flowci.pool.domain.PoolContext.AgentEnvs.AGENT_LOG_LEVEL;
+import static com.flowci.pool.domain.PoolContext.AgentEnvs.AGENT_TOKEN;
+import static com.flowci.pool.domain.PoolContext.AgentEnvs.SERVER_URL;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,11 +26,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.List;
 import java.util.Objects;
 
-import com.flowci.pool.AbstractPoolManager;
-import com.flowci.pool.PoolContext;
-import com.flowci.pool.PoolContext.DockerStatus;
+import com.flowci.pool.domain.AgentContainer;
+import com.flowci.pool.domain.PoolContext;
+import com.flowci.pool.domain.SshContext;
+import com.flowci.pool.domain.PoolContext.DockerStatus;
 import com.flowci.pool.exception.PoolException;
 import com.flowci.util.StringHelper;
 import com.jcraft.jsch.Channel;
@@ -61,6 +63,11 @@ public class SshPoolManager extends AbstractPoolManager<SshContext> {
 	}
 
 	@Override
+	public List<AgentContainer> list() {
+		return null;
+	}
+
+	@Override
 	public void close() throws Exception {
 		if (Objects.isNull(session)) {
 			return;
@@ -85,7 +92,6 @@ public class SshPoolManager extends AbstractPoolManager<SshContext> {
 
 				if (containerInStatus(context, DockerStatus.Exited)) {
 					runCmd(context, "docker start " + container);
-					numOfAgent.incrementAndGet();
 					return;
 				}
 
@@ -104,7 +110,6 @@ public class SshPoolManager extends AbstractPoolManager<SshContext> {
 	public void stop(SshContext context) throws PoolException {
 		try {
 			runCmd(context, String.format("docker stop %s", context.getContainerName()));
-			numOfAgent.decrementAndGet();
 		} catch (JSchException | IOException e) {
 			throw new PoolException(e.getMessage());
 		}

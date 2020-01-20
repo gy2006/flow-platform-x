@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.pool.ssh;
-
-import com.flowci.pool.PoolContext;
+package com.flowci.pool.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.pool;
+package com.flowci.pool.domain;
 
 import java.io.Serializable;
 

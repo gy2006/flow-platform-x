@@ -21,7 +21,7 @@ import java.io.InputStream;
 /**
  * @author yang
  */
-public abstract class PoolScenario {
+public class PoolScenario {
 
     protected InputStream load(String resource) {
         return PoolScenario.class.getClassLoader().getResourceAsStream(resource);

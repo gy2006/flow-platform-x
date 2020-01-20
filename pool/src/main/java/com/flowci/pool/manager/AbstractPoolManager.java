@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.flowci.pool;
+package com.flowci.pool.manager;
 
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.flowci.pool.domain.PoolContext;
 
 public abstract class AbstractPoolManager<T extends PoolContext> implements PoolManager<T>{
 
@@ -32,5 +34,10 @@ public abstract class AbstractPoolManager<T extends PoolContext> implements Pool
             throw new IllegalArgumentException("Max agent size must be positive integer");
         }
         max = limit;
+    }
+
+    @Override
+    public int size() {
+        return numOfAgent.get();
     }
 }

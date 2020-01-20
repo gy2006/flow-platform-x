@@ -2,10 +2,10 @@ package com.flowci.pool.test;
 
 import java.io.InputStream;
 
-import com.flowci.pool.PoolContext;
-import com.flowci.pool.PoolManager;
-import com.flowci.pool.ssh.SshContext;
-import com.flowci.pool.ssh.SshPoolManager;
+import com.flowci.pool.domain.PoolContext;
+import com.flowci.pool.domain.SshContext;
+import com.flowci.pool.manager.PoolManager;
+import com.flowci.pool.manager.SshPoolManager;
 import com.flowci.util.StringHelper;
 
 import org.junit.Test;
@@ -35,6 +35,6 @@ public class SshPoolManagerTest extends PoolScenario {
         status = service.status(context);
         Assert.assertEquals(PoolContext.DockerStatus.None, status);
 
-        service.release(context);
+        service.close();
     }
 }

@@ -1,13 +1,11 @@
-package com.flowci.pool.docker;
-
-import com.flowci.pool.PoolContext;
+package com.flowci.pool.domain;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class DockerContext extends PoolContext {
+public class SocketContext extends PoolContext {
 
     private final String dockerHost = "unix:///var/run/docker.sock";
 

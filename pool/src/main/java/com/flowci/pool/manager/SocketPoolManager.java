@@ -1,14 +1,15 @@
-package com.flowci.pool.docker;
+package com.flowci.pool.manager;
 
-import static com.flowci.pool.PoolContext.AgentEnvs.SERVER_URL;
+import static com.flowci.pool.domain.PoolContext.AgentEnvs.SERVER_URL;
+import static com.flowci.pool.domain.PoolContext.AgentEnvs.AGENT_TOKEN;
+import static com.flowci.pool.domain.PoolContext.AgentEnvs.AGENT_LOG_LEVEL;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_TOKEN;
-import static com.flowci.pool.PoolContext.AgentEnvs.AGENT_LOG_LEVEL;
-
-import com.flowci.pool.AbstractPoolManager;
-import com.flowci.pool.PoolContext;
+import com.flowci.pool.domain.AgentContainer;
+import com.flowci.pool.domain.PoolContext;
+import com.flowci.pool.domain.SocketContext;
 import com.flowci.pool.exception.PoolException;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -19,7 +20,7 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
-public class DockerPoolManager extends AbstractPoolManager<DockerContext> {
+public class SocketPoolManager extends AbstractPoolManager<SocketContext> {
 
     private DockerClient client;
 
@@ -27,7 +28,7 @@ public class DockerPoolManager extends AbstractPoolManager<DockerContext> {
      * Init local docker.sock api interface
      */
     @Override
-    public void init(DockerContext context) throws Exception {
+    public void init(SocketContext context) throws Exception {
         // setup client instance
         DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
                 .withDockerHost(context.getDockerHost()).build();
@@ -42,6 +43,20 @@ public class DockerPoolManager extends AbstractPoolManager<DockerContext> {
     }
 
     @Override
+    public List<AgentContainer> list() {
+        final String nameFilter = PoolContext.ContainerNamePerfix + "*";
+
+        List<Container> list = client.listContainersCmd().withShowAll(true)
+                .withNameFilter(Lists.newArrayList(nameFilter)).exec();
+
+        List<AgentContainer> result = new ArrayList<>(list.size());
+        for (Container item : list) {
+            result.add(AgentContainer.of(item.getId(), item.getNames()[0], item.getState()));
+        }
+        return result;
+    }
+
+    @Override
     public void close() throws Exception {
         if (client != null) {
             client.close();
@@ -49,7 +64,7 @@ public class DockerPoolManager extends AbstractPoolManager<DockerContext> {
     }
 
     @Override
-    public void start(DockerContext context) throws PoolException {
+    public void start(SocketContext context) throws PoolException {
         if (numOfAgent.get() > max) {
             throw new PoolException("Num of agent over the limit {0}", Integer.toString(max));
         }
@@ -77,7 +92,6 @@ public class DockerPoolManager extends AbstractPoolManager<DockerContext> {
 
         if (Objects.equal(PoolContext.DockerStatus.Exited, exist.getState())) {
             client.startContainerCmd(exist.getId());
-            numOfAgent.incrementAndGet();
             return;
         }
 
@@ -85,19 +99,18 @@ public class DockerPoolManager extends AbstractPoolManager<DockerContext> {
     }
 
     @Override
-    public void stop(DockerContext context) throws PoolException {
+    public void stop(SocketContext context) throws PoolException {
         client.stopContainerCmd(findContainer(context.getContainerName()).getId()).exec();
-        numOfAgent.decrementAndGet();
     }
 
     @Override
-    public void remove(DockerContext context) throws PoolException {
+    public void remove(SocketContext context) throws PoolException {
         client.removeContainerCmd(findContainer(context.getContainerName()).getId()).exec();
         numOfAgent.decrementAndGet();
     }
 
     @Override
-    public String status(DockerContext context) throws PoolException {
+    public String status(SocketContext context) throws PoolException {
         try {
             return findContainer(context.getContainerName()).getState();
         } catch (PoolException e) {

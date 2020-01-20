@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package com.flowci.pool;
+package com.flowci.pool.manager;
 
+import java.util.List;
+
+import com.flowci.pool.domain.AgentContainer;
+import com.flowci.pool.domain.PoolContext;
 import com.flowci.pool.exception.PoolException;
 
 /**
@@ -29,6 +33,17 @@ public interface PoolManager<Context extends PoolContext> extends AutoCloseable 
      * Set max agnet size
      */
     void setLimit(int size);
+
+    /**
+     * List all containers
+     */
+    List<AgentContainer> list();
+
+    /**
+     * How many agent container in the pool host
+     * @return
+     */
+    int size();
 
     /**
      * Init pool service setting
