@@ -1,15 +1,3 @@
-package com.flowci.core.agent.domain;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import com.flowci.core.common.domain.Mongoable;
-
-import org.springframework.data.mongodb.core.index.Indexed;
-
-import lombok.Getter;
-import lombok.Setter;
-
 /*
  * Copyright 2020 flow.ci
  *
@@ -26,6 +14,19 @@ import lombok.Setter;
  * the License.
  */
 
+package com.flowci.core.agent.domain;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import com.flowci.core.common.domain.Mongoable;
+
+import org.springframework.data.mongodb.core.index.Indexed;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
+
  @Getter
  @Setter
  public abstract class AgentHost extends Mongoable {
@@ -40,6 +41,7 @@ import lombok.Setter;
     /**
      * Unique host name
      */
+    @NonNull
     @Indexed(name = "index_agent_host_name", unique = true)
     private String name;
 
