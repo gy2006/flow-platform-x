@@ -18,7 +18,6 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
 public class SocketPoolManager implements PoolManager<SocketInitContext> {
@@ -80,29 +79,31 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
 
     @Override
     public void stop(String token) throws PoolException {
-        client.stopContainerCmd(findContainer(buildName(token)).getId()).exec();
+        client.stopContainerCmd(findContainer(token).getId()).exec();
+    }
+
+    @Override
+    public void resume(String token) throws PoolException {
+        Container c = findContainer(token);
+        client.startContainerCmd(c.getId()).exec();
     }
 
     @Override
     public void remove(String token) throws PoolException {
-        client.removeContainerCmd(findContainer(buildName(token)).getId()).exec();
+        client.removeContainerCmd(findContainer(token).getId()).exec();
     }
 
     @Override
     public String status(String token) throws PoolException {
         try {
-            return findContainer(buildName(token)).getState();
+            return findContainer(token).getState();
         } catch (PoolException e) {
             return DockerStatus.None;
         }
     }
 
-    @Override
-    public void resume(String token) throws PoolException {
-        // TODO Auto-generated method stub
-    }
-
-    private Container findContainer(String name) throws PoolException {
+    private Container findContainer(String token) throws PoolException {
+        String name = buildName(token);
         List<Container> list = client.listContainersCmd().withShowAll(true).withNameFilter(Lists.newArrayList(name))
                 .exec();
 
