@@ -14,22 +14,8 @@
  * limitations under the License.
  */
 
-package com.flowci.pool.domain;
+ package com.flowci.pool.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+ public abstract class InitContext {
 
-
-@Getter
-@AllArgsConstructor(staticName = "of")
-public class SshContext extends PoolContext {
-    
-    /**
-     * Private rsa key for remote host access
-     */
-    private final String privateKey;
-
-    private final String remoteHost;
-
-    private final String remoteUser;
-}
+ }

@@ -38,12 +38,25 @@ import lombok.Setter;
         Disonnected
     }
 
+    public enum Type {
+        SSH,
+
+        LocalUnixSocket,
+
+        K8s
+    }
+
     /**
      * Unique host name
      */
     @NonNull
     @Indexed(name = "index_agent_host_name", unique = true)
     private String name;
+
+    /**
+     * Agent host type
+     */
+    private Type type;
 
     /**
      * Host status

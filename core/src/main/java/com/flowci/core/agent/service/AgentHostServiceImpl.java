@@ -16,6 +16,8 @@
 
 package com.flowci.core.agent.service;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +30,7 @@ import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.domain.Agent;
+import com.flowci.exception.NotAvailableException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +45,9 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @Autowired
     private AgentHostDao agentHostDao;
+
+    @Autowired
+    private AgentService agentService;
 
     @PostConstruct
     public void init() {
@@ -60,13 +66,17 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @Override
     public Agent start(AgentHost host) {
-        return null;
+        return mapping.get(host.getClass()).start(host);
     }
 
     private class LocalUnixAgentHostService implements AgentHostService {
 
         @Override
         public void create(AgentHost host) {
+            if (!Files.exists(Paths.get("/var/run/docker.sock"))) {
+                throw new NotAvailableException("No local docker socket");
+            }
+
             host = (LocalUnixAgentHost) host;
             host.setCreatedAt(new Date());
             host.setCreatedBy(sessionManager.getUserId());
@@ -75,12 +85,24 @@ public class AgentHostServiceImpl implements AgentHostService {
 
         @Override
         public Agent start(AgentHost host) {
+            // find out exist idle agent in the host, and start to reuse
+
+
+            // if no idle agent on the host, so create new agent and start
             return null;
+        }
+
+        public void stop(AgentHost host) {
+            // stop idle agents
+        }
+
+        public void remove(AgentHost host) {
+            // remove agent container from stopped
         }
 
         @Override
         public List<AgentHost> list() {
-            return null;
+            throw new NoSuchMethodError("Not available here");
         }
 
     }

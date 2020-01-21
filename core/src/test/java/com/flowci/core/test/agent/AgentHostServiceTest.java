@@ -31,6 +31,7 @@ public class AgentHostServiceTest extends SpringScenario {
 
         // then:
         Assert.assertNotNull(host.getId());
+        Assert.assertEquals(AgentHost.Type.LocalUnixSocket, host.getType());
         Assert.assertEquals(1, agentHostService.list().size());
         Assert.assertEquals(host, agentHostService.list().get(0));
     }

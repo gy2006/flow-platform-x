@@ -7,6 +7,10 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor(staticName = "of")
 public class AgentContainer {
 
+    public static final String Image = "flowci/agent:latest";
+
+    public static final String Perfix = "ci-agent-";
+
     private final String id;
 
     private final String name;

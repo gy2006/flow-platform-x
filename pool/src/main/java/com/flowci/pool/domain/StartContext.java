@@ -27,10 +27,8 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public abstract class PoolContext implements Serializable {
-
-    public static final String ContainerNamePerfix = "ci-agent-";
-
+public class StartContext implements Serializable {
+    
     public static class AgentEnvs {
 
         public static final String SERVER_URL = "FLOWCI_SERVER_URL";
@@ -43,25 +41,6 @@ public abstract class PoolContext implements Serializable {
 
     }
 
-	public static abstract class DockerStatus {
-
-        public static final String None = "none";
-
-		public static final String Created = "created";
-
-		public static final String Restarting = "restarting";
-
-		public static final String Running = "running";
-
-		public static final String Removing = "removing";
-
-		public static final String Paused = "paused";
-
-		public static final String Exited = "exited";
-
-		public static final String Dead = "dead";
-	}
-
     @NonNull
     private String serverUrl; // ex: http://127.0.0.1:8080
 
@@ -72,10 +51,6 @@ public abstract class PoolContext implements Serializable {
 
     @NonNull
     private String logLevel = "DEBUG";
-
-    public String getContainerName() {
-        return String.format("%s%s", ContainerNamePerfix, token);
-    }
 
     public String getDirOnHost() {
         return String.format("${HOME}/.flow.agent-%s", token);

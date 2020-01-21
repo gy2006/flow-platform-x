@@ -19,57 +19,54 @@ package com.flowci.pool.manager;
 import java.util.List;
 
 import com.flowci.pool.domain.AgentContainer;
-import com.flowci.pool.domain.PoolContext;
+import com.flowci.pool.domain.InitContext;
+import com.flowci.pool.domain.StartContext;
 import com.flowci.pool.exception.PoolException;
 
 /**
- * Automatic manage agents
+ * Handle agent in docker on different type of host
  * 
  * @author yang
  */
-public interface PoolManager<Context extends PoolContext> extends AutoCloseable {
+public interface PoolManager<T extends InitContext> extends AutoCloseable {
 
     /**
-     * Set max agnet size
-     */
-    void setLimit(int size);
-
-    /**
-     * List all containers
+     * List all containers for agent
      */
     List<AgentContainer> list();
 
     /**
-     * How many agent container in the pool host
-     * @return
+     * How many agent containers in the pool host
      */
     int size();
 
     /**
      * Init pool service setting
-     * @param context
      */
-    void init(Context context) throws Exception;
+    void init(T context) throws Exception;
 
     /**
      * Start an agent
      */
-    void start(Context context) throws PoolException;
+    void start(StartContext context) throws PoolException;
 
     /**
      * Stop an agent
-     * @param context
-     * @throws PoolException
      */
-    void stop(Context context) throws PoolException;
+    void stop(String token) throws PoolException;
+
+    /**
+     * Resume agent container
+     */
+    void resume(String token) throws PoolException;
 
     /**
      * Remove an agent
      */
-    void remove(Context context) throws PoolException;
+    void remove(String token) throws PoolException;
 
     /**
      * Get docker status
      */
-    String status(Context context) throws PoolException;
+    String status(String token) throws PoolException;
 }

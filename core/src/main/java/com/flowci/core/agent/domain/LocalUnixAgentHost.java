@@ -26,4 +26,7 @@ import lombok.Setter;
 @Document(collection = "agent_host")
 public class LocalUnixAgentHost extends AgentHost {
     
+    public LocalUnixAgentHost() {
+        this.setType(AgentHost.Type.LocalUnixSocket);
+    }
 }

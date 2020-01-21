@@ -16,8 +16,9 @@
 
 package com.flowci.pool.test;
 
-import com.flowci.pool.domain.PoolContext;
-import com.flowci.pool.domain.SocketContext;
+import com.flowci.pool.domain.DockerStatus;
+import com.flowci.pool.domain.SocketInitContext;
+import com.flowci.pool.domain.StartContext;
 import com.flowci.pool.manager.PoolManager;
 import com.flowci.pool.manager.SocketPoolManager;
 
@@ -27,33 +28,29 @@ import org.junit.Test;
 
 public class SocketPoolManagerTest extends PoolScenario {
 
-    private final PoolManager<SocketContext> service = new SocketPoolManager();
+    private final PoolManager<SocketInitContext> service = new SocketPoolManager();
 
     @Test
     public void should_start_agent_and_stop() throws Exception {
-        SocketContext context = new SocketContext();
+        service.init(new SocketInitContext());
+
+        StartContext context = new StartContext();
         context.setServerUrl("http://localhost:8080");
         context.setToken("helloworld");
-        service.init(context);
 
         service.start(context);
-        Assert.assertEquals(PoolContext.DockerStatus.Running, service.status(context));
+        Assert.assertEquals(DockerStatus.Running, service.status(context.getToken()));
         Assert.assertEquals(1, service.list().size());
         Assert.assertEquals(1, service.size());
 
-        service.stop(context);
-        Assert.assertEquals(PoolContext.DockerStatus.Exited, service.status(context));
+        service.stop(context.getToken());
+        Assert.assertEquals(DockerStatus.Exited, service.status(context.getToken()));
         Assert.assertEquals(1, service.list().size());
         Assert.assertEquals(1, service.size());
 
-        service.remove(context);
-        Assert.assertEquals(PoolContext.DockerStatus.None, service.status(context));
+        service.remove(context.getToken());
+        Assert.assertEquals(DockerStatus.None, service.status(context.getToken()));
         Assert.assertEquals(0, service.list().size());
         Assert.assertEquals(0, service.size());
-    }
-
-    @Test
-    public void should_throw_exception_if_over_the_limit() {
-
     }
 }
