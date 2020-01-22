@@ -17,7 +17,6 @@ public class StringHelperTest {
 
         for (int i = 0; i < size; i++) {
             String val = StringHelper.randomString(5);
-            System.out.println(val);
             Assert.assertTrue(set.add(val));
         }
     }

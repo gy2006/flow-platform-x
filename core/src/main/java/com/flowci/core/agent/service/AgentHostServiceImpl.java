@@ -16,16 +16,6 @@
 
 package com.flowci.core.agent.service;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import javax.annotation.PostConstruct;
-
 import com.flowci.core.agent.dao.AgentHostDao;
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
@@ -40,11 +30,14 @@ import com.flowci.pool.exception.PoolException;
 import com.flowci.pool.manager.PoolManager;
 import com.flowci.pool.manager.SocketPoolManager;
 import com.flowci.util.StringHelper;
-
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import lombok.extern.log4j.Log4j2;
+import javax.annotation.PostConstruct;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 @Log4j2
 @Service
@@ -142,7 +135,7 @@ public class AgentHostServiceImpl implements AgentHostService {
                 context.setServerUrl(serverUrl);
                 context.setAgentName(agent.getName());
                 context.setToken(agent.getToken());
-                
+
                 manager.start(context);
             } catch (PoolException e) {
                 log.warn("Unable to start agent {}", agent.getName());
