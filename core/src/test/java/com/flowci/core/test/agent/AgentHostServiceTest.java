@@ -4,6 +4,7 @@ import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
 import com.flowci.core.agent.service.AgentHostService;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.exception.NotAvailableException;
 import com.google.common.collect.Sets;
 
 import org.junit.Assert;
@@ -21,7 +22,7 @@ public class AgentHostServiceTest extends SpringScenario {
         mockLogin();   
     }
 
-    @Test
+    @Test(expected = NotAvailableException.class)
     public void should_enable_to_create_unix_local_host() {
         // when: create host
         AgentHost host = new LocalUnixAgentHost();
@@ -34,5 +35,11 @@ public class AgentHostServiceTest extends SpringScenario {
         Assert.assertEquals(AgentHost.Type.LocalUnixSocket, host.getType());
         Assert.assertEquals(1, agentHostService.list().size());
         Assert.assertEquals(host, agentHostService.list().get(0));
+
+        // when: create other
+        AgentHost another = new LocalUnixAgentHost();
+        another.setName("test-host-failure");
+        another.setTags(Sets.newHashSet("local", "test"));
+        agentHostService.create(another);
     }
 }

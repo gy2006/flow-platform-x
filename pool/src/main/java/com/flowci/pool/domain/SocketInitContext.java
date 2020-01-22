@@ -7,6 +7,6 @@ import lombok.Setter;
 @Setter
 public class SocketInitContext extends InitContext {
 
-    private final String dockerHost = "unix:///var/run/docker.sock";
+    private String dockerHost = "unix:///var/run/docker.sock";
 
 }

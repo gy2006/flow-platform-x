@@ -118,6 +118,12 @@
 
       <dependency>
         <groupId>com.flowci</groupId>
+        <artifactId>pool</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.flowci</groupId>
         <artifactId>store</artifactId>
         <version>${project.version}</version>
       </dependency>

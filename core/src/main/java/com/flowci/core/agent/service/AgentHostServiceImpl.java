@@ -31,10 +31,16 @@ import com.flowci.core.agent.domain.LocalUnixAgentHost;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
+import com.flowci.pool.domain.SocketInitContext;
+import com.flowci.pool.manager.PoolManager;
+import com.flowci.pool.manager.SocketPoolManager;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
 @Service
 public class AgentHostServiceImpl implements AgentHostService {
 
@@ -45,9 +51,6 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @Autowired
     private AgentHostDao agentHostDao;
-
-    @Autowired
-    private AgentService agentService;
 
     @PostConstruct
     public void init() {
@@ -71,16 +74,30 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     private class LocalUnixAgentHostService implements AgentHostService {
 
+        private PoolManager<SocketInitContext> manager = new SocketPoolManager();
+
         @Override
         public void create(AgentHost host) {
             if (!Files.exists(Paths.get("/var/run/docker.sock"))) {
                 throw new NotAvailableException("No local docker socket");
             }
 
-            host = (LocalUnixAgentHost) host;
-            host.setCreatedAt(new Date());
-            host.setCreatedBy(sessionManager.getUserId());
-            agentHostDao.save(host);
+            if (agentHostDao.findAllByType(AgentHost.Type.LocalUnixSocket).size() > 0) {
+                throw new NotAvailableException("Local unix socket agent host been created");
+            }
+
+            try {
+                SocketInitContext context = new SocketInitContext();
+                manager.init(context);
+
+                host = (LocalUnixAgentHost) host;
+                host.setCreatedAt(new Date());
+                host.setCreatedBy(sessionManager.getUserId());
+                agentHostDao.save(host);
+            } catch (Exception e) {
+                log.warn("Unable to create local unix socket agnet host: {}", e.getMessage());
+                throw new NotAvailableException(e.getMessage());
+            }
         }
 
         @Override
