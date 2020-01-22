@@ -78,7 +78,12 @@ public class Agent implements Serializable {
 
     private String token;
 
-    private String host;
+    private String url;
+
+    /**
+     * Agent host obj id if agent ref on an host
+     */
+    private String hostId;
 
     private Common.OS os = OS.UNKNOWN;
 
@@ -103,8 +108,8 @@ public class Agent implements Serializable {
     }
 
     @JsonIgnore
-    public boolean hasHost() {
-        return !Strings.isNullOrEmpty(host);
+    public boolean hasUrl() {
+        return !Strings.isNullOrEmpty(url);
     }
 
     @JsonIgnore

@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
@@ -31,9 +32,14 @@ import com.flowci.core.agent.domain.LocalUnixAgentHost;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
+import com.flowci.pool.domain.AgentContainer;
+import com.flowci.pool.domain.DockerStatus;
 import com.flowci.pool.domain.SocketInitContext;
+import com.flowci.pool.domain.StartContext;
+import com.flowci.pool.exception.PoolException;
 import com.flowci.pool.manager.PoolManager;
 import com.flowci.pool.manager.SocketPoolManager;
+import com.flowci.util.StringHelper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,11 +52,19 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     private final Map<Class<?>, AgentHostService> mapping = new HashMap<>(3);
 
+    private final int MaxSize = 10;
+
+    @Autowired
+    private String serverUrl;
+
     @Autowired
     private SessionManager sessionManager;
 
     @Autowired
     private AgentHostDao agentHostDao;
+
+    @Autowired
+    private AgentService agentService;
 
     @PostConstruct
     public void init() {
@@ -68,8 +82,8 @@ public class AgentHostServiceImpl implements AgentHostService {
     }
 
     @Override
-    public Agent start(AgentHost host) {
-        return mapping.get(host.getClass()).start(host);
+    public void start(AgentHost host) {
+        mapping.get(host.getClass()).start(host);
     }
 
     private class LocalUnixAgentHostService implements AgentHostService {
@@ -101,12 +115,38 @@ public class AgentHostServiceImpl implements AgentHostService {
         }
 
         @Override
-        public Agent start(AgentHost host) {
-            // find out exist idle agent in the host, and start to reuse
+        public synchronized void start(AgentHost host) {
+            // resume from stopped
+            List<AgentContainer> list = manager.list(Optional.of(DockerStatus.Exited));
+            if (list.size() > 0) {
+                AgentContainer container = list.get(0);
+                try {
+                    manager.resume(container.getAgentName());
+                } catch (PoolException e) {
+                    log.warn("Unable to resume agent container {}", container.getName());
+                }
+                return;
+            }
 
+            if (manager.size() >= MaxSize) {
+                log.warn("Unable to start agent since over the limit size {}", MaxSize);
+                return;
+            }
 
-            // if no idle agent on the host, so create new agent and start
-            return null;
+            // create new agent on agent host
+            String name = String.format("%s-%s", host.getName(), StringHelper.randomString(5));
+            Agent agent = agentService.create(name, host.getTags(), Optional.of(host.getId()));
+
+            try {
+                StartContext context = new StartContext();
+                context.setServerUrl(serverUrl);
+                context.setAgentName(agent.getName());
+                context.setToken(agent.getToken());
+                
+                manager.start(context);
+            } catch (PoolException e) {
+                log.warn("Unable to start agent {}", agent.getName());
+            }
         }
 
         public void stop(AgentHost host) {

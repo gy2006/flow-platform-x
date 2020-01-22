@@ -35,8 +35,6 @@ public class StartContext implements Serializable {
 
         public static final String AGENT_TOKEN = "FLOWCI_AGENT_TOKEN";
 
-        public static final String AGENT_PORT = "FLOWCI_AGENT_PORT";
-
         public static final String AGENT_LOG_LEVEL = "FLOWCI_AGENT_LOG_LEVEL";
 
     }
@@ -44,15 +42,22 @@ public class StartContext implements Serializable {
     @NonNull
     private String serverUrl; // ex: http://127.0.0.1:8080
 
+    /**
+     * Agent name
+     */
+    @NonNull
+    private String agentName;
+
+    /**
+     * Agent token
+     */
     @NonNull
     private String token;
-
-    private Integer port = 8088;
 
     @NonNull
     private String logLevel = "DEBUG";
 
     public String getDirOnHost() {
-        return String.format("${HOME}/.flow.agent-%s", token);
+        return String.format("${HOME}/.flow.agent-%s", agentName);
     }
 }

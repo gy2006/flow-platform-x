@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Base64;
 
 /**
@@ -30,6 +31,10 @@ import java.util.Base64;
 public abstract class StringHelper {
 
     public final static String EMPTY = "";
+
+    private static final SecureRandom random = new SecureRandom();
+    
+    private static final Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
 
     private static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
 
@@ -88,5 +93,11 @@ public abstract class StringHelper {
     public static String fromBase64(String base64) {
         byte[] decode = Base64.getDecoder().decode(base64.getBytes());
         return new String(decode);
+    }
+
+    public static String randomString(int length) {
+        byte[] buffer = new byte[length];
+        random.nextBytes(buffer);
+        return encoder.encodeToString(buffer);
     }
 }

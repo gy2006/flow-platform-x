@@ -17,6 +17,7 @@
 package com.flowci.pool.manager;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.flowci.pool.domain.AgentContainer;
 import com.flowci.pool.domain.InitContext;
@@ -33,7 +34,7 @@ public interface PoolManager<T extends InitContext> extends AutoCloseable {
     /**
      * List all containers for agent
      */
-    List<AgentContainer> list();
+    List<AgentContainer> list(Optional<String> state);
 
     /**
      * How many agent containers in the pool host
@@ -52,21 +53,25 @@ public interface PoolManager<T extends InitContext> extends AutoCloseable {
 
     /**
      * Stop an agent
+     * @param name agnet name
      */
-    void stop(String token) throws PoolException;
+    void stop(String name) throws PoolException;
 
     /**
      * Resume agent container
+     * @param name agnet name
      */
-    void resume(String token) throws PoolException;
+    void resume(String name) throws PoolException;
 
     /**
      * Remove an agent
+     * @param name agnet name
      */
-    void remove(String token) throws PoolException;
+    void remove(String name) throws PoolException;
 
     /**
      * Get docker status
+     * @param name agnet name
      */
-    String status(String token) throws PoolException;
+    String status(String name) throws PoolException;
 }

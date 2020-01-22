@@ -19,7 +19,6 @@ package com.flowci.core.agent.service;
 import java.util.List;
 
 import com.flowci.core.agent.domain.AgentHost;
-import com.flowci.domain.Agent;
 
 public interface AgentHostService {
 
@@ -31,7 +30,7 @@ public interface AgentHostService {
     /**
      * Start agent on the host
      */
-    Agent start(AgentHost host);
+    void start(AgentHost host);
 
     /**
      * List all agent hosts

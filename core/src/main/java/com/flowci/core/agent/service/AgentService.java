@@ -21,6 +21,7 @@ import com.flowci.domain.Agent;
 import com.flowci.domain.CmdIn;
 import com.flowci.domain.Settings;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -92,7 +93,7 @@ public interface AgentService {
     /**
      * Create agent by name and tags
      */
-    Agent create(String name, Set<String> tags);
+    Agent create(String name, Set<String> tags, Optional<String> hostId);
 
     /**
      * Update agent name or and tags

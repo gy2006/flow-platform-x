@@ -16,11 +16,14 @@
 
 package com.flowci.pool.test;
 
+import java.util.Optional;
+
 import com.flowci.pool.domain.DockerStatus;
 import com.flowci.pool.domain.SocketInitContext;
 import com.flowci.pool.domain.StartContext;
 import com.flowci.pool.manager.PoolManager;
 import com.flowci.pool.manager.SocketPoolManager;
+import com.flowci.util.StringHelper;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,24 +36,26 @@ public class SocketPoolManagerTest extends PoolScenario {
     @Test
     public void should_start_agent_and_stop() throws Exception {
         service.init(new SocketInitContext());
+        final String name = StringHelper.randomString(5);
 
         StartContext context = new StartContext();
+        context.setAgentName(name);
         context.setServerUrl("http://localhost:8080");
         context.setToken("helloworld");
 
         service.start(context);
-        Assert.assertEquals(DockerStatus.Running, service.status(context.getToken()));
-        Assert.assertEquals(1, service.list().size());
+        Assert.assertEquals(DockerStatus.Running, service.status(name));
+        Assert.assertEquals(1, service.list(Optional.empty()).size());
         Assert.assertEquals(1, service.size());
 
-        service.stop(context.getToken());
-        Assert.assertEquals(DockerStatus.Exited, service.status(context.getToken()));
-        Assert.assertEquals(1, service.list().size());
+        service.stop(name);
+        Assert.assertEquals(DockerStatus.Exited, service.status(name));
+        Assert.assertEquals(1, service.list(Optional.empty()).size());
         Assert.assertEquals(1, service.size());
 
-        service.remove(context.getToken());
-        Assert.assertEquals(DockerStatus.None, service.status(context.getToken()));
-        Assert.assertEquals(0, service.list().size());
+        service.remove(name);
+        Assert.assertEquals(DockerStatus.None, service.status(name));
+        Assert.assertEquals(0, service.list(Optional.empty()).size());
         Assert.assertEquals(0, service.size());
     }
 }

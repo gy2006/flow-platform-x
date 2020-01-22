@@ -131,7 +131,7 @@ public class AgentServiceImpl implements AgentService {
     @Override
     public Settings connect(AgentInit init) {
         Agent target = getByToken(init.getToken());
-        target.setHost("http://" + init.getIp() + ":" + init.getPort());
+        target.setUrl("http://" + init.getIp() + ":" + init.getPort());
         target.setOs(init.getOs());
         target.setResource(init.getResource());
         agentDao.save(target);
@@ -249,7 +249,7 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public Agent create(String name, Set<String> tags) {
+    public Agent create(String name, Set<String> tags, Optional<String> hostId) {
         Agent exist = agentDao.findByName(name);
         if (exist != null) {
             throw new DuplicateException("Agent name {0} is already defined", name);
