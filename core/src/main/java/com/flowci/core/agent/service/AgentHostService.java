@@ -30,7 +30,12 @@ public interface AgentHostService {
     /**
      * Start agent on the host
      */
-    void start(AgentHost host);
+    boolean start(AgentHost host);
+
+    /**
+     * Num of agent on the host
+     */
+    int size(AgentHost host);
 
     /**
      * List all agent hosts

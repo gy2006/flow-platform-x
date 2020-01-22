@@ -1,7 +1,7 @@
 package com.flowci.pool.manager;
 
 import static com.flowci.pool.domain.AgentContainer.buildName;
-import static com.flowci.pool.domain.AgentContainer.buildPerfix;
+import static com.flowci.pool.domain.AgentContainer.buildPrefix;
 import static com.flowci.pool.domain.StartContext.AgentEnvs.AGENT_LOG_LEVEL;
 import static com.flowci.pool.domain.StartContext.AgentEnvs.AGENT_TOKEN;
 import static com.flowci.pool.domain.StartContext.AgentEnvs.SERVER_URL;
@@ -43,7 +43,7 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
 
     @Override
     public List<AgentContainer> list(Optional<String> state) {
-        final String nameFilter = buildPerfix(Flag) + "*";
+        final String nameFilter = buildPrefix(Flag) + "*";
 
         ListContainersCmd cmd = client.listContainersCmd().withShowAll(true)
                 .withNameFilter(Lists.newArrayList(nameFilter));
@@ -62,7 +62,7 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
 
     @Override
     public int size() {
-        final String nameFilter = buildPerfix(Flag) + "*";
+        final String nameFilter = buildPrefix(Flag) + "*";
         return client.listContainersCmd().withShowAll(true).withNameFilter(Lists.newArrayList(nameFilter)).exec()
                 .size();
     }

@@ -35,7 +35,7 @@ import lombok.Setter;
 
         Connected,
 
-        Disonnected
+        Disconnected
     }
 
     public enum Type {
@@ -61,7 +61,7 @@ import lombok.Setter;
     /**
      * Host status
      */
-    private Status status = Status.Disonnected;
+    private Status status = Status.Disconnected;
 
     /**
      * Tags for all agent holed by host

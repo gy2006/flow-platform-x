@@ -3,6 +3,7 @@ package com.flowci.core.test.agent;
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
 import com.flowci.core.agent.service.AgentHostService;
+import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.exception.NotAvailableException;
 import com.google.common.collect.Sets;
@@ -13,6 +14,9 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class AgentHostServiceTest extends SpringScenario {
+
+    @Autowired
+    private AgentService agentService;
 
     @Autowired
     private AgentHostService agentHostService;
@@ -41,5 +45,22 @@ public class AgentHostServiceTest extends SpringScenario {
         another.setName("test-host-failure");
         another.setTags(Sets.newHashSet("local", "test"));
         agentHostService.create(another);
+    }
+
+    @Test
+    public void should_start_agents_on_host() {
+        AgentHost host = new LocalUnixAgentHost();
+        host.setName("test-host");
+        host.setTags(Sets.newHashSet("local", "test"));
+        agentHostService.create(host);
+
+        // when: start agents on host
+        Assert.assertTrue(agentHostService.start(host));
+        Assert.assertTrue(agentHostService.start(host));
+        Assert.assertTrue(agentHostService.start(host));
+
+        // then:
+        Assert.assertEquals(3, agentHostService.size(host));
+        Assert.assertEquals(3, agentService.list().size());
     }
 }

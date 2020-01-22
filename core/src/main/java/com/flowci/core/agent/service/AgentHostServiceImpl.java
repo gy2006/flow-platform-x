@@ -19,7 +19,9 @@ package com.flowci.core.agent.service;
 import com.flowci.core.agent.dao.AgentHostDao;
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
+import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.manager.SessionManager;
+import com.flowci.core.job.service.LoggingServiceImpl;
 import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
 import com.flowci.pool.domain.AgentContainer;
@@ -30,22 +32,27 @@ import com.flowci.pool.exception.PoolException;
 import com.flowci.pool.manager.PoolManager;
 import com.flowci.pool.manager.SocketPoolManager;
 import com.flowci.util.StringHelper;
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 
 @Log4j2
 @Service
 public class AgentHostServiceImpl implements AgentHostService {
 
-    private final Map<Class<?>, AgentHostService> mapping = new HashMap<>(3);
+    private final Map<Class<?>, OnCreate> mapping = new HashMap<>(3);
 
     private final int MaxSize = 10;
+
+    private final Cache<AgentHost, PoolManager<?>> poolManagerCache = CacheHelper.createLocalCache(10, 600);
 
     @Autowired
     private String serverUrl;
@@ -61,7 +68,7 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @PostConstruct
     public void init() {
-        mapping.put(LocalUnixAgentHost.class, new LocalUnixAgentHostService());
+        mapping.put(LocalUnixAgentHost.class, new OnLocalUnixAgentHostCreate());
     }
 
     @Override
@@ -75,29 +82,103 @@ public class AgentHostServiceImpl implements AgentHostService {
     }
 
     @Override
-    public void start(AgentHost host) {
-        mapping.get(host.getClass()).start(host);
+    public boolean start(AgentHost host) {
+        final PoolManager<?> manager = getPoolManager(host);
+
+        // resume from stopped
+        List<AgentContainer> list = manager.list(Optional.of(DockerStatus.Exited));
+        if (list.size() > 0) {
+            AgentContainer container = list.get(0);
+            try {
+                manager.resume(container.getAgentName());
+            } catch (PoolException e) {
+                log.warn("Unable to resume agent container {}", container.getName());
+            }
+            return true;
+        }
+
+        if (manager.size() >= MaxSize) {
+            log.warn("Unable to start agent since over the limit size {}", MaxSize);
+            return false;
+        }
+
+        // create new agent on agent host
+        String name = String.format("%s-%s", host.getName(), StringHelper.randomString(5));
+        Agent agent = agentService.create(name, host.getTags(), Optional.of(host.getId()));
+
+        try {
+            StartContext context = new StartContext();
+            context.setServerUrl(serverUrl);
+            context.setAgentName(agent.getName());
+            context.setToken(agent.getToken());
+
+            manager.start(context);
+            log.info("Agent {} been started", name);
+            return true;
+        } catch (PoolException e) {
+            log.warn("Unable to start agent {}", agent.getName());
+            return false;
+        }
     }
 
-    private class LocalUnixAgentHostService implements AgentHostService {
+    @Override
+    public int size(AgentHost host) {
+        final PoolManager<?> manager = getPoolManager(host);
+        return manager.size();
+    }
+
+    private PoolManager<?> getPoolManager(AgentHost host) {
+        return poolManagerCache.get(host, (h) -> {
+            if (h.getType() == AgentHost.Type.LocalUnixSocket) {
+                try {
+                    PoolManager<SocketInitContext> poolManager = new SocketPoolManager();
+                    poolManager.init(new SocketInitContext());
+                    return poolManager;
+                } catch (Exception e) {
+                    log.warn("Unable to init local unix agent host");
+                }
+            }
+
+            return null;
+        });
+    }
+
+    private interface OnCreate {
+
+        void create(AgentHost host);
+    }
+
+    private class OnLocalUnixAgentHostCreate implements OnCreate {
 
         private PoolManager<SocketInitContext> manager = new SocketPoolManager();
 
-        @Override
-        public void create(AgentHost host) {
-            if (!Files.exists(Paths.get("/var/run/docker.sock"))) {
-                throw new NotAvailableException("No local docker socket");
+        public OnLocalUnixAgentHostCreate() {
+            if (!hasCreated()) {
+                return;
             }
 
-            if (agentHostDao.findAllByType(AgentHost.Type.LocalUnixSocket).size() > 0) {
+            // init
+            try {
+                manager.init(new SocketInitContext());
+            } catch (Exception e) {
+                log.warn("Unable to init local unix agent host", e);
+            }
+
+            // TODO: sync
+
+        }
+
+        @Override
+        public void create(AgentHost host) {
+            if (hasCreated()) {
                 throw new NotAvailableException("Local unix socket agent host been created");
             }
 
-            try {
-                SocketInitContext context = new SocketInitContext();
-                manager.init(context);
+            if (!Files.exists(Paths.get("/var/run/docker.sock"))) {
+                throw new NotAvailableException("Docker socket not available");
+            }
 
-                host = (LocalUnixAgentHost) host;
+            try {
                 host.setCreatedAt(new Date());
                 host.setCreatedBy(sessionManager.getUserId());
                 agentHostDao.save(host);
@@ -107,53 +188,8 @@ public class AgentHostServiceImpl implements AgentHostService {
             }
         }
 
-        @Override
-        public synchronized void start(AgentHost host) {
-            // resume from stopped
-            List<AgentContainer> list = manager.list(Optional.of(DockerStatus.Exited));
-            if (list.size() > 0) {
-                AgentContainer container = list.get(0);
-                try {
-                    manager.resume(container.getAgentName());
-                } catch (PoolException e) {
-                    log.warn("Unable to resume agent container {}", container.getName());
-                }
-                return;
-            }
-
-            if (manager.size() >= MaxSize) {
-                log.warn("Unable to start agent since over the limit size {}", MaxSize);
-                return;
-            }
-
-            // create new agent on agent host
-            String name = String.format("%s-%s", host.getName(), StringHelper.randomString(5));
-            Agent agent = agentService.create(name, host.getTags(), Optional.of(host.getId()));
-
-            try {
-                StartContext context = new StartContext();
-                context.setServerUrl(serverUrl);
-                context.setAgentName(agent.getName());
-                context.setToken(agent.getToken());
-
-                manager.start(context);
-            } catch (PoolException e) {
-                log.warn("Unable to start agent {}", agent.getName());
-            }
+        private boolean hasCreated() {
+            return agentHostDao.findAllByType(AgentHost.Type.LocalUnixSocket).size() > 0;
         }
-
-        public void stop(AgentHost host) {
-            // stop idle agents
-        }
-
-        public void remove(AgentHost host) {
-            // remove agent container from stopped
-        }
-
-        @Override
-        public List<AgentHost> list() {
-            throw new NoSuchMethodError("Not available here");
-        }
-
     }
 }
