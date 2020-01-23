@@ -27,9 +27,9 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
- @Getter
- @Setter
- public abstract class AgentHost extends Mongoable {
+@Getter
+@Setter
+public abstract class AgentHost extends Mongoable {
 
     public enum Status {
 
@@ -64,7 +64,12 @@ import lombok.Setter;
     private Status status = Status.Disconnected;
 
     /**
+     * Max agent size on the host
+     */
+    private int maxSize = 10;
+
+    /**
      * Tags for all agent holed by host
      */
     private Set<String> tags = new HashSet<>();
- }
+}
