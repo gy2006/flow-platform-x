@@ -16,6 +16,9 @@
 
 package com.flowci.core.agent.domain;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,6 +33,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public abstract class AgentHost extends Mongoable {
+
+    public static final int NoLimit = -1;
 
     public enum Status {
 
@@ -69,7 +74,31 @@ public abstract class AgentHost extends Mongoable {
     private int maxSize = 10;
 
     /**
+     * Stop agent container if over the idle seconds
+     */
+    private int maxIdleSeconds = 600;
+
+    /**
+     * Remove agent container if over the offline seconds
+     */
+    private int maxOfflineSeconds = 3600;
+
+    /**
      * Tags for all agent holed by host
      */
     private Set<String> tags = new HashSet<>();
+
+    public boolean isOverMaxIdleSeconds(Date date) {
+        if (maxIdleSeconds == NoLimit) {
+            return false;
+        }
+        return date.toInstant().plus(maxIdleSeconds, ChronoUnit.SECONDS).isBefore(Instant.now());
+    }
+
+    public boolean isOverMaxOfflineSeconds(Date date) {
+        if (maxOfflineSeconds == NoLimit) {
+            return false;
+        }
+        return date.toInstant().plus(maxOfflineSeconds, ChronoUnit.SECONDS).isBefore(Instant.now());
+    }
 }

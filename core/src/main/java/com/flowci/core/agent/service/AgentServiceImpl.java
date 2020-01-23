@@ -25,8 +25,8 @@ import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.event.CreateAgentEvent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CipherHelper;
-import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.manager.SpringEventManager;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.CmdIn;
@@ -37,14 +37,6 @@ import com.flowci.util.ObjectsHelper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -56,6 +48,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Manage agent from zookeeper nodes
@@ -337,13 +333,12 @@ public class AgentServiceImpl implements AgentService {
         }
 
         agent.setStatus(status);
-        String path = getPath(agent);
 
         try {
             // try update zookeeper status if new status not same with zk
             Status current = getStatusFromZk(agent);
             if (current != status) {
-                zk.set(path, status.getBytes());
+                zk.set(getPath(agent), status.getBytes());
             }
         } catch (ZookeeperException e) {
             // set agent to offline when zk exception
@@ -388,9 +383,9 @@ public class AgentServiceImpl implements AgentService {
     private class RootNodeListener implements PathChildrenCacheListener {
 
         private final Set<Type> ChildOperations = ImmutableSet.of(
-            Type.CHILD_ADDED,
-            Type.CHILD_REMOVED,
-            Type.CHILD_UPDATED
+                Type.CHILD_ADDED,
+                Type.CHILD_REMOVED,
+                Type.CHILD_UPDATED
         );
 
         @Override
@@ -425,7 +420,7 @@ public class AgentServiceImpl implements AgentService {
                 syncLockNode(agent, Type.CHILD_REMOVED);
                 updateAgentStatus(agent, Status.OFFLINE);
                 log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(),
-                    Status.OFFLINE);
+                        Status.OFFLINE);
                 return;
             }
 

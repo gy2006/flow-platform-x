@@ -21,6 +21,7 @@ import com.flowci.domain.Common.OS;
 import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -93,6 +94,8 @@ public class Agent implements Serializable {
 
     private Status status = Status.OFFLINE;
 
+    private Date statusUpdatedAt;
+
     private String jobId;
 
     @JsonIgnore
@@ -105,6 +108,11 @@ public class Agent implements Serializable {
     public Agent(String name, Set<String> tags) {
         this.name = name;
         this.tags = tags;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+        this.statusUpdatedAt = new Date();
     }
 
     @JsonIgnore

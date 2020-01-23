@@ -46,6 +46,11 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
 
 @Log4j2
@@ -137,7 +142,34 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @Override
     public void collect(AgentHost host) {
-        // find agents
+        List<Agent> list = agentDao.findAllByHostId(host.getId());
+        for (Agent agent : list) {
+            if (agent.getStatus() == Agent.Status.IDLE) {
+                if (!host.isOverMaxIdleSeconds(agent.getStatusUpdatedAt())) {
+                    continue;
+                }
+
+                try {
+                    PoolManager<?> manager = getPoolManager(host);
+                    manager.stop(agent.getName());
+                } catch (Exception e) {
+                    log.warn("Unable to stop idle agent {}", agent.getName());
+                }
+            }
+
+            else if (agent.getStatus() == Agent.Status.OFFLINE) {
+                if (!host.isOverMaxOfflineSeconds(agent.getStatusUpdatedAt())) {
+                    continue;
+                }
+
+                try {
+                    PoolManager<?> manager = getPoolManager(host);
+                    manager.remove(agent.getName());
+                } catch (Exception e) {
+                    log.warn("Unable to remove offline agent {}", agent.getName());
+                }
+            }
+        }
     }
 
     @Override

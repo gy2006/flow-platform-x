@@ -13,6 +13,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.sql.Date;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 public class AgentHostServiceTest extends SpringScenario {
 
     @Autowired
@@ -66,5 +70,30 @@ public class AgentHostServiceTest extends SpringScenario {
         agentHostService.removeAll(host);
         Assert.assertEquals(0, agentHostService.size(host));
         Assert.assertEquals(0, agentService.list().size());
+    }
+
+    @Test
+    public void should_should_over_time_limit() {
+        AgentHost host = new LocalUnixAgentHost();
+
+        // test idle limit
+        Instant updatedAt = Instant.now().minus(1, ChronoUnit.HOURS);
+        Assert.assertTrue(host.isOverMaxIdleSeconds(Date.from(updatedAt)));
+
+        updatedAt = Instant.now().minus(2, ChronoUnit.SECONDS);
+        Assert.assertFalse(host.isOverMaxIdleSeconds(Date.from(updatedAt)));
+
+        host.setMaxIdleSeconds(AgentHost.NoLimit);
+        Assert.assertFalse(host.isOverMaxIdleSeconds(Date.from(updatedAt)));
+
+        // test offline limit
+        updatedAt = Instant.now().minus(2, ChronoUnit.HOURS);
+        Assert.assertTrue(host.isOverMaxOfflineSeconds(Date.from(updatedAt)));
+
+        updatedAt = Instant.now().minus(20, ChronoUnit.MINUTES);
+        Assert.assertFalse(host.isOverMaxOfflineSeconds(Date.from(updatedAt)));
+
+        host.setMaxIdleSeconds(AgentHost.NoLimit);
+        Assert.assertFalse(host.isOverMaxOfflineSeconds(Date.from(updatedAt)));
     }
 }
