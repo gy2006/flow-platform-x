@@ -22,6 +22,7 @@ import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
+import com.flowci.core.agent.event.CreateAgentEvent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
@@ -52,6 +53,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -303,6 +305,12 @@ public class AgentServiceImpl implements AgentService {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
+    }
+
+    @EventListener
+    public void onCreateAgentEvent(CreateAgentEvent event) {
+        Agent agent = this.create(event.getName(), event.getTags(), Optional.of(event.getHostId()));
+        event.setCreated(agent);
     }
 
     /**

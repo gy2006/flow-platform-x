@@ -19,8 +19,10 @@ package com.flowci.core.agent.service;
 import com.flowci.core.agent.dao.AgentHostDao;
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
+import com.flowci.core.agent.event.CreateAgentEvent;
 import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.manager.SessionManager;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
 import com.flowci.pool.domain.AgentContainer;
@@ -64,7 +66,7 @@ public class AgentHostServiceImpl implements AgentHostService {
     private AgentHostDao agentHostDao;
 
     @Autowired
-    private AgentService agentService;
+    private SpringEventManager eventManager;
 
     @PostConstruct
     public void init() {
@@ -104,7 +106,9 @@ public class AgentHostServiceImpl implements AgentHostService {
 
         // create new agent on agent host
         String name = String.format("%s-%s", host.getName(), StringHelper.randomString(5));
-        Agent agent = agentService.create(name, host.getTags(), Optional.of(host.getId()));
+        CreateAgentEvent syncEvent = new CreateAgentEvent(this, name, host.getTags(), host.getId());
+        eventManager.publish(syncEvent);
+        Agent agent = syncEvent.getCreated();
 
         try {
             StartContext context = new StartContext();
@@ -125,6 +129,11 @@ public class AgentHostServiceImpl implements AgentHostService {
     public int size(AgentHost host) {
         final PoolManager<?> manager = getPoolManager(host);
         return manager.size();
+    }
+
+    @Override
+    public void collect(AgentHost host) {
+        // find agents
     }
 
     /**

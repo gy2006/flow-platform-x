@@ -38,6 +38,11 @@ public interface AgentHostService {
     int size(AgentHost host);
 
     /**
+     * Stop or remove unused agent
+     */
+    void collect(AgentHost host);
+
+    /**
      * List all agent hosts
      */
     List<AgentHost> list();
