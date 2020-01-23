@@ -33,6 +33,11 @@ public interface AgentHostService {
     boolean start(AgentHost host);
 
     /**
+     * Sync agents between db and host
+     */
+    void sync(AgentHost host);
+
+    /**
      * Num of agent on the host
      */
     int size(AgentHost host);

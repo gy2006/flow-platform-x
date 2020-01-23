@@ -133,4 +133,9 @@ public class AgentHostServiceTest extends ZookeeperScenario {
         Assert.assertEquals(0, agentHostService.size(host));
         Assert.assertEquals(0, agentService.list().size());
     }
+
+    @Test
+    public void should_sync_agents() {
+        //TODO:
+    }
 }

@@ -37,6 +37,7 @@ import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
+import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,11 +47,6 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.*;
 
 @Log4j2
@@ -90,6 +86,27 @@ public class AgentHostServiceImpl implements AgentHostService {
     @Override
     public List<AgentHost> list() {
         return agentHostDao.findAll();
+    }
+
+    @Override
+    public void sync(AgentHost host) {
+        PoolManager<?> manager = getPoolManager(host);
+
+        List<Agent> agentList = agentDao.findAllByHostId(host.getId());
+        Set<AgentItemWrapper> agentSet = AgentItemWrapper.toSet(agentList);
+
+        List<AgentContainer> containerList = manager.list(Optional.empty());
+        Set<AgentItemWrapper> containerSet = AgentItemWrapper.toSet(containerList);
+
+        containerSet.removeAll(agentSet);
+        for (AgentItemWrapper item : containerSet) {
+            try {
+                manager.remove(item.getName());
+                log.info("Agent {} has been cleaned up", item.getName());
+            } catch (PoolException ignore) {
+
+            }
+        }
     }
 
     @Override
@@ -261,6 +278,44 @@ public class AgentHostServiceImpl implements AgentHostService {
 
         private boolean hasCreated() {
             return agentHostDao.findAllByType(AgentHost.Type.LocalUnixSocket).size() > 0;
+        }
+    }
+
+    @AllArgsConstructor(staticName = "of")
+    private static class AgentItemWrapper {
+
+        static <T> Set<AgentItemWrapper> toSet(List<T> list) {
+            Set<AgentItemWrapper> set = new HashSet<>(list.size());
+            Iterator<T> iterator = list.iterator();
+            for (; iterator.hasNext(); ) {
+                set.add(AgentItemWrapper.of(iterator.next()));
+                iterator.remove();
+            }
+            return set;
+        }
+
+        private final Object object;
+
+        public String getName() {
+            if (object instanceof Agent) {
+                return ((Agent) object).getName();
+            }
+
+            if (object instanceof AgentContainer) {
+                return ((AgentContainer) object).getAgentName();
+            }
+
+            throw new IllegalArgumentException();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return this.getName().equals(o);
+        }
+
+        @Override
+        public int hashCode() {
+            return this.getName().hashCode();
         }
     }
 
