@@ -101,7 +101,7 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
 
     @Override
     public void remove(String name) throws PoolException {
-        client.removeContainerCmd(findContainer(name).getId()).exec();
+        client.removeContainerCmd(findContainer(name).getId()).withForce(true).exec();
     }
 
     @Override

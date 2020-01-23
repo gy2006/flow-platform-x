@@ -33,6 +33,8 @@ public interface AgentDao extends MongoRepository<Agent, String> {
 
     List<Agent> findAllByStatus(Status status);
 
+    List<Agent> findAllByHostId(String hostId);
+
     Agent findByToken(String token);
 
     Agent findByName(String name);

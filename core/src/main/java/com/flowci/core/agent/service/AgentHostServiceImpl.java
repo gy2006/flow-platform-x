@@ -16,6 +16,7 @@
 
 package com.flowci.core.agent.service;
 
+import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.agent.dao.AgentHostDao;
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
@@ -61,6 +62,9 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @Autowired
     private SessionManager sessionManager;
+
+    @Autowired
+    private AgentDao agentDao;
 
     @Autowired
     private AgentHostDao agentHostDao;
@@ -127,13 +131,29 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @Override
     public int size(AgentHost host) {
-        final PoolManager<?> manager = getPoolManager(host);
+        PoolManager<?> manager = getPoolManager(host);
         return manager.size();
     }
 
     @Override
     public void collect(AgentHost host) {
         // find agents
+    }
+
+    @Override
+    public void removeAll(AgentHost host) {
+        PoolManager<?> manager = getPoolManager(host);
+        List<Agent> list = agentDao.findAllByHostId(host.getId());
+
+        for (Agent agent : list) {
+            try {
+                manager.remove(agent.getName());
+                agentDao.delete(agent);
+                log.info("Agent {} been removed and deleted", agent.getName());
+            } catch (PoolException e) {
+                log.info("Unable to remove agent {}", agent.getName());
+            }
+        }
     }
 
     /**

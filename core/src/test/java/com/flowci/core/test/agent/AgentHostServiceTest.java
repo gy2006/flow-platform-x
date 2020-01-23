@@ -62,5 +62,9 @@ public class AgentHostServiceTest extends SpringScenario {
         // then:
         Assert.assertEquals(3, agentHostService.size(host));
         Assert.assertEquals(3, agentService.list().size());
+
+        agentHostService.removeAll(host);
+        Assert.assertEquals(0, agentHostService.size(host));
+        Assert.assertEquals(0, agentService.list().size());
     }
 }

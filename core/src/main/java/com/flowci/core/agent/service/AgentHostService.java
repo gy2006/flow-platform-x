@@ -43,6 +43,11 @@ public interface AgentHostService {
     void collect(AgentHost host);
 
     /**
+     * Remove all docker container
+     */
+    void removeAll(AgentHost host);
+
+    /**
      * List all agent hosts
      */
     List<AgentHost> list();

@@ -259,6 +259,7 @@ public class AgentServiceImpl implements AgentService {
 
         Agent agent = new Agent(name, tags);
         agent.setToken(UUID.randomUUID().toString());
+        hostId.ifPresent(agent::setHostId);
 
         String dummyEmailForAgent = "agent." + name + "@flow.ci";
         agent.setRsa(CipherHelper.RSA.gen(dummyEmailForAgent));
