@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.Executor;
 
 import javax.annotation.PostConstruct;
 
@@ -33,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
@@ -93,23 +95,24 @@ public class AppConfig {
 
     @Bean(name = "applicationEventMulticaster")
     public ApplicationEventMulticaster simpleApplicationEventMulticaster() {
-        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("s-event-");
-
-        return new SimpleApplicationEventMulticaster() {
+        SimpleApplicationEventMulticaster multicaster = new SimpleApplicationEventMulticaster() {
 
             @Override
             public void multicastEvent(ApplicationEvent event, ResolvableType eventType) {
-                ResolvableType resolvableType = ResolvableType.forInstance(event);
-                ResolvableType type = (eventType != null ? eventType : resolvableType);
-
                 if (event instanceof SyncEvent) {
-                    getApplicationListeners(event, type).forEach(listener -> invokeListener(listener, event));
+                    ResolvableType type = (eventType != null ? eventType : ResolvableType.forInstance(event));
+                    for (final ApplicationListener<?> listener : getApplicationListeners(event, type)) {
+                        invokeListener(listener, event);
+                    }
                     return;
                 }
 
-                getApplicationListeners(event, type)
-                        .forEach(listener -> executor.execute(() -> invokeListener(listener, event)));
+                super.multicastEvent(event, eventType);
             }
         };
+
+        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("s-event-");
+        multicaster.setTaskExecutor(executor);
+        return multicaster;
     }
 }

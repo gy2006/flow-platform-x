@@ -143,31 +143,17 @@ public class AgentHostServiceImpl implements AgentHostService {
     @Override
     public void collect(AgentHost host) {
         List<Agent> list = agentDao.findAllByHostId(host.getId());
+
         for (Agent agent : list) {
             if (agent.getStatus() == Agent.Status.IDLE) {
-                if (!host.isOverMaxIdleSeconds(agent.getStatusUpdatedAt())) {
-                    continue;
+                if (!removeIfTimeout(host, agent)) {
+                    stopIfTimeout(host, agent);
                 }
-
-                try {
-                    PoolManager<?> manager = getPoolManager(host);
-                    manager.stop(agent.getName());
-                } catch (Exception e) {
-                    log.warn("Unable to stop idle agent {}", agent.getName());
-                }
+                continue;
             }
 
-            else if (agent.getStatus() == Agent.Status.OFFLINE) {
-                if (!host.isOverMaxOfflineSeconds(agent.getStatusUpdatedAt())) {
-                    continue;
-                }
-
-                try {
-                    PoolManager<?> manager = getPoolManager(host);
-                    manager.remove(agent.getName());
-                } catch (Exception e) {
-                    log.warn("Unable to remove offline agent {}", agent.getName());
-                }
+            if (agent.getStatus() == Agent.Status.OFFLINE) {
+                removeIfTimeout(host, agent);
             }
         }
     }
@@ -185,6 +171,39 @@ public class AgentHostServiceImpl implements AgentHostService {
             } catch (PoolException e) {
                 log.info("Unable to remove agent {}", agent.getName());
             }
+        }
+    }
+
+    private boolean stopIfTimeout(AgentHost host, Agent agent) {
+        if (!host.isOverMaxIdleSeconds(agent.getStatusUpdatedAt())) {
+            return false;
+        }
+
+        try {
+            PoolManager<?> manager = getPoolManager(host);
+            manager.stop(agent.getName());
+            log.debug("Agent {} been stopped", agent.getName());
+            return true;
+        } catch (Exception e) {
+            log.warn("Unable to stop idle agent {}", agent.getName());
+            return false;
+        }
+    }
+
+    private boolean removeIfTimeout(AgentHost host, Agent agent) {
+        if (!host.isOverMaxOfflineSeconds(agent.getStatusUpdatedAt())) {
+            return false;
+        }
+
+        try {
+            PoolManager<?> manager = getPoolManager(host);
+            manager.remove(agent.getName());
+            agentDao.delete(agent);
+            log.debug("Agent {} been removed", agent.getName());
+            return true;
+        } catch (Exception e) {
+            log.warn("Unable to remove offline agent {}", agent.getName());
+            return false;
         }
     }
 

@@ -60,11 +60,7 @@ public abstract class ZookeeperScenario extends SpringScenario {
     protected Agent mockAgentOnline(String agentPath) throws InterruptedException {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
-
-        addEventListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
-            wrapper.setValue(event.getAgent());
-            counter.countDown();
-        });
+        addEventListener(new AgentStatusChangeListener(counter, wrapper));
 
         zk.create(CreateMode.EPHEMERAL, agentPath, Status.IDLE.getBytes());
         counter.await(10, TimeUnit.SECONDS);
@@ -77,14 +73,9 @@ public abstract class ZookeeperScenario extends SpringScenario {
     }
 
     protected Agent mockReleaseAgent(String agentPath) throws InterruptedException {
-        log.debug("Mock release agent {}", agentPath);
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
-
-        addEventListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
-            wrapper.setValue(event.getAgent());
-            counter.countDown();
-        });
+        addEventListener(new AgentStatusChangeListener(counter, wrapper));
 
         zk.set(agentPath, Status.IDLE.getBytes());
         counter.await(10, TimeUnit.SECONDS);
@@ -96,5 +87,23 @@ public abstract class ZookeeperScenario extends SpringScenario {
 
     protected Status getAgentStatus(String agentPath) {
         return Status.fromBytes(zk.get(agentPath));
+    }
+
+    private static class AgentStatusChangeListener implements ApplicationListener<AgentStatusChangeEvent> {
+
+        public final CountDownLatch counter;
+
+        private final ObjectWrapper<Agent> wrapper;
+
+        private AgentStatusChangeListener(CountDownLatch counter, ObjectWrapper<Agent> wrapper) {
+            this.counter = counter;
+            this.wrapper = wrapper;
+        }
+
+        @Override
+        public void onApplicationEvent(AgentStatusChangeEvent event) {
+            wrapper.setValue(event.getAgent());
+            counter.countDown();
+        }
     }
 }

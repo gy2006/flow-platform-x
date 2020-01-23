@@ -42,6 +42,8 @@ public class Agent implements Serializable {
 
     public enum Status {
 
+        CREATED,
+
         OFFLINE,
 
         BUSY,
@@ -92,7 +94,7 @@ public class Agent implements Serializable {
 
     private Set<String> tags = Collections.emptySet();
 
-    private Status status = Status.OFFLINE;
+    private Status status = Status.CREATED;
 
     private Date statusUpdatedAt;
 

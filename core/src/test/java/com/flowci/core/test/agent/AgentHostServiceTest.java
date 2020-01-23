@@ -2,9 +2,13 @@ package com.flowci.core.test.agent;
 
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
+import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentHostService;
 import com.flowci.core.agent.service.AgentService;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.test.SpringScenario;
+import com.flowci.core.test.ZookeeperScenario;
+import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
 import com.google.common.collect.Sets;
 
@@ -12,12 +16,16 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 
 import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
-public class AgentHostServiceTest extends SpringScenario {
+public class AgentHostServiceTest extends ZookeeperScenario {
 
     @Autowired
     private AgentService agentService;
@@ -95,5 +103,34 @@ public class AgentHostServiceTest extends SpringScenario {
 
         host.setMaxIdleSeconds(AgentHost.NoLimit);
         Assert.assertFalse(host.isOverMaxOfflineSeconds(Date.from(updatedAt)));
+    }
+
+    @Test
+    public void should_collect_container() throws InterruptedException {
+        // init: create host
+        AgentHost host = new LocalUnixAgentHost();
+        host.setName("test-host");
+        host.setTags(Sets.newHashSet("local", "test"));
+        host.setMaxIdleSeconds(2);
+        host.setMaxOfflineSeconds(2);
+        agentHostService.create(host);
+
+        // given: two agents up running with idle status
+        agentHostService.start(host);
+        agentHostService.start(host);
+
+        List<Agent> agents = agentService.list();
+        Assert.assertEquals(2, agents.size());
+        for (Agent agent : agents) {
+            mockAgentOnline(agentService.getPath(agent));
+        }
+
+        // when: make sure expired and collect
+        ThreadHelper.sleep(3000);
+        agentHostService.collect(host);
+
+        // then: agent should be remove
+        Assert.assertEquals(0, agentHostService.size(host));
+        Assert.assertEquals(0, agentService.list().size());
     }
 }
