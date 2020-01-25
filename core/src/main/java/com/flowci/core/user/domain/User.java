@@ -38,6 +38,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 public class User extends Mongoable {
 
+    public static final String DefaultSystemUser = "SYSTEM";
+
     public enum Role {
         Admin,
 

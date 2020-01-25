@@ -2,28 +2,22 @@ package com.flowci.core.test.agent;
 
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
-import com.flowci.core.agent.event.AgentStatusChangeEvent;
 import com.flowci.core.agent.service.AgentHostService;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.helper.ThreadHelper;
-import com.flowci.core.test.SpringScenario;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
 import com.google.common.collect.Sets;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
 
 import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class AgentHostServiceTest extends ZookeeperScenario {
 
@@ -35,7 +29,7 @@ public class AgentHostServiceTest extends ZookeeperScenario {
 
     @Before
     public void login() {
-        mockLogin();   
+        mockLogin();
     }
 
     @Test(expected = NotAvailableException.class)

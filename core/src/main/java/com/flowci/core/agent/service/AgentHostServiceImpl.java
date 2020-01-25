@@ -21,9 +21,13 @@ import com.flowci.core.agent.dao.AgentHostDao;
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
 import com.flowci.core.agent.event.CreateAgentEvent;
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
+import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.event.NoIdleAgentEvent;
+import com.flowci.core.user.domain.User;
 import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
 import com.flowci.pool.domain.AgentContainer;
@@ -34,12 +38,18 @@ import com.flowci.pool.exception.PoolException;
 import com.flowci.pool.manager.PoolManager;
 import com.flowci.pool.manager.SocketPoolManager;
 import com.flowci.util.StringHelper;
+import com.flowci.zookeeper.ZookeeperClient;
+import com.flowci.zookeeper.ZookeeperException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.curator.utils.ZKPaths;
+import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Nonnull;
@@ -58,11 +68,10 @@ public class AgentHostServiceImpl implements AgentHostService {
     private final Cache<AgentHost, PoolManager<?>> poolManagerCache =
             CacheHelper.createLocalCache(10, 600, new PoolManagerRemover());
 
-    @Autowired
-    private String serverUrl;
+    private String collectTaskZkPath;
 
     @Autowired
-    private SessionManager sessionManager;
+    private String serverUrl;
 
     @Autowired
     private AgentDao agentDao;
@@ -73,9 +82,38 @@ public class AgentHostServiceImpl implements AgentHostService {
     @Autowired
     private SpringEventManager eventManager;
 
+    @Autowired
+    private ZookeeperClient zk;
+
+    @Autowired
+    private ConfigProperties.Zookeeper zkProperties;
+
+    //====================================================================
+    //        %% Public functions
+    //====================================================================
+
     @PostConstruct
     public void init() {
+        collectTaskZkPath = ZKPaths.makePath(zkProperties.getCronRoot(), "agent-host-collect");
         mapping.put(LocalUnixAgentHost.class, new OnLocalUnixAgentHostCreate());
+    }
+
+    @PostConstruct
+    public void autoCreateLocalAgentHost() {
+        LocalUnixAgentHost host = new LocalUnixAgentHost();
+
+        try {
+            create(host);
+        } catch (NotAvailableException e) {
+            log.warn("Fail to create default local agent host");
+        }
+    }
+
+    @PostConstruct
+    public void syncAgents() {
+        for (AgentHost host : list()) {
+            sync(host);
+        }
     }
 
     @Override
@@ -191,6 +229,57 @@ public class AgentHostServiceImpl implements AgentHostService {
         }
     }
 
+    @Scheduled(cron = "0 0/30 * * * ?")
+    public void scheduleCollect() {
+        try {
+            if (!lock()) {
+                return;
+            }
+
+            log.info("Start to collect agents from host");
+            for (AgentHost host : list()) {
+                collect(host);
+            }
+            log.info("Collection finished");
+        } finally {
+            clean();
+        }
+    }
+
+    //====================================================================
+    //        %% Internal events
+    //====================================================================
+
+    @EventListener
+    public void onNoIdleAgent(NoIdleAgentEvent event) {
+        Job job = event.getJob();
+        Set<String> agentTags = job.getAgentSelector().getTags();
+
+        List<AgentHost> hosts;
+        if (agentTags.isEmpty()) {
+            hosts = list();
+        } else {
+            hosts = agentHostDao.findAllByTagsIn(agentTags);
+        }
+
+        if (hosts.isEmpty()) {
+            log.warn("Unable to find matched agent host for job {}", job.getId());
+            return;
+        }
+
+        for (AgentHost host : hosts) {
+            if (start(host)) {
+                return;
+            }
+        }
+
+        log.info("Unable to start agent from hosts");
+    }
+
+    //====================================================================
+    //        %% Private functions
+    //====================================================================
+
     private boolean stopIfTimeout(AgentHost host, Agent agent) {
         if (!host.isOverMaxIdleSeconds(agent.getStatusUpdatedAt())) {
             return false;
@@ -249,6 +338,31 @@ public class AgentHostServiceImpl implements AgentHostService {
         return manager;
     }
 
+    /**
+     * check zk and lock
+     */
+    private boolean lock() {
+        try {
+            zk.create(CreateMode.EPHEMERAL, collectTaskZkPath, null);
+            return true;
+        } catch (ZookeeperException e) {
+            log.warn("Unable to init agent host collect task : {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private void clean() {
+        try {
+            zk.delete(collectTaskZkPath, false);
+        } catch (ZookeeperException ignore) {
+
+        }
+    }
+
+    //====================================================================
+    //        %% Private classes
+    //====================================================================
+
     private interface OnCreate {
 
         void create(AgentHost host);
@@ -267,8 +381,9 @@ public class AgentHostServiceImpl implements AgentHostService {
             }
 
             try {
+                host.setName("local-" + StringHelper.randomString(5));
                 host.setCreatedAt(new Date());
-                host.setCreatedBy(sessionManager.getUserId());
+                host.setCreatedBy(User.DefaultSystemUser);
                 agentHostDao.save(host);
             } catch (Exception e) {
                 log.warn("Unable to create local unix socket agent host: {}", e.getMessage());

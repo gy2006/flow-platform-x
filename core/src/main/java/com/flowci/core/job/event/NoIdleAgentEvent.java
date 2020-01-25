@@ -14,20 +14,19 @@
  * the License.
  */
 
-package com.flowci.core.agent.dao;
+package com.flowci.core.job.event;
 
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import com.flowci.core.job.domain.Job;
+import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
-import java.util.List;
-import java.util.Set;
+@Getter
+public class NoIdleAgentEvent extends ApplicationEvent {
 
-import com.flowci.core.agent.domain.AgentHost;
+    private final Job job;
 
-@Repository
-public interface AgentHostDao extends MongoRepository<AgentHost, String> {
-
-    List<AgentHost> findAllByType(AgentHost.Type type);
-
-    List<AgentHost> findAllByTagsIn(Set<String> tags);
+    public NoIdleAgentEvent(Object source, Job job) {
+        super(source);
+        this.job = job;
+    }
 }

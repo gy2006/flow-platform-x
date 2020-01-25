@@ -32,6 +32,7 @@ import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.CreateNewJobEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
+import com.flowci.core.job.event.NoIdleAgentEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
@@ -502,6 +503,7 @@ public class JobEventServiceImpl implements JobEventService {
 
             while ((available = findAvailableAgent(job)) == null) {
                 logInfo(job, "waiting for agent...");
+                eventManager.publish(new NoIdleAgentEvent(this, job));
 
                 synchronized (lock) {
                     ThreadHelper.wait(lock, RetryIntervalOnNotFound);
