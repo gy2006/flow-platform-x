@@ -55,7 +55,11 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
         List<Container> list = cmd.exec();
         List<AgentContainer> result = new ArrayList<>(list.size());
         for (Container item : list) {
-            result.add(AgentContainer.of(item.getId(), item.getNames()[0], item.getState()));
+            String name = item.getNames()[0];
+            if (name.startsWith("/")) {
+                name = name.substring(1);
+            }
+            result.add(AgentContainer.of(item.getId(), name, item.getState()));
         }
         return result;
     }

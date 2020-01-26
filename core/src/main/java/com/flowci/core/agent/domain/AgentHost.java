@@ -29,9 +29,11 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
 @Setter
+@Document(collection = "agent_host")
 public abstract class AgentHost extends Mongoable {
 
     public static final int NoLimit = -1;
@@ -76,12 +78,12 @@ public abstract class AgentHost extends Mongoable {
     /**
      * Stop agent container if over the idle seconds
      */
-    private int maxIdleSeconds = 600;
+    private int maxIdleSeconds = 3600;
 
     /**
      * Remove agent container if over the offline seconds
      */
-    private int maxOfflineSeconds = 3600;
+    private int maxOfflineSeconds = 60;
 
     /**
      * Tags for all agent holed by host

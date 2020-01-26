@@ -23,7 +23,6 @@ import com.flowci.core.agent.domain.LocalUnixAgentHost;
 import com.flowci.core.agent.event.CreateAgentEvent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;
-import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.NoIdleAgentEvent;
@@ -31,7 +30,6 @@ import com.flowci.core.user.domain.User;
 import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
 import com.flowci.pool.domain.AgentContainer;
-import com.flowci.pool.domain.DockerStatus;
 import com.flowci.pool.domain.SocketInitContext;
 import com.flowci.pool.domain.StartContext;
 import com.flowci.pool.exception.PoolException;
@@ -71,6 +69,9 @@ public class AgentHostServiceImpl implements AgentHostService {
     private String collectTaskZkPath;
 
     @Autowired
+    private ConfigProperties appProperties;
+
+    @Autowired
     private String serverUrl;
 
     @Autowired
@@ -100,6 +101,10 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @PostConstruct
     public void autoCreateLocalAgentHost() {
+        if (!appProperties.isAutoLocalAgentHost()) {
+            return;
+        }
+
         LocalUnixAgentHost host = new LocalUnixAgentHost();
 
         try {
@@ -151,42 +156,64 @@ public class AgentHostServiceImpl implements AgentHostService {
     public boolean start(AgentHost host) {
         PoolManager<?> manager = getPoolManager(host);
 
+        List<Agent> agents = agentDao.findAllByHostId(host.getId());
+        List<Agent> offlines = new LinkedList<>();
+
         // resume from stopped
-        List<AgentContainer> list = manager.list(Optional.of(DockerStatus.Exited));
-        if (list.size() > 0) {
-            AgentContainer container = list.get(0);
-            try {
-                manager.resume(container.getAgentName());
-                return true;
-            } catch (PoolException e) {
-                log.warn("Unable to resume agent container {}", container.getName());
+        for (Agent agent : agents) {
+            if (agent.getStatus() == Agent.Status.OFFLINE) {
+                try {
+                    manager.resume(agent.getName());
+                    log.info("Agent {} been resumed", agent.getName());
+                    return true;
+                } catch (PoolException e) {
+                    log.warn("Unable to resume agent {}", agent.getName());
+                    offlines.add(agent);
+                }
             }
         }
 
-        if (manager.size() >= host.getMaxSize()) {
-            log.warn("Unable to start agent since over the limit size {}", host.getMaxSize());
-            return false;
-        }
-
-        // create new agent on agent host
-        String name = String.format("%s-%s", host.getName(), StringHelper.randomString(5));
-        CreateAgentEvent syncEvent = new CreateAgentEvent(this, name, host.getTags(), host.getId());
-        eventManager.publish(syncEvent);
-        Agent agent = syncEvent.getCreated();
-
-        try {
+        // re-start from offlines
+        for (Agent agent : offlines) {
             StartContext context = new StartContext();
             context.setServerUrl(serverUrl);
             context.setAgentName(agent.getName());
             context.setToken(agent.getToken());
 
-            manager.start(context);
-            log.info("Agent {} been started", name);
-            return true;
-        } catch (PoolException e) {
-            log.warn("Unable to start agent {}", agent.getName());
-            return false;
+            try {
+                manager.start(context);
+                log.info("Agent {} been started", agent.getName());
+                return true;
+            } catch (PoolException e) {
+                log.warn("Unable to restart agent {}", agent.getName());
+            }
         }
+
+        // create new agent
+        if (agents.size() < host.getMaxSize()) {
+            String name = String.format("%s-%s", host.getName(), StringHelper.randomString(5));
+            CreateAgentEvent syncEvent = new CreateAgentEvent(this, name, host.getTags(), host.getId());
+            eventManager.publish(syncEvent);
+
+            Agent agent = syncEvent.getCreated();
+
+            StartContext context = new StartContext();
+            context.setServerUrl(serverUrl);
+            context.setAgentName(agent.getName());
+            context.setToken(agent.getToken());
+
+            try {
+                manager.start(context);
+                log.info("Agent {} been created and started", name);
+                return true;
+            } catch (PoolException e) {
+                log.warn("Unable to start created agent {}", agent.getName());
+                return false;
+            }
+        }
+
+        log.warn("Unable to start agent since over the limit size {}", host.getMaxSize());
+        return false;
     }
 
     @Override
@@ -229,7 +256,7 @@ public class AgentHostServiceImpl implements AgentHostService {
         }
     }
 
-    @Scheduled(cron = "0 0/30 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ?")
     public void scheduleCollect() {
         try {
             if (!lock()) {
@@ -304,7 +331,6 @@ public class AgentHostServiceImpl implements AgentHostService {
         try {
             PoolManager<?> manager = getPoolManager(host);
             manager.remove(agent.getName());
-            agentDao.delete(agent);
             log.debug("Agent {} been removed", agent.getName());
             return true;
         } catch (Exception e) {
@@ -377,11 +403,12 @@ public class AgentHostServiceImpl implements AgentHostService {
             }
 
             if (!Files.exists(Paths.get("/var/run/docker.sock"))) {
+                deleteIfExist();
                 throw new NotAvailableException("Docker socket not available");
             }
 
             try {
-                host.setName("local-" + StringHelper.randomString(5));
+                host.setName("localhost");
                 host.setCreatedAt(new Date());
                 host.setCreatedBy(User.DefaultSystemUser);
                 agentHostDao.save(host);
@@ -393,6 +420,14 @@ public class AgentHostServiceImpl implements AgentHostService {
 
         private boolean hasCreated() {
             return agentHostDao.findAllByType(AgentHost.Type.LocalUnixSocket).size() > 0;
+        }
+
+        private void deleteIfExist() {
+            List<AgentHost> hosts = agentHostDao.findAllByType(AgentHost.Type.LocalUnixSocket);
+            if (hosts.isEmpty()) {
+                return;
+            }
+            agentHostDao.deleteAll(hosts);
         }
     }
 

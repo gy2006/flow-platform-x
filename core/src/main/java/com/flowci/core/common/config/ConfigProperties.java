@@ -54,6 +54,8 @@ public class ConfigProperties {
     @Length(max = 16, min = 16)
     private String secret;
 
+    private boolean autoLocalAgentHost;
+
     @Bean("adminProperties")
     @ConfigurationProperties(prefix = "app.admin")
     public Admin admin() {
