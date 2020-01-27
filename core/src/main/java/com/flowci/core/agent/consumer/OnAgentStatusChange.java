@@ -20,7 +20,6 @@ import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.common.domain.PushEvent;
 import com.flowci.core.common.manager.SocketPushManager;
 import com.flowci.domain.Agent;
-import com.flowci.domain.Agent.Status;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -43,10 +42,5 @@ public class OnAgentStatusChange implements ApplicationListener<AgentStatusEvent
     public void onApplicationEvent(AgentStatusEvent event) {
         Agent agent = event.getAgent();
         socketPushManager.push(topicForAgents, PushEvent.STATUS_CHANGE, agent);
-
-        String name = agent.getName();
-        Status status = agent.getStatus();
-        String jobId = agent.getJobId();
-        log.debug("Agent {} with status {} for job {} been pushed", name, status, jobId);
     }
 }
