@@ -83,7 +83,7 @@ public abstract class AgentHost extends Mongoable {
     /**
      * Remove agent container if over the offline seconds
      */
-    private int maxOfflineSeconds = 60;
+    private int maxOfflineSeconds = 600;
 
     /**
      * Tags for all agent holed by host

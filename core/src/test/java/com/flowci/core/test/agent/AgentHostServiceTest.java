@@ -14,6 +14,7 @@ import com.flowci.pool.domain.AgentContainer;
 import com.flowci.pool.domain.DockerStatus;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,6 +40,13 @@ public class AgentHostServiceTest extends ZookeeperScenario {
     @Before
     public void login() {
         mockLogin();
+    }
+
+    @After
+    public void cleanup() {
+        for (AgentHost h : agentHostService.list()) {
+            agentHostService.removeAll(h);
+        }
     }
 
     @Test(expected = NotAvailableException.class)
@@ -86,6 +94,8 @@ public class AgentHostServiceTest extends ZookeeperScenario {
     @Test
     public void should_should_over_time_limit() {
         AgentHost host = new LocalUnixAgentHost();
+        host.setMaxIdleSeconds(1800);
+        host.setMaxOfflineSeconds(600);
 
         // test idle limit
         Instant updatedAt = Instant.now().minus(1, ChronoUnit.HOURS);
@@ -101,7 +111,7 @@ public class AgentHostServiceTest extends ZookeeperScenario {
         updatedAt = Instant.now().minus(2, ChronoUnit.HOURS);
         Assert.assertTrue(host.isOverMaxOfflineSeconds(Date.from(updatedAt)));
 
-        updatedAt = Instant.now().minus(20, ChronoUnit.MINUTES);
+        updatedAt = Instant.now().minus(5, ChronoUnit.MINUTES);
         Assert.assertFalse(host.isOverMaxOfflineSeconds(Date.from(updatedAt)));
 
         host.setMaxIdleSeconds(AgentHost.NoLimit);
@@ -132,9 +142,9 @@ public class AgentHostServiceTest extends ZookeeperScenario {
         ThreadHelper.sleep(3000);
         agentHostService.collect(host);
 
-        // then: agent should be remove
+        // then: container should be removed, but keep agent there
         Assert.assertEquals(0, agentHostService.size(host));
-        Assert.assertEquals(0, agentService.list().size());
+        Assert.assertEquals(2, agentService.list().size());
     }
 
     @Test
