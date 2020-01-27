@@ -21,6 +21,8 @@ import com.flowci.core.agent.dao.AgentHostDao;
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
 import com.flowci.core.agent.event.AgentCreatedEvent;
+import com.flowci.core.agent.event.AgentHostStatusEvent;
+import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.agent.event.CreateAgentEvent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;
@@ -394,10 +396,17 @@ public class AgentHostServiceImpl implements AgentHostService {
         });
 
         if (Objects.isNull(manager)) {
+            updateAgentHostStatus(host, AgentHost.Status.Disconnected);
             throw new NotAvailableException("Cannot load pool manager for host {}", host.getName());
         }
 
+        updateAgentHostStatus(host, AgentHost.Status.Connected);
         return manager;
+    }
+
+    private void updateAgentHostStatus(AgentHost host, AgentHost.Status newStatus) {
+        host.setStatus(newStatus);
+        eventManager.publish(new AgentHostStatusEvent(this, host));
     }
 
     /**

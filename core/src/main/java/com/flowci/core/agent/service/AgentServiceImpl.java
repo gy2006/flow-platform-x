@@ -20,7 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.agent.domain.AgentInit;
-import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.event.CreateAgentEvent;
 import com.flowci.core.common.config.ConfigProperties;
@@ -350,7 +350,7 @@ public class AgentServiceImpl implements AgentService {
             log.warn("Unable to update status on zk node: {}", e.getMessage());
         } finally {
             agentDao.save(agent);
-            eventManager.publish(new AgentStatusChangeEvent(this, agent));
+            eventManager.publish(new AgentStatusEvent(this, agent));
         }
     }
 

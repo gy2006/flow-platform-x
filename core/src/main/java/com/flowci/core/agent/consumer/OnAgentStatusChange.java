@@ -16,7 +16,7 @@
 
 package com.flowci.core.agent.consumer;
 
-import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.common.domain.PushEvent;
 import com.flowci.core.common.manager.SocketPushManager;
 import com.flowci.domain.Agent;
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class OnAgentStatusChange implements ApplicationListener<AgentStatusChangeEvent> {
+public class OnAgentStatusChange implements ApplicationListener<AgentStatusEvent> {
 
     @Autowired
     private SocketPushManager socketPushManager;
@@ -40,7 +40,7 @@ public class OnAgentStatusChange implements ApplicationListener<AgentStatusChang
     private String topicForAgents;
 
     @Override
-    public void onApplicationEvent(AgentStatusChangeEvent event) {
+    public void onApplicationEvent(AgentStatusEvent event) {
         Agent agent = event.getAgent();
         socketPushManager.push(topicForAgents, PushEvent.STATUS_CHANGE, agent);
 

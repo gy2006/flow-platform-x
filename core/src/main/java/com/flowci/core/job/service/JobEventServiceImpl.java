@@ -17,7 +17,7 @@
 package com.flowci.core.job.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
@@ -166,7 +166,7 @@ public class JobEventServiceImpl implements JobEventService {
     }
 
     @EventListener
-    public void notifyToFindAvailableAgent(AgentStatusChangeEvent event) {
+    public void notifyToFindAvailableAgent(AgentStatusEvent event) {
         Agent agent = event.getAgent();
 
         if (agent.getStatus() != Agent.Status.IDLE) {
@@ -181,8 +181,8 @@ public class JobEventServiceImpl implements JobEventService {
         consumeHandlers.forEach((s, handler) -> handler.resume());
     }
 
-    @EventListener(value = AgentStatusChangeEvent.class)
-    public void updateJobAndStep(AgentStatusChangeEvent event) {
+    @EventListener(value = AgentStatusEvent.class)
+    public void updateJobAndStep(AgentStatusEvent event) {
         Agent agent = event.getAgent();
 
         if (agent.getStatus() != Agent.Status.OFFLINE || Objects.isNull(agent.getJobId())) {

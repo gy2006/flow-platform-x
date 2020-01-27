@@ -16,7 +16,7 @@
 
 package com.flowci.core.test.job;
 
-import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.domain.Variables;
@@ -462,7 +462,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         agent.setJobId(job.getId());
         agent.setStatus(Agent.Status.OFFLINE);
-        multicastEvent(new AgentStatusChangeEvent(this, agent));
+        multicastEvent(new AgentStatusEvent(this, agent));
 
         // then: job should be cancelled
         waitForCancelled.await();
