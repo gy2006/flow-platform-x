@@ -142,9 +142,20 @@ public class AgentHostServiceTest extends ZookeeperScenario {
         ThreadHelper.sleep(3000);
         agentHostService.collect(host);
 
-        // then: container should be removed, but keep agent there
+        // then: container should be stopped, but size should still 2
+        Assert.assertEquals(2, agentHostService.size(host));
+
+        // when: do collect again
+        for (Agent agent : agents) {
+            mockAgentOffline(agentService.getPath(agent));
+        }
+
+        ThreadHelper.sleep(3000);
+        agentHostService.collect(host);
+
+        // then: container should be removed, and agent removed as well
         Assert.assertEquals(0, agentHostService.size(host));
-        Assert.assertEquals(2, agentService.list().size());
+        Assert.assertEquals(0, agentService.list().size());
     }
 
     @Test

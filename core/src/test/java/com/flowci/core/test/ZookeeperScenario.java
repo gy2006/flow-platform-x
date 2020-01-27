@@ -72,16 +72,16 @@ public abstract class ZookeeperScenario extends SpringScenario {
         return wrapper.getValue();
     }
 
-    protected Agent mockReleaseAgent(String agentPath) throws InterruptedException {
+    protected Agent mockAgentOffline(String agentPath) throws InterruptedException {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
         addEventListener(new AgentStatusChangeListener(counter, wrapper));
 
-        zk.set(agentPath, Status.IDLE.getBytes());
+        zk.delete(agentPath, true);
         counter.await(10, TimeUnit.SECONDS);
 
         Assert.assertNotNull(wrapper.getValue());
-        Assert.assertEquals(Status.IDLE, wrapper.getValue().getStatus());
+        Assert.assertEquals(Status.OFFLINE, wrapper.getValue().getStatus());
         return wrapper.getValue();
     }
 

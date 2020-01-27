@@ -20,6 +20,7 @@ import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.agent.dao.AgentHostDao;
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
+import com.flowci.core.agent.event.AgentCreatedEvent;
 import com.flowci.core.agent.event.CreateAgentEvent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;
@@ -99,30 +100,9 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @PostConstruct
     public void init() {
-        collectTaskZkPath = ZKPaths.makePath(zkProperties.getCronRoot(), "agent-host-collect");
-    }
-
-    @PostConstruct
-    public void autoCreateLocalAgentHost() {
-        if (!appProperties.isAutoLocalAgentHost()) {
-            return;
-        }
-
-        try {
-            LocalUnixAgentHost host = new LocalUnixAgentHost();
-            host.setName("localhost");
-
-            create(host);
-        } catch (NotAvailableException e) {
-            log.warn("Fail to create default local agent host");
-        }
-    }
-
-    @PostConstruct
-    public void syncAgents() {
-        for (AgentHost host : list()) {
-            sync(host);
-        }
+        initZkNodeForCronTask();
+        autoCreateLocalAgentHost();
+        syncAgents();
     }
 
     @Override
@@ -222,6 +202,7 @@ public class AgentHostServiceImpl implements AgentHostService {
             eventManager.publish(syncEvent);
 
             Agent agent = syncEvent.getCreated();
+            eventManager.publish(new AgentCreatedEvent(this, agent, host));
 
             StartContext context = new StartContext();
             context.setServerUrl(serverUrl);
@@ -259,9 +240,7 @@ public class AgentHostServiceImpl implements AgentHostService {
 
         for (Agent agent : list) {
             if (agent.getStatus() == Agent.Status.IDLE) {
-                if (!removeIfTimeout(host, agent)) {
-                    stopIfTimeout(host, agent);
-                }
+                stopIfTimeout(host, agent);
                 continue;
             }
 
@@ -338,6 +317,31 @@ public class AgentHostServiceImpl implements AgentHostService {
     //        %% Private functions
     //====================================================================
 
+    private void initZkNodeForCronTask() {
+        collectTaskZkPath = ZKPaths.makePath(zkProperties.getCronRoot(), "agent-host-collect");
+    }
+
+    public void autoCreateLocalAgentHost() {
+        if (!appProperties.isAutoLocalAgentHost()) {
+            return;
+        }
+
+        try {
+            LocalUnixAgentHost host = new LocalUnixAgentHost();
+            host.setName("localhost");
+
+            create(host);
+        } catch (NotAvailableException e) {
+            log.warn("Fail to create default local agent host");
+        }
+    }
+
+    public void syncAgents() {
+        for (AgentHost host : list()) {
+            sync(host);
+        }
+    }
+
     private boolean stopIfTimeout(AgentHost host, Agent agent) {
         if (!host.isOverMaxIdleSeconds(agent.getStatusUpdatedAt())) {
             return false;
@@ -362,6 +366,7 @@ public class AgentHostServiceImpl implements AgentHostService {
         try {
             PoolManager<?> manager = getPoolManager(host);
             manager.remove(agent.getName());
+            agentDao.delete(agent);
             log.debug("Agent {} been removed", agent.getName());
             return true;
         } catch (Exception e) {

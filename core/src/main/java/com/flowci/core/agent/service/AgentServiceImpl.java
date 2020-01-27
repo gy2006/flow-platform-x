@@ -88,42 +88,9 @@ public class AgentServiceImpl implements AgentService {
     private ObjectMapper objectMapper;
 
     @PostConstruct
-    public void initRootNode() {
-        String root = zkProperties.getAgentRoot();
-
-        try {
-            zk.create(CreateMode.PERSISTENT, root, null);
-        } catch (ZookeeperException ignore) {
-
-        }
-
-        try {
-            zk.watchChildren(root, new RootNodeListener());
-        } catch (ZookeeperException e) {
-            log.error(e.getMessage());
-        }
-    }
-
-    @PostConstruct
-    public void initAgentsFromZK() {
-        for (Agent agent : agentDao.findAll()) {
-            String zkPath = getPath(agent);
-            String zkLockPath = getLockPath(agent);
-
-            // set to offline if zk node not exist
-            if (!zk.exist(zkPath)) {
-                agent.setStatus(Status.OFFLINE);
-                agentDao.save(agent);
-                zk.delete(zkLockPath, false);
-                continue;
-            }
-
-            // sync status and lock node
-            Status status = getStatusFromZk(agent);
-            agent.setStatus(status);
-            agentDao.save(agent);
-            syncLockNode(agent, Type.CHILD_ADDED);
-        }
+    private void init() {
+        initRootNode();
+        initAgentsFromZk();
     }
 
     @Override
@@ -318,6 +285,43 @@ public class AgentServiceImpl implements AgentService {
     private static String getAgentIdFromPath(String path) {
         int index = path.lastIndexOf(Agent.PATH_SLASH);
         return path.substring(index + 1);
+    }
+
+    private void initRootNode() {
+        String root = zkProperties.getAgentRoot();
+
+        try {
+            zk.create(CreateMode.PERSISTENT, root, null);
+        } catch (ZookeeperException ignore) {
+
+        }
+
+        try {
+            zk.watchChildren(root, new RootNodeListener());
+        } catch (ZookeeperException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void initAgentsFromZk() {
+        for (Agent agent : agentDao.findAll()) {
+            String zkPath = getPath(agent);
+            String zkLockPath = getLockPath(agent);
+
+            // set to offline if zk node not exist
+            if (!zk.exist(zkPath)) {
+                agent.setStatus(Status.OFFLINE);
+                agentDao.save(agent);
+                zk.delete(zkLockPath, false);
+                continue;
+            }
+
+            // sync status and lock node
+            Status status = getStatusFromZk(agent);
+            agent.setStatus(status);
+            agentDao.save(agent);
+            syncLockNode(agent, Type.CHILD_ADDED);
+        }
     }
 
     /**
