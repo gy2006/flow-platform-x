@@ -22,7 +22,7 @@ import java.util.Optional;
 import com.flowci.pool.domain.AgentContainer;
 import com.flowci.pool.domain.InitContext;
 import com.flowci.pool.domain.StartContext;
-import com.flowci.pool.exception.PoolException;
+import com.flowci.pool.exception.DockerPoolException;
 
 /**
  * Handle agent in docker on different type of host
@@ -34,12 +34,12 @@ public interface PoolManager<T extends InitContext> extends AutoCloseable {
     /**
      * List all containers for agent
      */
-    List<AgentContainer> list(Optional<String> state);
+    List<AgentContainer> list(Optional<String> state) throws DockerPoolException;
 
     /**
      * How many agent containers in the pool host
      */
-    int size();
+    int size() throws DockerPoolException;
 
     /**
      * Init pool service setting
@@ -49,29 +49,29 @@ public interface PoolManager<T extends InitContext> extends AutoCloseable {
     /**
      * Start an agent
      */
-    void start(StartContext context) throws PoolException;
+    void start(StartContext context) throws DockerPoolException;
 
     /**
      * Stop an agent
      * @param name agnet name
      */
-    void stop(String name) throws PoolException;
+    void stop(String name) throws DockerPoolException;
 
     /**
      * Resume agent container
      * @param name agnet name
      */
-    void resume(String name) throws PoolException;
+    void resume(String name) throws DockerPoolException;
 
     /**
      * Remove an agent
      * @param name agnet name
      */
-    void remove(String name) throws PoolException;
+    void remove(String name) throws DockerPoolException;
 
     /**
      * Get docker status
      * @param name agnet name
      */
-    String status(String name) throws PoolException;
+    String status(String name) throws DockerPoolException;
 }

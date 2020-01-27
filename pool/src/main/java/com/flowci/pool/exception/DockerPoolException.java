@@ -17,11 +17,17 @@
 
 package com.flowci.pool.exception;
 
+import com.github.dockerjava.api.exception.DockerException;
+
 import static java.text.MessageFormat.format;
 
-public class PoolException extends Exception {
+public class DockerPoolException extends Exception {
     
-    public PoolException(final String message, final String... params) {
+    public DockerPoolException(final String message, final String... params) {
         super(format(message, params));
+    }
+
+    public DockerPoolException(DockerException e) {
+        super(e.getMessage());
     }
 }

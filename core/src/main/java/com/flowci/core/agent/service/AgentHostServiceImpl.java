@@ -32,7 +32,7 @@ import com.flowci.exception.NotAvailableException;
 import com.flowci.pool.domain.AgentContainer;
 import com.flowci.pool.domain.SocketInitContext;
 import com.flowci.pool.domain.StartContext;
-import com.flowci.pool.exception.PoolException;
+import com.flowci.pool.exception.DockerPoolException;
 import com.flowci.pool.manager.PoolManager;
 import com.flowci.pool.manager.SocketPoolManager;
 import com.flowci.util.StringHelper;
@@ -137,7 +137,7 @@ public class AgentHostServiceImpl implements AgentHostService {
         for (Agent agent : agentList) {
             try {
                 manager.remove(agent.getName());
-            } catch (PoolException e) {
+            } catch (DockerPoolException e) {
                 log.warn("Unable to remove agent {} when delete host", agent.getName());
             }
         }
@@ -152,12 +152,18 @@ public class AgentHostServiceImpl implements AgentHostService {
     @Override
     public void sync(AgentHost host) {
         PoolManager<?> manager = getPoolManager(host);
+        List<AgentContainer> containerList;
 
+        try {
+            containerList = manager.list(Optional.empty());
+        } catch (DockerPoolException e) {
+            log.warn("Cannot list containers of host {}", host.getName());
+            return;
+        }
+
+        Set<AgentItemWrapper> containerSet = AgentItemWrapper.toSet(containerList);
         List<Agent> agentList = agentDao.findAllByHostId(host.getId());
         Set<AgentItemWrapper> agentSet = AgentItemWrapper.toSet(agentList);
-
-        List<AgentContainer> containerList = manager.list(Optional.empty());
-        Set<AgentItemWrapper> containerSet = AgentItemWrapper.toSet(containerList);
 
         // find and remove containers are not belong to host
         containerSet.removeAll(agentSet);
@@ -166,7 +172,7 @@ public class AgentHostServiceImpl implements AgentHostService {
             try {
                 manager.remove(item.getName());
                 log.info("Agent {} has been cleaned up", item.getName());
-            } catch (PoolException ignore) {
+            } catch (DockerPoolException ignore) {
 
             }
         }
@@ -186,7 +192,7 @@ public class AgentHostServiceImpl implements AgentHostService {
                     manager.resume(agent.getName());
                     log.info("Agent {} been resumed", agent.getName());
                     return true;
-                } catch (PoolException e) {
+                } catch (DockerPoolException e) {
                     log.warn("Unable to resume agent {}", agent.getName());
                     offline.add(agent);
                 }
@@ -204,7 +210,7 @@ public class AgentHostServiceImpl implements AgentHostService {
                 manager.start(context);
                 log.info("Agent {} been started", agent.getName());
                 return true;
-            } catch (PoolException e) {
+            } catch (DockerPoolException e) {
                 log.warn("Unable to restart agent {}", agent.getName());
             }
         }
@@ -226,7 +232,7 @@ public class AgentHostServiceImpl implements AgentHostService {
                 manager.start(context);
                 log.info("Agent {} been created and started", name);
                 return true;
-            } catch (PoolException e) {
+            } catch (DockerPoolException e) {
                 log.warn("Unable to start created agent {}", agent.getName());
                 return false;
             }
@@ -239,7 +245,12 @@ public class AgentHostServiceImpl implements AgentHostService {
     @Override
     public int size(AgentHost host) {
         PoolManager<?> manager = getPoolManager(host);
-        return manager.size();
+        try {
+            return manager.size();
+        } catch (DockerPoolException e) {
+            log.warn("Cannot get container size of host {}", host.getName());
+            return -1;
+        }
     }
 
     @Override
@@ -270,7 +281,7 @@ public class AgentHostServiceImpl implements AgentHostService {
                 manager.remove(agent.getName());
                 agentDao.delete(agent);
                 log.info("Agent {} been removed and deleted", agent.getName());
-            } catch (PoolException e) {
+            } catch (DockerPoolException e) {
                 log.info("Unable to remove agent {}", agent.getName());
             }
         }
