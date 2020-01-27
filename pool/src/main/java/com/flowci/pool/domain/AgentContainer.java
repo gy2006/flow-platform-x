@@ -9,14 +9,10 @@ public class AgentContainer {
 
     public static final String Image = "flowci/agent:latest";
 
-    public static final String DefaultPrefix = "flowci";
+    public static final String Prefix = "ci-agent";
 
-    public static String buildName(String agentName, String flag) {
-        return String.format("%s.%s", buildPrefix(flag), agentName);
-    }
-
-    public static String buildPrefix(String flag) {
-        return String.format("%s-%s", DefaultPrefix, flag);
+    public static String name(String agentName) {
+        return String.format("%s.%s", Prefix, agentName);
     }
 
     private final String id;

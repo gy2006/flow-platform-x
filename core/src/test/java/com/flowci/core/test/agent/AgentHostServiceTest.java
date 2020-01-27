@@ -1,13 +1,18 @@
 package com.flowci.core.test.agent;
 
+import com.flowci.core.agent.dao.AgentHostDao;
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
 import com.flowci.core.agent.service.AgentHostService;
+import com.flowci.core.agent.service.AgentHostServiceImpl.AgentItemWrapper;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.test.ZookeeperScenario;
 import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
+import com.flowci.pool.domain.AgentContainer;
+import com.flowci.pool.domain.DockerStatus;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,8 +23,12 @@ import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 
 public class AgentHostServiceTest extends ZookeeperScenario {
+
+    @Autowired
+    private AgentHostDao agentHostDao;
 
     @Autowired
     private AgentService agentService;
@@ -129,7 +138,40 @@ public class AgentHostServiceTest extends ZookeeperScenario {
     }
 
     @Test
+    public void should_get_containers_that_not_in_agent_list() {
+        Set<AgentItemWrapper> agentSet = AgentItemWrapper.toSet(Lists.newArrayList(
+                new Agent().setName("local-1"),
+                new Agent().setName("local-2")
+        ));
+
+        Set<AgentItemWrapper> containerSet = AgentItemWrapper.toSet(Lists.newArrayList(
+                AgentContainer.of("1", AgentContainer.name("local-1"), DockerStatus.Running),
+                AgentContainer.of("1", AgentContainer.name("local-3"), DockerStatus.Running)
+        ));
+
+        containerSet.removeAll(agentSet);
+        Assert.assertEquals(1, containerSet.size());
+    }
+
+    @Test
     public void should_sync_agents() {
-        //TODO:
+        AgentHost host = new LocalUnixAgentHost();
+        host.setName("test-host");
+        agentHostService.create(host);
+
+        // given: create agent, start it and delete host
+        Assert.assertTrue(agentHostService.start(host));
+        Assert.assertEquals(1, agentHostService.size(host));
+        agentHostDao.delete(host);
+
+        // when: create new host, and agent
+        host = new LocalUnixAgentHost();
+        host.setName("test-host-1");
+        agentHostService.create(host);
+        Assert.assertTrue(agentHostService.start(host));
+
+        // then:
+        agentHostService.sync(host);
+        Assert.assertEquals(1, agentHostService.size(host));
     }
 }

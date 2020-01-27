@@ -1,7 +1,6 @@
 package com.flowci.pool.manager;
 
-import static com.flowci.pool.domain.AgentContainer.buildName;
-import static com.flowci.pool.domain.AgentContainer.buildPrefix;
+import static com.flowci.pool.domain.AgentContainer.name;
 import static com.flowci.pool.domain.StartContext.AgentEnvs.AGENT_LOG_LEVEL;
 import static com.flowci.pool.domain.StartContext.AgentEnvs.AGENT_TOKEN;
 import static com.flowci.pool.domain.StartContext.AgentEnvs.SERVER_URL;
@@ -26,7 +25,7 @@ import com.google.common.collect.Lists;
 
 public class SocketPoolManager implements PoolManager<SocketInitContext> {
 
-    private static final String Flag = "socket";
+    private static final String NameFilter = AgentContainer.Prefix + "*";
 
     private DockerClient client;
 
@@ -43,10 +42,8 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
 
     @Override
     public List<AgentContainer> list(Optional<String> state) {
-        final String nameFilter = buildPrefix(Flag) + "*";
-
         ListContainersCmd cmd = client.listContainersCmd().withShowAll(true)
-                .withNameFilter(Lists.newArrayList(nameFilter));
+                .withNameFilter(Lists.newArrayList(NameFilter));
 
         state.ifPresent((s) -> {
             cmd.withStatusFilter(Lists.newArrayList(state.get()));
@@ -66,8 +63,7 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
 
     @Override
     public int size() {
-        final String nameFilter = buildPrefix(Flag) + "*";
-        return client.listContainersCmd().withShowAll(true).withNameFilter(Lists.newArrayList(nameFilter)).exec()
+        return client.listContainersCmd().withShowAll(true).withNameFilter(Lists.newArrayList(NameFilter)).exec()
                 .size();
     }
 
@@ -80,7 +76,7 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
 
     @Override
     public void start(StartContext context) throws PoolException {
-        final String name = buildName(context.getAgentName(), Flag);
+        final String name = name(context.getAgentName());
 
         CreateContainerResponse container = client.createContainerCmd(AgentContainer.Image).withName(name)
                 .withEnv(String.format("%s=%s", SERVER_URL, context.getServerUrl()),
@@ -118,7 +114,7 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
     }
 
     private Container findContainer(String name) throws PoolException {
-        String containerName = buildName(name, Flag);
+        String containerName = name(name);
         List<Container> list = client.listContainersCmd().withShowAll(true).withNameFilter(Lists.newArrayList(containerName))
                 .exec();
 

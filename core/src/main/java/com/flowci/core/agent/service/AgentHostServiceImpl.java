@@ -89,6 +89,10 @@ public class AgentHostServiceImpl implements AgentHostService {
     @Autowired
     private ConfigProperties.Zookeeper zkProperties;
 
+    {
+        mapping.put(LocalUnixAgentHost.class, new OnLocalUnixAgentHostCreate());
+    }
+
     //====================================================================
     //        %% Public functions
     //====================================================================
@@ -96,7 +100,6 @@ public class AgentHostServiceImpl implements AgentHostService {
     @PostConstruct
     public void init() {
         collectTaskZkPath = ZKPaths.makePath(zkProperties.getCronRoot(), "agent-host-collect");
-        mapping.put(LocalUnixAgentHost.class, new OnLocalUnixAgentHostCreate());
     }
 
     @PostConstruct
@@ -105,9 +108,10 @@ public class AgentHostServiceImpl implements AgentHostService {
             return;
         }
 
-        LocalUnixAgentHost host = new LocalUnixAgentHost();
-
         try {
+            LocalUnixAgentHost host = new LocalUnixAgentHost();
+            host.setName("localhost");
+
             create(host);
         } catch (NotAvailableException e) {
             log.warn("Fail to create default local agent host");
@@ -127,6 +131,20 @@ public class AgentHostServiceImpl implements AgentHostService {
     }
 
     @Override
+    public void delete(AgentHost host) {
+        PoolManager<?> manager = getPoolManager(host);
+        List<Agent> agentList = agentDao.findAllByHostId(host.getId());
+        for (Agent agent : agentList) {
+            try {
+                manager.remove(agent.getName());
+            } catch (PoolException e) {
+                log.warn("Unable to remove agent {} when delete host", agent.getName());
+            }
+        }
+        agentHostDao.delete(host);
+    }
+
+    @Override
     public List<AgentHost> list() {
         return agentHostDao.findAll();
     }
@@ -141,7 +159,9 @@ public class AgentHostServiceImpl implements AgentHostService {
         List<AgentContainer> containerList = manager.list(Optional.empty());
         Set<AgentItemWrapper> containerSet = AgentItemWrapper.toSet(containerList);
 
+        // find and remove containers are not belong to host
         containerSet.removeAll(agentSet);
+
         for (AgentItemWrapper item : containerSet) {
             try {
                 manager.remove(item.getName());
@@ -157,7 +177,7 @@ public class AgentHostServiceImpl implements AgentHostService {
         PoolManager<?> manager = getPoolManager(host);
 
         List<Agent> agents = agentDao.findAllByHostId(host.getId());
-        List<Agent> offlines = new LinkedList<>();
+        List<Agent> offline = new LinkedList<>();
 
         // resume from stopped
         for (Agent agent : agents) {
@@ -168,13 +188,13 @@ public class AgentHostServiceImpl implements AgentHostService {
                     return true;
                 } catch (PoolException e) {
                     log.warn("Unable to resume agent {}", agent.getName());
-                    offlines.add(agent);
+                    offline.add(agent);
                 }
             }
         }
 
-        // re-start from offlines
-        for (Agent agent : offlines) {
+        // re-start from offline
+        for (Agent agent : offline) {
             StartContext context = new StartContext();
             context.setServerUrl(serverUrl);
             context.setAgentName(agent.getName());
@@ -408,7 +428,6 @@ public class AgentHostServiceImpl implements AgentHostService {
             }
 
             try {
-                host.setName("localhost");
                 host.setCreatedAt(new Date());
                 host.setCreatedBy(User.DefaultSystemUser);
                 agentHostDao.save(host);
@@ -432,9 +451,9 @@ public class AgentHostServiceImpl implements AgentHostService {
     }
 
     @AllArgsConstructor(staticName = "of")
-    private static class AgentItemWrapper {
+    public static class AgentItemWrapper {
 
-        static <T> Set<AgentItemWrapper> toSet(List<T> list) {
+        public static <T> Set<AgentItemWrapper> toSet(List<T> list) {
             Set<AgentItemWrapper> set = new HashSet<>(list.size());
             Iterator<T> iterator = list.iterator();
             for (; iterator.hasNext(); ) {
@@ -460,7 +479,11 @@ public class AgentHostServiceImpl implements AgentHostService {
 
         @Override
         public boolean equals(Object o) {
-            return this.getName().equals(o);
+            if (o instanceof AgentItemWrapper) {
+                AgentItemWrapper obj = (AgentItemWrapper) o;
+                return this.getName().equals(obj.getName());
+            }
+            return false;
         }
 
         @Override

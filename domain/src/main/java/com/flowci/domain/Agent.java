@@ -35,6 +35,7 @@ import lombok.experimental.Accessors;
  */
 @Data
 @NoArgsConstructor
+@Accessors(chain = true)
 @EqualsAndHashCode(of = {"id"})
 public class Agent implements Serializable {
 
