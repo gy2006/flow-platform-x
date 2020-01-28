@@ -11,6 +11,8 @@ public class AgentContainer {
 
     public static final String Prefix = "ci-agent";
 
+    public static final String NameFilter = Prefix + "*";
+
     public static String name(String agentName) {
         return String.format("%s.%s", Prefix, agentName);
     }

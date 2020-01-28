@@ -33,4 +33,37 @@ public abstract class DockerStatus {
     public static final String Exited = "exited";
 
     public static final String Dead = "dead";
+
+    /**
+     * Convert human readable string to single machine string
+     * Ex: Up %s (Paused) -> paused
+     * Ref: https://github.com/moby/moby/blob/b44b5bbc8ba48f50343602a21e7d44c017c1e23d/container/state.go#L41
+     */
+    public static String toStateString(String str) {
+        if (str.endsWith("(Paused)")) {
+            return Paused;
+        }
+
+        if (str.startsWith("Restarting")) {
+            return Restarting;
+        }
+
+        if (str.startsWith("Up")) {
+            return Running;
+        }
+
+        if (str.startsWith("Dead")) {
+            return Dead;
+        }
+
+        if (str.startsWith("Created")) {
+            return Created;
+        }
+
+        if (str.startsWith("Removal In Progress")) {
+            return Removing;
+        }
+
+        return Exited;
+    }
 }

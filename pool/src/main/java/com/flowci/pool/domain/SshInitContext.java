@@ -32,4 +32,6 @@ public class SshInitContext extends InitContext {
     private final String remoteHost;
 
     private final String remoteUser;
+
+    private int timeoutInSeconds = 10;
 }

@@ -53,25 +53,25 @@ public interface PoolManager<T extends InitContext> extends AutoCloseable {
 
     /**
      * Stop an agent
-     * @param name agnet name
+     * @param name agent name
      */
     void stop(String name) throws DockerPoolException;
 
     /**
      * Resume agent container
-     * @param name agnet name
+     * @param name agent name
      */
     void resume(String name) throws DockerPoolException;
 
     /**
      * Remove an agent
-     * @param name agnet name
+     * @param name agent name
      */
     void remove(String name) throws DockerPoolException;
 
     /**
      * Get docker status
-     * @param name agnet name
+     * @param name agent name
      */
     String status(String name) throws DockerPoolException;
 }

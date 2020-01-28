@@ -18,12 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static com.flowci.pool.domain.AgentContainer.NameFilter;
 import static com.flowci.pool.domain.AgentContainer.name;
 import static com.flowci.pool.domain.StartContext.AgentEnvs.*;
 
 public class SocketPoolManager implements PoolManager<SocketInitContext> {
-
-    private static final String NameFilter = AgentContainer.Prefix + "*";
 
     private DockerClient client;
 
@@ -67,7 +66,10 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
     @Override
     public int size() throws DockerPoolException {
         try {
-            return client.listContainersCmd().withShowAll(true).withNameFilter(Lists.newArrayList(NameFilter)).exec()
+            return client.listContainersCmd()
+                    .withShowAll(true)
+                    .withNameFilter(Lists.newArrayList(NameFilter))
+                    .exec()
                     .size();
         } catch (DockerException e) {
             throw new DockerPoolException(e);

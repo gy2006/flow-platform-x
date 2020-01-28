@@ -1,40 +1,73 @@
-// package com.flowci.pool.test;
+package com.flowci.pool.test;
 
-// import java.io.InputStream;
+import com.flowci.pool.domain.AgentContainer;
+import com.flowci.pool.domain.DockerStatus;
+import com.flowci.pool.domain.SshInitContext;
+import com.flowci.pool.domain.StartContext;
+import com.flowci.pool.exception.DockerPoolException;
+import com.flowci.pool.manager.PoolManager;
+import com.flowci.pool.manager.SshPoolManager;
+import com.flowci.util.StringHelper;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-// import com.flowci.pool.domain.PoolContext;
-// import com.flowci.pool.domain.SshContext;
-// import com.flowci.pool.manager.PoolManager;
-// import com.flowci.pool.manager.SshPoolManager;
-// import com.flowci.util.StringHelper;
+import java.io.InputStream;
+import java.util.Optional;
 
-// import org.junit.Test;
-// import org.junit.Assert;
-// import org.junit.Ignore;
+public class SshPoolManagerTest extends PoolScenario {
 
-// public class SshPoolManagerTest extends PoolScenario {
+    private final PoolManager<SshInitContext> manager = new SshPoolManager();
 
-//     private final PoolManager<SshContext> service = new SshPoolManager();
+    @Before
+    public void init() throws Exception {
+        InputStream pk = load("test.pk");
+        manager.init(SshInitContext.of(StringHelper.toString(pk), "10.0.2.4", "server", 10));
+    }
 
-//     @Test
-//     @Ignore
-//     public void should_start_agent_via_ssh() throws Exception {
-//         // init: context
-//         InputStream pk = load("test.pk");
-//         SshContext context = SshContext.of(StringHelper.toString(pk), "10.0.2.4", "server");
+    @After
+    public void cleanup() throws DockerPoolException {
+        for (AgentContainer c : manager.list(Optional.empty())) {
+            manager.remove(c.getAgentName());
+        }
+    }
 
-//         // when: start
-//         service.init(context);
-//         service.start(context);
+    @Test(expected = DockerPoolException.class)
+    public void should_throw_exception_while_duplicate_container() throws DockerPoolException {
+        String name = StringHelper.randomString(5);
 
-//         String status = service.status(context);
-//         Assert.assertEquals(PoolContext.DockerStatus.Running, status);
+        try {
+            startAgent(name);
+        } catch (DockerPoolException e) {
+            Assert.fail();
+        }
 
-//         // then: remove it
-//         service.remove(context);
-//         status = service.status(context);
-//         Assert.assertEquals(PoolContext.DockerStatus.None, status);
+        startAgent(name);
+    }
 
-//         service.close();
-//     }
-// }
+    @Test
+    public void should_start_agent_and_stop() throws Exception {
+        // when: start two agent
+        String name1 = StringHelper.randomString(5);
+        startAgent(name1);
+        Assert.assertEquals(DockerStatus.Running, manager.status(name1));
+
+        String name2 = StringHelper.randomString(5);
+        startAgent(name2);
+        Assert.assertEquals(DockerStatus.Running, manager.status(name2));
+
+        // then: agent container should be running
+        Assert.assertEquals(2, manager.list(Optional.empty()).size());
+        Assert.assertEquals(2, manager.list(Optional.of(DockerStatus.Running)).size());
+        Assert.assertEquals(2, manager.size());
+    }
+
+    private void startAgent(String name) throws DockerPoolException {
+        StartContext context = new StartContext();
+        context.setAgentName(name);
+        context.setServerUrl("http://localhost:8080");
+        context.setToken("helloworld");
+        manager.start(context);
+    }
+}
