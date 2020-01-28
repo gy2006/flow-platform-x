@@ -50,7 +50,7 @@ public class AgentHostServiceTest extends ZookeeperScenario {
     }
 
     @Test(expected = NotAvailableException.class)
-    public void should_enable_to_create_unix_local_host() {
+    public void should_create_unix_local_host() {
         // when: create host
         AgentHost host = new LocalUnixAgentHost();
         host.setName("test-host");

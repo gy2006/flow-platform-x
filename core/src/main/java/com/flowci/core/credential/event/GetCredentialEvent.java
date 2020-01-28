@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,34 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.core.credential.event;
 
-import com.flowci.core.common.domain.Mongoable;
+import com.flowci.core.common.domain.SyncEvent;
+import com.flowci.core.credential.domain.Credential;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.context.ApplicationEvent;
 
 /**
- * @author yang
+ * Sync event to get credential by name
  */
 @Getter
 @Setter
-public class Credential extends Mongoable {
+public class GetCredentialEvent extends ApplicationEvent implements SyncEvent {
 
-    public enum Category {
+    private final String name;
 
-        AUTH,
+    private Credential credential;
 
-        SSH_RSA,
-
-//        SSH_DSS,
-//
-//        SSH_ED25519
+    public GetCredentialEvent(Object source, String credentialName) {
+        super(source);
+        this.name = credentialName;
     }
-
-    @Indexed(name = "index_credential_name", unique = true)
-    private String name;
-
-    private Category category;
-
 }

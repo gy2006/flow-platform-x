@@ -20,12 +20,17 @@ import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.agent.dao.AgentHostDao;
 import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
+import com.flowci.core.agent.domain.SshAgentHost;
 import com.flowci.core.agent.event.AgentCreatedEvent;
 import com.flowci.core.agent.event.AgentHostStatusEvent;
 import com.flowci.core.agent.event.CreateAgentEvent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;
+import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
+import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.credential.domain.RSACredential;
+import com.flowci.core.credential.event.GetCredentialEvent;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.NoIdleAgentEvent;
 import com.flowci.core.user.domain.User;
@@ -33,16 +38,19 @@ import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
 import com.flowci.pool.domain.AgentContainer;
 import com.flowci.pool.domain.SocketInitContext;
+import com.flowci.pool.domain.SshInitContext;
 import com.flowci.pool.domain.StartContext;
 import com.flowci.pool.exception.DockerPoolException;
 import com.flowci.pool.manager.PoolManager;
 import com.flowci.pool.manager.SocketPoolManager;
+import com.flowci.pool.manager.SshPoolManager;
 import com.flowci.util.StringHelper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
+import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.curator.utils.ZKPaths;
@@ -59,11 +67,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.flowci.core.credential.domain.Credential.Category.SSH_RSA;
+
 @Log4j2
 @Service
 public class AgentHostServiceImpl implements AgentHostService {
 
-    private final Map<Class<?>, OnCreate> mapping = new HashMap<>(3);
+    private final Map<Class<?>, OnCreateAndInit> mapping = new HashMap<>(3);
 
     private final Cache<AgentHost, PoolManager<?>> poolManagerCache =
             CacheHelper.createLocalCache(10, 600, new PoolManagerRemover());
@@ -86,13 +96,17 @@ public class AgentHostServiceImpl implements AgentHostService {
     private SpringEventManager eventManager;
 
     @Autowired
+    private SessionManager sessionManager;
+
+    @Autowired
     private ZookeeperClient zk;
 
     @Autowired
     private ConfigProperties.Zookeeper zkProperties;
 
     {
-        mapping.put(LocalUnixAgentHost.class, new OnLocalUnixAgentHostCreate());
+        mapping.put(LocalUnixAgentHost.class, new OnLocalSocketHostCreate());
+        mapping.put(SshAgentHost.class, new OnSshHostCreate());
     }
 
     //====================================================================
@@ -382,11 +396,7 @@ public class AgentHostServiceImpl implements AgentHostService {
     private PoolManager<?> getPoolManager(AgentHost host) {
         PoolManager<?> manager = poolManagerCache.get(host, (h) -> {
             try {
-                if (h.getType() == AgentHost.Type.LocalUnixSocket) {
-                    PoolManager<SocketInitContext> poolManager = new SocketPoolManager();
-                    poolManager.init(new SocketInitContext());
-                    return poolManager;
-                }
+                return mapping.get(host.getClass()).init(host);
             } catch (Exception e) {
                 log.warn("Unable to init local unix agent host");
             }
@@ -433,12 +443,14 @@ public class AgentHostServiceImpl implements AgentHostService {
     //        %% Private classes
     //====================================================================
 
-    private interface OnCreate {
+    private interface OnCreateAndInit {
 
         void create(AgentHost host);
+
+        PoolManager<?> init(AgentHost host) throws Exception;
     }
 
-    private class OnLocalUnixAgentHostCreate implements OnCreate {
+    private class OnLocalSocketHostCreate implements OnCreateAndInit {
 
         @Override
         public void create(AgentHost host) {
@@ -454,11 +466,18 @@ public class AgentHostServiceImpl implements AgentHostService {
             try {
                 host.setCreatedAt(new Date());
                 host.setCreatedBy(User.DefaultSystemUser);
-                agentHostDao.save(host);
+                agentHostDao.insert(host);
             } catch (Exception e) {
                 log.warn("Unable to create local unix socket agent host: {}", e.getMessage());
                 throw new NotAvailableException(e.getMessage());
             }
+        }
+
+        @Override
+        public PoolManager<?> init(AgentHost host) throws Exception {
+            PoolManager<SocketInitContext> poolManager = new SocketPoolManager();
+            poolManager.init(new SocketInitContext());
+            return poolManager;
         }
 
         private boolean hasCreated() {
@@ -471,6 +490,37 @@ public class AgentHostServiceImpl implements AgentHostService {
                 return;
             }
             agentHostDao.deleteAll(hosts);
+        }
+    }
+
+    private class OnSshHostCreate implements OnCreateAndInit {
+
+        @Override
+        public void create(AgentHost host) {
+            SshAgentHost sshHost = (SshAgentHost) host;
+            Preconditions.checkArgument(sshHost.getCredential() != null, "Credential name must be defined");
+
+            sshHost.setCreatedAt(new Date());
+            sshHost.setCreatedBy(sessionManager.getUserId());
+            agentHostDao.save(sshHost);
+        }
+
+        @Override
+        public PoolManager<?> init(AgentHost host) throws Exception {
+            SshAgentHost sshHost = (SshAgentHost) host;
+            GetCredentialEvent event = new GetCredentialEvent(this, sshHost.getCredential());
+            eventManager.publish(event);
+
+            Credential c = event.getCredential();
+            Preconditions.checkArgument(c != null, "Credential not found");
+            Preconditions.checkArgument(c.getCategory() == SSH_RSA, "Invalid credential category");
+
+            RSACredential rsa = (RSACredential) c;
+            PoolManager<SshInitContext> manager = new SshPoolManager();
+            manager.init(SshInitContext.of(
+                    rsa.getPrivateKey(), sshHost.getIp(), sshHost.getUser(), 10));
+
+            return manager;
         }
     }
 

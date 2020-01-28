@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,34 +14,28 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.core.agent.domain;
 
-import com.flowci.core.common.domain.Mongoable;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
-import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-/**
- * @author yang
- */
 @Getter
 @Setter
-public class Credential extends Mongoable {
+@Document(collection = "agent_host")
+public class SshAgentHost extends AgentHost {
 
-    public enum Category {
+    @NonNull
+    private String credential;
 
-        AUTH,
+    @NonNull
+    private String user;
 
-        SSH_RSA,
+    @NonNull
+    private String ip;
 
-//        SSH_DSS,
-//
-//        SSH_ED25519
+    public SshAgentHost() {
+        setType(Type.SSH);
     }
-
-    @Indexed(name = "index_credential_name", unique = true)
-    private String name;
-
-    private Category category;
-
 }
