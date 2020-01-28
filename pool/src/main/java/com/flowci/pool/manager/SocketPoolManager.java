@@ -1,6 +1,7 @@
 package com.flowci.pool.manager;
 
 import com.flowci.pool.domain.AgentContainer;
+import com.flowci.pool.domain.DockerStatus;
 import com.flowci.pool.domain.SocketInitContext;
 import com.flowci.pool.domain.StartContext;
 import com.flowci.pool.exception.DockerPoolException;
@@ -130,8 +131,12 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
     }
 
     @Override
-    public String status(String name) throws DockerPoolException {
-        return findContainer(name).getState();
+    public String status(String name) {
+        try {
+            return findContainer(name).getState();
+        } catch (DockerPoolException e) {
+            return DockerStatus.None;
+        }
     }
 
     private Container findContainer(String name) throws DockerPoolException {

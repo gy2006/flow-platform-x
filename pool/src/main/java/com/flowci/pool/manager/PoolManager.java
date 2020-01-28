@@ -73,5 +73,5 @@ public interface PoolManager<T extends InitContext> extends AutoCloseable {
      * Get docker status
      * @param name agent name
      */
-    String status(String name) throws DockerPoolException;
+    String status(String name);
 }

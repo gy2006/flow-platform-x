@@ -18,24 +18,39 @@ package com.flowci.pool.test;
 
 import java.util.Optional;
 
+import com.flowci.pool.domain.AgentContainer;
 import com.flowci.pool.domain.DockerStatus;
 import com.flowci.pool.domain.SocketInitContext;
 import com.flowci.pool.domain.StartContext;
+import com.flowci.pool.exception.DockerPoolException;
 import com.flowci.pool.manager.PoolManager;
 import com.flowci.pool.manager.SocketPoolManager;
 import com.flowci.util.StringHelper;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 
 public class SocketPoolManagerTest extends PoolScenario {
 
-    private final PoolManager<SocketInitContext> service = new SocketPoolManager();
+    private final PoolManager<SocketInitContext> manager = new SocketPoolManager();
+
+    @Before
+    public void init() throws Exception {
+        manager.init(new SocketInitContext());
+    }
+
+    @After
+    public void cleanUp() throws DockerPoolException {
+        for (AgentContainer c : manager.list(Optional.empty())) {
+            manager.remove(c.getAgentName());
+        }
+    }
 
     @Test
     public void should_start_agent_and_stop() throws Exception {
-        service.init(new SocketInitContext());
         final String name = StringHelper.randomString(5);
 
         StartContext context = new StartContext();
@@ -43,19 +58,19 @@ public class SocketPoolManagerTest extends PoolScenario {
         context.setServerUrl("http://localhost:8080");
         context.setToken("helloworld");
 
-        service.start(context);
-        Assert.assertEquals(DockerStatus.Running, service.status(name));
-        Assert.assertEquals(1, service.list(Optional.empty()).size());
-        Assert.assertEquals(1, service.size());
+        manager.start(context);
+        Assert.assertEquals(DockerStatus.Running, manager.status(name));
+        Assert.assertEquals(1, manager.list(Optional.empty()).size());
+        Assert.assertEquals(1, manager.size());
 
-        service.stop(name);
-        Assert.assertEquals(DockerStatus.Exited, service.status(name));
-        Assert.assertEquals(1, service.list(Optional.empty()).size());
-        Assert.assertEquals(1, service.size());
+        manager.stop(name);
+        Assert.assertEquals(DockerStatus.Exited, manager.status(name));
+        Assert.assertEquals(1, manager.list(Optional.empty()).size());
+        Assert.assertEquals(1, manager.size());
 
-        service.remove(name);
-        Assert.assertEquals(DockerStatus.None, service.status(name));
-        Assert.assertEquals(0, service.list(Optional.empty()).size());
-        Assert.assertEquals(0, service.size());
+        manager.remove(name);
+        Assert.assertEquals(DockerStatus.None, manager.status(name));
+        Assert.assertEquals(0, manager.list(Optional.empty()).size());
+        Assert.assertEquals(0, manager.size());
     }
 }

@@ -22,7 +22,6 @@ import com.flowci.core.agent.domain.AgentHost;
 import com.flowci.core.agent.domain.LocalUnixAgentHost;
 import com.flowci.core.agent.event.AgentCreatedEvent;
 import com.flowci.core.agent.event.AgentHostStatusEvent;
-import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.agent.event.CreateAgentEvent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;

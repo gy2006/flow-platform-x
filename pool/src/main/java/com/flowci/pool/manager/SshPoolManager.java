@@ -79,7 +79,7 @@
 
      @Override
      public int size() throws DockerPoolException {
-         String cmd = String.format("docker ps --filter \"name=%s\" --format \"{{.ID}}\" | wc -l", NameFilter);
+         String cmd = String.format("docker ps -a --filter \"name=%s\" --format \"{{.ID}}\" | wc -l", NameFilter);
          try {
              Output output = runCmd(cmd);
              if (output.exit > 0) {
@@ -93,10 +93,10 @@
 
      @Override
      public List<AgentContainer> list(Optional<String> state) throws DockerPoolException {
-         String cmd = String.format("docker ps --filter \"name=%s\" --format \"{{json .}}\"", NameFilter);
+         String cmd = String.format("docker ps -a --filter \"name=%s\" --format \"{{json .}}\"", NameFilter);
 
          if (state.isPresent()) {
-             cmd = String.format("docker ps --filter \"name=%s\" " +
+             cmd = String.format("docker ps -a --filter \"name=%s\" " +
                      "--filter \"status=%s\" " +
                      "--format \"{{json .}}\"",
                      NameFilter, state.get());
@@ -149,7 +149,7 @@
      @Override
      public void stop(String name) throws DockerPoolException {
          try {
-             runCmd(String.format("docker stop %s", name));
+             runCmd(String.format("docker stop %s", AgentContainer.name(name)));
          } catch (JSchException | IOException e) {
              throw new DockerPoolException(e.getMessage());
          }
@@ -157,7 +157,16 @@
 
      @Override
      public void resume(String name) throws DockerPoolException {
-
+         try {
+             String container = AgentContainer.name(name);
+             if (hasContainer(container)) {
+                 runCmd("docker start " + container);
+                 return;
+             }
+             throw new DockerPoolException("Unable to find container for agent {0}", name);
+         } catch (JSchException | IOException e) {
+            throw new DockerPoolException(e.getMessage());
+         }
      }
 
      @Override
@@ -170,7 +179,7 @@
      }
 
      @Override
-     public String status(String name) throws DockerPoolException {
+     public String status(String name) {
          String container = AgentContainer.name(name);
          try {
              if (!hasContainer(container)) {
@@ -182,7 +191,7 @@
              return DockerStatus.toStateString(content);
 
          } catch (JSchException | IOException e) {
-             throw new DockerPoolException(e.getMessage());
+             return DockerStatus.None;
          }
      }
 
