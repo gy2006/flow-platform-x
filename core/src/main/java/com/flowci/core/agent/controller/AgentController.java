@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.agent;
+package com.flowci.core.agent.controller;
 
 import com.flowci.core.agent.domain.AgentAction;
 import com.flowci.core.agent.domain.AgentInit;
