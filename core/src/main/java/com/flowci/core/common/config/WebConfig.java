@@ -80,6 +80,7 @@ public class WebConfig {
                         .addPathPatterns("/flows/**")
                         .addPathPatterns("/jobs/**")
                         .addPathPatterns("/agents/**")
+                        .addPathPatterns("/hosts/**")
                         .addPathPatterns("/stats/**")
                         .addPathPatterns("/plugins/**")
                         .addPathPatterns("/credentials/**")

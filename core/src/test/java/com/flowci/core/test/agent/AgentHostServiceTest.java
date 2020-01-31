@@ -55,7 +55,7 @@ public class AgentHostServiceTest extends ZookeeperScenario {
         AgentHost host = new LocalUnixAgentHost();
         host.setName("test-host");
         host.setTags(Sets.newHashSet("local", "test"));
-        agentHostService.create(host);
+        agentHostService.createOrUpdate(host);
 
         // then:
         Assert.assertNotNull(host.getId());
@@ -67,7 +67,7 @@ public class AgentHostServiceTest extends ZookeeperScenario {
         AgentHost another = new LocalUnixAgentHost();
         another.setName("test-host-failure");
         another.setTags(Sets.newHashSet("local", "test"));
-        agentHostService.create(another);
+        agentHostService.createOrUpdate(another);
     }
 
     @Test
@@ -75,7 +75,7 @@ public class AgentHostServiceTest extends ZookeeperScenario {
         AgentHost host = new LocalUnixAgentHost();
         host.setName("test-host");
         host.setTags(Sets.newHashSet("local", "test"));
-        agentHostService.create(host);
+        agentHostService.createOrUpdate(host);
 
         // when: start agents on host
         Assert.assertTrue(agentHostService.start(host));
@@ -126,7 +126,7 @@ public class AgentHostServiceTest extends ZookeeperScenario {
         host.setTags(Sets.newHashSet("local", "test"));
         host.setMaxIdleSeconds(2);
         host.setMaxOfflineSeconds(2);
-        agentHostService.create(host);
+        agentHostService.createOrUpdate(host);
 
         // given: two agents up running with idle status
         agentHostService.start(host);
@@ -178,7 +178,7 @@ public class AgentHostServiceTest extends ZookeeperScenario {
     public void should_sync_agents() {
         AgentHost host = new LocalUnixAgentHost();
         host.setName("test-host");
-        agentHostService.create(host);
+        agentHostService.createOrUpdate(host);
 
         // given: create agent, start it and delete host
         Assert.assertTrue(agentHostService.start(host));
@@ -188,7 +188,7 @@ public class AgentHostServiceTest extends ZookeeperScenario {
         // when: create new host, and agent
         host = new LocalUnixAgentHost();
         host.setName("test-host-1");
-        agentHostService.create(host);
+        agentHostService.createOrUpdate(host);
         Assert.assertTrue(agentHostService.start(host));
 
         // then:
