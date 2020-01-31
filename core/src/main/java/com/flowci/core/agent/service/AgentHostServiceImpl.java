@@ -367,7 +367,11 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     public void syncAgents() {
         for (AgentHost host : list()) {
-            sync(host);
+            try {
+                sync(host);
+            } catch (Exception e) {
+                log.warn(e.getMessage());
+            }
         }
     }
 
@@ -420,7 +424,7 @@ public class AgentHostServiceImpl implements AgentHostService {
 
         if (Objects.isNull(manager)) {
             updateAgentHostStatus(host, AgentHost.Status.Disconnected);
-            throw new NotAvailableException("Cannot load pool manager for host {}", host.getName());
+            throw new NotAvailableException("Cannot load pool manager for host {0}", host.getName());
         }
 
         updateAgentHostStatus(host, AgentHost.Status.Connected);

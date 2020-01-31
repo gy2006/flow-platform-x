@@ -20,12 +20,16 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotEmpty;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
 public class CreateOrUpdateSshAgentHost {
 
     private String id;
+
+    private Set<String> tags = new HashSet<>();
 
     @NotEmpty
     private String name;
@@ -52,6 +56,7 @@ public class CreateOrUpdateSshAgentHost {
         host.setCredential(credential);
         host.setUser(user);
         host.setIp(ip);
+        host.setTags(tags);
         host.setMaxSize(maxSize);
         host.setMaxIdleSeconds(maxIdleSeconds);
         host.setMaxOfflineSeconds(maxOfflineSeconds);
