@@ -433,6 +433,7 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     private void updateAgentHostStatus(AgentHost host, AgentHost.Status newStatus) {
         host.setStatus(newStatus);
+        agentHostDao.save(host);
         eventManager.publish(new AgentHostStatusEvent(this, host));
     }
 
