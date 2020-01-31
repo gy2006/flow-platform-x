@@ -36,6 +36,7 @@ import com.flowci.core.job.event.NoIdleAgentEvent;
 import com.flowci.core.user.domain.User;
 import com.flowci.domain.Agent;
 import com.flowci.exception.NotAvailableException;
+import com.flowci.exception.NotFoundException;
 import com.flowci.pool.domain.AgentContainer;
 import com.flowci.pool.domain.SocketInitContext;
 import com.flowci.pool.domain.SshInitContext;
@@ -121,7 +122,12 @@ public class AgentHostServiceImpl implements AgentHostService {
     }
 
     @Override
-    public void create(AgentHost host) {
+    public void createOrUpdate(AgentHost host) {
+        if (StringHelper.hasValue(host.getId())) {
+            agentHostDao.save(host);
+            return;
+        }
+
         mapping.get(host.getClass()).create(host);
     }
 
@@ -142,6 +148,15 @@ public class AgentHostServiceImpl implements AgentHostService {
     @Override
     public List<AgentHost> list() {
         return agentHostDao.findAll();
+    }
+
+    @Override
+    public AgentHost get(String name) {
+        Optional<AgentHost> optional = agentHostDao.findByName(name);
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+        throw new NotFoundException("Agent host {0} not found", name);
     }
 
     @Override
@@ -344,8 +359,7 @@ public class AgentHostServiceImpl implements AgentHostService {
         try {
             LocalUnixAgentHost host = new LocalUnixAgentHost();
             host.setName("localhost");
-
-            create(host);
+            createOrUpdate(host);
         } catch (NotAvailableException e) {
             log.warn("Fail to create default local agent host");
         }
@@ -502,7 +516,7 @@ public class AgentHostServiceImpl implements AgentHostService {
 
             sshHost.setCreatedAt(new Date());
             sshHost.setCreatedBy(sessionManager.getUserId());
-            agentHostDao.save(sshHost);
+            agentHostDao.insert(sshHost);
         }
 
         @Override

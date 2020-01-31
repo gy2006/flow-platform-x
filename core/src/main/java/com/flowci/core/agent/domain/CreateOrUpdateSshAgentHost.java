@@ -23,7 +23,9 @@ import javax.validation.constraints.NotEmpty;
 
 @Getter
 @Setter
-public class CreateSshAgentHost {
+public class CreateOrUpdateSshAgentHost {
+
+    private String id;
 
     @NotEmpty
     private String name;
@@ -45,6 +47,7 @@ public class CreateSshAgentHost {
 
     public SshAgentHost toObj() {
         SshAgentHost host = new SshAgentHost();
+        host.setId(id);
         host.setName(name);
         host.setCredential(credential);
         host.setUser(user);

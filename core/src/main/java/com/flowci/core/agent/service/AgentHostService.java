@@ -26,7 +26,7 @@ public interface AgentHostService {
     /**
      * Create an agent host
      */
-    void create(AgentHost host);
+    void createOrUpdate(AgentHost host);
 
     /**
      * Delete agent host, and clean up all related agent containers
@@ -62,4 +62,9 @@ public interface AgentHostService {
      * List all agent hosts
      */
     List<AgentHost> list();
+
+    /**
+     * Get agent host by name
+     */
+    AgentHost get(String name);
 }

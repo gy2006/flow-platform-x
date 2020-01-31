@@ -20,6 +20,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import com.flowci.core.agent.domain.AgentHost;
@@ -30,4 +31,6 @@ public interface AgentHostDao extends MongoRepository<AgentHost, String> {
     List<AgentHost> findAllByType(AgentHost.Type type);
 
     List<AgentHost> findAllByTagsIn(Set<String> tags);
+
+    Optional<AgentHost> findByName(String name);
 }

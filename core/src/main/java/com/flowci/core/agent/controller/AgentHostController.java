@@ -16,10 +16,7 @@
 
 package com.flowci.core.agent.controller;
 
-import com.flowci.core.agent.domain.AgentHost;
-import com.flowci.core.agent.domain.AgentHostAction;
-import com.flowci.core.agent.domain.CreateSshAgentHost;
-import com.flowci.core.agent.domain.SshAgentHost;
+import com.flowci.core.agent.domain.*;
 import com.flowci.core.agent.service.AgentHostService;
 import com.flowci.core.auth.annotation.Action;
 import lombok.extern.log4j.Log4j2;
@@ -43,11 +40,17 @@ public class AgentHostController {
         return agentHostService.list();
     }
 
+    @GetMapping("/{name}")
+    @Action(AgentAction.GET)
+    public AgentHost getByName(@PathVariable String name) {
+        return agentHostService.get(name);
+    }
+
     @PostMapping("/ssh")
     @Action(AgentHostAction.CREATE_UPDATE)
-    public SshAgentHost create(@RequestBody @Validated CreateSshAgentHost body) {
+    public SshAgentHost createOrUpdate(@RequestBody @Validated CreateOrUpdateSshAgentHost body) {
         SshAgentHost host = body.toObj();
-        agentHostService.create(host);
+        agentHostService.createOrUpdate(host);
         return host;
     }
 }
