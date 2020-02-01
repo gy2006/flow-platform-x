@@ -131,22 +131,9 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @Override
     public void delete(AgentHost host) {
-        agentHostDao.delete(host);
-
-        Optional<PoolManager<?>> optional = getPoolManager(host);
-        if (!optional.isPresent()) {
-            return;
-        }
-
+        agentHostDao.deleteById(host.getId());
         agentHostExecutor.execute(() -> {
-            List<Agent> agentList = agentDao.findAllByHostId(host.getId());
-            for (Agent agent : agentList) {
-                try {
-                    optional.get().remove(agent.getName());
-                } catch (DockerPoolException e) {
-                    log.warn("Unable to remove agent {} when delete host", agent.getName());
-                }
-            }
+            removeAll(host);
         });
     }
 
@@ -301,19 +288,21 @@ public class AgentHostServiceImpl implements AgentHostService {
 
     @Override
     public void removeAll(AgentHost host) {
+        List<Agent> list = agentDao.findAllByHostId(host.getId());
+        for (Agent agent : list) {
+            agentDao.delete(agent);
+        }
+
         Optional<PoolManager<?>> optional = getPoolManager(host);
         if (!optional.isPresent()) {
             log.warn("Fail to get pool manager of host: {}", host.getName());
             return;
         }
 
-        List<Agent> list = agentDao.findAllByHostId(host.getId());
-
         for (Agent agent : list) {
             try {
                 optional.get().remove(agent.getName());
-                agentDao.delete(agent);
-                log.info("Agent {} been removed and deleted", agent.getName());
+                log.info("Agent {} been removed from host", agent.getName());
             } catch (DockerPoolException e) {
                 log.info("Unable to remove agent {}", agent.getName());
             }
@@ -457,7 +446,7 @@ public class AgentHostServiceImpl implements AgentHostService {
             try {
                 return mapping.get(host.getClass()).init(host);
             } catch (Exception e) {
-                log.warn("Unable to init local unix agent host: {}", e.getMessage());
+                log.warn(e.getMessage());
                 host.setError(e.getMessage());
             }
 
@@ -475,6 +464,10 @@ public class AgentHostServiceImpl implements AgentHostService {
     }
 
     private void updateAgentHostStatus(AgentHost host, AgentHost.Status newStatus) {
+        if (!agentHostDao.existsById(host.getId())) {
+            return;
+        }
+
         host.setStatus(newStatus);
         agentHostDao.save(host);
         eventManager.publish(new AgentHostStatusEvent(this, host));
