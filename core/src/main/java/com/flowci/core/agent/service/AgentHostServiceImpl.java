@@ -65,7 +65,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -449,7 +448,6 @@ public class AgentHostServiceImpl implements AgentHostService {
                 log.warn(e.getMessage());
                 host.setError(e.getMessage());
             }
-
             return null;
         });
 

@@ -16,19 +16,11 @@
 
 package com.flowci.core.common.config;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.concurrent.Executor;
-
-import javax.annotation.PostConstruct;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.SyncEvent;
 import com.flowci.core.common.helper.JacksonHelper;
 import com.flowci.util.FileHelper;
-
+import lombok.extern.log4j.Log4j2;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
@@ -43,7 +35,11 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import lombok.extern.log4j.Log4j2;
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author yang
