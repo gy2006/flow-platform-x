@@ -90,6 +90,11 @@ public abstract class AgentHost extends Mongoable {
      */
     private Set<String> tags = new HashSet<>();
 
+    /**
+     * Error message if connection fail
+     */
+    private String error;
+
     public boolean isOverMaxIdleSeconds(Date date) {
         if (maxIdleSeconds == NoLimit) {
             return false;

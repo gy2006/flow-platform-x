@@ -46,6 +46,14 @@ public class AgentHostController {
         return agentHostService.get(name);
     }
 
+    @DeleteMapping("/{name}")
+    @Action(AgentAction.DELETE)
+    public AgentHost deleteByName(@PathVariable String name) {
+        AgentHost host = agentHostService.get(name);
+        agentHostService.delete(host);
+        return host;
+    }
+
     @PostMapping("/ssh")
     @Action(AgentHostAction.CREATE_UPDATE)
     public SshAgentHost createOrUpdate(@RequestBody @Validated CreateOrUpdateSshAgentHost body) {

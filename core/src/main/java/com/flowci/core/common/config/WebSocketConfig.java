@@ -56,6 +56,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     /**
      * To subscribe agent update
      */
+
     private final String agentsTopic = "/topic/agents";
 
     /**
