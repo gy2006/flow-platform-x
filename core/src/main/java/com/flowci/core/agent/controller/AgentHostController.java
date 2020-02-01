@@ -41,13 +41,13 @@ public class AgentHostController {
     }
 
     @GetMapping("/{name}")
-    @Action(AgentAction.GET)
+    @Action(AgentHostAction.GET)
     public AgentHost getByName(@PathVariable String name) {
         return agentHostService.get(name);
     }
 
     @DeleteMapping("/{name}")
-    @Action(AgentAction.DELETE)
+    @Action(AgentHostAction.DELETE)
     public AgentHost deleteByName(@PathVariable String name) {
         AgentHost host = agentHostService.get(name);
         agentHostService.delete(host);
