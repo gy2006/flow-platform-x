@@ -59,6 +59,11 @@ public interface AgentHostService {
     void removeAll(AgentHost host);
 
     /**
+     * Test agent host connection
+     */
+    void testConn(AgentHost host);
+
+    /**
      * List all agent hosts
      */
     List<AgentHost> list();

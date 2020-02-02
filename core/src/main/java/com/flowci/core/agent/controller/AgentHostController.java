@@ -61,4 +61,11 @@ public class AgentHostController {
         agentHostService.createOrUpdate(host);
         return host;
     }
+
+    @PostMapping("/{name}/test")
+    @Action(AgentHostAction.CREATE_UPDATE)
+    public void testConnection(@PathVariable String name) {
+        AgentHost host = agentHostService.get(name);
+        agentHostService.testConn(host);
+    }
 }

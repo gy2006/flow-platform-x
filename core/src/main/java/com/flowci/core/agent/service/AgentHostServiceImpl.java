@@ -270,6 +270,13 @@ public class AgentHostServiceImpl implements AgentHostService {
     }
 
     @Override
+    public void testConn(AgentHost host) {
+        agentHostExecutor.execute(() -> {
+            getPoolManager(host);
+        });
+    }
+
+    @Override
     public void collect(AgentHost host) {
         List<Agent> list = agentDao.findAllByHostId(host.getId());
 
