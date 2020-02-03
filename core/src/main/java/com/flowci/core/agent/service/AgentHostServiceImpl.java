@@ -122,6 +122,7 @@ public class AgentHostServiceImpl implements AgentHostService {
     public void createOrUpdate(AgentHost host) {
         if (StringHelper.hasValue(host.getId())) {
             agentHostDao.save(host);
+            poolManagerCache.invalidate(host);
             return;
         }
 
