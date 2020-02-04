@@ -16,12 +16,12 @@
 
 package com.flowci.core.credential.dao;
 
-import com.flowci.core.credential.domain.Credential;
 import java.util.List;
 import java.util.Optional;
 
+import com.flowci.core.credential.domain.Credential;
+
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 /**

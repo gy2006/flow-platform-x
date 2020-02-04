@@ -21,15 +21,19 @@ import com.flowci.domain.Agent.Status;
 import java.util.List;
 import java.util.Set;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author yang
  */
+@Repository
 public interface AgentDao extends MongoRepository<Agent, String> {
 
     List<Agent> findAllByStatusAndTagsIn(Status status, Set<String> tags);
 
     List<Agent> findAllByStatus(Status status);
+
+    List<Agent> findAllByHostId(String hostId);
 
     Agent findByToken(String token);
 

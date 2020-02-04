@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.flowci.pool;
+package com.flowci.pool.domain;
 
 import java.io.Serializable;
-import java.net.URI;
-import java.util.Date;
+
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 /**
@@ -27,29 +27,37 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public abstract class PoolContext implements Serializable {
-
+public class StartContext implements Serializable {
+    
     public static class AgentEnvs {
 
         public static final String SERVER_URL = "FLOWCI_SERVER_URL";
 
         public static final String AGENT_TOKEN = "FLOWCI_AGENT_TOKEN";
 
-        public static final String AGENT_PORT = "FLOWCI_AGENT_PORT";
-
         public static final String AGENT_LOG_LEVEL = "FLOWCI_AGENT_LOG_LEVEL";
 
     }
 
-    private URI serverUri;
+    @NonNull
+    private String serverUrl; // ex: http://127.0.0.1:8080
 
+    /**
+     * Agent name
+     */
+    @NonNull
+    private String agentName;
+
+    /**
+     * Agent token
+     */
+    @NonNull
     private String token;
 
-    private Integer port = 8088;
-
+    @NonNull
     private String logLevel = "DEBUG";
 
-    private String status;
-
-    private Date startAt;
+    public String getDirOnHost() {
+        return String.format("${HOME}/.flow.agent-%s", agentName);
+    }
 }

@@ -16,7 +16,7 @@
 
 package com.flowci.core.test.job;
 
-import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.domain.Variables;
@@ -55,6 +55,7 @@ import org.springframework.context.ApplicationListener;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -198,7 +199,7 @@ public class JobServiceTest extends ZookeeperScenario {
     @Test
     public void should_dispatch_job_to_agent() throws InterruptedException {
         // init:
-        Agent agent = agentService.create("hello.agent", null);
+        Agent agent = agentService.create("hello.agent", null, Optional.empty());
         mockAgentOnline(agentService.getPath(agent));
 
         Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
@@ -238,7 +239,7 @@ public class JobServiceTest extends ZookeeperScenario {
     @Test
     public void should_handle_cmd_callback_for_success_status() {
         // init: agent and job
-        Agent agent = agentService.create("hello.agent", null);
+        Agent agent = agentService.create("hello.agent", null, Optional.empty());
         Job job = prepareJobForRunningStatus(agent);
 
         NodeTree tree = ymlManager.getTree(job);
@@ -249,9 +250,9 @@ public class JobServiceTest extends ZookeeperScenario {
         output.put("HELLO_WORLD", "hello.world");
 
         ExecutedCmd executedCmd = new ExecutedCmd(
-            cmdManager.createId(job, firstNode),
-            job.getFlowId(),
-            firstNode.isAllowFailure()
+                cmdManager.createId(job, firstNode),
+                job.getFlowId(),
+                firstNode.isAllowFailure()
         );
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
@@ -277,9 +278,9 @@ public class JobServiceTest extends ZookeeperScenario {
         output.put("HELLO_JAVA", "hello.java");
 
         executedCmd = new ExecutedCmd(
-            cmdManager.createId(job, secondNode),
-            job.getFlowId(),
-            secondNode.isAllowFailure()
+                cmdManager.createId(job, secondNode),
+                job.getFlowId(),
+                secondNode.isAllowFailure()
         );
         executedCmd.setStatus(ExecutedCmd.Status.SUCCESS);
         executedCmd.setOutput(output);
@@ -303,7 +304,7 @@ public class JobServiceTest extends ZookeeperScenario {
     public void should_handle_cmd_callback_for_failure_status_but_allow_failure() throws IOException {
         // init: agent and job
         yml = ymlService.saveYml(flow, StringHelper.toString(load("flow-all-failure.yml")));
-        Agent agent = agentService.create("hello.agent", null);
+        Agent agent = agentService.create("hello.agent", null, Optional.empty());
         Job job = prepareJobForRunningStatus(agent);
 
         NodeTree tree = ymlManager.getTree(job);
@@ -314,9 +315,9 @@ public class JobServiceTest extends ZookeeperScenario {
         output.put("HELLO_WORLD", "hello.world");
 
         ExecutedCmd executedCmd = new ExecutedCmd(
-            cmdManager.createId(job, firstNode),
-            job.getFlowId(),
-            firstNode.isAllowFailure()
+                cmdManager.createId(job, firstNode),
+                job.getFlowId(),
+                firstNode.isAllowFailure()
         );
         executedCmd.setStatus(ExecutedCmd.Status.EXCEPTION);
         executedCmd.setOutput(output);
@@ -339,9 +340,9 @@ public class JobServiceTest extends ZookeeperScenario {
         output.put("HELLO_TIMEOUT", "hello.timeout");
 
         executedCmd = new ExecutedCmd(
-            cmdManager.createId(job, secondNode),
-            job.getFlowId(),
-            secondNode.isAllowFailure()
+                cmdManager.createId(job, secondNode),
+                job.getFlowId(),
+                secondNode.isAllowFailure()
         );
         executedCmd.setStatus(ExecutedCmd.Status.TIMEOUT);
         executedCmd.setOutput(output);
@@ -360,7 +361,7 @@ public class JobServiceTest extends ZookeeperScenario {
     @Test
     public void should_job_failure_with_final_node() throws Exception {
         yml = ymlService.saveYml(flow, StringHelper.toString(load("flow-failure-with-final.yml")));
-        Agent agent = agentService.create("hello.agent.0", null);
+        Agent agent = agentService.create("hello.agent.0", null, Optional.empty());
         Job job = prepareJobForRunningStatus(agent);
 
         NodeTree tree = ymlManager.getTree(job);
@@ -389,7 +390,7 @@ public class JobServiceTest extends ZookeeperScenario {
         // init: save yml, make agent online and create job
         yml = ymlService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
 
-        Agent agent = agentService.create("hello.agent.1", null);
+        Agent agent = agentService.create("hello.agent.1", null, Optional.empty());
         mockAgentOnline(agentService.getPath(agent));
 
         Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
@@ -434,7 +435,7 @@ public class JobServiceTest extends ZookeeperScenario {
         Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
 
         // mock agent online
-        Agent agent = agentService.create("hello.agent.2", null);
+        Agent agent = agentService.create("hello.agent.2", null, Optional.empty());
         mockAgentOnline(agentService.getPath(agent));
 
         // given: start job and wait for running
@@ -461,7 +462,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
         agent.setJobId(job.getId());
         agent.setStatus(Agent.Status.OFFLINE);
-        multicastEvent(new AgentStatusChangeEvent(this, agent));
+        multicastEvent(new AgentStatusEvent(this, agent));
 
         // then: job should be cancelled
         waitForCancelled.await();

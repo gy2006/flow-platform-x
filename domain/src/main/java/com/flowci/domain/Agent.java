@@ -21,6 +21,7 @@ import com.flowci.domain.Common.OS;
 import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -34,12 +35,15 @@ import lombok.experimental.Accessors;
  */
 @Data
 @NoArgsConstructor
+@Accessors(chain = true)
 @EqualsAndHashCode(of = {"id"})
 public class Agent implements Serializable {
 
     public final static String PATH_SLASH = "/";
 
     public enum Status {
+
+        CREATED,
 
         OFFLINE,
 
@@ -78,7 +82,12 @@ public class Agent implements Serializable {
 
     private String token;
 
-    private String host;
+    private String url;
+
+    /**
+     * Agent host obj id if agent ref on an host
+     */
+    private String hostId;
 
     private Common.OS os = OS.UNKNOWN;
 
@@ -86,7 +95,9 @@ public class Agent implements Serializable {
 
     private Set<String> tags = Collections.emptySet();
 
-    private Status status = Status.OFFLINE;
+    private Status status = Status.CREATED;
+
+    private Date statusUpdatedAt;
 
     private String jobId;
 
@@ -102,9 +113,14 @@ public class Agent implements Serializable {
         this.tags = tags;
     }
 
+    public void setStatus(Status status) {
+        this.status = status;
+        this.statusUpdatedAt = new Date();
+    }
+
     @JsonIgnore
-    public boolean hasHost() {
-        return !Strings.isNullOrEmpty(host);
+    public boolean hasUrl() {
+        return !Strings.isNullOrEmpty(url);
     }
 
     @JsonIgnore

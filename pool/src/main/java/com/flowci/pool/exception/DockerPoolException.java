@@ -1,5 +1,6 @@
+
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +15,19 @@
  * limitations under the License.
  */
 
-package com.flowci.pool;
+package com.flowci.pool.exception;
 
-/**
- * @author yang
- */
-public interface PoolService<Context extends PoolContext> {
+import com.github.dockerjava.api.exception.DockerException;
 
-    void start(Context context);
+import static java.text.MessageFormat.format;
 
-    void status(Context context);
+public class DockerPoolException extends Exception {
+    
+    public DockerPoolException(final String message, final String... params) {
+        super(format(message, params));
+    }
 
-    void stop(Context context);
-
-    void remove(Context context);
+    public DockerPoolException(DockerException e) {
+        super(e.getMessage());
+    }
 }

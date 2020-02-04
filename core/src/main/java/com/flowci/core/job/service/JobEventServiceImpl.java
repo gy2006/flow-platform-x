@@ -17,7 +17,7 @@
 package com.flowci.core.job.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.helper.ThreadHelper;
@@ -32,6 +32,7 @@ import com.flowci.core.flow.event.FlowInitEvent;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.CreateNewJobEvent;
 import com.flowci.core.job.event.JobReceivedEvent;
+import com.flowci.core.job.event.NoIdleAgentEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
@@ -165,7 +166,7 @@ public class JobEventServiceImpl implements JobEventService {
     }
 
     @EventListener
-    public void notifyToFindAvailableAgent(AgentStatusChangeEvent event) {
+    public void notifyToFindAvailableAgent(AgentStatusEvent event) {
         Agent agent = event.getAgent();
 
         if (agent.getStatus() != Agent.Status.IDLE) {
@@ -180,8 +181,8 @@ public class JobEventServiceImpl implements JobEventService {
         consumeHandlers.forEach((s, handler) -> handler.resume());
     }
 
-    @EventListener(value = AgentStatusChangeEvent.class)
-    public void updateJobAndStep(AgentStatusChangeEvent event) {
+    @EventListener(value = AgentStatusEvent.class)
+    public void updateJobAndStep(AgentStatusEvent event) {
         Agent agent = event.getAgent();
 
         if (agent.getStatus() != Agent.Status.OFFLINE || Objects.isNull(agent.getJobId())) {
@@ -502,6 +503,7 @@ public class JobEventServiceImpl implements JobEventService {
 
             while ((available = findAvailableAgent(job)) == null) {
                 logInfo(job, "waiting for agent...");
+                eventManager.publish(new NoIdleAgentEvent(this, job));
 
                 synchronized (lock) {
                     ThreadHelper.wait(lock, RetryIntervalOnNotFound);

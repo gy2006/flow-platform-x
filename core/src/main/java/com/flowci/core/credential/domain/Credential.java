@@ -34,9 +34,9 @@ public class Credential extends Mongoable {
 
         SSH_RSA,
 
-        SSH_DSS,
-
-        SSH_ED25519
+//        SSH_DSS,
+//
+//        SSH_ED25519
     }
 
     @Indexed(name = "index_credential_name", unique = true)

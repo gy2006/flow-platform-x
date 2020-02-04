@@ -23,6 +23,7 @@ import com.flowci.core.credential.domain.AuthCredential;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.domain.Credential.Category;
 import com.flowci.core.credential.domain.RSACredential;
+import com.flowci.core.credential.event.GetCredentialEvent;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.exception.DuplicateException;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -113,6 +115,15 @@ public class CredentialServiceImpl implements CredentialService {
         auth.setName(name);
         auth.setPair(pair);
         return save(auth);
+    }
+
+    @EventListener
+    public void onGetCredentialEvent(GetCredentialEvent event) {
+        try {
+            Credential c = get(event.getName());
+            event.setCredential(c);
+        } catch (NotFoundException ignore) {
+        }
     }
 
     private <T extends Credential> T save(T credential) {
