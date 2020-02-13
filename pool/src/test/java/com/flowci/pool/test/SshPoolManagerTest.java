@@ -13,7 +13,7 @@ import org.junit.*;
 import java.io.InputStream;
 import java.util.Optional;
 
-//@Ignore
+@Ignore
 public class SshPoolManagerTest extends PoolScenario {
 
     private final PoolManager<SshInitContext> manager = new SshPoolManager();

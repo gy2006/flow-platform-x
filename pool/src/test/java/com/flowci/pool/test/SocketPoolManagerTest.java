@@ -27,11 +27,7 @@ import com.flowci.pool.manager.PoolManager;
 import com.flowci.pool.manager.SocketPoolManager;
 import com.flowci.util.StringHelper;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
+import org.junit.*;
 
 public class SocketPoolManagerTest extends PoolScenario {
 
