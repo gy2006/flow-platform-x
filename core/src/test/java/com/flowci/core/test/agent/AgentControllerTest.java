@@ -18,7 +18,7 @@ package com.flowci.core.test.agent;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flowci.core.agent.AgentAuth;
+import com.flowci.core.agent.controller.AgentAuth;
 import com.flowci.core.agent.domain.AgentInit;
 import com.flowci.core.agent.domain.CreateOrUpdateAgent;
 import com.flowci.core.agent.domain.DeleteAgent;

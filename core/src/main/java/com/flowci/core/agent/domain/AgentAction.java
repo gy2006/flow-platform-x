@@ -25,7 +25,7 @@ public abstract class AgentAction {
 
     public static final String CREATE_UPDATE = "create_update_agent";
 
-    public static final String DELETE = "delete";
+    public static final String DELETE = "delete_agent";
 
     public static final String[] ALL = {
             GET,

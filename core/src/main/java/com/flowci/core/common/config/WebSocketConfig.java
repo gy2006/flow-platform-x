@@ -58,6 +58,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      */
     private final String agentsTopic = "/topic/agents";
 
+    /**
+     * To subscribe agent host update
+     */
+    private final String agentHostTopic = "/topic/hosts";
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws").setAllowedOrigins("*").withSockJS();
@@ -65,7 +70,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker(jobsTopic, stepsTopic, logsTopic, agentsTopic, gitTestTopic);
+        registry.enableSimpleBroker(jobsTopic, stepsTopic, logsTopic, agentsTopic, agentHostTopic, gitTestTopic);
         registry.setApplicationDestinationPrefixes("/app");
     }
 
@@ -92,5 +97,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Bean("topicForAgents")
     public String topicForAgents() {
         return agentsTopic;
+    }
+
+    @Bean("topicForAgentHost")
+    public String topicForAgentHost() {
+        return agentHostTopic;
     }
 }

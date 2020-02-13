@@ -16,7 +16,7 @@
 
 package com.flowci.core.test;
 
-import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
@@ -60,11 +60,7 @@ public abstract class ZookeeperScenario extends SpringScenario {
     protected Agent mockAgentOnline(String agentPath) throws InterruptedException {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
-
-        addEventListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
-            wrapper.setValue(event.getAgent());
-            counter.countDown();
-        });
+        addEventListener(new AgentStatusChangeListener(counter, wrapper));
 
         zk.create(CreateMode.EPHEMERAL, agentPath, Status.IDLE.getBytes());
         counter.await(10, TimeUnit.SECONDS);
@@ -76,25 +72,38 @@ public abstract class ZookeeperScenario extends SpringScenario {
         return wrapper.getValue();
     }
 
-    protected Agent mockReleaseAgent(String agentPath) throws InterruptedException {
-        log.debug("Mock release agent {}", agentPath);
+    protected Agent mockAgentOffline(String agentPath) throws InterruptedException {
         CountDownLatch counter = new CountDownLatch(1);
         ObjectWrapper<Agent> wrapper = new ObjectWrapper<>();
+        addEventListener(new AgentStatusChangeListener(counter, wrapper));
 
-        addEventListener((ApplicationListener<AgentStatusChangeEvent>) event -> {
-            wrapper.setValue(event.getAgent());
-            counter.countDown();
-        });
-
-        zk.set(agentPath, Status.IDLE.getBytes());
+        zk.delete(agentPath, true);
         counter.await(10, TimeUnit.SECONDS);
 
         Assert.assertNotNull(wrapper.getValue());
-        Assert.assertEquals(Status.IDLE, wrapper.getValue().getStatus());
+        Assert.assertEquals(Status.OFFLINE, wrapper.getValue().getStatus());
         return wrapper.getValue();
     }
 
     protected Status getAgentStatus(String agentPath) {
         return Status.fromBytes(zk.get(agentPath));
+    }
+
+    private static class AgentStatusChangeListener implements ApplicationListener<AgentStatusEvent> {
+
+        public final CountDownLatch counter;
+
+        private final ObjectWrapper<Agent> wrapper;
+
+        private AgentStatusChangeListener(CountDownLatch counter, ObjectWrapper<Agent> wrapper) {
+            this.counter = counter;
+            this.wrapper = wrapper;
+        }
+
+        @Override
+        public void onApplicationEvent(AgentStatusEvent event) {
+            wrapper.setValue(event.getAgent());
+            counter.countDown();
+        }
     }
 }

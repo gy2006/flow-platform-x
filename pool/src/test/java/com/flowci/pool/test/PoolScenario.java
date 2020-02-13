@@ -16,26 +16,14 @@
 
 package com.flowci.pool.test;
 
-import com.flowci.pool.test.PoolScenario.Config;
-import org.junit.runner.RunWith;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.test.context.junit4.SpringRunner;
+import java.io.InputStream;
 
 /**
  * @author yang
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = Config.class)
-public abstract class PoolScenario {
+public class PoolScenario {
 
-    @TestConfiguration
-    @SpringBootConfiguration
-    @ComponentScan("com.flowci.pool")
-    public static class Config {
-
+    protected InputStream load(String resource) {
+        return PoolScenario.class.getClassLoader().getResourceAsStream(resource);
     }
-
 }

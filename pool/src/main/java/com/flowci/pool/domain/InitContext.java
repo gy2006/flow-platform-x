@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,8 @@
  * limitations under the License.
  */
 
-package com.flowci.core.agent.event;
+ package com.flowci.pool.domain;
 
-import com.flowci.domain.Agent;
-import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
+ public abstract class InitContext {
 
-/**
- * @author yang
- */
-public class AgentStatusChangeEvent extends ApplicationEvent {
-
-    @Getter
-    private final Agent agent;
-
-    public AgentStatusChangeEvent(Object source, Agent agent) {
-        super(source);
-        this.agent = agent;
-    }
-}
+ }

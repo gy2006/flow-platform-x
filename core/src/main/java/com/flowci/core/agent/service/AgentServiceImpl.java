@@ -20,12 +20,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.dao.AgentDao;
 import com.flowci.core.agent.domain.AgentInit;
-import com.flowci.core.agent.event.AgentStatusChangeEvent;
+import com.flowci.core.agent.event.AgentStatusEvent;
 import com.flowci.core.agent.event.CmdSentEvent;
+import com.flowci.core.agent.event.CreateAgentEvent;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CipherHelper;
-import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.core.common.manager.SpringEventManager;
+import com.flowci.core.common.rabbit.RabbitChannelOperation;
 import com.flowci.domain.Agent;
 import com.flowci.domain.Agent.Status;
 import com.flowci.domain.CmdIn;
@@ -36,14 +37,6 @@ import com.flowci.util.ObjectsHelper;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
 import com.google.common.collect.ImmutableSet;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import javax.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -52,8 +45,13 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Manage agent from zookeeper nodes
@@ -90,48 +88,15 @@ public class AgentServiceImpl implements AgentService {
     private ObjectMapper objectMapper;
 
     @PostConstruct
-    public void initRootNode() {
-        String root = zkProperties.getAgentRoot();
-
-        try {
-            zk.create(CreateMode.PERSISTENT, root, null);
-        } catch (ZookeeperException ignore) {
-
-        }
-
-        try {
-            zk.watchChildren(root, new RootNodeListener());
-        } catch (ZookeeperException e) {
-            log.error(e.getMessage());
-        }
-    }
-
-    @PostConstruct
-    public void initAgentsFromZK() {
-        for (Agent agent : agentDao.findAll()) {
-            String zkPath = getPath(agent);
-            String zkLockPath = getLockPath(agent);
-
-            // set to offline if zk node not exist
-            if (!zk.exist(zkPath)) {
-                agent.setStatus(Status.OFFLINE);
-                agentDao.save(agent);
-                zk.delete(zkLockPath, false);
-                continue;
-            }
-
-            // sync status and lock node
-            Status status = getStatusFromZk(agent);
-            agent.setStatus(status);
-            agentDao.save(agent);
-            syncLockNode(agent, Type.CHILD_ADDED);
-        }
+    private void init() {
+        initRootNode();
+        initAgentsFromZk();
     }
 
     @Override
     public Settings connect(AgentInit init) {
         Agent target = getByToken(init.getToken());
-        target.setHost("http://" + init.getIp() + ":" + init.getPort());
+        target.setUrl("http://" + init.getIp() + ":" + init.getPort());
         target.setOs(init.getOs());
         target.setResource(init.getResource());
         agentDao.save(target);
@@ -249,7 +214,7 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public Agent create(String name, Set<String> tags) {
+    public Agent create(String name, Set<String> tags, Optional<String> hostId) {
         Agent exist = agentDao.findByName(name);
         if (exist != null) {
             throw new DuplicateException("Agent name {0} is already defined", name);
@@ -257,6 +222,7 @@ public class AgentServiceImpl implements AgentService {
 
         Agent agent = new Agent(name, tags);
         agent.setToken(UUID.randomUUID().toString());
+        hostId.ifPresent(agent::setHostId);
 
         String dummyEmailForAgent = "agent." + name + "@flow.ci";
         agent.setRsa(CipherHelper.RSA.gen(dummyEmailForAgent));
@@ -305,6 +271,12 @@ public class AgentServiceImpl implements AgentService {
         }
     }
 
+    @EventListener
+    public void onCreateAgentEvent(CreateAgentEvent event) {
+        Agent agent = this.create(event.getName(), event.getTags(), Optional.of(event.getHostId()));
+        event.setCreated(agent);
+    }
+
     /**
      * Get agent id from zookeeper path
      * <p>
@@ -313,6 +285,43 @@ public class AgentServiceImpl implements AgentService {
     private static String getAgentIdFromPath(String path) {
         int index = path.lastIndexOf(Agent.PATH_SLASH);
         return path.substring(index + 1);
+    }
+
+    private void initRootNode() {
+        String root = zkProperties.getAgentRoot();
+
+        try {
+            zk.create(CreateMode.PERSISTENT, root, null);
+        } catch (ZookeeperException ignore) {
+
+        }
+
+        try {
+            zk.watchChildren(root, new RootNodeListener());
+        } catch (ZookeeperException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void initAgentsFromZk() {
+        for (Agent agent : agentDao.findAll()) {
+            String zkPath = getPath(agent);
+            String zkLockPath = getLockPath(agent);
+
+            // set to offline if zk node not exist
+            if (!zk.exist(zkPath)) {
+                agent.setStatus(Status.OFFLINE);
+                agentDao.save(agent);
+                zk.delete(zkLockPath, false);
+                continue;
+            }
+
+            // sync status and lock node
+            Status status = getStatusFromZk(agent);
+            agent.setStatus(status);
+            agentDao.save(agent);
+            syncLockNode(agent, Type.CHILD_ADDED);
+        }
     }
 
     /**
@@ -328,13 +337,12 @@ public class AgentServiceImpl implements AgentService {
         }
 
         agent.setStatus(status);
-        String path = getPath(agent);
 
         try {
             // try update zookeeper status if new status not same with zk
             Status current = getStatusFromZk(agent);
             if (current != status) {
-                zk.set(path, status.getBytes());
+                zk.set(getPath(agent), status.getBytes());
             }
         } catch (ZookeeperException e) {
             // set agent to offline when zk exception
@@ -342,7 +350,7 @@ public class AgentServiceImpl implements AgentService {
             log.warn("Unable to update status on zk node: {}", e.getMessage());
         } finally {
             agentDao.save(agent);
-            eventManager.publish(new AgentStatusChangeEvent(this, agent));
+            eventManager.publish(new AgentStatusEvent(this, agent));
         }
     }
 
@@ -379,9 +387,9 @@ public class AgentServiceImpl implements AgentService {
     private class RootNodeListener implements PathChildrenCacheListener {
 
         private final Set<Type> ChildOperations = ImmutableSet.of(
-            Type.CHILD_ADDED,
-            Type.CHILD_REMOVED,
-            Type.CHILD_UPDATED
+                Type.CHILD_ADDED,
+                Type.CHILD_REMOVED,
+                Type.CHILD_UPDATED
         );
 
         @Override
@@ -416,7 +424,7 @@ public class AgentServiceImpl implements AgentService {
                 syncLockNode(agent, Type.CHILD_REMOVED);
                 updateAgentStatus(agent, Status.OFFLINE);
                 log.debug("Event '{}' of agent '{}' with status '{}'", event.getType(), agent.getName(),
-                    Status.OFFLINE);
+                        Status.OFFLINE);
                 return;
             }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package com.flowci.pool.docker.manager;
+package com.flowci.pool.domain;
 
-import com.flowci.pool.docker.DockerConfig;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-/**
- * @author yang
- */
-public interface ImageManager {
 
+@Getter
+@AllArgsConstructor(staticName = "of")
+public class SshInitContext extends InitContext {
+    
     /**
-     * Pull image
+     * Private rsa key for remote host access
      */
-    boolean pull(DockerConfig config, String image);
+    private final String privateKey;
 
-    /**
-     * Delete image
-     */
-    boolean remove(DockerConfig config, String imageId);
+    private final String remoteHost;
 
+    private final String remoteUser;
+
+    private int timeoutInSeconds = 10;
 }

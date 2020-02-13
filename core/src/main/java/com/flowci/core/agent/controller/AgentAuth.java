@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.agent;
+package com.flowci.core.agent.controller;
 
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.exception.AuthenticationException;

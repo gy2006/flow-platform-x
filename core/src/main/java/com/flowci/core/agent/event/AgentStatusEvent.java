@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-package com.flowci.pool.docker;
+package com.flowci.core.agent.event;
+
+import com.flowci.domain.Agent;
+import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
 /**
  * @author yang
  */
-public abstract class Network {
+@Getter
+public class AgentStatusEvent extends ApplicationEvent {
 
-    public static final String Host = "host";
+    private final Agent agent;
 
-    public static final String Bridge = "bridge";
-
-    public static final String None = "none";
-
+    public AgentStatusEvent(Object source, Agent agent) {
+        super(source);
+        this.agent = agent;
+    }
 }

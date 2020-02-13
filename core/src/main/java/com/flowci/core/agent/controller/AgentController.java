@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.agent;
+package com.flowci.core.agent.controller;
 
 import com.flowci.core.agent.domain.AgentAction;
 import com.flowci.core.agent.domain.AgentInit;
@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author yang
@@ -69,7 +70,7 @@ public class AgentController {
             return agentService.update(body.getToken(), body.getName(), body.getTags());
         }
 
-        return agentService.create(body.getName(), body.getTags());
+        return agentService.create(body.getName(), body.getTags(), Optional.empty());
     }
 
     @DeleteMapping()

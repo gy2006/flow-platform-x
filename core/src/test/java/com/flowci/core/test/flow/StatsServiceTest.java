@@ -18,21 +18,20 @@ package com.flowci.core.test.flow;
 
 import com.flowci.core.common.helper.DateHelper;
 import com.flowci.core.common.helper.ThreadHelper;
-import com.flowci.core.job.domain.Job;
-import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.flow.domain.StatsItem;
 import com.flowci.core.flow.domain.StatsType;
 import com.flowci.core.flow.service.StatsService;
+import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.event.JobStatusChangeEvent;
 import com.flowci.core.test.SpringScenario;
+import org.junit.Assert;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
-
-import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author yang

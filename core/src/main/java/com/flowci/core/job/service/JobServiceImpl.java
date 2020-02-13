@@ -251,15 +251,26 @@ public class JobServiceImpl implements JobService {
     public Job cancel(Job job) {
         if (job.isQueuing()) {
             setJobStatusAndSave(job, Job.Status.CANCELLED, "canceled while queued up");
+            return job;
         }
 
         // send stop cmd when is running
-        else if (job.isRunning()) {
-            Agent agent = agentService.get(job.getAgentId());
-            CmdIn killCmd = cmdManager.createKillCmd();
+        if (!job.isRunning()) {
+            return job;
+        }
 
-            agentService.dispatch(killCmd, agent);
-            logInfo(job, " cancel cmd been send to {}", agent.getName());
+        try {
+            Agent agent = agentService.get(job.getAgentId());
+
+            if (agent.isOnline()) {
+                CmdIn killCmd = cmdManager.createKillCmd();
+                agentService.dispatch(killCmd, agent);
+                logInfo(job, " cancel cmd been send to {}", agent.getName());
+            } else {
+                setJobStatusAndSave(job, Job.Status.CANCELLED, "cancel while agent offline");
+            }
+        } catch (NotFoundException e) {
+            setJobStatusAndSave(job, Job.Status.CANCELLED, "cancel while agent deleted");
         }
 
         return job;

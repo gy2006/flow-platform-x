@@ -27,6 +27,8 @@ import com.flowci.domain.CmdIn;
 import com.flowci.domain.CmdType;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.google.common.collect.ImmutableSet;
+
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +60,7 @@ public class AgentServiceTest extends ZookeeperScenario {
 
     @Test
     public void should_create_agent_in_db() {
-        Agent agent = agentService.create("hello.test", ImmutableSet.of("local", "android"));
+        Agent agent = agentService.create("hello.test", ImmutableSet.of("local", "android"), Optional.empty());
         Assert.assertNotNull(agent);
         Assert.assertEquals(agent, agentService.get(agent.getId()));
     }
@@ -66,7 +68,7 @@ public class AgentServiceTest extends ZookeeperScenario {
     @Test
     public void should_make_agent_online() throws InterruptedException {
         // init:
-        Agent agent = agentService.create("hello.test", ImmutableSet.of("local", "android"));
+        Agent agent = agentService.create("hello.test", ImmutableSet.of("local", "android"), Optional.empty());
 
         // when:
         Agent online = mockAgentOnline(agentService.getPath(agent));
@@ -79,13 +81,13 @@ public class AgentServiceTest extends ZookeeperScenario {
     @Test
     public void should_find_lock_and_release_agents() throws InterruptedException {
         // init:
-        agentService.create("hello.test.1", ImmutableSet.of("local", "android"));
-        agentService.create("hello.test.2", null);
-        Agent idle = agentService.create("hello.test.3", ImmutableSet.of("alicloud", "android"));
+        agentService.create("hello.test.1", ImmutableSet.of("local", "android"), Optional.empty());
+        agentService.create("hello.test.2", null, Optional.empty());
+        Agent idle = agentService.create("hello.test.3", ImmutableSet.of("alicloud", "android"), Optional.empty());
         ThreadPoolTaskExecutor executor = ThreadHelper.createTaskExecutor(5, 5, 0, "mock-tryLock-");
 
         // when:
-        Agent agent = agentService.find(Status.OFFLINE, ImmutableSet.of("android")).get(0);
+        Agent agent = agentService.find(Status.CREATED, ImmutableSet.of("android")).get(0);
         Assert.assertNotNull(agent);
 
         // when: make agent online
@@ -137,7 +139,7 @@ public class AgentServiceTest extends ZookeeperScenario {
     public void should_dispatch_cmd_to_agent() throws InterruptedException {
         // init:
         CmdIn cmd = new CmdIn(UUID.randomUUID().toString(), CmdType.SHELL);
-        Agent agent = agentService.create("hello.agent", null);
+        Agent agent = agentService.create("hello.agent", null, Optional.empty());
 
         // when:
         CountDownLatch counter = new CountDownLatch(1);

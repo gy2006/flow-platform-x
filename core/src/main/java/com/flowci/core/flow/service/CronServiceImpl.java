@@ -23,6 +23,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.flow.dao.YmlDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Yml;
@@ -32,19 +33,19 @@ import com.flowci.tree.Node;
 import com.flowci.tree.YmlParser;
 import com.flowci.zookeeper.ZookeeperClient;
 import com.flowci.zookeeper.ZookeeperException;
+import lombok.extern.log4j.Log4j2;
+import org.apache.curator.utils.ZKPaths;
+import org.apache.zookeeper.CreateMode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.PostConstruct;
-import lombok.extern.log4j.Log4j2;
-import org.apache.curator.utils.ZKPaths;
-import org.apache.zookeeper.CreateMode;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Service;
 
 /**
  * @author yang
@@ -61,7 +62,7 @@ public class CronServiceImpl implements CronService {
     private YmlDao ymlDao;
 
     @Autowired
-    private ApplicationContext context;
+    private SpringEventManager eventManager;
 
     @Autowired
     private ConfigProperties.Zookeeper zkProperties;
@@ -113,7 +114,7 @@ public class CronServiceImpl implements CronService {
         public void run() {
             if (lock()) {
                 log.info("Start flow '{}' from cron task", flow.getName());
-                context.publishEvent(new CreateNewJobEvent(this, flow, yml, Trigger.SCHEDULER, null));
+                eventManager.publish(new CreateNewJobEvent(this, flow, yml, Trigger.SCHEDULER, null));
                 clean();
             }
 

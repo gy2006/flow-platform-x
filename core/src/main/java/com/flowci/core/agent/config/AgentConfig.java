@@ -17,8 +17,8 @@
 package com.flowci.core.agent.config;
 
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.common.config.QueueConfig;
 import com.flowci.core.common.domain.Variables.App;
+import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.domain.Settings;
 import java.util.Objects;
@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * @author yang
@@ -64,6 +65,11 @@ public class AgentConfig {
 
         log.info(settings);
         return settings;
+    }
+
+    @Bean("agentHostExecutor")
+    public ThreadPoolTaskExecutor agentHostExecutor() {
+        return ThreadHelper.createTaskExecutor(10, 1, 10, "agent-host");
     }
 
     private String getZkHost() {
