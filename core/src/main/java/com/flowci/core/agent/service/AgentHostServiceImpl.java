@@ -387,8 +387,9 @@ public class AgentHostServiceImpl implements AgentHostService {
             LocalUnixAgentHost host = new LocalUnixAgentHost();
             host.setName("localhost");
             createOrUpdate(host);
+            log.info("Local unix agent host been created");
         } catch (NotAvailableException e) {
-
+            log.warn(e.getMessage());
         }
     }
 
