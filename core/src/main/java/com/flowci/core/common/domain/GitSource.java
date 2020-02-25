@@ -26,9 +26,5 @@ public enum GitSource {
 
     GOGS,
 
-    CODING,
-
-    OSCHINA,
-
-    BITBUCKET
+    GITEE,
 }
