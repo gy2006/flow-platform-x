@@ -18,9 +18,8 @@ package com.flowci.core.trigger.converter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flowci.core.common.domain.GitSource;
-import com.flowci.core.trigger.domain.GitPingTrigger;
-import com.flowci.core.trigger.domain.GitTrigger;
-import com.flowci.core.trigger.domain.GitTriggerable;
+import com.flowci.core.trigger.domain.*;
+import com.flowci.core.trigger.util.BranchHelper;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
@@ -48,6 +47,7 @@ public class GiteeConverter extends TriggerConverter  {
     private final Map<String, Function<InputStream, GitTrigger>> mapping =
             ImmutableMap.<String, Function<InputStream, GitTrigger>>builder()
                     .put(Ping, new EventConverter<>("Ping", GiteeConverter.PingEvent.class))
+                    .put(Push, new EventConverter<>("Push", GiteeConverter.PushEvent.class))
                     .build();
 
     @Override
@@ -68,6 +68,63 @@ public class GiteeConverter extends TriggerConverter  {
             trigger.setSource(GitSource.GITEE);
             trigger.setEvent(GitTrigger.GitEvent.PING);
             return trigger;
+        }
+    }
+
+    private static class PushEvent implements GitTriggerable {
+
+        public String ref;
+
+        @JsonProperty("head_commit")
+        public Commit commit;
+
+        @JsonProperty("total_commits_count")
+        public Integer numOfCommit;
+
+        public Author pusher;
+
+        @Override
+        public GitTrigger toTrigger() {
+            GitPushTrigger trigger = new GitPushTrigger();
+            trigger.setSource(GitSource.GITEE);
+            trigger.setEvent(GitTrigger.GitEvent.PUSH);
+            trigger.setAuthor(pusher.toGitUser());
+            trigger.setCommitId(commit.id);
+            trigger.setMessage(commit.message);
+            trigger.setCommitUrl(commit.url);
+            trigger.setRef(BranchHelper.getBranchName(ref));
+            trigger.setTime(commit.timestamp);
+            trigger.setNumOfCommit(numOfCommit);
+            return trigger;
+        }
+    }
+
+    private static class Commit {
+
+        public String id;
+
+        public String message;
+
+        public String timestamp;
+
+        public String url;
+
+        public Author author;
+    }
+
+    private static class Author {
+
+        public String name;
+
+        public String email;
+
+        public String username;
+
+        public GitUser toGitUser() {
+            return new GitUser()
+                    .setEmail(email)
+                    .setName(name)
+                    .setUsername(username);
         }
     }
 }
