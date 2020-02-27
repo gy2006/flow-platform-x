@@ -21,6 +21,7 @@ import com.flowci.core.test.SpringScenario;
 import com.flowci.core.trigger.converter.GiteeConverter;
 import com.flowci.core.trigger.converter.TriggerConverter;
 import com.flowci.core.trigger.domain.GitPingTrigger;
+import com.flowci.core.trigger.domain.GitPrTrigger;
 import com.flowci.core.trigger.domain.GitPushTrigger;
 import com.flowci.core.trigger.domain.GitTrigger;
 import org.junit.Assert;
@@ -94,5 +95,54 @@ public class GiteeConverterTest extends SpringScenario {
         Assert.assertEquals("benqyang_2006@hotmail.com", trigger.getAuthor().getEmail());
         Assert.assertEquals("yang.guo", trigger.getAuthor().getName());
         Assert.assertEquals("https://gitee.com/assets/no_portrait.png", trigger.getAuthor().getAvatarLink());
+    }
+
+    @Test
+    public void should_parse_pr_open_event() {
+        InputStream stream = load("gitee/webhook_pr_open.json");
+
+        Optional<GitTrigger> optional = giteeConverter.convert(GiteeConverter.PR, stream);
+        GitPrTrigger trigger = (GitPrTrigger) optional.get();
+        Assert.assertNotNull(trigger);
+        Assert.assertEquals(GitTrigger.GitEvent.PR_OPENED, trigger.getEvent());
+        Assert.assertEquals(GitSource.GITEE, trigger.getSource());
+
+        Assert.assertEquals("1", trigger.getNumber());
+        Assert.assertEquals("gitee create pr test", trigger.getTitle());
+        Assert.assertEquals("pr comments...\r\n1.aa\r\n2.bb\r\n3.cc", trigger.getBody());
+        Assert.assertEquals("2020-02-25T22:53:47+08:00", trigger.getTime());
+        Assert.assertEquals("https://gitee.com/gy2006/flow-test/pulls/1", trigger.getUrl());
+        Assert.assertEquals("1", trigger.getNumOfCommits());
+        Assert.assertEquals("1", trigger.getNumOfFileChanges());
+        Assert.assertEquals(Boolean.FALSE, trigger.getMerged());
+
+        // verify head repo
+        Assert.assertEquals("ea926aebbe8738e903345534a9b158716b904816", trigger.getHead().getCommit());
+        Assert.assertEquals("feature/222", trigger.getHead().getRef());
+        Assert.assertEquals("gy2006/flow-test", trigger.getHead().getRepoName());
+        Assert.assertEquals("https://gitee.com/gy2006/flow-test", trigger.getHead().getRepoUrl());
+
+        // verify base repo
+        Assert.assertEquals("2e6e071da3f8c718d0969f3d96cedc848dab605e", trigger.getBase().getCommit());
+        Assert.assertEquals("master", trigger.getBase().getRef());
+        Assert.assertEquals("gy2006/flow-test", trigger.getBase().getRepoName());
+        Assert.assertEquals("https://gitee.com/gy2006/flow-test", trigger.getBase().getRepoUrl());
+
+        Assert.assertEquals("1666376", trigger.getSender().getId());
+        Assert.assertEquals("yang.guo", trigger.getSender().getName());
+        Assert.assertEquals("gy2006", trigger.getSender().getUsername());
+        Assert.assertEquals("benqyang_2006@hotmail.com", trigger.getSender().getEmail());
+    }
+
+    @Test
+    public void should_parse_pr_merge_event() {
+        InputStream stream = load("gitee/webhook_pr_merge.json");
+
+        Optional<GitTrigger> optional = giteeConverter.convert(GiteeConverter.PR, stream);
+        GitPrTrigger trigger = (GitPrTrigger) optional.get();
+        Assert.assertNotNull(trigger);
+        Assert.assertEquals(GitTrigger.GitEvent.PR_MERGED, trigger.getEvent());
+        Assert.assertEquals(GitSource.GITEE, trigger.getSource());
+        Assert.assertEquals(Boolean.TRUE, trigger.getMerged());
     }
 }

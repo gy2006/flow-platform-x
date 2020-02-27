@@ -33,7 +33,7 @@ import java.util.function.Function;
 
 @Log4j2
 @Component("giteeConverter")
-public class GiteeConverter extends TriggerConverter  {
+public class GiteeConverter extends TriggerConverter {
 
     public static final String Header = "X-Gitee-Event";
 
@@ -130,15 +130,58 @@ public class GiteeConverter extends TriggerConverter  {
 
         public String action;
 
-        public String number;
-
         @JsonProperty("pull_request")
         public PullRequest prBody;
+
+        public Author sender;
 
         @Override
         public GitTrigger toTrigger() {
             GitPrTrigger trigger = new GitPrTrigger();
+            trigger.setSource(GitSource.GITEE);
+            trigger.setEvent(getEvent());
+
+            trigger.setTitle(prBody.title);
+            trigger.setBody(prBody.body);
+            trigger.setTime(prBody.createdAt);
+            trigger.setNumber(prBody.number);
+            trigger.setUrl(prBody.url);
+            trigger.setMerged(isMerged());
+            trigger.setNumOfCommits(prBody.numOfCommits);
+            trigger.setNumOfFileChanges(prBody.numOfFileChanges);
+            trigger.setSender(sender.toGitUser());
+
+            GitPrTrigger.Source head = new GitPrTrigger.Source();
+            head.setCommit(prBody.head.sha);
+            head.setRef(prBody.head.ref);
+            head.setRepoName(prBody.head.repo.fullName);
+            head.setRepoUrl(prBody.head.repo.url);
+            trigger.setHead(head);
+
+            GitPrTrigger.Source base = new GitPrTrigger.Source();
+            base.setCommit(prBody.base.sha);
+            base.setRef(prBody.base.ref);
+            base.setRepoName(prBody.base.repo.fullName);
+            base.setRepoUrl(prBody.base.repo.url);
+            trigger.setBase(base);
+
             return trigger;
+        }
+
+        private boolean isMerged() {
+            return PrMerged.equals(action);
+        }
+
+        private GitTrigger.GitEvent getEvent() {
+            if (PrOpen.equals(action)) {
+                return GitTrigger.GitEvent.PR_OPENED;
+            }
+
+            if (PrMerged.equals(action)) {
+                return GitTrigger.GitEvent.PR_MERGED;
+            }
+
+            throw new ArgumentException("Cannot handle action {0} from pull request", action);
         }
     }
 
@@ -146,7 +189,7 @@ public class GiteeConverter extends TriggerConverter  {
 
         public String id;
 
-        public int number;
+        public String number;
 
         public String title;
 
@@ -159,10 +202,34 @@ public class GiteeConverter extends TriggerConverter  {
         public String url;
 
         @JsonProperty("commits")
-        public int numOfCommits;
+        public String numOfCommits;
 
         @JsonProperty("changed_files")
-        public int numOfFileChanges;
+        public String numOfFileChanges;
+
+        public PrSource head;
+
+        public PrSource base;
+    }
+
+    private static class PrSource {
+
+        public String ref;
+
+        public String sha;
+
+        public PrRepo repo;
+    }
+
+    private static class PrRepo {
+
+        public String id;
+
+        @JsonProperty("full_name")
+        public String fullName;
+
+        @JsonProperty("html_url")
+        public String url;
     }
 
     private static class Commit {
