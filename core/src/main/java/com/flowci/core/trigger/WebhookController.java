@@ -18,10 +18,7 @@ package com.flowci.core.trigger;
 
 import com.flowci.core.common.domain.GitSource;
 import com.flowci.core.common.manager.SpringEventManager;
-import com.flowci.core.trigger.converter.GitHubConverter;
-import com.flowci.core.trigger.converter.GitLabConverter;
-import com.flowci.core.trigger.converter.GogsConverter;
-import com.flowci.core.trigger.converter.TriggerConverter;
+import com.flowci.core.trigger.converter.*;
 import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.event.GitHookEvent;
 import com.flowci.exception.ArgumentException;
@@ -60,6 +57,9 @@ public class WebhookController {
     private TriggerConverter gogsConverter;
 
     @Autowired
+    private TriggerConverter giteeConverter;
+
+    @Autowired
     private SpringEventManager eventManager;
 
     private final Map<GitSource, TriggerConverter> converterMap = new HashMap<>(3);
@@ -69,6 +69,7 @@ public class WebhookController {
         converterMap.put(GitSource.GITHUB, gitHubConverter);
         converterMap.put(GitSource.GITLAB, gitLabConverter);
         converterMap.put(GitSource.GOGS, gogsConverter);
+        converterMap.put(GitSource.GITEE, giteeConverter);
     }
 
     @PostMapping("/{name}")
@@ -111,7 +112,20 @@ public class WebhookController {
             return obj;
         }
 
-        throw new ArgumentException("Unsupported git event {0}", event);
+        // gitee
+        event = request.getHeader(GiteeConverter.Header);
+        if (StringHelper.hasValue(event)) {
+            obj.source = GitSource.GITEE;
+            obj.event = event;
+
+            String pingInd = request.getHeader(GiteeConverter.HeaderForPing);
+            if (Boolean.parseBoolean(pingInd)) {
+                obj.event = GiteeConverter.Ping;
+            }
+            return obj;
+        }
+
+        throw new ArgumentException("Unsupported git event");
     }
 
     private static class GitSourceWithEvent {
