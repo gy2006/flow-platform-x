@@ -47,4 +47,9 @@ public interface GitService {
      * @return list of branches or empty list if git config not defined
      */
     List<String> listGitBranch(Flow flow);
+
+    /**
+     * Async way to fetch root file from repo, send out GitFileFetchedEvent
+     */
+    void fetch(Flow flow, String branch, String file);
 }
