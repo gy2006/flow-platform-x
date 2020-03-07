@@ -202,6 +202,7 @@ public class FlowServiceImpl implements FlowService {
         } catch (IOException e) {
             flowDao.delete(flow);
             flowUserDao.delete(flow.getId());
+            log.error(e);
             throw new StatusException("Cannot create flow workspace");
         }
 
