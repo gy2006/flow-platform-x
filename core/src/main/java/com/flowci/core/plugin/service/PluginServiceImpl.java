@@ -19,6 +19,7 @@ package com.flowci.core.plugin.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.config.ConfigProperties;
+import com.flowci.core.common.git.GitProgressMonitor;
 import com.flowci.core.plugin.dao.PluginDao;
 import com.flowci.core.plugin.domain.Plugin;
 import com.flowci.core.plugin.domain.PluginParser;
@@ -27,6 +28,15 @@ import com.flowci.core.plugin.event.RepoCloneEvent;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.CIException;
 import com.flowci.exception.NotFoundException;
+import lombok.extern.log4j.Log4j2;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.stereotype.Component;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -39,15 +49,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import lombok.extern.log4j.Log4j2;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.ProgressMonitor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.stereotype.Component;
 
 /**
  * @author yang
@@ -56,7 +57,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class PluginServiceImpl implements PluginService {
 
-    private static final TypeReference<List<PluginRepoInfo>> RepoListType = new TypeReference<List<PluginRepoInfo>>() {};
+    private static final TypeReference<List<PluginRepoInfo>> RepoListType = new TypeReference<List<PluginRepoInfo>>() {
+    };
 
     private static final String PluginFileName = "plugin.yml";
 
@@ -206,11 +208,11 @@ public class PluginServiceImpl implements PluginService {
 
         // clone from git
         try (Git ignored = Git.cloneRepository()
-            .setDirectory(dirFile)
-            .setURI(repo.getSource())
-            .setProgressMonitor(monitor)
-            .setBranch(repo.getBranch())
-            .call()) {
+                .setDirectory(dirFile)
+                .setURI(repo.getSource())
+                .setProgressMonitor(monitor)
+                .setBranch(repo.getBranch())
+                .call()) {
         }
 
         return load(dirFile, repo);
@@ -234,13 +236,13 @@ public class PluginServiceImpl implements PluginService {
 
             if (!info.getName().equals(plugin.getName())) {
                 throw new ArgumentException(
-                    "Plugin name {0} not match the name defined in repo {1}", plugin.getName(), info.getName());
+                        "Plugin name {0} not match the name defined in repo {1}", plugin.getName(), info.getName());
             }
 
             if (!info.getVersion().equals(plugin.getVersion())) {
                 throw new ArgumentException(
-                    "Plugin {0} version {1} not match the name defined in repo {2}",
-                    plugin.getName(), plugin.getVersion().toString(), info.getVersion().toString());
+                        "Plugin {0} version {1} not match the name defined in repo {2}",
+                        plugin.getName(), plugin.getVersion().toString(), info.getVersion().toString());
             }
 
             // tags load from repo info obj
@@ -259,42 +261,5 @@ public class PluginServiceImpl implements PluginService {
      */
     private Path getPluginRepoDir(String name, String version) {
         return Paths.get(pluginDir.toString(), name, version);
-    }
-
-    private class GitProgressMonitor implements ProgressMonitor {
-
-        private final String source;
-
-        private final File target;
-
-        public GitProgressMonitor(String source, File target) {
-            this.source = source;
-            this.target = target;
-        }
-
-        @Override
-        public void start(int totalTasks) {
-            log.debug("Git - {} start: {}", source, totalTasks);
-        }
-
-        @Override
-        public void beginTask(String title, int totalWork) {
-            log.debug("Git - {} beginTask: {} {}", source, title, totalWork);
-        }
-
-        @Override
-        public void update(int completed) {
-            log.debug("Git - {} update: {}", source, completed);
-        }
-
-        @Override
-        public void endTask() {
-            log.debug("Git - {} endTask on {}", source, target);
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return false;
-        }
     }
 }
