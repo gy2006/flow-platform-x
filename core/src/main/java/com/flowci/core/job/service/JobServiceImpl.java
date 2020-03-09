@@ -177,9 +177,9 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job create(Flow flow, Yml yml, Trigger trigger, StringVars input) {
+    public Job create(Flow flow, String yml, Trigger trigger, StringVars input) {
         // verify yml and parse to Node
-        Node root = YmlParser.load(flow.getName(), yml.getRaw());
+        Node root = YmlParser.load(flow.getName(), yml);
 
         // create job number
         JobNumber jobNumber = jobNumberDao.increaseBuildNumber(flow.getId());

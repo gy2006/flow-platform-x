@@ -78,7 +78,7 @@ public class CmdManagerTest extends SpringScenario {
         Flow flow = flowService.create("hello");
         Yml yml = ymlService.saveYml(flow, StringHelper.toString(load("flow-with-plugin.yml")));
 
-        Job job = jobService.create(flow, yml, Job.Trigger.MANUAL, new StringVars());
+        Job job = jobService.create(flow, yml.getRaw(), Job.Trigger.MANUAL, new StringVars());
         Assert.assertNotNull(job);
 
         // when: create shell cmd

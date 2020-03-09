@@ -51,11 +51,6 @@ public abstract class Variables {
         public static final String IsYamlSourceFromGit = "FLOWCI_YAML_FROM_GIT";
 
         /**
-         * Yaml file name in git repo
-         */
-        public static final String YamlSourceNamePattern = "FLOWCI_YAML_FILE_NAME";
-
-        /**
          * Yaml file branch
          */
         public static final String YamlSourceBranch = "FLOWCI_YAML_FILE_BRANCH";

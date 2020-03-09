@@ -29,7 +29,7 @@ public interface YmlManager {
 
     JobYml get(Job job);
 
-    JobYml create(Flow flow, Job job, Yml yml);
+    JobYml create(Flow flow, Job job, String yml);
 
     /**
      * Get node tree from job

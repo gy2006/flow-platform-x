@@ -166,7 +166,7 @@ public class JobController {
     public Job create(@Validated @RequestBody CreateJob data) {
         Flow flow = flowService.get(data.getFlow());
         Yml yml = ymlService.getYml(flow);
-        return jobService.create(flow, yml, Trigger.API, data.getInputs());
+        return jobService.create(flow, yml.getRaw(), Trigger.API, data.getInputs());
     }
 
     @PostMapping("/run")

@@ -59,7 +59,7 @@ public interface JobService {
     /**
      * Create job by flow and yml
      */
-    Job create(Flow flow, Yml yml, Trigger trigger, StringVars input);
+    Job create(Flow flow, String yml, Trigger trigger, StringVars input);
 
     /**
      * Send to job queue

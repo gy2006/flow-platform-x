@@ -124,7 +124,7 @@ public class JobServiceTest extends ZookeeperScenario {
         input.put("INPUT_VAR", "input");
 
         // when: create job
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, input);
+        Job job = jobService.create(flow, yml.getRaw(), Trigger.MANUAL, input);
         Vars<String> context = job.getContext();
         Assert.assertNotNull(context);
 
@@ -148,7 +148,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
     @Test
     public void should_init_steps_cmd_after_job_created() {
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
+        Job job = jobService.create(flow, yml.getRaw(), Trigger.MANUAL, StringVars.EMPTY);
 
         List<ExecutedCmd> steps = stepService.list(job);
         Assert.assertNotNull(steps);
@@ -172,7 +172,7 @@ public class JobServiceTest extends ZookeeperScenario {
         });
 
         // when: create and start job
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
+        Job job = jobService.create(flow, yml.getRaw(), Trigger.MANUAL, StringVars.EMPTY);
         NodeTree tree = ymlManager.getTree(job);
 
         Assert.assertEquals(Status.PENDING, job.getStatus());
@@ -192,7 +192,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
     @Test
     public void should_get_job_expire() {
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
+        Job job = jobService.create(flow, yml.getRaw(), Trigger.MANUAL, StringVars.EMPTY);
         Assert.assertFalse(jobService.isExpired(job));
     }
 
@@ -202,7 +202,7 @@ public class JobServiceTest extends ZookeeperScenario {
         Agent agent = agentService.create("hello.agent", null, Optional.empty());
         mockAgentOnline(agentService.getPath(agent));
 
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
+        Job job = jobService.create(flow, yml.getRaw(), Trigger.MANUAL, StringVars.EMPTY);
 
         // when:
         ObjectWrapper<Agent> targetAgent = new ObjectWrapper<>();
@@ -393,7 +393,7 @@ public class JobServiceTest extends ZookeeperScenario {
         Agent agent = agentService.create("hello.agent.1", null, Optional.empty());
         mockAgentOnline(agentService.getPath(agent));
 
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
+        Job job = jobService.create(flow, yml.getRaw(), Trigger.MANUAL, StringVars.EMPTY);
 
         // init: wait counter
         CountDownLatch waitForJobQueued = new CountDownLatch(2);
@@ -432,7 +432,7 @@ public class JobServiceTest extends ZookeeperScenario {
     public void should_cancel_job_if_agent_offline() throws IOException, InterruptedException {
         // init:
         yml = ymlService.saveYml(flow, StringHelper.toString(load("flow-with-before.yml")));
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
+        Job job = jobService.create(flow, yml.getRaw(), Trigger.MANUAL, StringVars.EMPTY);
 
         // mock agent online
         Agent agent = agentService.create("hello.agent.2", null, Optional.empty());
@@ -477,7 +477,7 @@ public class JobServiceTest extends ZookeeperScenario {
 
     private Job prepareJobForRunningStatus(Agent agent) {
         // init: job to mock the first node been send to agent
-        Job job = jobService.create(flow, yml, Trigger.MANUAL, StringVars.EMPTY);
+        Job job = jobService.create(flow, yml.getRaw(), Trigger.MANUAL, StringVars.EMPTY);
 
         NodeTree tree = ymlManager.getTree(job);
         Node firstNode = tree.next(tree.getRoot().getPath());

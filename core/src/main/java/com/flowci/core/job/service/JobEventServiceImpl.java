@@ -160,7 +160,7 @@ public class JobEventServiceImpl implements JobEventService {
     }
 
     @EventListener
-    public void onApplicationEvent(CreateNewJobEvent event) {
+    public void startNewJob(CreateNewJobEvent event) {
         Job job = jobService.create(event.getFlow(), event.getYml(), event.getTrigger(), event.getInput());
         jobService.start(job);
     }

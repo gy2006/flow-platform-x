@@ -114,7 +114,7 @@ public class CronServiceImpl implements CronService {
         public void run() {
             if (lock()) {
                 log.info("Start flow '{}' from cron task", flow.getName());
-                eventManager.publish(new CreateNewJobEvent(this, flow, yml, Trigger.SCHEDULER, null));
+                eventManager.publish(new CreateNewJobEvent(this, flow, yml.getRaw(), Trigger.SCHEDULER, null));
                 clean();
             }
 

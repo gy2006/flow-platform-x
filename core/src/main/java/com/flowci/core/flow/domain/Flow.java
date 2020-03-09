@@ -106,10 +106,6 @@ public final class Flow extends Mongoable implements Pathable {
         return Boolean.parseBoolean(findVar(Variables.Flow.IsYamlSourceFromGit));
     }
 
-    public String getYamlFileNamePattern() {
-        return findVar(Variables.Flow.YamlSourceNamePattern);
-    }
-
     public String getYamlFileBranch() {
         return findVar(Variables.Flow.YamlSourceBranch);
     }

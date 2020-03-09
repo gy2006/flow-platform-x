@@ -41,12 +41,7 @@ import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.event.GitHookEvent;
 import com.flowci.core.user.event.UserDeletedEvent;
-import com.flowci.domain.SimpleAuthPair;
-import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.StringVars;
-import com.flowci.domain.VarType;
-import com.flowci.domain.VarValue;
-import com.flowci.domain.Vars;
+import com.flowci.domain.*;
 import com.flowci.exception.*;
 import com.flowci.store.FileManager;
 import com.flowci.tree.Node;
@@ -55,21 +50,20 @@ import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
 import com.google.common.collect.Sets;
-import java.io.IOException;
-import java.sql.Date;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Date;
+import java.time.Instant;
+import java.util.*;
 
 /**
  * @author yang
@@ -80,7 +74,7 @@ public class FlowServiceImpl implements FlowService {
 
     private final String defaultYamlBranch = "master";
 
-    private final String defaultYamlPattern = ".flow-*.yaml";
+    private final String defaultYamlPattern = ".flow";
 
     @Autowired
     private String serverUrl;
@@ -113,6 +107,9 @@ public class FlowServiceImpl implements FlowService {
     private GitService gitService;
 
     @Autowired
+    private YmlService ymlService;
+
+    @Autowired
     private RabbitChannelOperation jobQueueManager;
 
     // ====================================================================
@@ -132,7 +129,7 @@ public class FlowServiceImpl implements FlowService {
         List<Flow> list = list(Status.CONFIRMED);
         Iterator<Flow> iter = list.iterator();
 
-        for (; iter.hasNext();) {
+        for (; iter.hasNext(); ) {
             Flow flow = iter.next();
             if (Objects.equals(flow.getCredentialName(), credential.getName())) {
                 continue;
@@ -315,20 +312,34 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
-    public void start(String name) {
+    public void start(String name, Trigger trigger, StringVars vars) {
         Flow flow = get(name);
 
         if (flow.isYamlFromRepo()) {
-            try {
-                gitService.fetch(flow);
-            } catch (NotAvailableException e) {
-                // TODO: send event
+            Path dir = gitService.fetch(flow);
+
+            String[] files = dir.toFile().list((currentDir, fileName) ->
+                    fileName.endsWith(".yaml") ||
+                            fileName.endsWith(".yml") ||
+                            fileName.startsWith(defaultYamlPattern));
+
+            if (files == null || files.length == 0) {
+                throw new NotAvailableException("Unable to find yaml file in repo");
             }
 
-            // TODO: find yml from repo
+            try {
+                byte[] ymlInBytes = Files.readAllBytes(Paths.get(files[0]));
+                CreateNewJobEvent event = new CreateNewJobEvent(this, flow, new String(ymlInBytes), trigger, vars);
+                eventManager.publish(event);
+                return;
+            } catch (IOException e) {
+                throw new NotAvailableException("Unable to read yaml file in repo");
+            }
         }
 
-        // TODO: send event to start job
+        Yml yml = ymlService.getYml(flow);
+        CreateNewJobEvent event = new CreateNewJobEvent(this, flow, yml.getRaw(), trigger, vars);
+        eventManager.publish(event);
     }
 
     // ====================================================================
@@ -384,7 +395,7 @@ public class FlowServiceImpl implements FlowService {
             StringVars gitInput = event.getTrigger().toVariableMap();
             Trigger jobTrigger = event.getTrigger().toJobTrigger();
 
-            eventManager.publish(new CreateNewJobEvent(this, flow, yml, jobTrigger, gitInput));
+            eventManager.publish(new CreateNewJobEvent(this, flow, yml.getRaw(), jobTrigger, gitInput));
         }
     }
 
@@ -400,7 +411,6 @@ public class FlowServiceImpl implements FlowService {
 
         localVars.put(Variables.Flow.IsYamlSourceFromGit, VarValue.of("false", VarType.BOOL, true));
         localVars.put(Variables.Flow.YamlSourceBranch, VarValue.of(defaultYamlBranch, VarType.STRING, true));
-        localVars.put(Variables.Flow.YamlSourceNamePattern, VarValue.of(defaultYamlPattern, VarType.STRING, true));
     }
 
     private boolean canStartJob(Node root, GitTrigger trigger) {
