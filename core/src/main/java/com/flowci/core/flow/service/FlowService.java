@@ -115,4 +115,10 @@ public interface FlowService {
      * List users by flow
      */
     List<String> listUsers(Flow flow);
+
+    /**
+     * Start a job
+     * @param name
+     */
+    void start(String name);
 }

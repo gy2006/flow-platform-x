@@ -19,6 +19,8 @@ package com.flowci.core.flow.service;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
+
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -51,5 +53,5 @@ public interface GitService {
     /**
      * Async way to fetch root file from repo, send out GitFileFetchedEvent
      */
-    void fetch(Flow flow, String branch, String file);
+    Path fetch(Flow flow);
 }

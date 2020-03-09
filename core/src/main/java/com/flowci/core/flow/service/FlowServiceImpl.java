@@ -47,10 +47,7 @@ import com.flowci.domain.StringVars;
 import com.flowci.domain.VarType;
 import com.flowci.domain.VarValue;
 import com.flowci.domain.Vars;
-import com.flowci.exception.ArgumentException;
-import com.flowci.exception.DuplicateException;
-import com.flowci.exception.NotFoundException;
-import com.flowci.exception.StatusException;
+import com.flowci.exception.*;
 import com.flowci.store.FileManager;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
@@ -81,6 +78,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class FlowServiceImpl implements FlowService {
 
+    private final String defaultYamlBranch = "master";
+
     private final String defaultYamlPattern = ".flow-*.yaml";
 
     @Autowired
@@ -109,6 +108,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private CredentialService credentialService;
+
+    @Autowired
+    private GitService gitService;
 
     @Autowired
     private RabbitChannelOperation jobQueueManager;
@@ -185,7 +187,7 @@ public class FlowServiceImpl implements FlowService {
         flow.setName(name);
         flow.setCreatedBy(userId);
 
-        setDefaultVars(flow);
+        setupDefaultVars(flow);
 
         try {
             flowDao.save(flow);
@@ -312,6 +314,23 @@ public class FlowServiceImpl implements FlowService {
         flowUserDao.remove(flow.getId(), idSet);
     }
 
+    @Override
+    public void start(String name) {
+        Flow flow = get(name);
+
+        if (flow.isYamlFromRepo()) {
+            try {
+                gitService.fetch(flow);
+            } catch (NotAvailableException e) {
+                // TODO: send event
+            }
+
+            // TODO: find yml from repo
+        }
+
+        // TODO: send event to start job
+    }
+
     // ====================================================================
     // %% Internal events
     // ====================================================================
@@ -373,14 +392,15 @@ public class FlowServiceImpl implements FlowService {
     // %% Utils
     // ====================================================================
 
-    private void setDefaultVars(Flow flow) {
+    private void setupDefaultVars(Flow flow) {
         Vars<VarValue> localVars = flow.getLocally();
 
         localVars.put(Variables.Flow.Name, VarValue.of(flow.getName(), VarType.STRING, false));
         localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.HTTP_URL, false));
 
         localVars.put(Variables.Flow.IsYamlSourceFromGit, VarValue.of("false", VarType.BOOL, true));
-        localVars.put(Variables.Flow.YamlSourceName, VarValue.of(defaultYamlPattern, VarType.STRING, true));
+        localVars.put(Variables.Flow.YamlSourceBranch, VarValue.of(defaultYamlBranch, VarType.STRING, true));
+        localVars.put(Variables.Flow.YamlSourceNamePattern, VarValue.of(defaultYamlPattern, VarType.STRING, true));
     }
 
     private boolean canStartJob(Node root, GitTrigger trigger) {

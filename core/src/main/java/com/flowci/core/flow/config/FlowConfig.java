@@ -16,14 +16,21 @@
 
 package com.flowci.core.flow.config;
 
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.helper.ThreadHelper;
+import com.flowci.util.FileHelper;
 import com.github.benmanes.caffeine.cache.Cache;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -45,9 +52,19 @@ public class FlowConfig {
         Velocity.init(templateProperties);
     }
 
+    @Autowired
+    private ConfigProperties appProperties;
+
     @Bean("gitTestExecutor")
     public ThreadPoolTaskExecutor gitTestExecutor() {
         return ThreadHelper.createTaskExecutor(20, 20, 100, "git-test-");
+    }
+
+    @Bean("repoDir")
+    public Path pluginDir() throws IOException {
+        String workspace = appProperties.getWorkspace().toString();
+        Path pluginDir = Paths.get(workspace, "repos");
+        return FileHelper.createDirectory(pluginDir);
     }
 
     @Bean

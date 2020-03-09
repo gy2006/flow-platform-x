@@ -53,7 +53,12 @@ public abstract class Variables {
         /**
          * Yaml file name in git repo
          */
-        public static final String YamlSourceName = "FLOWCI_YAML_FILE_NAME";
+        public static final String YamlSourceNamePattern = "FLOWCI_YAML_FILE_NAME";
+
+        /**
+         * Yaml file branch
+         */
+        public static final String YamlSourceBranch = "FLOWCI_YAML_FILE_BRANCH";
     }
 
     public abstract static class Job {

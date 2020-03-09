@@ -38,6 +38,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,6 +54,9 @@ public class GitServiceImpl implements GitService {
 
     @Autowired
     private Path tmpDir;
+
+    @Autowired
+    private Path repoDir;
 
     @Autowired
     private Cache<String, List<String>> gitBranchCache;
@@ -111,16 +115,24 @@ public class GitServiceImpl implements GitService {
     }
 
     @Override
-    public void fetch(Flow flow, String branch, String file) {
+    public Path fetch(Flow flow) {
         final String gitUrl = flow.getGitUrl();
         final String credentialName = flow.getCredentialName();
         final Credential c = getCredential(credentialName);
+        final Path dir = getFlowRepoDir(flow);
 
         if (!StringHelper.hasValue(gitUrl)) {
             throw new NotAvailableException("Git url is missing");
         }
 
-
+        try {
+            GitClient client = new GitClient(gitUrl, tmpDir, c.toSimpleSecret());
+            client.klone(dir, flow.getYamlFileBranch());
+            return dir;
+        } catch (Exception e) {
+            log.warn("Unable to fetch yaml config for flow {}", flow.getName(), e);
+            throw new NotAvailableException("Unable to fetch yaml config for flow {0}", flow.getName());
+        }
     }
 
     //====================================================================
@@ -148,5 +160,12 @@ public class GitServiceImpl implements GitService {
             eventManager.publish(new GitTestEvent(this, flow.getId(), e.getMessage()));
             return Collections.emptyList();
         }
+    }
+
+    /**
+     * Get flow repo path: {repo dir}/{repo}
+     */
+    private Path getFlowRepoDir(Flow flow) {
+        return Paths.get(repoDir.toString(), flow.getName());
     }
 }
