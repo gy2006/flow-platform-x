@@ -81,6 +81,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class FlowServiceImpl implements FlowService {
 
+    private final String defaultYamlPattern = ".flow-*.yaml";
+
     @Autowired
     private String serverUrl;
 
@@ -183,10 +185,7 @@ public class FlowServiceImpl implements FlowService {
         flow.setName(name);
         flow.setCreatedBy(userId);
 
-        // set default vars
-        Vars<VarValue> localVars = flow.getLocally();
-        localVars.put(Variables.Flow.Name, VarValue.of(flow.getName(), VarType.STRING, false));
-        localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.HTTP_URL, false));
+        setDefaultVars(flow);
 
         try {
             flowDao.save(flow);
@@ -373,6 +372,16 @@ public class FlowServiceImpl implements FlowService {
     // ====================================================================
     // %% Utils
     // ====================================================================
+
+    private void setDefaultVars(Flow flow) {
+        Vars<VarValue> localVars = flow.getLocally();
+
+        localVars.put(Variables.Flow.Name, VarValue.of(flow.getName(), VarType.STRING, false));
+        localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.HTTP_URL, false));
+
+        localVars.put(Variables.Flow.IsYamlSourceFromGit, VarValue.of("false", VarType.BOOL, true));
+        localVars.put(Variables.Flow.YamlSourceName, VarValue.of(defaultYamlPattern, VarType.STRING, true));
+    }
 
     private boolean canStartJob(Node root, GitTrigger trigger) {
         TriggerFilter condition = root.getTrigger();

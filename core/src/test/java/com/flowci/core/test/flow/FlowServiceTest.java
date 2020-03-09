@@ -86,16 +86,25 @@ public class FlowServiceTest extends SpringScenario {
 
     @Test
     public void should_have_default_vars() {
-        Flow flow = flowService.create("vars-test");
-        Assert.assertEquals(2, flow.getLocally().size());
+        final Flow flow = flowService.create("vars-test");
+        final Vars<VarValue> vars = flow.getLocally();
+        Assert.assertEquals(4, vars.size());
 
-        VarValue nameVar = flow.getLocally().get(Variables.Flow.Name);
+        VarValue nameVar = vars.get(Variables.Flow.Name);
         Assert.assertEquals(flow.getName(), nameVar.getData());
         Assert.assertFalse(nameVar.isEditable());
 
-        VarValue webhookVar = flow.getLocally().get(Variables.Flow.Webhook);
+        VarValue webhookVar = vars.get(Variables.Flow.Webhook);
         Assert.assertEquals(serverUrl + "/webhooks/" + flow.getName(), webhookVar.getData());
         Assert.assertFalse(webhookVar.isEditable());
+
+        VarValue isLoadYamlFromGit = vars.get(Variables.Flow.IsYamlSourceFromGit);
+        Assert.assertEquals("false", isLoadYamlFromGit.getData());
+        Assert.assertTrue(isLoadYamlFromGit.isEditable());
+
+        VarValue yamlSourceName = vars.get(Variables.Flow.YamlSourceName);
+        Assert.assertEquals(".flow-*.yaml", yamlSourceName.getData());
+        Assert.assertTrue(yamlSourceName.isEditable());
     }
 
     @Test

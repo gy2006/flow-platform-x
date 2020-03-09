@@ -27,7 +27,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
  */
 @Getter
 @Setter
-public abstract class Credential extends Mongoable {
+public class Credential extends Mongoable {
 
     public enum Category {
 
@@ -45,5 +45,7 @@ public abstract class Credential extends Mongoable {
 
     private Category category;
 
-    public abstract SimpleSecret toSimpleSecret();
+    public SimpleSecret toSimpleSecret() {
+        return null;
+    }
 }

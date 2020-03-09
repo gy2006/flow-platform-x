@@ -44,6 +44,16 @@ public abstract class Variables {
         public static final String GitBranch = "FLOWCI_GIT_BRANCH"; // set
 
         public static final String GitCredential = "FLOWCI_GIT_CREDENTIAL"; // set
+
+        /**
+         * Boolean value indicate load yaml from git or not
+         */
+        public static final String IsYamlSourceFromGit = "FLOWCI_YAML_FROM_GIT";
+
+        /**
+         * Yaml file name in git repo
+         */
+        public static final String YamlSourceName = "FLOWCI_YAML_FILE_NAME";
     }
 
     public abstract static class Job {
