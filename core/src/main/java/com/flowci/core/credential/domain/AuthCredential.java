@@ -18,6 +18,7 @@ package com.flowci.core.credential.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.domain.SimpleAuthPair;
+import com.flowci.domain.SimpleSecret;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -49,4 +50,8 @@ public class AuthCredential extends Credential {
         return pair.getPassword();
     }
 
+    @Override
+    public SimpleSecret toSimpleSecret() {
+        return pair;
+    }
 }

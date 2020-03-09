@@ -17,6 +17,7 @@
 package com.flowci.core.credential.domain;
 
 import com.flowci.core.common.domain.Mongoable;
+import com.flowci.domain.SimpleSecret;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -26,7 +27,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
  */
 @Getter
 @Setter
-public class Credential extends Mongoable {
+public abstract class Credential extends Mongoable {
 
     public enum Category {
 
@@ -44,4 +45,5 @@ public class Credential extends Mongoable {
 
     private Category category;
 
+    public abstract SimpleSecret toSimpleSecret();
 }

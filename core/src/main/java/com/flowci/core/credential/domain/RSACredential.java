@@ -18,6 +18,7 @@ package com.flowci.core.credential.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.domain.SimpleKeyPair;
+import com.flowci.domain.SimpleSecret;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.TypeAlias;
@@ -54,5 +55,10 @@ public final class RSACredential extends Credential {
 
     public void setPublicKey(String pk) {
         this.pair.setPublicKey(pk);
+    }
+
+    @Override
+    public SimpleSecret toSimpleSecret() {
+        return pair;
     }
 }
