@@ -20,7 +20,6 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 
-import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -30,6 +29,7 @@ public interface GitService {
 
     /**
      * Test git connection for http or ssh with credential
+     *
      * @param credential nullable
      */
     void testConn(Flow flow, String url, String credential);
@@ -46,12 +46,8 @@ public interface GitService {
 
     /**
      * List remote branches
+     *
      * @return list of branches or empty list if git config not defined
      */
     List<String> listGitBranch(Flow flow);
-
-    /**
-     * Async way to fetch root file from repo, send out GitFileFetchedEvent
-     */
-    Path fetch(Flow flow);
 }

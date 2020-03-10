@@ -16,13 +16,20 @@
 
 package com.flowci.core.job.config;
 
+import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.tree.NodeTree;
+import com.flowci.util.FileHelper;
 import com.github.benmanes.caffeine.cache.Cache;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -33,6 +40,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Log4j2
 @Configuration
 public class JobConfig {
+
+    @Autowired
+    private ConfigProperties appProperties;
 
     /**
      * Consume http request
@@ -55,5 +65,12 @@ public class JobConfig {
     @Bean("jobStepCache")
     public Cache<String, List<ExecutedCmd>> jobStepCache() {
         return CacheHelper.createLocalCache(100, 60);
+    }
+
+    @Bean("repoDir")
+    public Path pluginDir() throws IOException {
+        String workspace = appProperties.getWorkspace().toString();
+        Path pluginDir = Paths.get(workspace, "repos");
+        return FileHelper.createDirectory(pluginDir);
     }
 }

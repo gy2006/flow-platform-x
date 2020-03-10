@@ -117,9 +117,4 @@ public interface FlowService {
      * List users by flow
      */
     List<String> listUsers(Flow flow);
-
-    /**
-     * Start a job
-     */
-    void start(String name, Job.Trigger trigger, StringVars vars);
 }

@@ -175,7 +175,7 @@ public class JobServiceTest extends ZookeeperScenario {
         Job job = jobService.create(flow, yml.getRaw(), Trigger.MANUAL, StringVars.EMPTY);
         NodeTree tree = ymlManager.getTree(job);
 
-        Assert.assertEquals(Status.PENDING, job.getStatus());
+        Assert.assertEquals(Status.CREATED, job.getStatus());
         Assert.assertEquals(tree.getRoot().getPath(), NodePath.create(job.getCurrentPath()));
 
         job = jobService.start(job);

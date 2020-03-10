@@ -114,27 +114,6 @@ public class GitServiceImpl implements GitService {
                 fetchBranchFromGit(flow, gitUrl, c));
     }
 
-    @Override
-    public Path fetch(Flow flow) {
-        final String gitUrl = flow.getGitUrl();
-        final String credentialName = flow.getCredentialName();
-        final Credential c = getCredential(credentialName);
-        final Path dir = getFlowRepoDir(flow);
-
-        if (!StringHelper.hasValue(gitUrl)) {
-            throw new NotAvailableException("Git url is missing");
-        }
-
-        try {
-            GitClient client = new GitClient(gitUrl, tmpDir, c.toSimpleSecret());
-            client.klone(dir, flow.getYamlFileBranch());
-            return dir;
-        } catch (Exception e) {
-            log.warn("Unable to fetch yaml config for flow {}", flow.getName(), e);
-            throw new NotAvailableException("Unable to fetch yaml config for flow {0}", flow.getName());
-        }
-    }
-
     //====================================================================
     //        %% Utils
     //====================================================================
@@ -160,12 +139,5 @@ public class GitServiceImpl implements GitService {
             eventManager.publish(new GitTestEvent(this, flow.getId(), e.getMessage()));
             return Collections.emptyList();
         }
-    }
-
-    /**
-     * Get flow repo path: {repo dir}/{repo}
-     */
-    private Path getFlowRepoDir(Flow flow) {
-        return Paths.get(repoDir.toString(), flow.getName());
     }
 }

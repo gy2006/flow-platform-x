@@ -29,6 +29,7 @@ import com.flowci.core.user.domain.User;
 import com.flowci.domain.CmdId;
 import com.flowci.domain.ExecutedCmd;
 import com.flowci.exception.ArgumentException;
+import com.flowci.exception.NotAvailableException;
 import com.flowci.tree.NodePath;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -174,9 +175,14 @@ public class JobController {
     public void createAndRun(@Validated @RequestBody CreateJob data) {
         final User current = sessionManager.get();
         jobRunExecutor.execute(() -> {
-            sessionManager.set(current);
-            Job job = create(data);
-            jobService.start(job);
+            try {
+                sessionManager.set(current);
+                Job job = create(data);
+                jobService.start(job);
+            } catch (NotAvailableException e) {
+                Job job = (Job) e.getExtra();
+                jobService.setJobStatusAndSave(job, Job.Status.FAILURE, e.getMessage());
+            }
         });
     }
 

@@ -42,7 +42,10 @@ import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.event.GitHookEvent;
 import com.flowci.core.user.event.UserDeletedEvent;
 import com.flowci.domain.*;
-import com.flowci.exception.*;
+import com.flowci.exception.ArgumentException;
+import com.flowci.exception.DuplicateException;
+import com.flowci.exception.NotFoundException;
+import com.flowci.exception.StatusException;
 import com.flowci.store.FileManager;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
@@ -58,9 +61,6 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Date;
 import java.time.Instant;
 import java.util.*;
@@ -71,10 +71,6 @@ import java.util.*;
 @Log4j2
 @Service
 public class FlowServiceImpl implements FlowService {
-
-    private final String defaultYamlBranch = "master";
-
-    private final String defaultYamlPattern = ".flow";
 
     @Autowired
     private String serverUrl;
@@ -102,12 +98,6 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private CredentialService credentialService;
-
-    @Autowired
-    private GitService gitService;
-
-    @Autowired
-    private YmlService ymlService;
 
     @Autowired
     private RabbitChannelOperation jobQueueManager;
@@ -311,37 +301,6 @@ public class FlowServiceImpl implements FlowService {
         flowUserDao.remove(flow.getId(), idSet);
     }
 
-    @Override
-    public void start(String name, Trigger trigger, StringVars vars) {
-        Flow flow = get(name);
-
-        if (flow.isYamlFromRepo()) {
-            Path dir = gitService.fetch(flow);
-
-            String[] files = dir.toFile().list((currentDir, fileName) ->
-                    fileName.endsWith(".yaml") ||
-                            fileName.endsWith(".yml") ||
-                            fileName.startsWith(defaultYamlPattern));
-
-            if (files == null || files.length == 0) {
-                throw new NotAvailableException("Unable to find yaml file in repo");
-            }
-
-            try {
-                byte[] ymlInBytes = Files.readAllBytes(Paths.get(files[0]));
-                CreateNewJobEvent event = new CreateNewJobEvent(this, flow, new String(ymlInBytes), trigger, vars);
-                eventManager.publish(event);
-                return;
-            } catch (IOException e) {
-                throw new NotAvailableException("Unable to read yaml file in repo");
-            }
-        }
-
-        Yml yml = ymlService.getYml(flow);
-        CreateNewJobEvent event = new CreateNewJobEvent(this, flow, yml.getRaw(), trigger, vars);
-        eventManager.publish(event);
-    }
-
     // ====================================================================
     // %% Internal events
     // ====================================================================
@@ -410,6 +369,7 @@ public class FlowServiceImpl implements FlowService {
         localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.HTTP_URL, false));
 
         localVars.put(Variables.Flow.IsYamlSourceFromGit, VarValue.of("false", VarType.BOOL, true));
+        String defaultYamlBranch = "master";
         localVars.put(Variables.Flow.YamlSourceBranch, VarValue.of(defaultYamlBranch, VarType.STRING, true));
     }
 
