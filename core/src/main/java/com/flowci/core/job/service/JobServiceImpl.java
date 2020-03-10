@@ -70,6 +70,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
@@ -169,7 +170,7 @@ public class JobServiceImpl implements JobService {
         }
 
         throw new NotFoundException(
-            "The job {0} for build number {1} cannot found", flow.getName(), Long.toString(buildNumber));
+                "The job {0} for build number {1} cannot found", flow.getName(), Long.toString(buildNumber));
     }
 
     @Override
@@ -352,11 +353,12 @@ public class JobServiceImpl implements JobService {
 
     private String fetchYamlFromGit(String flowName, Job job) {
         final String gitUrl = job.getGitUrl();
-        final Path dir = getFlowRepoDir(job.getFlowId());
 
         if (!StringHelper.hasValue(gitUrl)) {
             throw new NotAvailableException("Git url is missing").setExtra(job);
         }
+
+        final Path dir = getFlowRepoDir(gitUrl);
 
         try {
             GitClient client = new GitClient(gitUrl, tmpDir, getSimpleSecret(job.getCredentialName()));
@@ -367,16 +369,14 @@ public class JobServiceImpl implements JobService {
         }
 
         String[] files = dir.toFile().list((currentDir, fileName) ->
-                fileName.endsWith(".yaml") ||
-                        fileName.endsWith(".yml") ||
-                        fileName.startsWith(".flowci"));
+                (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) && fileName.startsWith(".flowci"));
 
         if (files == null || files.length == 0) {
             throw new NotAvailableException("Unable to find yaml file in repo").setExtra(job);
         }
 
         try {
-            byte[] ymlInBytes = Files.readAllBytes(Paths.get(files[0]));
+            byte[] ymlInBytes = Files.readAllBytes(Paths.get(dir.toString(), files[0]));
             return new String(ymlInBytes);
         } catch (IOException e) {
             throw new NotAvailableException("Unable to read yaml file in repo").setExtra(job);
@@ -386,8 +386,9 @@ public class JobServiceImpl implements JobService {
     /**
      * Get flow repo path: {repo dir}/{flow id}
      */
-    private Path getFlowRepoDir(String flowId) {
-        return Paths.get(repoDir.toString(), flowId);
+    private Path getFlowRepoDir(String repoUrl) {
+        String b64 = Base64.getEncoder().encodeToString(repoUrl.getBytes());
+        return Paths.get(repoDir.toString(), b64);
     }
 
     private SimpleSecret getSimpleSecret(String credentialName) {
