@@ -98,18 +98,6 @@ public final class Flow extends Mongoable implements Pathable {
         return findVar(Variables.Flow.GitUrl);
     }
 
-    public String getWebhook() {
-        return findVar(Variables.Flow.Webhook);
-    }
-
-    public boolean isYamlFromRepo() {
-        return Boolean.parseBoolean(findVar(Variables.Flow.IsYamlSourceFromGit));
-    }
-
-    public String getYamlFileBranch() {
-        return findVar(Variables.Flow.YamlSourceBranch);
-    }
-
     /**
      * Get credential name from vars, local var has top priority
      */

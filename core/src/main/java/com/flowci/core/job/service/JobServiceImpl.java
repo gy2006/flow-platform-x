@@ -16,8 +16,6 @@
 
 package com.flowci.core.job.service;
 
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
@@ -29,7 +27,6 @@ import com.flowci.core.common.rabbit.RabbitQueueOperation;
 import com.flowci.core.credential.domain.Credential;
 import com.flowci.core.credential.service.CredentialService;
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobItemDao;
 import com.flowci.core.job.dao.JobNumberDao;
@@ -38,7 +35,6 @@ import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobNumber;
 import com.flowci.core.job.domain.JobYml;
-import com.flowci.core.job.event.CreateNewJobEvent;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobDeletedEvent;
 import com.flowci.core.job.event.JobStatusChangeEvent;
@@ -56,16 +52,6 @@ import com.flowci.exception.StatusException;
 import com.flowci.store.FileManager;
 import com.flowci.tree.Node;
 import com.flowci.tree.YmlParser;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
-
 import com.flowci.util.StringHelper;
 import com.google.common.base.Strings;
 import lombok.extern.log4j.Log4j2;
@@ -78,6 +64,18 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Objects;
+import java.util.Optional;
+
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
+
 /**
  * @author yang
  */
@@ -86,8 +84,6 @@ import org.springframework.stereotype.Service;
 public class JobServiceImpl implements JobService {
 
     private static final Sort SortByBuildNumber = Sort.by(Direction.DESC, "buildNumber");
-
-    private static final String DefaultYamlPattern = ".flow";
 
     //====================================================================
     //        %% Spring injection
@@ -204,7 +200,7 @@ public class JobServiceImpl implements JobService {
         Job job = createJob(flow, trigger, input);
         eventManager.publish(new JobCreatedEvent(this, job));
 
-        if (flow.isYamlFromRepo()) {
+        if (job.isYamlFromRepo()) {
             setJobStatusAndSave(job, Job.Status.LOADING, StringHelper.EMPTY);
             yml = fetchYamlFromGit(flow.getName(), job);
         }
