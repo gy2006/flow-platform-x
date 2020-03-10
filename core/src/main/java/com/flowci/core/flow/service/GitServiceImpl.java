@@ -27,18 +27,18 @@ import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
+import com.flowci.domain.SimpleSecret;
 import com.flowci.exception.ArgumentException;
-import com.flowci.exception.NotAvailableException;
 import com.flowci.util.StringHelper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.base.Function;
+import com.google.common.base.Strings;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -106,12 +106,9 @@ public class GitServiceImpl implements GitService {
 
     @Override
     public List<String> listGitBranch(Flow flow) {
-        final String gitUrl = flow.getGitUrl();
         final String credentialName = flow.getCredentialName();
-        final Credential c = getCredential(credentialName);
-
         return gitBranchCache.get(flow.getId(), (Function<String, List<String>>) flowId ->
-                fetchBranchFromGit(flow, gitUrl, c));
+                fetchBranchFromGit(flow, flow.getGitUrl(), getCredential(credentialName)));
     }
 
     //====================================================================
@@ -127,8 +124,18 @@ public class GitServiceImpl implements GitService {
     }
 
     private List<String> fetchBranchFromGit(Flow flow, String url, Credential credential) {
+        if (Strings.isNullOrEmpty(url)) {
+            eventManager.publish(new GitTestEvent(this, flow.getId(), "Git url is missing"));
+            return Collections.emptyList();
+        }
+
         eventManager.publish(new GitTestEvent(this, flow.getId()));
-        GitClient client = new GitClient(url, tmpDir, credential.toSimpleSecret());
+
+        SimpleSecret secret = null;
+        if (credential != null) {
+            secret = credential.toSimpleSecret();
+        }
+        GitClient client = new GitClient(flow.getGitUrl(), tmpDir, secret);
 
         try {
             final List<String> branches = client.branches();
