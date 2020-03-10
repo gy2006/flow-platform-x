@@ -281,6 +281,12 @@ public class JobServiceImpl implements JobService {
             return jobDao.save(job);
         }
 
+        if (Job.FINISH_STATUS.contains(newStatus)) {
+            if (Objects.isNull(job.getFinishAt())) {
+                job.setFinishAt(new Date());
+            }
+        }
+
         job.setStatus(newStatus);
         job.setMessage(message);
         job.getContext().put(Variables.Job.Status, newStatus.name());
