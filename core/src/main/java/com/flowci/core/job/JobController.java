@@ -177,7 +177,9 @@ public class JobController {
         jobRunExecutor.execute(() -> {
             try {
                 sessionManager.set(current);
-                Job job = create(data);
+                Flow flow = flowService.get(data.getFlow());
+                Yml yml = ymlService.getYml(flow);
+                Job job = jobService.create(flow, yml.getRaw(), Trigger.API, data.getInputs());
                 jobService.start(job);
             } catch (NotAvailableException e) {
                 Job job = (Job) e.getExtra();

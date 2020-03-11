@@ -49,12 +49,12 @@ public class JobConfig {
      */
     @Bean("jobRunExecutor")
     public ThreadPoolTaskExecutor jobRunExecutor() {
-        return ThreadHelper.createTaskExecutor(1, 1, 50, "job-run-");
+        return ThreadHelper.createTaskExecutor(1, 1, 100, "job-run-");
     }
 
     @Bean("jobDeleteExecutor")
     public ThreadPoolTaskExecutor jobDeleteExecutor() {
-        return ThreadHelper.createTaskExecutor(1, 1, 10, "job-delete-");
+        return ThreadHelper.createTaskExecutor(1, 1, 100, "job-delete-");
     }
 
     @Bean("jobTreeCache")

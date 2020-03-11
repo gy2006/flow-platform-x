@@ -345,8 +345,11 @@ public class JobServiceImpl implements JobService {
 
     private void setupYaml(Flow flow, String yml, Job job) {
         Node root = YmlParser.load(flow.getName(), yml);
+
         job.setCurrentPath(root.getPathAsString());
         job.setAgentSelector(root.getSelector());
+        job.getContext().merge(root.getEnvironments());
+
         ymlManager.create(flow, job, yml);
         jobDao.save(job);
     }
@@ -358,7 +361,7 @@ public class JobServiceImpl implements JobService {
             throw new NotAvailableException("Git url is missing").setExtra(job);
         }
 
-        final Path dir = getFlowRepoDir(gitUrl);
+        final Path dir = getFlowRepoDir(gitUrl, job.getYamlFileBranch());
 
         try {
             GitClient client = new GitClient(gitUrl, tmpDir, getSimpleSecret(job.getCredentialName()));
@@ -386,9 +389,9 @@ public class JobServiceImpl implements JobService {
     /**
      * Get flow repo path: {repo dir}/{flow id}
      */
-    private Path getFlowRepoDir(String repoUrl) {
+    private Path getFlowRepoDir(String repoUrl, String branch) {
         String b64 = Base64.getEncoder().encodeToString(repoUrl.getBytes());
-        return Paths.get(repoDir.toString(), b64);
+        return Paths.get(repoDir.toString(), b64 + "_" + branch);
     }
 
     private SimpleSecret getSimpleSecret(String credentialName) {
@@ -401,7 +404,7 @@ public class JobServiceImpl implements JobService {
     }
 
     private void initJobContext(Job job, Flow flow, StringVars... inputs) {
-        StringVars context = new StringVars(flow.getVariables());
+        StringVars context = new StringVars();
         context.mergeFromTypedVars(flow.getLocally());
 
         context.put(Variables.App.Url, serverUrl);
