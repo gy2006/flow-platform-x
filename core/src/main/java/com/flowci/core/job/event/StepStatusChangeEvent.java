@@ -20,16 +20,21 @@ import com.flowci.domain.ExecutedCmd;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
+import java.util.List;
+
 /**
  * @author yang
  */
+@Getter
 public class StepStatusChangeEvent extends ApplicationEvent {
 
-    @Getter
-    private final ExecutedCmd executedCmd;
+    private final String jobId;
 
-    public StepStatusChangeEvent(Object source, ExecutedCmd executedCmd) {
+    private final List<ExecutedCmd> steps;
+
+    public StepStatusChangeEvent(Object source, String jobId, List<ExecutedCmd> steps) {
         super(source);
-        this.executedCmd = executedCmd;
+        this.jobId = jobId;
+        this.steps = steps;
     }
 }

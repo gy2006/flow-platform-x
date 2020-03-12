@@ -17,7 +17,6 @@
 package com.flowci.core.job.event;
 
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.domain.StringVars;
 import lombok.Getter;
