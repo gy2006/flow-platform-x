@@ -313,6 +313,8 @@ public class JobServiceImpl implements JobService {
         job.setCreatedAt(Date.from(Instant.now()));
         job.setTimeout(jobProperties.getTimeoutInSeconds());
         job.setExpire(jobProperties.getExpireInSeconds());
+        job.setYamlFromRepo(flow.isYamlFromRepo());
+        job.setYamlRepoBranch(flow.getYamlRepoBranch());
 
         // init job context
         initJobContext(job, flow, input);
@@ -361,11 +363,11 @@ public class JobServiceImpl implements JobService {
             throw new NotAvailableException("Git url is missing").setExtra(job);
         }
 
-        final Path dir = getFlowRepoDir(gitUrl, job.getYamlFileBranch());
+        final Path dir = getFlowRepoDir(gitUrl, job.getYamlRepoBranch());
 
         try {
             GitClient client = new GitClient(gitUrl, tmpDir, getSimpleSecret(job.getCredentialName()));
-            client.klone(dir, job.getYamlFileBranch());
+            client.klone(dir, job.getYamlRepoBranch());
         } catch (Exception e) {
             log.warn("Unable to fetch yaml config for flow {}", flowName, e);
             throw new NotAvailableException("Unable to fetch yaml config for flow {0}", flowName).setExtra(job);

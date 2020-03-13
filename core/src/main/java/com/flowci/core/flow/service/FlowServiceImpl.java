@@ -364,13 +364,8 @@ public class FlowServiceImpl implements FlowService {
 
     private void setupDefaultVars(Flow flow) {
         Vars<VarValue> localVars = flow.getLocally();
-
         localVars.put(Variables.Flow.Name, VarValue.of(flow.getName(), VarType.STRING, false));
         localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.HTTP_URL, false));
-
-        localVars.put(Variables.Flow.IsYamlSourceFromGit, VarValue.of("false", VarType.BOOL, true));
-        String defaultYamlBranch = "master";
-        localVars.put(Variables.Flow.YamlSourceBranch, VarValue.of(defaultYamlBranch, VarType.STRING, true));
     }
 
     private boolean canStartJob(Node root, GitTrigger trigger) {

@@ -200,6 +200,10 @@ public class Job extends Mongoable implements Pathable {
 
     private Integer priority = MinPriority;
 
+    private boolean isYamlFromRepo;
+
+    private String yamlRepoBranch;
+
     /**
      * Execution timeout in seconds
      */
@@ -273,14 +277,6 @@ public class Job extends Mongoable implements Pathable {
 
     public String getGitUrl() {
         return context.get(Variables.Flow.GitUrl);
-    }
-
-    public boolean isYamlFromRepo() {
-        return Boolean.parseBoolean(context.get(Variables.Flow.IsYamlSourceFromGit));
-    }
-
-    public String getYamlFileBranch() {
-        return context.get(Variables.Flow.YamlSourceBranch);
     }
 
     public void setAgentSnapshot(Agent agent) {
