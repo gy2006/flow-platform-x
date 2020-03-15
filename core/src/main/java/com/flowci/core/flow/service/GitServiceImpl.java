@@ -67,8 +67,8 @@ public class GitServiceImpl implements GitService {
     private SecretService credentialService;
 
     @Override
-    public void testConn(Flow flow, String url, String credential) {
-        Secret c = getSecret(credential);
+    public void testConn(Flow flow, String url, String secret) {
+        Secret c = getSecret(secret);
 
         if (c != null) {
             if (c.getCategory() != Secret.Category.AUTH && StringHelper.isHttpLink(url)) {

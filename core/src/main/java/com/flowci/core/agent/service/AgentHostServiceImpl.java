@@ -560,7 +560,7 @@ public class AgentHostServiceImpl implements AgentHostService {
         @Override
         public void create(AgentHost host) {
             SshAgentHost sshHost = (SshAgentHost) host;
-            Preconditions.checkArgument(sshHost.getCredential() != null, "Credential name must be defined");
+            Preconditions.checkArgument(sshHost.getSecret() != null, "Credential name must be defined");
 
             sshHost.setCreatedAt(new Date());
             sshHost.setCreatedBy(sessionManager.getUserId());
@@ -570,7 +570,7 @@ public class AgentHostServiceImpl implements AgentHostService {
         @Override
         public PoolManager<?> init(AgentHost host) throws Exception {
             SshAgentHost sshHost = (SshAgentHost) host;
-            GetSecretEvent event = new GetSecretEvent(this, sshHost.getCredential());
+            GetSecretEvent event = new GetSecretEvent(this, sshHost.getSecret());
             eventManager.publish(event);
 
             Secret c = event.getSecret();

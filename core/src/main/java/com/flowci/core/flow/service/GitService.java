@@ -30,9 +30,9 @@ public interface GitService {
     /**
      * Test git connection for http or ssh with credential
      *
-     * @param credential nullable
+     * @param secret nullable
      */
-    void testConn(Flow flow, String url, String credential);
+    void testConn(Flow flow, String url, String secret);
 
     /**
      * Test git connection for ssh url with private key

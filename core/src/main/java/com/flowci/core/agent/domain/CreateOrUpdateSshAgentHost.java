@@ -39,7 +39,7 @@ public class CreateOrUpdateSshAgentHost {
     @NotEmpty
     private String name;
 
-    private String credential;
+    private String secret;
 
     private String user;
 
@@ -56,7 +56,7 @@ public class CreateOrUpdateSshAgentHost {
             SshAgentHost host = new SshAgentHost();
             host.setId(id);
             host.setName(name);
-            host.setCredential(credential);
+            host.setSecret(secret);
             host.setUser(user);
             host.setIp(ip);
             host.setTags(tags);
