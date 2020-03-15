@@ -20,7 +20,7 @@ import com.flowci.core.agent.domain.AgentAction;
 import com.flowci.core.agent.domain.AgentHostAction;
 import com.flowci.core.auth.domain.PermissionMap;
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.credential.domain.SecretAction;
+import com.flowci.core.secret.domain.SecretAction;
 import com.flowci.core.flow.domain.FlowAction;
 import com.flowci.core.job.domain.JobAction;
 import com.flowci.core.user.domain.User;

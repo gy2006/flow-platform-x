@@ -18,10 +18,10 @@ package com.flowci.core.flow.service;
 
 import com.flowci.core.common.git.GitClient;
 import com.flowci.core.common.manager.SpringEventManager;
-import com.flowci.core.credential.domain.AuthSecret;
-import com.flowci.core.credential.domain.RSASecret;
-import com.flowci.core.credential.domain.Secret;
-import com.flowci.core.credential.service.SecretService;
+import com.flowci.core.secret.domain.AuthSecret;
+import com.flowci.core.secret.domain.RSASecret;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.service.SecretService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.domain.SimpleAuthPair;

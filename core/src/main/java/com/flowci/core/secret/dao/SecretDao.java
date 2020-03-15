@@ -14,38 +14,20 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.core.secret.dao;
 
-import com.flowci.core.common.domain.Mongoable;
-import com.flowci.domain.SimpleSecret;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.data.mongodb.core.index.Indexed;
+import com.flowci.core.secret.domain.Secret;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 /**
  * @author yang
  */
-@Getter
-@Setter
-public class Secret extends Mongoable {
+@Repository
+public interface SecretDao extends MongoRepository<Secret, String>, CustomSecretDao {
 
-    public enum Category {
+    Optional<Secret> findByName(String name);
 
-        AUTH,
-
-        SSH_RSA,
-
-//        SSH_DSS,
-//
-//        SSH_ED25519
-    }
-
-    @Indexed(name = "index_secret_name", unique = true)
-    private String name;
-
-    private Category category;
-
-    public SimpleSecret toSimpleSecret() {
-        return null;
-    }
 }

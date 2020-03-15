@@ -28,9 +28,9 @@ import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
-import com.flowci.core.credential.domain.RSASecret;
-import com.flowci.core.credential.domain.Secret;
-import com.flowci.core.credential.event.GetSecretEvent;
+import com.flowci.core.secret.domain.RSASecret;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.event.GetSecretEvent;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.NoIdleAgentEvent;
 import com.flowci.core.user.domain.User;
@@ -69,7 +69,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static com.flowci.core.credential.domain.Secret.Category.SSH_RSA;
+import static com.flowci.core.secret.domain.Secret.Category.SSH_RSA;
 
 @Log4j2
 @Service

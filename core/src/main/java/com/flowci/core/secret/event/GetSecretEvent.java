@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.event;
+package com.flowci.core.secret.event;
 
 import com.flowci.core.common.domain.SyncEvent;
-import com.flowci.core.credential.domain.Secret;
+import com.flowci.core.secret.domain.Secret;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.context.ApplicationEvent;

@@ -15,7 +15,7 @@
  *
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.core.secret.domain;
 
 public abstract class SecretAction {
 

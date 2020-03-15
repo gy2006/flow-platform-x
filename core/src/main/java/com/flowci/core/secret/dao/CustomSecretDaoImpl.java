@@ -15,9 +15,9 @@
  *
  */
 
-package com.flowci.core.credential.dao;
+package com.flowci.core.secret.dao;
 
-import com.flowci.core.credential.domain.Secret;
+import com.flowci.core.secret.domain.Secret;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;

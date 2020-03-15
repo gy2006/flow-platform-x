@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 flow.ci
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,44 +14,38 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.core.secret.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.flowci.domain.SimpleAuthPair;
+import com.flowci.core.common.domain.Mongoable;
 import com.flowci.domain.SimpleSecret;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.Indexed;
 
 /**
- * Username and password credential
- *
  * @author yang
  */
 @Getter
 @Setter
-@Document(collection = "secret")
-public class AuthSecret extends Secret {
+public class Secret extends Mongoable {
 
-    private SimpleAuthPair pair;
+    public enum Category {
 
-    public AuthSecret() {
-        this.pair = new SimpleAuthPair();
-        this.setCategory(Category.AUTH);
+        AUTH,
+
+        SSH_RSA,
+
+//        SSH_DSS,
+//
+//        SSH_ED25519
     }
 
-    @JsonIgnore
-    public String getUsername() {
-        return pair.getUsername();
-    }
+    @Indexed(name = "index_secret_name", unique = true)
+    private String name;
 
-    @JsonIgnore
-    public String getPassword() {
-        return pair.getPassword();
-    }
+    private Category category;
 
-    @Override
     public SimpleSecret toSimpleSecret() {
-        return pair;
+        return null;
     }
 }

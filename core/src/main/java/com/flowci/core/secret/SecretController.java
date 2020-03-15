@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential;
+package com.flowci.core.secret;
 
 import com.flowci.core.auth.annotation.Action;
-import com.flowci.core.credential.domain.CreateAuth;
-import com.flowci.core.credential.domain.CreateRSA;
-import com.flowci.core.credential.domain.Secret;
-import com.flowci.core.credential.domain.SecretAction;
-import com.flowci.core.credential.service.SecretService;
+import com.flowci.core.secret.domain.CreateAuth;
+import com.flowci.core.secret.domain.CreateRSA;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.domain.SecretAction;
+import com.flowci.core.secret.service.SecretService;
 import com.flowci.domain.SimpleKeyPair;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;

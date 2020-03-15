@@ -16,10 +16,10 @@
 
 package com.flowci.core.test.secret;
 
-import com.flowci.core.credential.domain.AuthSecret;
-import com.flowci.core.credential.domain.RSASecret;
-import com.flowci.core.credential.domain.Secret;
-import com.flowci.core.credential.service.SecretService;
+import com.flowci.core.secret.domain.AuthSecret;
+import com.flowci.core.secret.domain.RSASecret;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.service.SecretService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.exception.DuplicateException;

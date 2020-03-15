@@ -15,9 +15,9 @@
  *
  */
 
-package com.flowci.core.credential.dao;
+package com.flowci.core.secret.dao;
 
-import com.flowci.core.credential.domain.Secret;
+import com.flowci.core.secret.domain.Secret;
 
 import java.util.List;
 

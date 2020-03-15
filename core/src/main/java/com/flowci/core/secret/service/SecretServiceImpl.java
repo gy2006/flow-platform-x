@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.service;
+package com.flowci.core.secret.service;
 
 import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.manager.SessionManager;
-import com.flowci.core.credential.dao.SecretDao;
-import com.flowci.core.credential.domain.AuthSecret;
-import com.flowci.core.credential.domain.RSASecret;
-import com.flowci.core.credential.domain.Secret;
-import com.flowci.core.credential.event.GetSecretEvent;
+import com.flowci.core.secret.dao.SecretDao;
+import com.flowci.core.secret.domain.AuthSecret;
+import com.flowci.core.secret.domain.RSASecret;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.event.GetSecretEvent;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.exception.DuplicateException;

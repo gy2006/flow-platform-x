@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2019 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.core.secret.domain;
 
-import com.flowci.domain.SimpleKeyPair;
-import com.google.common.base.Strings;
+import com.flowci.domain.SimpleAuthPair;
 import javax.validation.constraints.NotEmpty;
 import lombok.Data;
 
@@ -25,23 +24,18 @@ import lombok.Data;
  * @author yang
  */
 @Data
-public class CreateRSA {
+public class CreateAuth {
 
     @NotEmpty
     private String name;
 
     @NotEmpty
-    private String publicKey;
+    private String username;
 
     @NotEmpty
-    private String privateKey;
+    private String password;
 
-    public boolean hasKeyPair() {
-        return !Strings.isNullOrEmpty(publicKey) && !Strings.isNullOrEmpty(privateKey);
+    public SimpleAuthPair getAuthPair() {
+        return SimpleAuthPair.of(username, password);
     }
-
-    public SimpleKeyPair getKeyPair() {
-        return SimpleKeyPair.of(publicKey, privateKey);
-    }
-
 }

@@ -19,7 +19,7 @@ package com.flowci.core.api.service;
 
 import com.flowci.core.api.domain.CreateJobArtifact;
 import com.flowci.core.api.domain.CreateJobReport;
-import com.flowci.core.credential.domain.Secret;
+import com.flowci.core.secret.domain.Secret;
 import com.flowci.core.flow.domain.StatsCounter;
 import com.flowci.core.user.domain.User;
 import java.util.List;
