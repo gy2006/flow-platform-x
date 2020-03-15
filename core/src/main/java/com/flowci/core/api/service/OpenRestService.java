@@ -19,7 +19,7 @@ package com.flowci.core.api.service;
 
 import com.flowci.core.api.domain.CreateJobArtifact;
 import com.flowci.core.api.domain.CreateJobReport;
-import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.credential.domain.Secret;
 import com.flowci.core.flow.domain.StatsCounter;
 import com.flowci.core.user.domain.User;
 import java.util.List;
@@ -31,7 +31,7 @@ public interface OpenRestService {
     /**
      * Get credential data by name
      */
-    Credential getCredential(String name);
+    Secret getSecret(String name);
 
     /**
      * Save statistic data for flow

@@ -24,8 +24,8 @@ import com.flowci.core.common.git.GitClient;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.service.CredentialService;
+import com.flowci.core.credential.domain.Secret;
+import com.flowci.core.credential.service.SecretService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobItemDao;
@@ -140,7 +140,7 @@ public class JobServiceImpl implements JobService {
     private StepService stepService;
 
     @Autowired
-    private CredentialService credentialService;
+    private SecretService secretService;
 
     @Autowired
     private FlowJobQueueManager flowJobQueueManager;
@@ -401,8 +401,8 @@ public class JobServiceImpl implements JobService {
             return null;
         }
 
-        final Credential credential = credentialService.get(credentialName);
-        return credential.toSimpleSecret();
+        final Secret secret = secretService.get(credentialName);
+        return secret.toSimpleSecret();
     }
 
     private void initJobContext(Job job, Flow flow, StringVars... inputs) {

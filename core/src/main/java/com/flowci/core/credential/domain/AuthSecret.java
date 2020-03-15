@@ -30,12 +30,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Getter
 @Setter
-@Document(collection = "credential")
-public class AuthCredential extends Credential {
+@Document(collection = "secret")
+public class AuthSecret extends Secret {
 
     private SimpleAuthPair pair;
 
-    public AuthCredential() {
+    public AuthSecret() {
         this.pair = new SimpleAuthPair();
         this.setCategory(Category.AUTH);
     }

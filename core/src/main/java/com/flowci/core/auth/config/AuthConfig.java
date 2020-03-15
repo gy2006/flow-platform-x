@@ -20,7 +20,7 @@ import com.flowci.core.agent.domain.AgentAction;
 import com.flowci.core.agent.domain.AgentHostAction;
 import com.flowci.core.auth.domain.PermissionMap;
 import com.flowci.core.common.config.ConfigProperties;
-import com.flowci.core.credential.domain.CredentialAction;
+import com.flowci.core.credential.domain.SecretAction;
 import com.flowci.core.flow.domain.FlowAction;
 import com.flowci.core.job.domain.JobAction;
 import com.flowci.core.user.domain.User;
@@ -74,7 +74,7 @@ public class AuthConfig {
         // admin
         permissionMap.add(User.Role.Admin, FlowAction.ALL);
         permissionMap.add(User.Role.Admin, JobAction.ALL);
-        permissionMap.add(User.Role.Admin, CredentialAction.ALL);
+        permissionMap.add(User.Role.Admin, SecretAction.ALL);
         permissionMap.add(User.Role.Admin, AgentAction.ALL);
         permissionMap.add(User.Role.Admin, AgentHostAction.ALL);
         permissionMap.add(User.Role.Admin, UserAction.ALL);
@@ -83,7 +83,7 @@ public class AuthConfig {
         permissionMap.add(User.Role.Developer,
                 FlowAction.GET, FlowAction.LIST, FlowAction.LIST_BRANCH, FlowAction.GET, FlowAction.GET_YML);
         permissionMap.add(User.Role.Developer, JobAction.ALL);
-        permissionMap.add(User.Role.Developer, CredentialAction.LIST_NAME);
+        permissionMap.add(User.Role.Developer, SecretAction.LIST_NAME);
         permissionMap.add(User.Role.Developer, AgentAction.GET, AgentAction.LIST);
         permissionMap.add(User.Role.Developer, AgentHostAction.GET, AgentHostAction.LIST);
         permissionMap.add(User.Role.Developer, UserAction.CHANGE_PASSWORD, UserAction.UPDATE_AVATAR);

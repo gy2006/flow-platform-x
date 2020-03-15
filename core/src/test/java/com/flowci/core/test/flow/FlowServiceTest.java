@@ -19,9 +19,9 @@ package com.flowci.core.test.flow;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.common.domain.Variables;
-import com.flowci.core.credential.domain.AuthCredential;
-import com.flowci.core.credential.domain.RSACredential;
-import com.flowci.core.credential.service.CredentialService;
+import com.flowci.core.credential.domain.AuthSecret;
+import com.flowci.core.credential.domain.RSASecret;
+import com.flowci.core.credential.service.SecretService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.Flow.Status;
 import com.flowci.core.flow.domain.Yml;
@@ -74,7 +74,7 @@ public class FlowServiceTest extends SpringScenario {
     private YmlService ymlService;
 
     @MockBean
-    private CredentialService credentialService;
+    private SecretService credentialService;
 
     @Autowired
     private String serverUrl;
@@ -166,7 +166,7 @@ public class FlowServiceTest extends SpringScenario {
     public void should_list_flow_by_credential_name() {
         String credentialName = "flow-ssh-ras-name";
 
-        RSACredential mocked = new RSACredential();
+        RSASecret mocked = new RSASecret();
         mocked.setName(credentialName);
 
         Mockito.when(credentialService.get(credentialName)).thenReturn(mocked);
@@ -236,7 +236,7 @@ public class FlowServiceTest extends SpringScenario {
     @Test
     public void should_list_remote_branches_via_http_with_credential() throws InterruptedException {
         String credentialName = "test-auth-c";
-        AuthCredential mocked = new AuthCredential();
+        AuthSecret mocked = new AuthSecret();
         mocked.setName(credentialName);
         mocked.setPair(SimpleAuthPair.of("xxx", "xxx"));
         Mockito.when(credentialService.get(credentialName)).thenReturn(mocked);

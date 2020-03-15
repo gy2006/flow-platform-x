@@ -29,12 +29,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Getter
 @Setter
-@Document(collection = "credential")
-public final class RSACredential extends Credential {
+@Document(collection = "secret")
+public final class RSASecret extends Secret {
 
     private SimpleKeyPair pair;
 
-    public RSACredential() {
+    public RSASecret() {
         this.pair = new SimpleKeyPair();
         this.setCategory(Category.SSH_RSA);
     }

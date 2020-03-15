@@ -17,7 +17,7 @@
 
 package com.flowci.core.credential.domain;
 
-public abstract class CredentialAction {
+public abstract class SecretAction {
 
     public static final String LIST = "list_credential";
 

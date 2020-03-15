@@ -14,24 +14,38 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.dao;
+package com.flowci.core.credential.domain;
 
-import java.util.List;
-import java.util.Optional;
-
-import com.flowci.core.credential.domain.Credential;
-
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import com.flowci.core.common.domain.Mongoable;
+import com.flowci.domain.SimpleSecret;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.mongodb.core.index.Indexed;
 
 /**
  * @author yang
  */
-@Repository
-public interface CredentialDao extends MongoRepository<Credential, String>, CustomCredentialDao {
+@Getter
+@Setter
+public class Secret extends Mongoable {
 
-    List<Credential> findAllAndOrderByCreatedAt();
+    public enum Category {
 
-    Optional<Credential> findByName(String name);
+        AUTH,
 
+        SSH_RSA,
+
+//        SSH_DSS,
+//
+//        SSH_ED25519
+    }
+
+    @Indexed(name = "index_secret_name", unique = true)
+    private String name;
+
+    private Category category;
+
+    public SimpleSecret toSimpleSecret() {
+        return null;
+    }
 }

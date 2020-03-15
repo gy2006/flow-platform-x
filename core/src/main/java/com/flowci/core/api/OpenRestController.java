@@ -21,8 +21,8 @@ import com.flowci.core.api.domain.AddStatsItem;
 import com.flowci.core.api.domain.CreateJobArtifact;
 import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.api.service.OpenRestService;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.RSACredential;
+import com.flowci.core.credential.domain.RSASecret;
+import com.flowci.core.credential.domain.Secret;
 import com.flowci.core.flow.domain.StatsCounter;
 import com.flowci.core.user.domain.User;
 import java.util.List;
@@ -49,12 +49,12 @@ public class OpenRestController {
     private OpenRestService openRestService;
 
     @GetMapping("/credential/{name}")
-    public Credential getCredential(@PathVariable String name) {
-        Credential credential = openRestService.getCredential(name);
+    public Secret getSecret(@PathVariable String name) {
+        Secret credential = openRestService.getSecret(name);
         credential.cleanDBInfo();
 
-        if (credential instanceof RSACredential) {
-            RSACredential rsa = (RSACredential) credential;
+        if (credential instanceof RSASecret) {
+            RSASecret rsa = (RSASecret) credential;
             rsa.setPublicKey(null);
         }
 

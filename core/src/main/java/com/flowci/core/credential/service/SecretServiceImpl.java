@@ -18,21 +18,16 @@ package com.flowci.core.credential.service;
 
 import com.flowci.core.common.helper.CipherHelper;
 import com.flowci.core.common.manager.SessionManager;
-import com.flowci.core.credential.dao.CredentialDao;
-import com.flowci.core.credential.domain.AuthCredential;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.Credential.Category;
-import com.flowci.core.credential.domain.RSACredential;
-import com.flowci.core.credential.event.GetCredentialEvent;
+import com.flowci.core.credential.dao.SecretDao;
+import com.flowci.core.credential.domain.AuthSecret;
+import com.flowci.core.credential.domain.RSASecret;
+import com.flowci.core.credential.domain.Secret;
+import com.flowci.core.credential.event.GetSecretEvent;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.util.StringHelper;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -40,36 +35,41 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * @author yang
  */
 @Log4j2
 @Service
-public class CredentialServiceImpl implements CredentialService {
+public class SecretServiceImpl implements SecretService {
 
     @Autowired
-    private CredentialDao credentialDao;
+    private SecretDao secretDao;
 
     @Autowired
     private SessionManager sessionManager;
 
     @Override
-    public List<Credential> list() {
-        return credentialDao.findAll(Sort.by("createdAt"));
+    public List<Secret> list() {
+        return secretDao.findAll(Sort.by("createdAt"));
     }
 
     @Override
-    public List<Credential> listName(String category) {
+    public List<Secret> listName(String category) {
         if (!StringHelper.hasValue(category)) {
-            return credentialDao.listNameOnly();
+            return secretDao.listNameOnly();
         }
 
-        return credentialDao.listNameOnly(Category.valueOf(category));
+        return secretDao.listNameOnly(Secret.Category.valueOf(category));
     }
 
     @Override
-    public Credential get(String name) {
-        Optional<Credential> optional = credentialDao.findByName(name);
+    public Secret get(String name) {
+        Optional<Secret> optional = secretDao.findByName(name);
         if (optional.isPresent()) {
             return optional.get();
         }
@@ -77,9 +77,9 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public Credential delete(String name) {
-        Credential c = get(name);
-        credentialDao.delete(c);
+    public Secret delete(String name) {
+        Secret c = get(name);
+        secretDao.delete(c);
         return c;
     }
 
@@ -90,11 +90,11 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public RSACredential createRSA(String name) {
+    public RSASecret createRSA(String name) {
         String email = sessionManager.get().getEmail();
         SimpleKeyPair pair = CipherHelper.RSA.gen(email);
 
-        RSACredential rsaCredential = new RSACredential();
+        RSASecret rsaCredential = new RSASecret();
         rsaCredential.setName(name);
         rsaCredential.setPair(pair);
 
@@ -102,37 +102,37 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public RSACredential createRSA(String name, SimpleKeyPair pair) {
-        RSACredential rsaCredential = new RSACredential();
+    public RSASecret createRSA(String name, SimpleKeyPair pair) {
+        RSASecret rsaCredential = new RSASecret();
         rsaCredential.setName(name);
         rsaCredential.setPair(pair);
         return save(rsaCredential);
     }
 
     @Override
-    public AuthCredential createAuth(String name, SimpleAuthPair pair) {
-        AuthCredential auth = new AuthCredential();
+    public AuthSecret createAuth(String name, SimpleAuthPair pair) {
+        AuthSecret auth = new AuthSecret();
         auth.setName(name);
         auth.setPair(pair);
         return save(auth);
     }
 
     @EventListener
-    public void onGetCredentialEvent(GetCredentialEvent event) {
+    public void onGetCredentialEvent(GetSecretEvent event) {
         try {
-            Credential c = get(event.getName());
-            event.setCredential(c);
+            Secret c = get(event.getName());
+            event.setSecret(c);
         } catch (NotFoundException ignore) {
         }
     }
 
-    private <T extends Credential> T save(T credential) {
+    private <T extends Secret> T save(T credential) {
         try {
             Date now = Date.from(Instant.now());
             credential.setUpdatedAt(now);
             credential.setCreatedAt(now);
             credential.setCreatedBy(sessionManager.getUserId());
-            return credentialDao.insert(credential);
+            return secretDao.insert(credential);
         } catch (DuplicateKeyException e) {
             throw new DuplicateException("Credential name {0} is already defined", credential.getName());
         }

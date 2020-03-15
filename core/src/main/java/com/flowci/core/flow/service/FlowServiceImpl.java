@@ -21,8 +21,8 @@ import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.service.CredentialService;
+import com.flowci.core.credential.domain.Secret;
+import com.flowci.core.credential.service.SecretService;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.FlowUserDao;
 import com.flowci.core.flow.dao.YmlDao;
@@ -97,7 +97,7 @@ public class FlowServiceImpl implements FlowService {
     private FileManager fileManager;
 
     @Autowired
-    private CredentialService credentialService;
+    private SecretService secretService;
 
     @Autowired
     private RabbitChannelOperation jobQueueManager;
@@ -114,14 +114,14 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public List<Flow> listByCredential(String credentialName) {
-        Credential credential = credentialService.get(credentialName);
+        Secret secret = secretService.get(credentialName);
 
         List<Flow> list = list(Status.CONFIRMED);
         Iterator<Flow> iter = list.iterator();
 
         for (; iter.hasNext(); ) {
             Flow flow = iter.next();
-            if (Objects.equals(flow.getCredentialName(), credential.getName())) {
+            if (Objects.equals(flow.getCredentialName(), secret.getName())) {
                 continue;
             }
 
@@ -261,7 +261,7 @@ public class FlowServiceImpl implements FlowService {
         Flow flow = get(name);
 
         String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
-        credentialService.createRSA(credentialName, pair);
+        secretService.createRSA(credentialName, pair);
 
         return credentialName;
     }
@@ -271,7 +271,7 @@ public class FlowServiceImpl implements FlowService {
         Flow flow = get(name);
 
         String credentialName = "flow-" + flow.getName() + "-auth";
-        credentialService.createAuth(credentialName, keyPair);
+        secretService.createAuth(credentialName, keyPair);
 
         return credentialName;
     }

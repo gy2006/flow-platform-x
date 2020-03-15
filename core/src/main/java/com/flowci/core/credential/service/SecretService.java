@@ -16,9 +16,9 @@
 
 package com.flowci.core.credential.service;
 
-import com.flowci.core.credential.domain.AuthCredential;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.RSACredential;
+import com.flowci.core.credential.domain.AuthSecret;
+import com.flowci.core.credential.domain.Secret;
+import com.flowci.core.credential.domain.RSASecret;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
 
@@ -27,27 +27,27 @@ import java.util.List;
 /**
  * @author yang
  */
-public interface CredentialService {
+public interface SecretService {
 
     /**
      * List credential for current user
      */
-    List<Credential> list();
+    List<Secret> list();
 
     /**
      * List credential name only for current user
      */
-    List<Credential> listName(String category);
+    List<Secret> listName(String category);
 
     /**
      * Get credential for current user
      */
-    Credential get(String name);
+    Secret get(String name);
 
     /**
      * Delete credential by name
      */
-    Credential delete(String name);
+    Secret delete(String name);
 
     /**
      * Generate RSA key pair
@@ -57,16 +57,16 @@ public interface CredentialService {
     /**
      * Create rsa key pair which is generated automatically
      */
-    RSACredential createRSA(String name);
+    RSASecret createRSA(String name);
 
     /**
      * Create rsa key pair which is given from user
      */
-    RSACredential createRSA(String name, SimpleKeyPair pair);
+    RSASecret createRSA(String name, SimpleKeyPair pair);
 
     /**
      * Create auth username, password pair
      */
-    AuthCredential createAuth(String name, SimpleAuthPair pair);
+    AuthSecret createAuth(String name, SimpleAuthPair pair);
 
 }

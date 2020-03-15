@@ -17,7 +17,7 @@
 package com.flowci.core.credential.event;
 
 import com.flowci.core.common.domain.SyncEvent;
-import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.credential.domain.Secret;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.context.ApplicationEvent;
@@ -27,13 +27,13 @@ import org.springframework.context.ApplicationEvent;
  */
 @Getter
 @Setter
-public class GetCredentialEvent extends ApplicationEvent implements SyncEvent {
+public class GetSecretEvent extends ApplicationEvent implements SyncEvent {
 
     private final String name;
 
-    private Credential credential;
+    private Secret secret;
 
-    public GetCredentialEvent(Object source, String credentialName) {
+    public GetSecretEvent(Object source, String credentialName) {
         super(source);
         this.name = credentialName;
     }

@@ -17,13 +17,13 @@
 
 package com.flowci.core.credential.dao;
 
-import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.credential.domain.Secret;
 
 import java.util.List;
 
-public interface CustomCredentialDao {
+public interface CustomSecretDao {
 
-    List<Credential> listNameOnly();
+    List<Secret> listNameOnly();
 
-    List<Credential> listNameOnly(Credential.Category category);
+    List<Secret> listNameOnly(Secret.Category category);
 }

@@ -18,11 +18,10 @@ package com.flowci.core.flow.service;
 
 import com.flowci.core.common.git.GitClient;
 import com.flowci.core.common.manager.SpringEventManager;
-import com.flowci.core.credential.domain.AuthCredential;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.Credential.Category;
-import com.flowci.core.credential.domain.RSACredential;
-import com.flowci.core.credential.service.CredentialService;
+import com.flowci.core.credential.domain.AuthSecret;
+import com.flowci.core.credential.domain.RSASecret;
+import com.flowci.core.credential.domain.Secret;
+import com.flowci.core.credential.service.SecretService;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.event.GitTestEvent;
 import com.flowci.domain.SimpleAuthPair;
@@ -65,14 +64,14 @@ public class GitServiceImpl implements GitService {
     private SpringEventManager eventManager;
 
     @Autowired
-    private CredentialService credentialService;
+    private SecretService credentialService;
 
     @Override
     public void testConn(Flow flow, String url, String credential) {
-        Credential c = getCredential(credential);
+        Secret c = getSecret(credential);
 
         if (c != null) {
-            if (c.getCategory() != Category.AUTH && StringHelper.isHttpLink(url)) {
+            if (c.getCategory() != Secret.Category.AUTH && StringHelper.isHttpLink(url)) {
                 throw new ArgumentException("Invalid credential for http git url");
             }
         }
@@ -86,7 +85,7 @@ public class GitServiceImpl implements GitService {
             throw new ArgumentException("Invalid git url");
         }
 
-        RSACredential c = new RSACredential();
+        RSASecret c = new RSASecret();
         c.setPair(rsa);
 
         gitTestExecutor.execute(() -> fetchBranchFromGit(flow, url, c));
@@ -98,7 +97,7 @@ public class GitServiceImpl implements GitService {
             throw new ArgumentException("Invalid git url");
         }
 
-        AuthCredential c = new AuthCredential();
+        AuthSecret c = new AuthSecret();
         c.setPair(auth);
 
         gitTestExecutor.execute(() -> fetchBranchFromGit(flow, url, c));
@@ -108,14 +107,14 @@ public class GitServiceImpl implements GitService {
     public List<String> listGitBranch(Flow flow) {
         final String credentialName = flow.getCredentialName();
         return gitBranchCache.get(flow.getId(), (Function<String, List<String>>) flowId ->
-                fetchBranchFromGit(flow, flow.getGitUrl(), getCredential(credentialName)));
+                fetchBranchFromGit(flow, flow.getGitUrl(), getSecret(credentialName)));
     }
 
     //====================================================================
     //        %% Utils
     //====================================================================
 
-    private Credential getCredential(String name) {
+    private Secret getSecret(String name) {
         if (!StringHelper.hasValue(name)) {
             return null;
         }
@@ -123,7 +122,7 @@ public class GitServiceImpl implements GitService {
         return credentialService.get(name);
     }
 
-    private List<String> fetchBranchFromGit(Flow flow, String url, Credential credential) {
+    private List<String> fetchBranchFromGit(Flow flow, String url, Secret credential) {
         if (Strings.isNullOrEmpty(url)) {
             eventManager.publish(new GitTestEvent(this, flow.getId(), "Git url is missing"));
             return Collections.emptyList();
