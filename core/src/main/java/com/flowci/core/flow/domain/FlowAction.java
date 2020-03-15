@@ -25,6 +25,8 @@ public abstract class FlowAction {
 
     public static final String CONFIRM = "confirm_flow";
 
+    public static final String UPDATE = "update_flow";
+
     public static final String DELETE = "delete_flow";
 
     public static final String LIST = "list_flow";
@@ -56,24 +58,25 @@ public abstract class FlowAction {
     public static final String LIST_PLUGINS = "list_plugins";
 
     public static final String[] ALL = {
-        CREATE,
-        CHECK_NAME,
-        CONFIRM,
-        DELETE,
-        LIST,
-        LIST_BY_CREDENTIAL,
-        GET,
-        ADD_VARS,
-        REMOVE_VARS,
-        GET_YML,
-        SET_YML,
-        GIT_TEST,
-        LIST_BRANCH,
-        SETUP_CREDENTIAL,
-        ADD_USER,
-        REMOVE_USER,
-        LIST_USER,
-        LIST_PLUGINS
+            CREATE,
+            CHECK_NAME,
+            CONFIRM,
+            UPDATE,
+            DELETE,
+            LIST,
+            LIST_BY_CREDENTIAL,
+            GET,
+            ADD_VARS,
+            REMOVE_VARS,
+            GET_YML,
+            SET_YML,
+            GIT_TEST,
+            LIST_BRANCH,
+            SETUP_CREDENTIAL,
+            ADD_USER,
+            REMOVE_USER,
+            LIST_USER,
+            LIST_PLUGINS
     };
 
 }
