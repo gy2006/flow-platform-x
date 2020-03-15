@@ -105,13 +105,13 @@ public class FlowController {
     /**
      * Create credential for flow only
      */
-    @PostMapping("/{name}/credentials/rsa")
+    @PostMapping("/{name}/secret/rsa")
     @Action(FlowAction.SETUP_CREDENTIAL)
     public String setupRSACredential(@PathVariable String name, @RequestBody SimpleKeyPair pair) {
         return flowService.setSshRsaCredential(name, pair);
     }
 
-    @PostMapping("/{name}/credentials/auth")
+    @PostMapping("/{name}/secret/auth")
     @Action(FlowAction.SETUP_CREDENTIAL)
     public String setupAuthCredential(@PathVariable String name, @RequestBody SimpleAuthPair pair) {
         return flowService.setAuthCredential(name, pair);
@@ -156,7 +156,7 @@ public class FlowController {
         flowVarService.remove(flow, vars);
     }
 
-    @GetMapping("/credentials/{name}")
+    @GetMapping("/secret/{name}")
     @Action(FlowAction.LIST_BY_CREDENTIAL)
     public List<Flow> listFlowByCredentials(@PathVariable String name) {
         return flowService.listByCredential(name);

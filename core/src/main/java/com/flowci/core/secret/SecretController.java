@@ -39,55 +39,55 @@ import org.springframework.web.bind.annotation.RestController;
  * @author yang
  */
 @RestController
-@RequestMapping("/credentials")
+@RequestMapping("/secrets")
 public class SecretController {
 
     @Autowired
-    private SecretService credentialService;
+    private SecretService secretService;
 
     @GetMapping("/{name}")
     @Action(SecretAction.GET)
     public Secret getByName(@PathVariable String name) {
-        return credentialService.get(name);
+        return secretService.get(name);
     }
 
     @GetMapping
     @Action(SecretAction.LIST)
     public List<Secret> list() {
-        return credentialService.list();
+        return secretService.list();
     }
 
     @GetMapping("/list/name")
     @Action(SecretAction.LIST_NAME)
     public List<Secret> listName(@RequestParam String category) {
-        return credentialService.listName(category);
+        return secretService.listName(category);
     }
 
     @PostMapping("/rsa")
     @Action(SecretAction.CREATE_RSA)
     public Secret create(@Validated @RequestBody CreateRSA body) {
         if (body.hasKeyPair()) {
-            return credentialService.createRSA(body.getName(), body.getKeyPair());
+            return secretService.createRSA(body.getName(), body.getKeyPair());
         }
 
-        return credentialService.createRSA(body.getName());
+        return secretService.createRSA(body.getName());
     }
 
     @PostMapping("/auth")
     @Action(SecretAction.CREATE_AUTH)
     public Secret create(@Validated @RequestBody CreateAuth body) {
-        return credentialService.createAuth(body.getName(), body.getAuthPair());
+        return secretService.createAuth(body.getName(), body.getAuthPair());
     }
 
     @PostMapping("/rsa/gen")
     @Action(SecretAction.GENERATE_RSA)
     public SimpleKeyPair genByEmail() {
-        return credentialService.genRSA();
+        return secretService.genRSA();
     }
 
     @DeleteMapping("/{name}")
     @Action(SecretAction.DELETE)
     public Secret delete(@PathVariable String name) {
-        return credentialService.delete(name);
+        return secretService.delete(name);
     }
 }
