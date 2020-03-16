@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,30 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.service;
+package com.flowci.core.flow.domain;
 
-import com.flowci.core.job.event.JobCreatedEvent;
-import com.flowci.core.job.event.JobStatusChangeEvent;
-import com.flowci.core.job.event.StepInitializedEvent;
-import com.flowci.core.job.event.StepStatusChangeEvent;
+import lombok.Getter;
+import lombok.Setter;
 
-/**
- * @author yang
- */
-public interface PushService {
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
-    void onJobCreated(JobCreatedEvent event);
+@Getter
+@Setter
+public class UpdateFlow {
 
-    void onJobStatusChange(JobStatusChangeEvent event);
+    @NotEmpty
+    private String name;
 
-    void onStepStatusChange(StepStatusChangeEvent event);
+    @NotNull
+    private Boolean isYamlFromRepo;
 
-    void onStepInitialized(StepInitializedEvent event);
+    @NotEmpty
+    private String yamlRepoBranch;
+
+    public void update(Flow flow) {
+        flow.setName(name);
+        flow.setYamlFromRepo(isYamlFromRepo);
+        flow.setYamlRepoBranch(yamlRepoBranch);
+    }
 }

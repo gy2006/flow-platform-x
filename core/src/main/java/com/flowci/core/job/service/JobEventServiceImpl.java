@@ -38,6 +38,7 @@ import com.flowci.core.job.manager.FlowJobQueueManager;
 import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.StatusHelper;
 import com.flowci.domain.*;
+import com.flowci.exception.NotAvailableException;
 import com.flowci.tree.GroovyRunner;
 import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
@@ -48,6 +49,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -91,6 +93,9 @@ public class JobEventServiceImpl implements JobEventService {
 
     @Autowired
     private StepService stepService;
+
+    @Autowired
+    private ThreadPoolTaskExecutor jobRunExecutor;
 
     private final Map<String, JobConsumerHandler> consumeHandlers = new ConcurrentHashMap<>();
 
@@ -160,9 +165,16 @@ public class JobEventServiceImpl implements JobEventService {
     }
 
     @EventListener
-    public void onApplicationEvent(CreateNewJobEvent event) {
-        Job job = jobService.create(event.getFlow(), event.getYml(), event.getTrigger(), event.getInput());
-        jobService.start(job);
+    public void startNewJob(CreateNewJobEvent event) {
+        jobRunExecutor.execute(() -> {
+            try {
+                Job job = jobService.create(event.getFlow(), event.getYml(), event.getTrigger(), event.getInput());
+                jobService.start(job);
+            } catch (NotAvailableException e) {
+                Job job = (Job) e.getExtra();
+                jobService.setJobStatusAndSave(job, Job.Status.FAILURE, e.getMessage());
+            }
+        });
     }
 
     @EventListener

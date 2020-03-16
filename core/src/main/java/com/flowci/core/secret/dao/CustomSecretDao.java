@@ -15,15 +15,15 @@
  *
  */
 
-package com.flowci.core.credential.dao;
+package com.flowci.core.secret.dao;
 
-import com.flowci.core.credential.domain.Credential;
+import com.flowci.core.secret.domain.Secret;
 
 import java.util.List;
 
-public interface CustomCredentialDao {
+public interface CustomSecretDao {
 
-    List<Credential> listNameOnly();
+    List<Secret> listNameOnly();
 
-    List<Credential> listNameOnly(Credential.Category category);
+    List<Secret> listNameOnly(Secret.Category category);
 }

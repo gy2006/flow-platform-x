@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.service;
+package com.flowci.core.flow.event;
 
-import com.flowci.core.job.event.JobCreatedEvent;
-import com.flowci.core.job.event.JobStatusChangeEvent;
-import com.flowci.core.job.event.StepInitializedEvent;
-import com.flowci.core.job.event.StepStatusChangeEvent;
+import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
-/**
- * @author yang
- */
-public interface PushService {
+@Getter
+public class GitFileFetchedEvent extends ApplicationEvent {
 
-    void onJobCreated(JobCreatedEvent event);
+    private final String fileName;
 
-    void onJobStatusChange(JobStatusChangeEvent event);
+    private final String content;
 
-    void onStepStatusChange(StepStatusChangeEvent event);
+    private final String error;
 
-    void onStepInitialized(StepInitializedEvent event);
+    public GitFileFetchedEvent(Object source, String fileName, String content, String error) {
+        super(source);
+        this.fileName = fileName;
+        this.content = content;
+        this.error = error;
+    }
 }

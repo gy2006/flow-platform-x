@@ -31,14 +31,14 @@ public class FlowGitTest {
     @NotEmpty
     private String gitUrl;
 
-    private String credential;
+    private String secret;
 
     private SimpleAuthPair auth;
 
     private SimpleKeyPair rsa;
 
     public boolean hasCredential() {
-        return StringHelper.hasValue(credential);
+        return StringHelper.hasValue(secret);
     }
 
     public boolean hasPrivateKey() {

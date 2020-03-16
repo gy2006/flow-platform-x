@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,27 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.service;
+package com.flowci.core.secret.event;
 
-import com.flowci.core.job.event.JobCreatedEvent;
-import com.flowci.core.job.event.JobStatusChangeEvent;
-import com.flowci.core.job.event.StepInitializedEvent;
-import com.flowci.core.job.event.StepStatusChangeEvent;
+import com.flowci.core.common.domain.SyncEvent;
+import com.flowci.core.secret.domain.Secret;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.context.ApplicationEvent;
 
 /**
- * @author yang
+ * Sync event to get credential by name
  */
-public interface PushService {
+@Getter
+@Setter
+public class GetSecretEvent extends ApplicationEvent implements SyncEvent {
 
-    void onJobCreated(JobCreatedEvent event);
+    private final String name;
 
-    void onJobStatusChange(JobStatusChangeEvent event);
+    private Secret secret;
 
-    void onStepStatusChange(StepStatusChangeEvent event);
-
-    void onStepInitialized(StepInitializedEvent event);
+    public GetSecretEvent(Object source, String credentialName) {
+        super(source);
+        this.name = credentialName;
+    }
 }

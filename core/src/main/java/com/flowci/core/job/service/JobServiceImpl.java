@@ -16,17 +16,17 @@
 
 package com.flowci.core.job.service;
 
-import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowci.core.agent.service.AgentService;
 import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.domain.Variables;
+import com.flowci.core.common.git.GitClient;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitQueueOperation;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.service.SecretService;
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.dao.JobDao;
 import com.flowci.core.job.dao.JobItemDao;
 import com.flowci.core.job.dao.JobNumberDao;
@@ -44,18 +44,16 @@ import com.flowci.core.job.manager.YmlManager;
 import com.flowci.core.job.util.JobKeyBuilder;
 import com.flowci.domain.Agent;
 import com.flowci.domain.CmdIn;
+import com.flowci.domain.SimpleSecret;
 import com.flowci.domain.StringVars;
+import com.flowci.exception.NotAvailableException;
 import com.flowci.exception.NotFoundException;
 import com.flowci.exception.StatusException;
 import com.flowci.store.FileManager;
 import com.flowci.tree.Node;
 import com.flowci.tree.YmlParser;
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
+import com.flowci.util.StringHelper;
+import com.google.common.base.Strings;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -65,6 +63,19 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
+import java.util.Date;
+import java.util.Objects;
+import java.util.Optional;
+
+import static com.flowci.core.trigger.domain.Variables.GIT_AUTHOR;
 
 /**
  * @author yang
@@ -87,6 +98,12 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private Path repoDir;
+
+    @Autowired
+    private Path tmpDir;
 
     @Autowired
     private JobDao jobDao;
@@ -123,6 +140,9 @@ public class JobServiceImpl implements JobService {
     private StepService stepService;
 
     @Autowired
+    private SecretService secretService;
+
+    @Autowired
     private FlowJobQueueManager flowJobQueueManager;
 
     //====================================================================
@@ -150,7 +170,7 @@ public class JobServiceImpl implements JobService {
         }
 
         throw new NotFoundException(
-            "The job {0} for build number {1} cannot found", flow.getName(), Long.toString(buildNumber));
+                "The job {0} for build number {1} cannot found", flow.getName(), Long.toString(buildNumber));
     }
 
     @Override
@@ -177,66 +197,24 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job create(Flow flow, Yml yml, Trigger trigger, StringVars input) {
-        // verify yml and parse to Node
-        Node root = YmlParser.load(flow.getName(), yml.getRaw());
-
-        // create job number
-        JobNumber jobNumber = jobNumberDao.increaseBuildNumber(flow.getId());
-
-        // create job
-        Job job = new Job();
-        job.setKey(JobKeyBuilder.build(flow, jobNumber.getNumber()));
-        job.setFlowId(flow.getId());
-        job.setTrigger(trigger);
-        job.setBuildNumber(jobNumber.getNumber());
-        job.setCurrentPath(root.getPathAsString());
-        job.setAgentSelector(root.getSelector());
-        job.setCreatedAt(Date.from(Instant.now()));
-        job.setTimeout(jobProperties.getTimeoutInSeconds());
-        job.setExpire(jobProperties.getExpireInSeconds());
-
-        // init job context
-        initJobContext(job, flow, input);
-
-        // setup created by form login user or git event author
-        if (sessionManager.exist()) {
-            job.setCreatedBy(sessionManager.getUserId());
-            job.getContext().put(Variables.Job.TriggerBy, sessionManager.get().getEmail());
-        } else {
-            String createdBy = job.getContext().get(GIT_AUTHOR, "Unknown");
-            job.setCreatedBy(createdBy);
-            job.getContext().put(Variables.Job.TriggerBy, createdBy);
-        }
-
-        long totalExpire = job.getExpire() + job.getTimeout();
-        Instant expireAt = Instant.now().plus(totalExpire, ChronoUnit.SECONDS);
-        job.setExpireAt(Date.from(expireAt));
-
-        // save
-        jobDao.insert(job);
-
-        // create job file space
-        try {
-            fileManager.create(flow, job);
-        } catch (IOException e) {
-            jobDao.delete(job);
-            throw new StatusException("Cannot create workspace for job");
-        }
-
-        // create job yml
-        ymlManager.create(flow, job, yml);
-
-        // init job steps as executed cmd
-        stepService.init(job);
-
+    public Job create(Flow flow, String yml, Trigger trigger, StringVars input) {
+        Job job = createJob(flow, trigger, input);
         eventManager.publish(new JobCreatedEvent(this, job));
+
+        if (job.isYamlFromRepo()) {
+            setJobStatusAndSave(job, Job.Status.LOADING, StringHelper.EMPTY);
+            yml = fetchYamlFromGit(flow.getName(), job);
+        }
+
+        setupYaml(flow, yml, job);
+        stepService.init(job);
+        setJobStatusAndSave(job, Job.Status.CREATED, StringHelper.EMPTY);
         return job;
     }
 
     @Override
     public Job start(Job job) {
-        if (job.getStatus() != Job.Status.PENDING) {
+        if (job.getStatus() != Job.Status.CREATED) {
             throw new StatusException("Job not in pending status");
         }
 
@@ -304,6 +282,12 @@ public class JobServiceImpl implements JobService {
             return jobDao.save(job);
         }
 
+        if (Job.FINISH_STATUS.contains(newStatus)) {
+            if (Objects.isNull(job.getFinishAt())) {
+                job.setFinishAt(new Date());
+            }
+        }
+
         job.setStatus(newStatus);
         job.setMessage(message);
         job.getContext().put(Variables.Job.Status, newStatus.name());
@@ -316,8 +300,113 @@ public class JobServiceImpl implements JobService {
     //        %% Utils
     //====================================================================
 
+    private Job createJob(Flow flow, Trigger trigger, StringVars input) {
+        // create job number
+        JobNumber jobNumber = jobNumberDao.increaseBuildNumber(flow.getId());
+
+        // create job
+        Job job = new Job();
+        job.setKey(JobKeyBuilder.build(flow, jobNumber.getNumber()));
+        job.setFlowId(flow.getId());
+        job.setTrigger(trigger);
+        job.setBuildNumber(jobNumber.getNumber());
+        job.setCreatedAt(Date.from(Instant.now()));
+        job.setTimeout(jobProperties.getTimeoutInSeconds());
+        job.setExpire(jobProperties.getExpireInSeconds());
+        job.setYamlFromRepo(flow.isYamlFromRepo());
+        job.setYamlRepoBranch(flow.getYamlRepoBranch());
+
+        // init job context
+        initJobContext(job, flow, input);
+
+        // setup created by form login user or git event author
+        if (sessionManager.exist()) {
+            job.setCreatedBy(sessionManager.getUserId());
+            job.getContext().put(Variables.Job.TriggerBy, sessionManager.get().getEmail());
+        } else {
+            String createdBy = job.getContext().get(GIT_AUTHOR, "Unknown");
+            job.setCreatedBy(createdBy);
+            job.getContext().put(Variables.Job.TriggerBy, createdBy);
+        }
+
+        long totalExpire = job.getExpire() + job.getTimeout();
+        Instant expireAt = Instant.now().plus(totalExpire, ChronoUnit.SECONDS);
+        job.setExpireAt(Date.from(expireAt));
+
+        // create job file space
+        try {
+            fileManager.create(flow, job);
+        } catch (IOException e) {
+            jobDao.delete(job);
+            throw new StatusException("Cannot create workspace for job");
+        }
+
+        // save
+        return jobDao.insert(job);
+    }
+
+    private void setupYaml(Flow flow, String yml, Job job) {
+        Node root = YmlParser.load(flow.getName(), yml);
+
+        job.setCurrentPath(root.getPathAsString());
+        job.setAgentSelector(root.getSelector());
+        job.getContext().merge(root.getEnvironments());
+
+        ymlManager.create(flow, job, yml);
+        jobDao.save(job);
+    }
+
+    private String fetchYamlFromGit(String flowName, Job job) {
+        final String gitUrl = job.getGitUrl();
+
+        if (!StringHelper.hasValue(gitUrl)) {
+            throw new NotAvailableException("Git url is missing").setExtra(job);
+        }
+
+        final Path dir = getFlowRepoDir(gitUrl, job.getYamlRepoBranch());
+
+        try {
+            GitClient client = new GitClient(gitUrl, tmpDir, getSimpleSecret(job.getCredentialName()));
+            client.klone(dir, job.getYamlRepoBranch());
+        } catch (Exception e) {
+            log.warn("Unable to fetch yaml config for flow {}", flowName, e);
+            throw new NotAvailableException("Unable to fetch yaml config for flow {0}", flowName).setExtra(job);
+        }
+
+        String[] files = dir.toFile().list((currentDir, fileName) ->
+                (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) && fileName.startsWith(".flowci"));
+
+        if (files == null || files.length == 0) {
+            throw new NotAvailableException("Unable to find yaml file in repo").setExtra(job);
+        }
+
+        try {
+            byte[] ymlInBytes = Files.readAllBytes(Paths.get(dir.toString(), files[0]));
+            return new String(ymlInBytes);
+        } catch (IOException e) {
+            throw new NotAvailableException("Unable to read yaml file in repo").setExtra(job);
+        }
+    }
+
+    /**
+     * Get flow repo path: {repo dir}/{flow id}
+     */
+    private Path getFlowRepoDir(String repoUrl, String branch) {
+        String b64 = Base64.getEncoder().encodeToString(repoUrl.getBytes());
+        return Paths.get(repoDir.toString(), b64 + "_" + branch);
+    }
+
+    private SimpleSecret getSimpleSecret(String credentialName) {
+        if (Strings.isNullOrEmpty(credentialName)) {
+            return null;
+        }
+
+        final Secret secret = secretService.get(credentialName);
+        return secret.toSimpleSecret();
+    }
+
     private void initJobContext(Job job, Flow flow, StringVars... inputs) {
-        StringVars context = new StringVars(flow.getVariables());
+        StringVars context = new StringVars();
         context.mergeFromTypedVars(flow.getLocally());
 
         context.put(Variables.App.Url, serverUrl);

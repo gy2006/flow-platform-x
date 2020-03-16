@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor(staticName = "of")
-public class SimpleAuthPair {
+public class SimpleAuthPair implements SimpleSecret {
 
     private String username;
 

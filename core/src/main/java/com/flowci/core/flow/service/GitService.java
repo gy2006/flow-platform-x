@@ -19,6 +19,7 @@ package com.flowci.core.flow.service;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.domain.SimpleKeyPair;
+
 import java.util.List;
 
 /**
@@ -28,9 +29,10 @@ public interface GitService {
 
     /**
      * Test git connection for http or ssh with credential
-     * @param credential nullable
+     *
+     * @param secret nullable
      */
-    void testConn(Flow flow, String url, String credential);
+    void testConn(Flow flow, String url, String secret);
 
     /**
      * Test git connection for ssh url with private key
@@ -44,6 +46,7 @@ public interface GitService {
 
     /**
      * List remote branches
+     *
      * @return list of branches or empty list if git config not defined
      */
     List<String> listGitBranch(Flow flow);

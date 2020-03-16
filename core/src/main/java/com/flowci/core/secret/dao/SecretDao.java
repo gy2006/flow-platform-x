@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 flow.ci
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package com.flowci.core.job.service;
+package com.flowci.core.secret.dao;
 
-import com.flowci.core.job.event.JobCreatedEvent;
-import com.flowci.core.job.event.JobStatusChangeEvent;
-import com.flowci.core.job.event.StepInitializedEvent;
-import com.flowci.core.job.event.StepStatusChangeEvent;
+import com.flowci.core.secret.domain.Secret;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 /**
  * @author yang
  */
-public interface PushService {
+@Repository
+public interface SecretDao extends MongoRepository<Secret, String>, CustomSecretDao {
 
-    void onJobCreated(JobCreatedEvent event);
+    Optional<Secret> findByName(String name);
 
-    void onJobStatusChange(JobStatusChangeEvent event);
-
-    void onStepStatusChange(StepStatusChangeEvent event);
-
-    void onStepInitialized(StepInitializedEvent event);
 }

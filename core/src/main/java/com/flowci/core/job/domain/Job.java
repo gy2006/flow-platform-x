@@ -18,6 +18,7 @@ package com.flowci.core.job.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flowci.core.common.domain.Mongoable;
+import com.flowci.core.common.domain.Variables;
 import com.flowci.domain.Agent;
 import com.flowci.domain.StringVars;
 import com.flowci.domain.Vars;
@@ -87,6 +88,16 @@ public class Job extends Mongoable implements Pathable {
          * Initial job state
          */
         PENDING,
+
+        /**
+         * Loading the yaml from git repo
+         */
+        LOADING,
+
+        /**
+         * Job created with yaml and steps
+         */
+        CREATED,
 
         /**
          * Been put to job queue
@@ -189,6 +200,10 @@ public class Job extends Mongoable implements Pathable {
 
     private Integer priority = MinPriority;
 
+    private boolean isYamlFromRepo;
+
+    private String yamlRepoBranch;
+
     /**
      * Execution timeout in seconds
      */
@@ -254,6 +269,14 @@ public class Job extends Mongoable implements Pathable {
             return StringHelper.EMPTY;
         }
         return DateFormat.format(this.finishAt);
+    }
+
+    public String getCredentialName() {
+        return context.get(Variables.Flow.GitCredential);
+    }
+
+    public String getGitUrl() {
+        return context.get(Variables.Flow.GitUrl);
     }
 
     public void setAgentSnapshot(Agent agent) {

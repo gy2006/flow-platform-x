@@ -27,7 +27,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class SshAgentHost extends AgentHost {
 
     @NonNull
-    private String credential;
+    private String secret;
 
     @NonNull
     private String user;

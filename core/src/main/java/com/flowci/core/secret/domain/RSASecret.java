@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 flow.ci
+ * Copyright 2018 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,39 +14,50 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.core.secret.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.flowci.domain.SimpleAuthPair;
+import com.flowci.domain.SimpleKeyPair;
+import com.flowci.domain.SimpleSecret;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
- * Username and password credential
- *
  * @author yang
  */
 @Getter
 @Setter
-@Document(collection = "credential")
-public class AuthCredential extends Credential {
+@Document(collection = "secret")
+public final class RSASecret extends Secret {
 
-    private SimpleAuthPair pair;
+    private SimpleKeyPair pair;
 
-    public AuthCredential() {
-        this.pair = new SimpleAuthPair();
-        this.setCategory(Category.AUTH);
+    public RSASecret() {
+        this.pair = new SimpleKeyPair();
+        this.setCategory(Category.SSH_RSA);
     }
 
     @JsonIgnore
-    public String getUsername() {
-        return pair.getUsername();
+    public String getPrivateKey() {
+        return pair.getPrivateKey();
     }
 
     @JsonIgnore
-    public String getPassword() {
-        return pair.getPassword();
+    public String getPublicKey() {
+        return pair.getPublicKey();
     }
 
+    public void setPrivateKey(String pk) {
+        this.pair.setPrivateKey(pk);
+    }
+
+    public void setPublicKey(String pk) {
+        this.pair.setPublicKey(pk);
+    }
+
+    @Override
+    public SimpleSecret toSimpleSecret() {
+        return pair;
+    }
 }

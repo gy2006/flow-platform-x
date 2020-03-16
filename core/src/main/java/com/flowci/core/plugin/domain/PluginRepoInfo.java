@@ -38,7 +38,7 @@ public class PluginRepoInfo implements Serializable {
     @Indexed(name = "index_plugins_name", unique = true)
     private String name;
 
-    private String source;
+    private String source; // git repo url
 
     private String branch = "master";
 

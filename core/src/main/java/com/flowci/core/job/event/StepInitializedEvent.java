@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.dao;
+package com.flowci.core.job.event;
+
+import com.flowci.domain.ExecutedCmd;
+import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
 import java.util.List;
-import java.util.Optional;
 
-import com.flowci.core.credential.domain.Credential;
+@Getter
+public class StepInitializedEvent extends ApplicationEvent {
 
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+    private final String jobId;
 
-/**
- * @author yang
- */
-@Repository
-public interface CredentialDao extends MongoRepository<Credential, String>, CustomCredentialDao {
+    private final List<ExecutedCmd> steps;
 
-    List<Credential> findAllAndOrderByCreatedAt();
-
-    Optional<Credential> findByName(String name);
-
+    public StepInitializedEvent(Object source, String jobId, List<ExecutedCmd> steps) {
+        super(source);
+        this.jobId = jobId;
+        this.steps = steps;
+    }
 }

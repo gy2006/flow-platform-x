@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.flowci.core.test.credential;
+package com.flowci.core.test.secret;
 
-import com.flowci.core.credential.domain.AuthCredential;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.Credential.Category;
-import com.flowci.core.credential.domain.RSACredential;
-import com.flowci.core.credential.service.CredentialService;
+import com.flowci.core.secret.domain.AuthSecret;
+import com.flowci.core.secret.domain.RSASecret;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.service.SecretService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.SimpleAuthPair;
 import com.flowci.exception.DuplicateException;
@@ -35,10 +34,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * @author yang
  */
-public class CredentialServiceTest extends SpringScenario {
+public class SecretServiceTest extends SpringScenario {
 
     @Autowired
-    private CredentialService credentialService;
+    private SecretService secretService;
 
     @Before
     public void login() {
@@ -46,58 +45,58 @@ public class CredentialServiceTest extends SpringScenario {
     }
 
     @Test
-    public void should_create_rsa_credential() {
-        Credential rsa = credentialService.createRSA("hello.rsa");
+    public void should_create_rsa_secret() {
+        Secret rsa = secretService.createRSA("hello.rsa");
         Assert.assertNotNull(rsa);
-        Assert.assertEquals(Credential.Category.SSH_RSA, rsa.getCategory());
+        Assert.assertEquals(Secret.Category.SSH_RSA, rsa.getCategory());
         Assert.assertEquals(sessionManager.getUserId(), rsa.getCreatedBy());
         Assert.assertNotNull(rsa.getCreatedAt());
         Assert.assertNotNull(rsa.getUpdatedAt());
 
-        Credential loaded = credentialService.get("hello.rsa");
-        Assert.assertTrue(loaded instanceof RSACredential);
+        Secret loaded = secretService.get("hello.rsa");
+        Assert.assertTrue(loaded instanceof RSASecret);
 
-        RSACredential keyPair = (RSACredential) loaded;
+        RSASecret keyPair = (RSASecret) loaded;
         Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getPublicKey()));
         Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getPrivateKey()));
     }
 
     @Test
-    public void should_create_auth_credential() {
+    public void should_create_auth_secret() {
         SimpleAuthPair sa = new SimpleAuthPair();
         sa.setUsername("test@flow.ci");
         sa.setPassword("12345");
 
-        Credential auth = credentialService.createAuth("hello.auth", sa);
+        Secret auth = secretService.createAuth("hello.auth", sa);
         Assert.assertNotNull(auth);
-        Assert.assertEquals(Category.AUTH, auth.getCategory());
+        Assert.assertEquals(Secret.Category.AUTH, auth.getCategory());
         Assert.assertEquals(sessionManager.getUserId(), auth.getCreatedBy());
         Assert.assertNotNull(auth.getCreatedAt());
         Assert.assertNotNull(auth.getUpdatedAt());
 
-        Credential loaded = credentialService.get("hello.auth");
-        Assert.assertTrue(loaded instanceof AuthCredential);
+        Secret loaded = secretService.get("hello.auth");
+        Assert.assertTrue(loaded instanceof AuthSecret);
 
-        AuthCredential keyPair = (AuthCredential) loaded;
+        AuthSecret keyPair = (AuthSecret) loaded;
         Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getUsername()));
         Assert.assertFalse(Strings.isNullOrEmpty(keyPair.getPassword()));
     }
 
     @Test(expected = DuplicateException.class)
     public void should_throw_duplicate_error_on_same_name() {
-        credentialService.createRSA("hello.rsa");
-        credentialService.createRSA("hello.rsa");
+        secretService.createRSA("hello.rsa");
+        secretService.createRSA("hello.rsa");
     }
 
     @Test
-    public void should_list_credential() {
-        credentialService.createRSA("hello.rsa.1");
-        credentialService.createRSA("hello.rsa.2");
+    public void should_list_secret() {
+        secretService.createRSA("hello.rsa.1");
+        secretService.createRSA("hello.rsa.2");
 
-        credentialService.createAuth("hello.auth.1", SimpleAuthPair.of("111", "111"));
-        credentialService.createAuth("hello.auth.2", SimpleAuthPair.of("111", "111"));
+        secretService.createAuth("hello.auth.1", SimpleAuthPair.of("111", "111"));
+        secretService.createAuth("hello.auth.2", SimpleAuthPair.of("111", "111"));
 
-        List<Credential> list = credentialService.list();
+        List<Secret> list = secretService.list();
         Assert.assertEquals(4, list.size());
 
         Assert.assertEquals("hello.rsa.1", list.get(0).getName());
@@ -105,7 +104,7 @@ public class CredentialServiceTest extends SpringScenario {
         Assert.assertEquals("hello.auth.1", list.get(2).getName());
         Assert.assertEquals("hello.auth.2", list.get(3).getName());
 
-        List<Credential> names = credentialService.listName(null);
+        List<Secret> names = secretService.listName(null);
         Assert.assertEquals(4, names.size());
 
         Assert.assertEquals("hello.rsa.1", names.get(0).getName());

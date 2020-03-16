@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.core.secret.domain;
 
 import com.flowci.core.common.domain.Mongoable;
+import com.flowci.domain.SimpleSecret;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -26,7 +27,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
  */
 @Getter
 @Setter
-public class Credential extends Mongoable {
+public class Secret extends Mongoable {
 
     public enum Category {
 
@@ -39,9 +40,12 @@ public class Credential extends Mongoable {
 //        SSH_ED25519
     }
 
-    @Indexed(name = "index_credential_name", unique = true)
+    @Indexed(name = "index_secret_name", unique = true)
     private String name;
 
     private Category category;
 
+    public SimpleSecret toSimpleSecret() {
+        return null;
+    }
 }

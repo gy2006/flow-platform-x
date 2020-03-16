@@ -21,8 +21,8 @@ import com.flowci.core.common.domain.Variables;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.common.rabbit.RabbitChannelOperation;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.service.CredentialService;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.service.SecretService;
 import com.flowci.core.flow.dao.FlowDao;
 import com.flowci.core.flow.dao.FlowUserDao;
 import com.flowci.core.flow.dao.YmlDao;
@@ -41,12 +41,7 @@ import com.flowci.core.trigger.domain.GitTrigger;
 import com.flowci.core.trigger.domain.GitTrigger.GitEvent;
 import com.flowci.core.trigger.event.GitHookEvent;
 import com.flowci.core.user.event.UserDeletedEvent;
-import com.flowci.domain.SimpleAuthPair;
-import com.flowci.domain.SimpleKeyPair;
-import com.flowci.domain.StringVars;
-import com.flowci.domain.VarType;
-import com.flowci.domain.VarValue;
-import com.flowci.domain.Vars;
+import com.flowci.domain.*;
 import com.flowci.exception.ArgumentException;
 import com.flowci.exception.DuplicateException;
 import com.flowci.exception.NotFoundException;
@@ -58,21 +53,17 @@ import com.flowci.tree.TriggerFilter;
 import com.flowci.tree.YmlParser;
 import com.flowci.util.StringHelper;
 import com.google.common.collect.Sets;
-import java.io.IOException;
-import java.sql.Date;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.sql.Date;
+import java.time.Instant;
+import java.util.*;
 
 /**
  * @author yang
@@ -106,7 +97,7 @@ public class FlowServiceImpl implements FlowService {
     private FileManager fileManager;
 
     @Autowired
-    private CredentialService credentialService;
+    private SecretService secretService;
 
     @Autowired
     private RabbitChannelOperation jobQueueManager;
@@ -123,14 +114,14 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public List<Flow> listByCredential(String credentialName) {
-        Credential credential = credentialService.get(credentialName);
+        Secret secret = secretService.get(credentialName);
 
         List<Flow> list = list(Status.CONFIRMED);
         Iterator<Flow> iter = list.iterator();
 
-        for (; iter.hasNext();) {
+        for (; iter.hasNext(); ) {
             Flow flow = iter.next();
-            if (Objects.equals(flow.getCredentialName(), credential.getName())) {
+            if (Objects.equals(flow.getCredentialName(), secret.getName())) {
                 continue;
             }
 
@@ -183,10 +174,7 @@ public class FlowServiceImpl implements FlowService {
         flow.setName(name);
         flow.setCreatedBy(userId);
 
-        // set default vars
-        Vars<VarValue> localVars = flow.getLocally();
-        localVars.put(Variables.Flow.Name, VarValue.of(flow.getName(), VarType.STRING, false));
-        localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.HTTP_URL, false));
+        setupDefaultVars(flow);
 
         try {
             flowDao.save(flow);
@@ -273,7 +261,7 @@ public class FlowServiceImpl implements FlowService {
         Flow flow = get(name);
 
         String credentialName = "flow-" + flow.getName() + "-ssh-rsa";
-        credentialService.createRSA(credentialName, pair);
+        secretService.createRSA(credentialName, pair);
 
         return credentialName;
     }
@@ -283,7 +271,7 @@ public class FlowServiceImpl implements FlowService {
         Flow flow = get(name);
 
         String credentialName = "flow-" + flow.getName() + "-auth";
-        credentialService.createAuth(credentialName, keyPair);
+        secretService.createAuth(credentialName, keyPair);
 
         return credentialName;
     }
@@ -366,13 +354,19 @@ public class FlowServiceImpl implements FlowService {
             StringVars gitInput = event.getTrigger().toVariableMap();
             Trigger jobTrigger = event.getTrigger().toJobTrigger();
 
-            eventManager.publish(new CreateNewJobEvent(this, flow, yml, jobTrigger, gitInput));
+            eventManager.publish(new CreateNewJobEvent(this, flow, yml.getRaw(), jobTrigger, gitInput));
         }
     }
 
     // ====================================================================
     // %% Utils
     // ====================================================================
+
+    private void setupDefaultVars(Flow flow) {
+        Vars<VarValue> localVars = flow.getLocally();
+        localVars.put(Variables.Flow.Name, VarValue.of(flow.getName(), VarType.STRING, false));
+        localVars.put(Variables.Flow.Webhook, VarValue.of(getWebhook(flow.getName()), VarType.HTTP_URL, false));
+    }
 
     private boolean canStartJob(Node root, GitTrigger trigger) {
         TriggerFilter condition = root.getTrigger();
