@@ -39,7 +39,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @Document(collection = "plugins")
-public class Plugin extends PluginRepoInfo {
+public class Plugin extends PluginRepoInfo implements PluginBody {
 
     @Id
     private String id;
@@ -54,7 +54,7 @@ public class Plugin extends PluginRepoInfo {
 
     private Boolean allowFailure;
 
-    private String script;
+    private PluginBody body;
 
     private String icon;
 
@@ -69,6 +69,6 @@ public class Plugin extends PluginRepoInfo {
         this.setInputs(src.getInputs());
         this.setStatsTypes(src.getStatsTypes());
         this.setAllowFailure(src.getAllowFailure());
-        this.setScript(src.getScript());
+        this.setBody(src.getBody());
     }
 }

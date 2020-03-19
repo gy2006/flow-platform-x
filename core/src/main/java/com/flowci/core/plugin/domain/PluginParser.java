@@ -26,9 +26,7 @@ import lombok.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yang
@@ -60,13 +58,19 @@ public class PluginParser {
 
         public Boolean allow_failure;
 
-        @NonNull
         public String script;
+
+        public ParentWrapper parent;
 
         public Plugin toPlugin() {
             Plugin plugin = new Plugin(name, Version.parse(version));
             plugin.setIcon(icon);
-            plugin.setScript(script);
+
+            if (Objects.isNull(parent)) {
+                plugin.setBody(new ScriptBody(script));
+            } else {
+                plugin.setBody(parent.toParentBody());
+            }
 
             ObjectsHelper.ifNotNull(exports, plugin::setExports);
             ObjectsHelper.ifNotNull(allow_failure, plugin::setAllowFailure);
@@ -82,6 +86,26 @@ public class PluginParser {
             });
 
             return plugin;
+        }
+    }
+
+    @NoArgsConstructor
+    private static class ParentWrapper {
+
+        @NonNull
+        public String name;
+
+        @NonNull
+        public String version;
+
+        public Map<String, String> envs = new LinkedHashMap<>();
+
+        public PluginBody toParentBody() {
+            ParentBody body = new ParentBody();
+            body.setName(name);
+            body.setVersion(version);
+            body.getEnvs().putAll(envs);
+            return body;
         }
     }
 

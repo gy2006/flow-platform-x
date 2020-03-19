@@ -17,8 +17,7 @@
 package com.flowci.core.job.manager;
 
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.domain.Input;
+import com.flowci.core.plugin.domain.*;
 import com.flowci.core.plugin.service.PluginService;
 import com.flowci.domain.*;
 import com.flowci.exception.ArgumentException;
@@ -62,7 +61,15 @@ public class CmdManagerImpl implements CmdManager {
             Plugin plugin = pluginService.get(node.getPlugin());
             verifyPluginInput(inputs, plugin);
 
-            script = plugin.getScript();
+            PluginBody body = plugin.getBody();
+            if (body instanceof ScriptBody) {
+                script = ((ScriptBody) body).getScript();
+            }
+
+            if (body instanceof ParentBody) {
+                //TODO:
+            }
+
             exports.addAll(plugin.getExports());
 
             if (plugin.getAllowFailure() != null) {
