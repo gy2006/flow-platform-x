@@ -158,7 +158,7 @@ public class ExecutedCmd extends CmdBase {
 
     @JsonIgnore
     public boolean isSuccess() {
-        return SuccessStatus.contains(status) || getAllowFailure();
+        return SuccessStatus.contains(status) || isAllowFailure();
     }
 
     @JsonIgnore

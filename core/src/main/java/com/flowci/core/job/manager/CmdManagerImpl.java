@@ -55,7 +55,6 @@ public class CmdManagerImpl implements CmdManager {
         // create cmd based on plugin
         CmdIn cmd = new CmdIn(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
-        cmd.setAllowFailure(node.isAllowFailure());
         cmd.setWorkDir(job.getFlowId()); // default work dir is {agent dir}/{flow id}
 
         cmd.addScript(node.getScript());
@@ -63,6 +62,11 @@ public class CmdManagerImpl implements CmdManager {
 
         if (node.hasPlugin()) {
             setPlugin(node.getPlugin(), cmd);
+        }
+
+        // set node allow failure as top priority
+        if (node.isAllowFailure() != cmd.isAllowFailure()) {
+            cmd.setAllowFailure(node.isAllowFailure());
         }
 
         return cmd;
@@ -78,7 +82,7 @@ public class CmdManagerImpl implements CmdManager {
         verifyPluginInput(cmd.getInputs(), plugin);
 
         cmd.setPlugin(name);
-        cmd.setAllowFailure(plugin.getAllowFailure());
+        cmd.setAllowFailure(plugin.isAllowFailure());
         cmd.addEnvFilters(plugin.getExports());
 
         PluginBody body = plugin.getBody();

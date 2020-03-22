@@ -52,7 +52,7 @@ public class Plugin extends PluginRepoInfo implements PluginBody {
     // Plugin that supported statistic types
     private List<StatsType> statsTypes = new LinkedList<>();
 
-    private Boolean allowFailure;
+    private boolean allowFailure;
 
     private PluginBody body;
 
@@ -68,7 +68,7 @@ public class Plugin extends PluginRepoInfo implements PluginBody {
         this.setVersion(src.getVersion());
         this.setInputs(src.getInputs());
         this.setStatsTypes(src.getStatsTypes());
-        this.setAllowFailure(src.getAllowFailure());
+        this.setAllowFailure(src.isAllowFailure());
         this.setBody(src.getBody());
     }
 }
