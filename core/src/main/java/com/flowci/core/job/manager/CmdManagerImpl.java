@@ -56,9 +56,10 @@ public class CmdManagerImpl implements CmdManager {
         CmdIn cmd = new CmdIn(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
         cmd.setAllowFailure(node.isAllowFailure());
-        cmd.setEnvFilters(Sets.newHashSet(node.getExports()));
-        cmd.setScripts(Lists.newArrayList(node.getScript()));
         cmd.setWorkDir(job.getFlowId()); // default work dir is {agent dir}/{flow id}
+
+        cmd.addScript(node.getScript());
+        cmd.addEnvFilters(node.getExports());
 
         if (node.hasPlugin()) {
             setPlugin(node.getPlugin(), cmd);
@@ -72,7 +73,39 @@ public class CmdManagerImpl implements CmdManager {
         return new CmdIn(UUID.randomUUID().toString(), CmdType.KILL);
     }
 
-    private void verifyPluginInput(Vars<String> context, Plugin plugin) {
+    private void setPlugin(String name, CmdIn cmd) {
+        Plugin plugin = pluginService.get(name);
+        verifyPluginInput(cmd.getInputs(), plugin);
+
+        cmd.setPlugin(name);
+        cmd.setAllowFailure(plugin.getAllowFailure());
+        cmd.addEnvFilters(plugin.getExports());
+
+        PluginBody body = plugin.getBody();
+
+        if (body instanceof ScriptBody) {
+            String script = ((ScriptBody) body).getScript();
+            cmd.addScript(script);
+            return;
+        }
+
+        if (body instanceof ParentBody) {
+            ParentBody parentData = (ParentBody) body;
+            Plugin parent = pluginService.get(parentData.getName());
+
+            if (!(parent.getBody() instanceof ScriptBody)) {
+                throw new NotAvailableException("Script not found on parent plugin");
+            }
+
+            String scriptFromParent = ((ScriptBody) parent.getBody()).getScript();
+            cmd.addInputs(parentData.getEnvs());
+            cmd.addScript(scriptFromParent);
+
+            verifyPluginInput(cmd.getInputs(), parent);
+        }
+    }
+
+    private static void verifyPluginInput(Vars<String> context, Plugin plugin) {
         for (Input input : plugin.getInputs()) {
             String value = context.get(input.getName());
 
@@ -87,37 +120,6 @@ public class CmdManagerImpl implements CmdManager {
                 throw new ArgumentException(
                         "The illegal input {0} for plugin {1}", input.getName(), plugin.getName());
             }
-        }
-    }
-
-    private void setPlugin(String name, CmdIn cmd) {
-        Plugin plugin = pluginService.get(name);
-        verifyPluginInput(cmd.getInputs(), plugin);
-
-        cmd.setPlugin(name);
-        cmd.setAllowFailure(plugin.getAllowFailure());
-        cmd.getEnvFilters().addAll(plugin.getExports());
-
-        PluginBody body = plugin.getBody();
-
-        if (body instanceof ScriptBody) {
-            String script = ((ScriptBody) body).getScript();
-            cmd.setScripts(Lists.newArrayList(script));
-            return;
-        }
-
-        if (body instanceof ParentBody) {
-            ParentBody parentData = (ParentBody) body;
-            Plugin parent = pluginService.get(parentData.getName());
-
-            if (!(parent.getBody() instanceof ScriptBody)) {
-                throw new NotAvailableException("Script not found on parent plugin");
-            }
-
-            String scriptFromParent = ((ScriptBody) parent.getBody()).getScript();
-
-            cmd.getInputs().putAll(parentData.getEnvs());
-            cmd.setScripts(Lists.newArrayList(scriptFromParent));
         }
     }
 }

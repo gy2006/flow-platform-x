@@ -47,6 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.io.IOException;
+import java.util.List;
 
 public class CmdManagerTest extends SpringScenario {
 
@@ -93,13 +94,17 @@ public class CmdManagerTest extends SpringScenario {
         Assert.assertNotNull(cmdIn);
 
         // then:
-        Assert.assertEquals("gittest", cmdIn.getPlugin());
         Vars<String> inputs = cmdIn.getInputs();
+        List<String> scripts = cmdIn.getScripts();
+        Assert.assertEquals(2, scripts.size());
+
+        Assert.assertEquals("gittest", cmdIn.getPlugin());
         Assert.assertEquals("test", inputs.get("GIT_STR_VAL"));
         Assert.assertEquals("60", inputs.get("GIT_DEFAULT_VAL"));
 
-        // then: script should from parent, two inputs for parent
-        Assert.assertEquals("echo ${P_VAR_1} ${P_VAR_2}", cmdIn.getScripts().get(0));
+        // then: script should from self and parent, two inputs for parent
+        Assert.assertEquals("echo \"plugin-test\"", scripts.get(0));
+        Assert.assertEquals("echo ${P_VAR_1} ${P_VAR_2}", scripts.get(1));
         Assert.assertEquals("hello", inputs.get("P_VAR_1"));
         Assert.assertEquals("world", inputs.get("P_VAR_2"));
     }
