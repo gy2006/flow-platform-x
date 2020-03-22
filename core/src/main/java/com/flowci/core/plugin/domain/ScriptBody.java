@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 flow.ci
+ * Copyright 2020 flow.ci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,18 @@
  * limitations under the License.
  */
 
-package com.flowci.domain;
+package com.flowci.core.plugin.domain;
 
-import java.io.Serializable;
-import lombok.EqualsAndHashCode;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NonNull;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * @author yang
- */
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"id"})
-public abstract class CmdBase implements Serializable {
+@NoArgsConstructor
+@AllArgsConstructor
+public class ScriptBody implements PluginBody {
 
-    @NonNull
-    private String id;
-
-    private boolean allowFailure;
-
-    /**
-     * Cmd related plugin name
-     */
-    private String plugin;
+    private String script;
 }

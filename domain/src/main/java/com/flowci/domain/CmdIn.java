@@ -19,10 +19,8 @@ package com.flowci.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -57,15 +55,26 @@ public class CmdIn extends CmdBase {
      * Output env filters
      */
     @NonNull
-    private Set<String> envFilters = Collections.emptySet();
+    private Set<String> envFilters = new LinkedHashSet<>();
 
     public CmdIn(String id, CmdType type) {
         setId(id);
         this.type = type;
     }
 
-    @JsonIgnore
-    public boolean hasWorkDir() {
-        return !Strings.isNullOrEmpty(workDir);
+    public void addScript(String script) {
+        if (Strings.isNullOrEmpty(script)) {
+            return;
+        }
+
+        scripts.add(script);
+    }
+
+    public void addEnvFilters(Set<String> exports) {
+        this.envFilters.addAll(exports);
+    }
+
+    public void addInputs(StringVars vars) {
+        inputs.putAll(vars);
     }
 }

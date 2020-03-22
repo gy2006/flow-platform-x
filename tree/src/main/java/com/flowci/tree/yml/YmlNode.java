@@ -18,12 +18,12 @@ package com.flowci.tree.yml;
 
 import com.flowci.domain.StringVars;
 import com.flowci.tree.Node;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
 
 /**
  * @author yang
@@ -34,7 +34,6 @@ public abstract class YmlNode implements Serializable {
 
     public String name;
 
-    @NonNull
     public Map<String, String> envs = new LinkedHashMap<>();
 
     public abstract Node toNode(int index);

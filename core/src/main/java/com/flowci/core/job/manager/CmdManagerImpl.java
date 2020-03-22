@@ -17,20 +17,18 @@
 package com.flowci.core.job.manager;
 
 import com.flowci.core.job.domain.Job;
-import com.flowci.core.plugin.domain.Plugin;
-import com.flowci.core.plugin.domain.Input;
+import com.flowci.core.plugin.domain.*;
 import com.flowci.core.plugin.service.PluginService;
 import com.flowci.domain.*;
 import com.flowci.exception.ArgumentException;
+import com.flowci.exception.NotAvailableException;
 import com.flowci.tree.Node;
-import com.flowci.util.ObjectsHelper;
 import com.flowci.util.StringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -54,32 +52,22 @@ public class CmdManagerImpl implements CmdManager {
                 .merge(job.getContext())
                 .merge(node.getEnvironments());
 
-        String script = node.getScript();
-        boolean allowFailure = node.isAllowFailure();
-        Set<String> exports = node.getExports();
-
-        if (node.hasPlugin()) {
-            Plugin plugin = pluginService.get(node.getPlugin());
-            verifyPluginInput(inputs, plugin);
-
-            script = plugin.getScript();
-            exports.addAll(plugin.getExports());
-
-            if (plugin.getAllowFailure() != null) {
-                allowFailure = plugin.getAllowFailure();
-            }
-        }
-
         // create cmd based on plugin
         CmdIn cmd = new CmdIn(createId(job, node).toString(), CmdType.SHELL);
         cmd.setInputs(inputs);
-        cmd.setAllowFailure(allowFailure);
-        cmd.setEnvFilters(Sets.newHashSet(exports));
-        cmd.setScripts(Lists.newArrayList(script));
-        cmd.setPlugin(node.getPlugin());
+        cmd.setWorkDir(job.getFlowId()); // default work dir is {agent dir}/{flow id}
 
-        // default work dir is {agent dir}/{flow id}
-        cmd.setWorkDir(job.getFlowId());
+        cmd.addScript(node.getScript());
+        cmd.addEnvFilters(node.getExports());
+
+        if (node.hasPlugin()) {
+            setPlugin(node.getPlugin(), cmd);
+        }
+
+        // set node allow failure as top priority
+        if (node.isAllowFailure() != cmd.isAllowFailure()) {
+            cmd.setAllowFailure(node.isAllowFailure());
+        }
 
         return cmd;
     }
@@ -89,7 +77,39 @@ public class CmdManagerImpl implements CmdManager {
         return new CmdIn(UUID.randomUUID().toString(), CmdType.KILL);
     }
 
-    private void verifyPluginInput(Vars<String> context, Plugin plugin) {
+    private void setPlugin(String name, CmdIn cmd) {
+        Plugin plugin = pluginService.get(name);
+        verifyPluginInput(cmd.getInputs(), plugin);
+
+        cmd.setPlugin(name);
+        cmd.setAllowFailure(plugin.isAllowFailure());
+        cmd.addEnvFilters(plugin.getExports());
+
+        PluginBody body = plugin.getBody();
+
+        if (body instanceof ScriptBody) {
+            String script = ((ScriptBody) body).getScript();
+            cmd.addScript(script);
+            return;
+        }
+
+        if (body instanceof ParentBody) {
+            ParentBody parentData = (ParentBody) body;
+            Plugin parent = pluginService.get(parentData.getName());
+
+            if (!(parent.getBody() instanceof ScriptBody)) {
+                throw new NotAvailableException("Script not found on parent plugin");
+            }
+
+            String scriptFromParent = ((ScriptBody) parent.getBody()).getScript();
+            cmd.addInputs(parentData.getEnvs());
+            cmd.addScript(scriptFromParent);
+
+            verifyPluginInput(cmd.getInputs(), parent);
+        }
+    }
+
+    private static void verifyPluginInput(Vars<String> context, Plugin plugin) {
         for (Input input : plugin.getInputs()) {
             String value = context.get(input.getName());
 
