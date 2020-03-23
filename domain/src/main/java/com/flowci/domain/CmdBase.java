@@ -16,7 +16,6 @@
 
 package com.flowci.domain;
 
-import com.google.common.base.Strings;
 import java.io.Serializable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -34,14 +33,10 @@ public abstract class CmdBase implements Serializable {
     @NonNull
     private String id;
 
-    private Boolean allowFailure = Boolean.FALSE;
+    private boolean allowFailure;
 
     /**
      * Cmd related plugin name
      */
     private String plugin;
-
-    public boolean hasPlugin() {
-        return !Strings.isNullOrEmpty(plugin);
-    }
 }

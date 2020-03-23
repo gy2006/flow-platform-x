@@ -127,7 +127,7 @@ public class GitHubConverterTest extends SpringScenario {
             trigger.getCommitUrl());
         Assert.assertEquals("v1.6", trigger.getRef());
         Assert.assertEquals("2017-08-08T13:19:55+08:00", trigger.getTime());
-        Assert.assertEquals(1, trigger.getNumOfCommit());
+        Assert.assertEquals(0, trigger.getNumOfCommit());
 
         GitUser author = trigger.getAuthor();
         Assert.assertEquals("yang-guo-2016", author.getName());

@@ -53,7 +53,7 @@ public class GitController {
         String gitUrl = body.getGitUrl();
 
         if (body.hasCredential()) {
-            gitService.testConn(flow, gitUrl, body.getCredential());
+            gitService.testConn(flow, gitUrl, body.getSecret());
             return;
         }
 

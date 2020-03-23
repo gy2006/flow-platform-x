@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.flowci.core.common.manager.SpringEventManager;
 import com.flowci.core.job.dao.ExecutedCmdDao;
 import com.flowci.core.job.domain.Job;
+import com.flowci.core.job.event.StepInitializedEvent;
 import com.flowci.core.job.event.StepStatusChangeEvent;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.manager.YmlManager;
@@ -32,7 +33,7 @@ import com.flowci.tree.Node;
 import com.flowci.tree.NodePath;
 import com.flowci.tree.NodeTree;
 import com.github.benmanes.caffeine.cache.Cache;
-import java.util.ArrayList;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -77,7 +78,9 @@ public class StepServiceImpl implements StepService {
             steps.add(cmd);
         }
 
-        return executedCmdDao.insert(steps);
+        executedCmdDao.insert(steps);
+        eventManager.publish(new StepInitializedEvent(this, job.getId(), steps));
+        return steps;
     }
 
     @Override
@@ -99,8 +102,7 @@ public class StepServiceImpl implements StepService {
 
     @Override
     public List<ExecutedCmd> list(Job job) {
-        return jobStepCache.get(job.getId(),
-                s -> executedCmdDao.findByFlowIdAndBuildNumber(job.getFlowId(), job.getBuildNumber()));
+        return list(job.getId(), job.getFlowId(), job.getBuildNumber());
     }
 
     @Override
@@ -138,8 +140,11 @@ public class StepServiceImpl implements StepService {
         entity.setError(err);
         executedCmdDao.save(entity);
 
-        jobStepCache.invalidate(entity.getJobId());
-        eventManager.publish(new StepStatusChangeEvent(this, entity));
+        String jobId = entity.getJobId();
+        jobStepCache.invalidate(jobId);
+
+        List<ExecutedCmd> steps = list(jobId, entity.getFlowId(), entity.getBuildNumber());
+        eventManager.publish(new StepStatusChangeEvent(this, jobId, steps));
     }
 
     @Override
@@ -162,5 +167,10 @@ public class StepServiceImpl implements StepService {
     @Override
     public Long delete(String flowId) {
         return executedCmdDao.deleteByFlowId(flowId);
+    }
+
+    private List<ExecutedCmd> list(String jobId, String flowId, long buildNumber) {
+        return jobStepCache.get(jobId,
+                s -> executedCmdDao.findByFlowIdAndBuildNumber(flowId, buildNumber));
     }
 }

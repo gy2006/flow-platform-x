@@ -5,16 +5,19 @@ import com.flowci.pool.domain.DockerStatus;
 import com.flowci.pool.domain.SocketInitContext;
 import com.flowci.pool.domain.StartContext;
 import com.flowci.pool.exception.DockerPoolException;
+import com.flowci.util.UnixHelper;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.google.common.collect.Lists;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -88,13 +91,16 @@ public class SocketPoolManager implements PoolManager<SocketInitContext> {
     public void start(StartContext context) throws DockerPoolException {
         try {
             final String name = name(context.getAgentName());
+            final Path srcDirOnHost = UnixHelper.replacePathWithEnv(context.getDirOnHost());
 
             CreateContainerResponse container = client.createContainerCmd(AgentContainer.Image).withName(name)
                     .withEnv(String.format("%s=%s", SERVER_URL, context.getServerUrl()),
                             String.format("%s=%s", AGENT_TOKEN, context.getToken()),
                             String.format("%s=%s", AGENT_LOG_LEVEL, context.getLogLevel()))
-                    .withVolumes(new Volume(context.getDirOnHost()), new Volume("/root/.flow.ci.agent"))
-                    .withVolumes(new Volume("/var/run/docker.sock"), new Volume("/var/run/docker.sock")).exec();
+                    .withBinds(
+                            new Bind(srcDirOnHost.toString(), new Volume("/root/.flow.ci.agent")),
+                            new Bind("/var/run/docker.sock", new Volume("/var/run/docker.sock")))
+                    .exec();
 
             client.startContainerCmd(container.getId()).exec();
         } catch (DockerException e) {

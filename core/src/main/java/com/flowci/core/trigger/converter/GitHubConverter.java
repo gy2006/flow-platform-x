@@ -27,7 +27,6 @@ import com.flowci.util.ObjectsHelper;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
-import org.omg.CORBA.ObjectHelper;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -106,16 +105,14 @@ public class GitHubConverter extends TriggerConverter {
 
         private static final String TagRefPrefix = "refs/tags";
 
-        private static final String PushRefPrefix = "refs/heads";
-
         public String ref;
 
-        public List<CommitObject> commits;
+        public List<Commit> commits;
 
         @JsonProperty("head_commit")
-        public CommitObject commit;
+        public Commit commit;
 
-        public AuthorObject pusher;
+        public Author pusher;
 
         private GitEvent getEvent() {
             return ref.startsWith(TagRefPrefix) ? GitEvent.TAG : GitEvent.PUSH;
@@ -124,7 +121,7 @@ public class GitHubConverter extends TriggerConverter {
         @Override
         public GitPushTrigger toTrigger() {
             if (Objects.isNull(commit)) {
-                throw new ArgumentException("No commits data on Github push event");
+                throw new ArgumentException("No commits data on Github push or tag event");
             }
 
             GitPushTrigger trigger = new GitPushTrigger();
@@ -136,14 +133,9 @@ public class GitHubConverter extends TriggerConverter {
             trigger.setCommitUrl(commit.url);
             trigger.setRef(BranchHelper.getBranchName(ref));
             trigger.setTime(commit.timestamp);
+            trigger.setNumOfCommit(0);
+
             ObjectsHelper.ifNotNull(commits, val -> {
-
-                // for tag event, no commits in the list
-                if (commits.size() == 0 && commit != null) {
-                    trigger.setNumOfCommit(1);
-                    return;
-                }
-
                 trigger.setNumOfCommit(val.size());
             });
 
@@ -172,9 +164,9 @@ public class GitHubConverter extends TriggerConverter {
         @Override
         public GitPrTrigger toTrigger() {
             GitPrTrigger trigger = new GitPrTrigger();
-            setTriggerEvent(trigger);
-
+            trigger.setEvent(getEvent());
             trigger.setSource(GitSource.GITHUB);
+
             trigger.setNumber(number);
             trigger.setBody(prBody.body);
             trigger.setTitle(prBody.title);
@@ -206,15 +198,13 @@ public class GitHubConverter extends TriggerConverter {
             return trigger;
         }
 
-        private void setTriggerEvent(GitPrTrigger trigger) {
+        private GitEvent getEvent() {
             if (action.equals(PrOpen)) {
-                trigger.setEvent(GitEvent.PR_OPENED);
-                return;
+                return GitEvent.PR_OPENED;
             }
 
             if (action.equals(PrClosed) && prBody.merged) {
-                trigger.setEvent(GitEvent.PR_MERGED);
-                return;
+                return GitEvent.PR_MERGED;
             }
 
             throw new ArgumentException("Cannot handle action {0} from pull request", action);
@@ -274,7 +264,7 @@ public class GitHubConverter extends TriggerConverter {
         public String username;
     }
 
-    private static class CommitObject {
+    private static class Commit {
 
         public String id;
 
@@ -285,7 +275,7 @@ public class GitHubConverter extends TriggerConverter {
         public String url;
     }
 
-    private static class AuthorObject {
+    private static class Author {
 
         public String name;
 

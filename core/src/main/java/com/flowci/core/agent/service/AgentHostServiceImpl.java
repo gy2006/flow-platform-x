@@ -28,9 +28,9 @@ import com.flowci.core.common.config.ConfigProperties;
 import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.manager.SessionManager;
 import com.flowci.core.common.manager.SpringEventManager;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.RSACredential;
-import com.flowci.core.credential.event.GetCredentialEvent;
+import com.flowci.core.secret.domain.RSASecret;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.event.GetSecretEvent;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.NoIdleAgentEvent;
 import com.flowci.core.user.domain.User;
@@ -69,7 +69,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static com.flowci.core.credential.domain.Credential.Category.SSH_RSA;
+import static com.flowci.core.secret.domain.Secret.Category.SSH_RSA;
 
 @Log4j2
 @Service
@@ -560,7 +560,7 @@ public class AgentHostServiceImpl implements AgentHostService {
         @Override
         public void create(AgentHost host) {
             SshAgentHost sshHost = (SshAgentHost) host;
-            Preconditions.checkArgument(sshHost.getCredential() != null, "Credential name must be defined");
+            Preconditions.checkArgument(sshHost.getSecret() != null, "Credential name must be defined");
 
             sshHost.setCreatedAt(new Date());
             sshHost.setCreatedBy(sessionManager.getUserId());
@@ -570,14 +570,14 @@ public class AgentHostServiceImpl implements AgentHostService {
         @Override
         public PoolManager<?> init(AgentHost host) throws Exception {
             SshAgentHost sshHost = (SshAgentHost) host;
-            GetCredentialEvent event = new GetCredentialEvent(this, sshHost.getCredential());
+            GetSecretEvent event = new GetSecretEvent(this, sshHost.getSecret());
             eventManager.publish(event);
 
-            Credential c = event.getCredential();
+            Secret c = event.getSecret();
             Preconditions.checkArgument(c != null, "Credential not found");
             Preconditions.checkArgument(c.getCategory() == SSH_RSA, "Invalid credential category");
 
-            RSACredential rsa = (RSACredential) c;
+            RSASecret rsa = (RSASecret) c;
             PoolManager<SshInitContext> manager = new SshPoolManager();
             manager.init(SshInitContext.of(
                     rsa.getPrivateKey(), sshHost.getIp(), sshHost.getUser(), 10));

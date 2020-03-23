@@ -21,8 +21,8 @@ import com.flowci.core.common.manager.SocketPushManager;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.job.event.StepInitializedEvent;
 import com.flowci.core.job.event.StepStatusChangeEvent;
-import com.flowci.domain.ExecutedCmd;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -45,7 +45,7 @@ public class PushServiceImpl implements PushService {
     private SocketPushManager socketPushManager;
 
     @Override
-    @EventListener(JobCreatedEvent.class)
+    @EventListener
     public void onJobCreated(JobCreatedEvent event) {
         Job job = event.getJob();
         socketPushManager.push(topicForJobs, PushEvent.NEW_CREATED, job);
@@ -53,7 +53,7 @@ public class PushServiceImpl implements PushService {
     }
 
     @Override
-    @EventListener(JobStatusChangeEvent.class)
+    @EventListener
     public void onJobStatusChange(JobStatusChangeEvent event) {
         Job job = event.getJob();
         socketPushManager.push(topicForJobs, PushEvent.STATUS_CHANGE, job);
@@ -61,13 +61,16 @@ public class PushServiceImpl implements PushService {
     }
 
     @Override
-    @EventListener(StepStatusChangeEvent.class)
+    @EventListener
     public void onStepStatusChange(StepStatusChangeEvent event) {
-        ExecutedCmd cmd = event.getExecutedCmd();
+        String topic = topicForSteps + "/" + event.getJobId();
+        socketPushManager.push(topic, PushEvent.STATUS_CHANGE, event.getSteps());
+    }
 
-        String topic = topicForSteps + "/" + cmd.getJobId();
-        socketPushManager.push(topic, PushEvent.STATUS_CHANGE, cmd);
-
-        log.debug("Executed cmd {} with status {} been pushed to topic {}", cmd.getId(), cmd.getStatus(), topic);
+    @Override
+    @EventListener
+    public void onStepInitialized(StepInitializedEvent event) {
+        String topic = topicForSteps + "/" + event.getJobId();
+        socketPushManager.push(topic, PushEvent.NEW_CREATED, event.getSteps());
     }
 }

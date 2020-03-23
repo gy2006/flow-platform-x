@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
     "com.flowci.core.job",
     "com.flowci.core.agent",
     "com.flowci.core.stats",
-    "com.flowci.core.credential",
+    "com.flowci.core.secret",
     "com.flowci.core.plugin"
 })
 public class ExceptionAdviser {

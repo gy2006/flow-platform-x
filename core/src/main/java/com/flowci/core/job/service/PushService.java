@@ -18,6 +18,7 @@ package com.flowci.core.job.service;
 
 import com.flowci.core.job.event.JobCreatedEvent;
 import com.flowci.core.job.event.JobStatusChangeEvent;
+import com.flowci.core.job.event.StepInitializedEvent;
 import com.flowci.core.job.event.StepStatusChangeEvent;
 
 /**
@@ -30,4 +31,6 @@ public interface PushService {
     void onJobStatusChange(JobStatusChangeEvent event);
 
     void onStepStatusChange(StepStatusChangeEvent event);
+
+    void onStepInitialized(StepInitializedEvent event);
 }

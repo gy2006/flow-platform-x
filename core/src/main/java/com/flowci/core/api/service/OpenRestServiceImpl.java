@@ -20,8 +20,8 @@ package com.flowci.core.api.service;
 import com.flowci.core.api.domain.CreateJobArtifact;
 import com.flowci.core.api.domain.CreateJobReport;
 import com.flowci.core.common.helper.DateHelper;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.service.CredentialService;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.service.SecretService;
 import com.flowci.core.flow.dao.FlowUserDao;
 import com.flowci.core.flow.domain.Flow;
 import com.flowci.core.flow.domain.StatsCounter;
@@ -57,7 +57,7 @@ public class OpenRestServiceImpl implements OpenRestService {
     private FlowService flowService;
 
     @Autowired
-    private CredentialService credentialService;
+    private SecretService credentialService;
 
     @Autowired
     private StatsService statsService;
@@ -69,7 +69,7 @@ public class OpenRestServiceImpl implements OpenRestService {
     private ArtifactService artifactService;
 
     @Override
-    public Credential getCredential(String name) {
+    public Secret getSecret(String name) {
         return credentialService.get(name);
     }
 

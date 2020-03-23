@@ -19,14 +19,15 @@ package com.flowci.core.flow.config;
 import com.flowci.core.common.helper.CacheHelper;
 import com.flowci.core.common.helper.ThreadHelper;
 import com.github.benmanes.caffeine.cache.Cache;
-import java.util.List;
-import java.util.Properties;
 import lombok.extern.log4j.Log4j2;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.util.List;
+import java.util.Properties;
 
 /**
  * @author yang
@@ -40,7 +41,7 @@ public class FlowConfig {
     static {
         templateProperties.setProperty("resource.loader", "class");
         templateProperties.setProperty("class.resource.loader.class",
-            "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+                "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
 
         Velocity.init(templateProperties);
     }

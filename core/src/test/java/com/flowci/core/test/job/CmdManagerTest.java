@@ -24,7 +24,9 @@ import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.manager.CmdManager;
 import com.flowci.core.job.service.JobService;
 import com.flowci.core.plugin.domain.Input;
+import com.flowci.core.plugin.domain.ParentBody;
 import com.flowci.core.plugin.domain.Plugin;
+import com.flowci.core.plugin.domain.ScriptBody;
 import com.flowci.core.plugin.service.PluginService;
 import com.flowci.core.test.SpringScenario;
 import com.flowci.domain.CmdIn;
@@ -45,6 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.io.IOException;
+import java.util.List;
 
 public class CmdManagerTest extends SpringScenario {
 
@@ -71,14 +74,17 @@ public class CmdManagerTest extends SpringScenario {
     @Test
     public void should_create_cmd_in_with_default_plugin_value() throws IOException {
         // init: setup mock plugin service
-        Plugin dummy = createDummyPlugin();
-        Mockito.when(pluginService.get(dummy.getName())).thenReturn(dummy);
+        Plugin plugin = createDummyPlugin();
+        Mockito.when(pluginService.get(plugin.getName())).thenReturn(plugin);
+
+        Plugin parent = createDummyParentPlugin();
+        Mockito.when(pluginService.get(parent.getName())).thenReturn(parent);
 
         // given: flow and job
         Flow flow = flowService.create("hello");
         Yml yml = ymlService.saveYml(flow, StringHelper.toString(load("flow-with-plugin.yml")));
 
-        Job job = jobService.create(flow, yml, Job.Trigger.MANUAL, new StringVars());
+        Job job = jobService.create(flow, yml.getRaw(), Job.Trigger.MANUAL, new StringVars());
         Assert.assertNotNull(job);
 
         // when: create shell cmd
@@ -88,11 +94,19 @@ public class CmdManagerTest extends SpringScenario {
         Assert.assertNotNull(cmdIn);
 
         // then:
-        Assert.assertEquals("gittest", cmdIn.getPlugin());
-
         Vars<String> inputs = cmdIn.getInputs();
+        List<String> scripts = cmdIn.getScripts();
+        Assert.assertEquals(2, scripts.size());
+
+        Assert.assertEquals("gittest", cmdIn.getPlugin());
         Assert.assertEquals("test", inputs.get("GIT_STR_VAL"));
         Assert.assertEquals("60", inputs.get("GIT_DEFAULT_VAL"));
+
+        // then: script should from self and parent, two inputs for parent
+        Assert.assertEquals("echo \"plugin-test\"", scripts.get(0));
+        Assert.assertEquals("echo ${P_VAR_1} ${P_VAR_2}", scripts.get(1));
+        Assert.assertEquals("hello", inputs.get("P_VAR_1"));
+        Assert.assertEquals("world", inputs.get("P_VAR_2"));
     }
 
     private Plugin createDummyPlugin() {
@@ -108,10 +122,38 @@ public class CmdManagerTest extends SpringScenario {
         strInput.setType(VarType.STRING);
         strInput.setRequired(true);
 
-        Plugin dummy = new Plugin();
-        dummy.setName("gittest");
-        dummy.setInputs(Lists.newArrayList(intInput, strInput));
+        StringVars varsForParent = new StringVars();
+        varsForParent.put("P_VAR_1", "hello");
+        varsForParent.put("P_VAR_2", "world");
 
-        return dummy;
+        ParentBody parent = new ParentBody();
+        parent.setName("parent");
+        parent.setEnvs(varsForParent);
+
+        Plugin plugin = new Plugin();
+        plugin.setName("gittest");
+        plugin.setInputs(Lists.newArrayList(intInput, strInput));
+        plugin.setBody(parent);
+
+        return plugin;
+    }
+
+    private Plugin createDummyParentPlugin() {
+        Input input1 = new Input();
+        input1.setName("P_VAR_1");
+        input1.setType(VarType.STRING);
+        input1.setRequired(true);
+
+        Input input2 = new Input();
+        input2.setName("P_VAR_2");
+        input2.setType(VarType.STRING);
+        input2.setRequired(true);
+
+        Plugin plugin = new Plugin();
+        plugin.setName("parent");
+        plugin.setInputs(Lists.newArrayList(input1, input2));
+        plugin.setBody(new ScriptBody("echo ${P_VAR_1} ${P_VAR_2}"));
+
+        return plugin;
     }
 }

@@ -15,9 +15,9 @@
  *
  */
 
-package com.flowci.core.credential.domain;
+package com.flowci.core.secret.domain;
 
-public abstract class CredentialAction {
+public abstract class SecretAction {
 
     public static final String LIST = "list_credential";
 

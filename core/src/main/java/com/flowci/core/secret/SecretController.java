@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential;
+package com.flowci.core.secret;
 
 import com.flowci.core.auth.annotation.Action;
-import com.flowci.core.credential.domain.CreateAuth;
-import com.flowci.core.credential.domain.CreateRSA;
-import com.flowci.core.credential.domain.Credential;
-import com.flowci.core.credential.domain.CredentialAction;
-import com.flowci.core.credential.service.CredentialService;
+import com.flowci.core.secret.domain.CreateAuth;
+import com.flowci.core.secret.domain.CreateRSA;
+import com.flowci.core.secret.domain.Secret;
+import com.flowci.core.secret.domain.SecretAction;
+import com.flowci.core.secret.service.SecretService;
 import com.flowci.domain.SimpleKeyPair;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,55 +39,55 @@ import org.springframework.web.bind.annotation.RestController;
  * @author yang
  */
 @RestController
-@RequestMapping("/credentials")
-public class CredentialController {
+@RequestMapping("/secrets")
+public class SecretController {
 
     @Autowired
-    private CredentialService credentialService;
+    private SecretService secretService;
 
     @GetMapping("/{name}")
-    @Action(CredentialAction.GET)
-    public Credential getByName(@PathVariable String name) {
-        return credentialService.get(name);
+    @Action(SecretAction.GET)
+    public Secret getByName(@PathVariable String name) {
+        return secretService.get(name);
     }
 
     @GetMapping
-    @Action(CredentialAction.LIST)
-    public List<Credential> list() {
-        return credentialService.list();
+    @Action(SecretAction.LIST)
+    public List<Secret> list() {
+        return secretService.list();
     }
 
     @GetMapping("/list/name")
-    @Action(CredentialAction.LIST_NAME)
-    public List<Credential> listName(@RequestParam String category) {
-        return credentialService.listName(category);
+    @Action(SecretAction.LIST_NAME)
+    public List<Secret> listName(@RequestParam String category) {
+        return secretService.listName(category);
     }
 
     @PostMapping("/rsa")
-    @Action(CredentialAction.CREATE_RSA)
-    public Credential create(@Validated @RequestBody CreateRSA body) {
+    @Action(SecretAction.CREATE_RSA)
+    public Secret create(@Validated @RequestBody CreateRSA body) {
         if (body.hasKeyPair()) {
-            return credentialService.createRSA(body.getName(), body.getKeyPair());
+            return secretService.createRSA(body.getName(), body.getKeyPair());
         }
 
-        return credentialService.createRSA(body.getName());
+        return secretService.createRSA(body.getName());
     }
 
     @PostMapping("/auth")
-    @Action(CredentialAction.CREATE_AUTH)
-    public Credential create(@Validated @RequestBody CreateAuth body) {
-        return credentialService.createAuth(body.getName(), body.getAuthPair());
+    @Action(SecretAction.CREATE_AUTH)
+    public Secret create(@Validated @RequestBody CreateAuth body) {
+        return secretService.createAuth(body.getName(), body.getAuthPair());
     }
 
     @PostMapping("/rsa/gen")
-    @Action(CredentialAction.GENERATE_RSA)
+    @Action(SecretAction.GENERATE_RSA)
     public SimpleKeyPair genByEmail() {
-        return credentialService.genRSA();
+        return secretService.genRSA();
     }
 
     @DeleteMapping("/{name}")
-    @Action(CredentialAction.DELETE)
-    public Credential delete(@PathVariable String name) {
-        return credentialService.delete(name);
+    @Action(SecretAction.DELETE)
+    public Secret delete(@PathVariable String name) {
+        return secretService.delete(name);
     }
 }

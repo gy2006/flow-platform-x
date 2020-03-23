@@ -65,6 +65,10 @@ public final class Flow extends Mongoable implements Pathable {
     @NonNull
     private Status status = Status.PENDING;
 
+    private boolean isYamlFromRepo;
+
+    private String yamlRepoBranch = "master";
+
     // variables from yml
     @NonNull
     private Vars<String> variables = new StringVars();
@@ -96,10 +100,6 @@ public final class Flow extends Mongoable implements Pathable {
 
     public String getGitUrl() {
         return findVar(Variables.Flow.GitUrl);
-    }
-
-    public String getWebhook() {
-        return findVar(Variables.Flow.Webhook);
     }
 
     /**

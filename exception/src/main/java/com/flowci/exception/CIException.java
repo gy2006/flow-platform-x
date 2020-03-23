@@ -17,12 +17,21 @@
 package com.flowci.exception;
 
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
 import static java.text.MessageFormat.format;
 
 /**
  * @author yang
  */
+@Getter
+@Setter
+@Accessors(chain = true)
 public class CIException extends RuntimeException {
+
+    private Object extra;
 
     public CIException(final String message, final String... params) {
         super(format(message, params));

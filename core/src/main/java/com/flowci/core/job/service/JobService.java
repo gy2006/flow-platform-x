@@ -17,12 +17,10 @@
 package com.flowci.core.job.service;
 
 import com.flowci.core.flow.domain.Flow;
-import com.flowci.core.flow.domain.Yml;
 import com.flowci.core.job.domain.Job;
 import com.flowci.core.job.domain.Job.Trigger;
 import com.flowci.core.job.domain.JobItem;
 import com.flowci.core.job.domain.JobYml;
-import com.flowci.domain.ExecutedCmd;
 import com.flowci.domain.StringVars;
 import org.springframework.data.domain.Page;
 
@@ -57,9 +55,11 @@ public interface JobService {
     Page<JobItem> list(Flow flow, int page, int size);
 
     /**
-     * Create job by flow and yml
+     * Create a job by flow and yml
+     *
+     * @throws com.flowci.exception.NotAvailableException with job object in extra field
      */
-    Job create(Flow flow, Yml yml, Trigger trigger, StringVars input);
+    Job create(Flow flow, String yml, Trigger trigger, StringVars input);
 
     /**
      * Send to job queue

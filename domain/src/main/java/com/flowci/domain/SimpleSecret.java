@@ -14,27 +14,7 @@
  * limitations under the License.
  */
 
-package com.flowci.core.credential.event;
+package com.flowci.domain;
 
-import com.flowci.core.common.domain.SyncEvent;
-import com.flowci.core.credential.domain.Credential;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.context.ApplicationEvent;
-
-/**
- * Sync event to get credential by name
- */
-@Getter
-@Setter
-public class GetCredentialEvent extends ApplicationEvent implements SyncEvent {
-
-    private final String name;
-
-    private Credential credential;
-
-    public GetCredentialEvent(Object source, String credentialName) {
-        super(source);
-        this.name = credentialName;
-    }
+public interface SimpleSecret {
 }
